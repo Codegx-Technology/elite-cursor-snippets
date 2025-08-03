@@ -1,0 +1,80 @@
+{
+  "Task Context Chain": {
+    "prefix": "taskchain",
+    "body": [
+      "// [TASK]: ${1:Describe the current task}",
+      "// [GOAL]: ${2:Desired outcome}",
+      "// [CONSTRAINTS]: ${3:Limitations or requirements}",
+      "// [SNIPPET]: ${4:thinkwithai|surgicalfix|refactorintent|writetest|doccode|unstuck|augmentsearch|kenyafirst|mindreset}",
+      "// [CONTEXT]: ${5:Background information}",
+      "",
+      "// Now, let's think through this step by step..."
+    ],
+    "description": "Create a task context chain for AI assistance"
+  },
+  "Memory Context Chain": {
+    "prefix": "memorychain",
+    "body": [
+      "// [AI-MEMORY]: ${1:Memory identifier}",
+      "// [SNIPPET]: ${2:thinkwithai|surgicalfix|refactorintent|writetest|doccode|unstuck|augmentsearch|kenyafirst|mindreset}",
+      "// [GOAL]: ${3:Current goal}",
+      "// [PROGRESS]: ${4:Current status}",
+      "// [NEXT]: ${5:Next action}",
+      "",
+      "// Continuing from where we left off..."
+    ],
+    "description": "Create a memory context chain for ongoing work"
+  },
+  "Debug Context Chain": {
+    "prefix": "debugchain",
+    "body": [
+      "// [DEBUG]: ${1:Debug issue description}",
+      "// [SNIPPET]: ${2:surgicalfix|thinkwithai|augmentsearch}",
+      "// [LOCATION]: ${3:File and line reference}",
+      "// [SYMPTOM]: ${4:What's happening}",
+      "// [SUSPECT]: ${5:Suspected cause}",
+      "",
+      "// Apply surgical fix here..."
+    ],
+    "description": "Create a debug context chain for troubleshooting"
+  },
+  "Refactor Context Chain": {
+    "prefix": "refactorchain",
+    "body": [
+      "// [REFACTOR]: ${1:Refactoring description}",
+      "// [SNIPPET]: refactorintent",
+      "// [TARGET]: ${2:What to refactor}",
+      "// [GOAL]: ${3:Refactoring goal}",
+      "// [CONSTRAINTS]: ${4:Refactoring constraints}",
+      "",
+      "// Refactor with intent..."
+    ],
+    "description": "Create a refactor context chain for code optimization"
+  },
+  "Search Context Chain": {
+    "prefix": "searchchain",
+    "body": [
+      "// [SEARCH]: ${1:Search description}",
+      "// [SNIPPET]: augmentsearch",
+      "// [START]: ${2:Starting point}",
+      "// [GOAL]: ${3:Search goal}",
+      "// [SCOPE]: ${4:Search scope}",
+      "",
+      "// Begin semantic search..."
+    ],
+    "description": "Create a search context chain for codebase exploration"
+  },
+  "Recovery Context Chain": {
+    "prefix": "recoverychain",
+    "body": [
+      "// [RECOVERY]: ${1:Recovery issue}",
+      "// [SNIPPET]: mindreset",
+      "// [ISSUE]: ${2:What's wrong}",
+      "// [GOAL]: ${3:Desired outcome}",
+      "// [CLEAR]: ${4:What to clear}",
+      "",
+      "// Reset and refocus..."
+    ],
+    "description": "Create a recovery context chain for AI reset"
+  }
+} 

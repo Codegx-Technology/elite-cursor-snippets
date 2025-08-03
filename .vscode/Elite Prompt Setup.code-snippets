@@ -1,0 +1,113 @@
+{
+  // === ELITE AI PROMPT ARSENAL ===
+  "Think With AI": {
+    "prefix": "thinkwithai",
+    "body": [
+      "You are my elite engineering thinking partner.",
+      "Think through this code or problem with me step by step:",
+      "",
+      "${1:Paste problem or code here}"
+    ],
+    "description": "Ask Cursor to reason with you step-by-step."
+  },
+  "Surgical Fix": {
+    "prefix": "surgicalfix",
+    "body": [
+      "You're the best fullstack engineer with 1000% precision.",
+      "Fix this issue without breaking anything else:",
+      "${1:Paste broken or buggy code here}",
+      "",
+      "**Rules:**",
+      "- Do not change unrelated logic.",
+      "- Clean commit-ready code only.",
+      "- Avoid noisy explanations or guesses.",
+      "- If unsure, ask first before changing logic."
+    ],
+    "description": "Apply surgical fix with clean code."
+  },
+  "Refactor With Intent": {
+    "prefix": "refactorintent",
+    "body": [
+      "Refactor this code to be modular, readable, and future-proof:",
+      "${1:Paste code here}",
+      "",
+      "**Constraints:**",
+      "- Do not change functionality.",
+      "- Extract reusable logic if needed.",
+      "- Adhere to clean code principles.",
+      "- Output code only. No extra text."
+    ],
+    "description": "Refactor code like an elite engineer."
+  },
+  "Write Tests": {
+    "prefix": "writetest",
+    "body": [
+      "Generate clean unit tests for this code:",
+      "${1:Paste code to test}",
+      "",
+      "**Requirements:**",
+      "- Use appropriate testing framework.",
+      "- Include edge cases.",
+      "- Ensure readability and maintainability."
+    ],
+    "description": "Generate unit tests for pasted code."
+  },
+  "Doc From Code": {
+    "prefix": "doccode",
+    "body": [
+      "Generate developer-friendly docstring or code comments for this logic:",
+      "${1:Paste code here}",
+      "",
+      "**Rules:**",
+      "- Use Kenya-first dev tone.",
+      "- Explain purpose, inputs, outputs.",
+      "- Avoid obvious boilerplate."
+    ],
+    "description": "Generate docs or code comments from logic."
+  },
+  "Cursor Unstuck": {
+    "prefix": "unstuck",
+    "body": [
+      "Cursor seems stuck or noisy. Reroute thinking like this:",
+      "- Restate goal clearly: ${1:What do we want?}",
+      "- Summarize where we are stuck.",
+      "- Suggest next logical step.",
+      "- Continue from where we left off."
+    ],
+    "description": "When AI or Cursor gets stuck, inject this pattern."
+  },
+  "Augment Search": {
+    "prefix": "augmentsearch",
+    "body": [
+      "Search and reason across large files or multi-module codebases.",
+      "Focus on relevance, not noise.",
+      "Start with this snippet or function:",
+      "${1:Paste snippet or symbol}",
+      "",
+      "**Goal:** ${2:What are we trying to understand?}"
+    ],
+    "description": "Use this for semantic search guidance across large files."
+  },
+  "Voice of Kenya": {
+    "prefix": "kenyafirst",
+    "body": [
+      "Infuse this code, doc, or UX with Kenya-first principles.",
+      "${1:Paste UI content, documentation, or code here}",
+      "",
+      "**Style:** Professional, local, inspiring tone."
+    ],
+    "description": "Apply Kenyan identity, values, and tone."
+  },
+  "Inject Mind Reset": {
+    "prefix": "mindreset",
+    "body": [
+      "Reset current state. Clear hallucinations, focus back on goal:",
+      "",
+      "- What are we solving?",
+      "- Where are we currently?",
+      "- What has already been tried?",
+      "- What's the next clean step?"
+    ],
+    "description": "Use when AI or Cursor veers off topic"
+  }
+}
