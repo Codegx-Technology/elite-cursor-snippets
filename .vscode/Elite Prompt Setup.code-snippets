@@ -109,5 +109,67 @@
       "- What's the next clean step?"
     ],
     "description": "Use when AI or Cursor veers off topic"
+  },
+  "AI Handle": {
+    "prefix": "aihandle",
+    "body": [
+      "You are an elite AI assistant. Handle this request with precision:",
+      "${1:Describe what you need help with}",
+      "",
+      "**Context:** ${2:Any relevant context or constraints}",
+      "**Expected Output:** ${3:What format or structure you need}"
+    ],
+    "description": "General AI assistance for any coding task"
+  },
+  "AI Debug": {
+    "prefix": "aidebug",
+    "body": [
+      "Debug this code with AI assistance:",
+      "${1:Paste the problematic code here}",
+      "",
+      "**Error/Issue:** ${2:Describe the problem}",
+      "**Expected Behavior:** ${3:What should happen}",
+      "**Environment:** ${4:Any relevant environment details}"
+    ],
+    "description": "AI-powered debugging assistance"
+  },
+  "AI Optimize": {
+    "prefix": "aioptimize",
+    "body": [
+      "Optimize this code for performance and best practices:",
+      "${1:Paste code to optimize}",
+      "",
+      "**Focus Areas:**",
+      "- Performance improvements",
+      "- Code readability",
+      "- Best practices",
+      "- Security considerations"
+    ],
+    "description": "AI-powered code optimization"
+  },
+  "AI Review": {
+    "prefix": "aireview",
+    "body": [
+      "Review this code and provide feedback:",
+      "${1:Paste code to review}",
+      "",
+      "**Review Focus:**",
+      "- Code quality",
+      "- Potential issues",
+      "- Improvements",
+      "- Security concerns"
+    ],
+    "description": "AI-powered code review"
+  },
+  "AI Explain": {
+    "prefix": "aiexplain",
+    "body": [
+      "Explain this code in detail:",
+      "${1:Paste code to explain}",
+      "",
+      "**Explanation Level:** ${2:Beginner/Intermediate/Advanced}",
+      "**Focus Areas:** ${3:What aspects to emphasize}"
+    ],
+    "description": "AI-powered code explanation"
   }
 }
