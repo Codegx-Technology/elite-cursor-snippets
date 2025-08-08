@@ -1,0 +1,50 @@
+# Shujaa Studio Configuration
+# Production-ready settings for local deployment
+
+# Core paths
+work_base: ./outputs
+bark_cli: ./voice_engine.py
+sdxl_path: ./models/sdxl
+musicgen_script: ./music_engine.py
+whisper_cmd: whisper
+ffmpeg: ffmpeg
+
+# Performance settings
+use_cuda: false
+default_scenes: 3
+vertical: true
+
+# Video settings
+video_fps: 24
+video_width: 1080
+video_height: 1920
+
+# API settings
+api_host: 0.0.0.0
+api_port: 8000
+ui_port: 7860
+
+# Model paths (update these to your actual paths)
+models:
+  sdxl: ./models/sdxl
+  bark: ./bark
+  whisper: ./models/whisper
+
+# Output settings
+output:
+  format: mp4
+  quality: high
+  enable_subtitles: true
+  enable_music: true
+
+# Platform export settings
+export:
+  tiktok:
+    resolution: [1080, 1920]
+    max_size_mb: 287
+  whatsapp:
+    resolution: [720, 1280]
+    max_size_mb: 16
+  instagram:
+    resolution: [1080, 1920]
+    max_size_mb: 100
