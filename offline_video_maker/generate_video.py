@@ -29,6 +29,11 @@ from voice_engine import VoiceEngine
 from music_engine import MusicEngine
 from video_effects import VideoEffects
 
+# Performance and concurrency enhancements (non-breaking integrations)
+from analytics import log_event, timed, mark_stage
+from model_cache import initialize_cache, model_cache
+from parallel_processor import ParallelProcessor, SceneProcessor
+
 # SDXL and AI imports for Combo Pack C
 try:
     import torch
@@ -84,6 +89,20 @@ class OfflineVideoMaker:
         print("[INIT] Shujaa Studio Offline Video Maker initialized!")
         print(f"[CONTEXT] Working directory: {self.project_dir}")
         print(f"[CONTEXT] Output directory: {self.output_dir}")
+
+        # Initialize model cache asynchronously (safe, non-blocking)
+        try:
+            initialize_cache()
+            print("[CACHE] Background model preloading started (if enabled)")
+        except Exception as e:
+            print(f"[CACHE] Initialization skipped: {e}")
+
+        # Prepare parallel processing utilities (optional usage by pipeline)
+        try:
+            self.parallel = ParallelProcessor()
+            self.scene_processor = SceneProcessor(model_cache=model_cache)
+        except Exception as e:
+            print(f"[PARALLEL] Initialization skipped: {e}")
 
         # Initialize AI models on startup
         self._initialize_ai_models()

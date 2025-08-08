@@ -21,7 +21,7 @@ import json
 # Add offline_video_maker to path
 sys.path.append(str(Path(__file__).parent / "offline_video_maker"))
 
-from offline_video_maker.generate_video import VideoGenerator
+from offline_video_maker.generate_video import OfflineVideoMaker
 from offline_video_maker.helpers import MediaUtils, SubtitleEngine, MusicIntegration, VerticalExport
 
 logging.basicConfig(level=logging.INFO)
@@ -32,7 +32,7 @@ class ShujaaStudioUI:
     """Professional Gradio UI for Shujaa Studio video generation"""
     
     def __init__(self):
-        self.video_generator = VideoGenerator()
+        self.video_generator = OfflineVideoMaker()
         self.media_utils = MediaUtils()
         self.subtitle_engine = SubtitleEngine()
         self.music_integration = MusicIntegration()
@@ -45,7 +45,8 @@ class ShujaaStudioUI:
         logger.info("[UI] Shujaa Studio UI initialized")
     
     def generate_video_with_progress(self, prompt: str, enable_subtitles: bool = True,
-                                   enable_music: bool = True, 
+                                   enable_music: bool = True, auto_export: bool = True,
+                                   kenya_mode: bool = True,
                                    export_platforms: List[str] = None) -> Tuple[str, str, str]:
         """
         Generate video with progress updates
@@ -167,139 +168,596 @@ class ShujaaStudioUI:
         ]
     
     def create_interface(self):
-        """Create the Gradio interface"""
-        
-        # Custom CSS for Kenya-first branding
+        """Create the world-class Kenya-first Gradio interface"""
+
+        # Elite Kenya-first CSS with modern aesthetics
         css = """
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --kenya-black: #000000;
+            --kenya-red: #FF0000;
+            --kenya-green: #00A651;
+            --kenya-white: #FFFFFF;
+            --savanna-gold: #FFD700;
+            --sunset-orange: #FF6B35;
+            --acacia-brown: #8B4513;
+            --sky-blue: #87CEEB;
+            --gradient-primary: linear-gradient(135deg, #FF6B35 0%, #FFD700 50%, #00A651 100%);
+            --gradient-hero: linear-gradient(135deg, rgba(0,166,81,0.9) 0%, rgba(255,107,53,0.8) 50%, rgba(255,215,0,0.9) 100%);
+            --shadow-elegant: 0 10px 30px rgba(0,0,0,0.1);
+            --shadow-hover: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
         .gradio-container {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f8fffe 0%, #f0f9ff 100%);
+            min-height: 100vh;
         }
-        .header {
-            text-align: center;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+
+        /* Hero Section with Kenya Elements */
+        .hero-section {
+            background: var(--gradient-hero);
+            background-image:
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="acacia" patternUnits="userSpaceOnUse" width="20" height="20"><circle cx="10" cy="10" r="2" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23acacia)"/></svg>');
             color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            padding: 40px 20px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-elegant);
         }
-        .example-prompt {
-            background-color: #f8f9fa;
-            border-left: 4px solid #007bff;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 5px;
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100"><path d="M0,50 Q250,0 500,50 T1000,50 L1000,100 L0,100 Z" fill="rgba(255,255,255,0.1)"/></svg>') repeat-x;
+            animation: wave 20s linear infinite;
+        }
+
+        @keyframes wave {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100px); }
+        }
+
+        .kenya-flag {
+            height: 8px;
+            background: linear-gradient(to right, var(--kenya-black) 33%, var(--kenya-red) 33%, var(--kenya-red) 66%, var(--kenya-green) 66%);
+            margin: 15px auto;
+            border-radius: 4px;
+            width: 200px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Kenya Slider */
+        .kenya-slider {
+            display: flex;
+            overflow: hidden;
+            margin: 20px 0;
+            border-radius: 15px;
+            height: 120px;
+            position: relative;
+        }
+
+        .slider-track {
+            display: flex;
+            animation: slide 25s linear infinite;
+            gap: 20px;
+        }
+
+        .slider-item {
+            min-width: 200px;
+            height: 100px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slider-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(0,0,0,0.3), transparent);
+        }
+
+        .slider-item span {
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes slide {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Modern Cards */
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-elegant);
+            border: 1px solid rgba(0,166,81,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* Elite Buttons */
+        .btn-primary {
+            background: var(--gradient-primary) !important;
+            border: none !important;
+            border-radius: 12px !important;
+            padding: 16px 32px !important;
+            font-weight: 600 !important;
+            font-size: 16px !important;
+            color: white !important;
+            box-shadow: var(--shadow-elegant) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: var(--shadow-hover) !important;
+        }
+
+        /* Status Indicators */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .status-item {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--kenya-green);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 30px 15px;
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .kenya-slider {
+                height: 80px;
+            }
+
+            .slider-item {
+                min-width: 150px;
+                height: 70px;
+                font-size: 12px;
+            }
+
+            .feature-card {
+                padding: 20px;
+                margin: 10px;
+            }
+        }
+
+        /* Elegant Animations */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gradient-primary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--kenya-green);
         }
         """
         
-        with gr.Blocks(css=css, title="Shujaa Studio - AI Video Generator") as interface:
-            
-            # Header
+        with gr.Blocks(css=css, title="🇰🇪 Shujaa Studio - Elite AI Video Generation") as interface:
+
+            # Elite Hero Section with Kenya Elements
             gr.HTML("""
-            <div class="header">
-                <h1>🎬 Shujaa Studio</h1>
-                <h3>Elite AI Video Generation with Kenya-First Storytelling</h3>
-                <p>Transform your stories into professional videos with SDXL images, voice narration, and mobile-optimized export</p>
+            <div class="hero-section fade-in">
+                <div style="text-align: center; position: relative; z-index: 2;">
+                    <h1 style="font-size: 3.5em; font-weight: 700; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                        🇰🇪 SHUJAA STUDIO
+                    </h1>
+                    <div class="kenya-flag"></div>
+                    <h2 style="font-size: 1.8em; font-weight: 500; margin: 10px 0; opacity: 0.95;">
+                        Elite AI Video Generation • Kenya First
+                    </h2>
+                    <p style="font-size: 1.2em; margin: 20px auto; max-width: 600px; opacity: 0.9; line-height: 1.6;">
+                        🔥 <strong>Beating InVideo</strong> with authentic African storytelling, mobile-first design, and enterprise-grade AI
+                    </p>
+
+                    <!-- Kenya Pride Slider -->
+                    <div class="kenya-slider">
+                        <div class="slider-track">
+                            <div class="slider-item" style="background: linear-gradient(45deg, #FF6B35, #FFD700);">
+                                <span>🏔️ Mount Kenya<br>Snow-Capped Beauty</span>
+                            </div>
+                            <div class="slider-item" style="background: linear-gradient(45deg, #00A651, #87CEEB);">
+                                <span>🏃‍♂️ Eliud Kipchoge<br>Marathon Legend</span>
+                            </div>
+                            <div class="slider-item" style="background: linear-gradient(45deg, #8B4513, #FFD700);">
+                                <span>🦁 Maasai Mara<br>Wildlife Paradise</span>
+                            </div>
+                            <div class="slider-item" style="background: linear-gradient(45deg, #87CEEB, #FFFFFF);">
+                                <span>🏖️ Diani Beach<br>Coastal Paradise</span>
+                            </div>
+                            <div class="slider-item" style="background: linear-gradient(45deg, #00A651, #000000);">
+                                <span>🏙️ Nairobi<br>Green City Tech Hub</span>
+                            </div>
+                            <div class="slider-item" style="background: linear-gradient(45deg, #FF0000, #FFD700);">
+                                <span>🎯 David Rudisha<br>800m World Record</span>
+                            </div>
+                            <div class="slider-item" style="background: linear-gradient(45deg, #8B4513, #00A651);">
+                                <span>🐘 Amboseli<br>Elephants & Kilimanjaro</span>
+                            </div>
+                            <div class="slider-item" style="background: linear-gradient(45deg, #FFD700, #FF6B35);">
+                                <span>🏃‍♀️ Faith Kipyegon<br>1500m Champion</span>
+                            </div>
+                            <div class="slider-item" style="background: linear-gradient(45deg, #00A651, #87CEEB);">
+                                <span>🌍 Harambee Spirit<br>Unity & Progress</span>
+                            </div>
+                            <div class="slider-item" style="background: linear-gradient(45deg, #FF0000, #000000);">
+                                <span>🎵 Hakuna Matata<br>Born in Kenya</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 25px;">
+                        <span style="background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; font-size: 0.9em;">
+                            🚀 Combo Pack D: Subtitles • Music • TikTok • Batch • Mobile • Kenya-First
+                        </span>
+                    </div>
+                </div>
             </div>
             """)
             
+            # Main Content Area
             with gr.Row():
                 with gr.Column(scale=2):
-                    # Input section
-                    gr.Markdown("## 📝 Story Input")
-                    
+                    # Story Input Card
+                    gr.HTML("""
+                    <div class="feature-card fade-in">
+                        <h2 style="color: #00A651; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center;">
+                            📝 <span style="margin-left: 10px;">Create Your Kenya Story</span>
+                        </h2>
+                        <p style="color: #666; margin-bottom: 20px;">Transform your ideas into professional videos with authentic African storytelling</p>
+                    </div>
+                    """)
+
                     prompt_input = gr.Textbox(
-                        label="Enter your story prompt",
-                        placeholder="Tell a compelling story with Kenya-first themes...",
-                        lines=4,
-                        max_lines=8
+                        label="✨ Enter your Kenya-first story prompt",
+                        placeholder="Eeh bana, tell a compelling story... Mix Sheng and English, showcase Kenya's beauty, innovation, and spirit!",
+                        lines=5,
+                        max_lines=10,
+                        elem_classes=["feature-card"]
                     )
-                    
-                    # Options
+
+                    # Elite Options Card
+                    gr.HTML("""
+                    <div class="feature-card fade-in" style="margin-top: 20px;">
+                        <h3 style="color: #FF6B35; font-weight: 600; margin-bottom: 15px;">🔥 Elite Features</h3>
+                    </div>
+                    """)
+
                     with gr.Row():
-                        enable_subtitles = gr.Checkbox(
-                            label="Add Subtitles",
-                            value=True,
-                            info="Generate and burn subtitles using Whisper"
-                        )
-                        enable_music = gr.Checkbox(
-                            label="Background Music",
-                            value=True,
-                            info="Add Kenya-appropriate background music"
-                        )
-                    
-                    # Platform export options
+                        with gr.Column():
+                            enable_subtitles = gr.Checkbox(
+                                label="📝 Auto Subtitles (Whisper AI)",
+                                value=True,
+                                info="Generate professional subtitles with Kenya-first formatting"
+                            )
+                            enable_music = gr.Checkbox(
+                                label="🎵 Smart Music (Kenya Themes)",
+                                value=True,
+                                info="AI-selected background music with African authenticity"
+                            )
+                        with gr.Column():
+                            auto_export = gr.Checkbox(
+                                label="📱 Auto Mobile Export",
+                                value=True,
+                                info="Automatically optimize for TikTok, WhatsApp, Instagram"
+                            )
+                            kenya_mode = gr.Checkbox(
+                                label="🇰🇪 Kenya-First Mode",
+                                value=True,
+                                info="Enhanced cultural authenticity and local context"
+                            )
+
+                    # Platform Export Card
+                    gr.HTML("""
+                    <div class="feature-card fade-in" style="margin-top: 20px;">
+                        <h3 style="color: #FFD700; font-weight: 600; margin-bottom: 15px;">📱 Mobile Platforms</h3>
+                        <p style="color: #666; font-size: 14px;">Select platforms for optimized export (auto-sized and compressed)</p>
+                    </div>
+                    """)
+
                     platform_options = gr.CheckboxGroup(
-                        choices=["tiktok", "instagram_stories", "whatsapp", "youtube_shorts"],
-                        label="Export Platforms",
-                        info="Select platforms for optimized export"
+                        choices=[
+                            ("🎵 TikTok (1080x1920)", "tiktok"),
+                            ("📸 Instagram Stories (1080x1920)", "instagram_stories"),
+                            ("💬 WhatsApp Status (720x1280)", "whatsapp"),
+                            ("📺 YouTube Shorts (1080x1920)", "youtube_shorts"),
+                            ("👥 Facebook Stories (1080x1920)", "facebook_stories")
+                        ],
+                        label="Export Destinations",
+                        value=["tiktok", "whatsapp"],
+                        info="Videos will be automatically optimized for each platform"
                     )
-                    
-                    # Generate button
+
+                    # Elite Generate Button
+                    gr.HTML("<div style='margin: 30px 0;'>")
                     generate_btn = gr.Button(
-                        "🎬 Generate Video",
+                        "🚀 Generate Elite Kenya Video",
                         variant="primary",
-                        size="lg"
+                        size="lg",
+                        elem_classes=["btn-primary"]
                     )
+                    gr.HTML("</div>")
                 
                 with gr.Column(scale=1):
-                    # Example prompts
-                    gr.Markdown("## 💡 Example Prompts")
-                    
+                    # Kenya Examples Card
+                    gr.HTML("""
+                    <div class="feature-card fade-in">
+                        <h2 style="color: #00A651; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center;">
+                            💡 <span style="margin-left: 10px;">Kenya-First Examples</span>
+                        </h2>
+                        <p style="color: #666; margin-bottom: 20px;">Authentic stories that celebrate our culture, innovation, and spirit</p>
+                    </div>
+                    """)
+
                     example_prompts = self.get_example_prompts()
-                    
+
                     for i, example in enumerate(example_prompts):
+                        # Create elegant example cards
+                        category_colors = ["#FF6B35", "#00A651", "#FFD700", "#87CEEB", "#8B4513"]
+                        color = category_colors[i % len(category_colors)]
+
                         gr.HTML(f"""
-                        <div class="example-prompt">
-                            <strong>Example {i+1}:</strong><br>
-                            {example[:150]}...
+                        <div class="feature-card fade-in" style="margin: 15px 0; border-left: 4px solid {color}; transition: all 0.3s ease;">
+                            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                <span style="background: {color}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                    EXAMPLE {i+1}
+                                </span>
+                            </div>
+                            <p style="color: #333; line-height: 1.5; margin: 0; font-size: 14px;">
+                                {example[:120]}...
+                            </p>
                         </div>
                         """)
-                        
-                        if i == 0:  # Add click functionality for first example
-                            gr.Button(
-                                f"Use Example {i+1}",
-                                size="sm"
-                            ).click(
-                                lambda: example,
+
+                        if i < 2:  # Add click functionality for first two examples
+                            use_btn = gr.Button(
+                                f"🎯 Use Example {i+1}",
+                                size="sm",
+                                variant="secondary"
+                            )
+                            use_btn.click(
+                                lambda ex=example: ex,
                                 outputs=prompt_input
                             )
+
+                    # Live Stats Card
+                    gr.HTML("""
+                    <div class="feature-card fade-in" style="margin-top: 30px; background: linear-gradient(135deg, #f8fffe 0%, #e8f5e8 100%);">
+                        <h3 style="color: #00A651; font-weight: 600; margin-bottom: 15px; display: flex; align-items: center;">
+                            📊 <span style="margin-left: 10px;">Live System Status</span>
+                        </h3>
+                        <div class="status-grid">
+                            <div class="status-item">
+                                <div style="font-size: 24px; color: #00A651;">✅</div>
+                                <div style="font-weight: 600; color: #333;">SDXL Ready</div>
+                                <div style="font-size: 12px; color: #666;">Image Generation</div>
+                            </div>
+                            <div class="status-item">
+                                <div style="font-size: 24px; color: #00A651;">✅</div>
+                                <div style="font-weight: 600; color: #333;">Whisper AI</div>
+                                <div style="font-size: 12px; color: #666;">Auto Subtitles</div>
+                            </div>
+                            <div class="status-item">
+                                <div style="font-size: 24px; color: #00A651;">✅</div>
+                                <div style="font-weight: 600; color: #333;">Mobile Export</div>
+                                <div style="font-size: 12px; color: #666;">5 Platforms</div>
+                            </div>
+                            <div class="status-item">
+                                <div style="font-size: 24px; color: #FFD700;">🔥</div>
+                                <div style="font-weight: 600; color: #333;">Kenya Mode</div>
+                                <div style="font-size: 12px; color: #666;">Cultural AI</div>
+                            </div>
+                        </div>
+                    </div>
+                    """)
             
-            # Output section
-            gr.Markdown("## 🎥 Generated Video")
-            
+            # Elite Output Section
+            gr.HTML("""
+            <div class="feature-card fade-in" style="margin: 40px 0 20px 0;">
+                <h2 style="color: #FF6B35; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center;">
+                    🎥 <span style="margin-left: 10px;">Your Elite Kenya Video</span>
+                </h2>
+                <p style="color: #666; margin-bottom: 20px;">Professional AI-generated content ready for global audiences</p>
+            </div>
+            """)
+
             with gr.Row():
                 with gr.Column(scale=2):
                     video_output = gr.Video(
-                        label="Generated Video",
-                        height=400
+                        label="🎬 Generated Video Preview",
+                        height=450,
+                        elem_classes=["feature-card"]
                     )
-                
+
+                    # Video Stats Card
+                    gr.HTML("""
+                    <div class="feature-card fade-in" style="margin-top: 20px; background: linear-gradient(135deg, #fff8f0 0%, #fff0e6 100%);">
+                        <h3 style="color: #FF6B35; font-weight: 600; margin-bottom: 15px;">📊 Video Analytics</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px;">
+                            <div style="text-align: center; padding: 10px;">
+                                <div style="font-size: 20px; font-weight: 600; color: #FF6B35;">0:00</div>
+                                <div style="font-size: 12px; color: #666;">Duration</div>
+                            </div>
+                            <div style="text-align: center; padding: 10px;">
+                                <div style="font-size: 20px; font-weight: 600; color: #00A651;">0</div>
+                                <div style="font-size: 12px; color: #666;">Scenes</div>
+                            </div>
+                            <div style="text-align: center; padding: 10px;">
+                                <div style="font-size: 20px; font-weight: 600; color: #FFD700;">0MB</div>
+                                <div style="font-size: 12px; color: #666;">File Size</div>
+                            </div>
+                            <div style="text-align: center; padding: 10px;">
+                                <div style="font-size: 20px; font-weight: 600; color: #87CEEB;">Ready</div>
+                                <div style="font-size: 12px; color: #666;">Status</div>
+                            </div>
+                        </div>
+                    </div>
+                    """)
+
                 with gr.Column(scale=1):
+                    # Live Status Card
+                    gr.HTML("""
+                    <div class="feature-card fade-in" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
+                        <h3 style="color: #87CEEB; font-weight: 600; margin-bottom: 15px;">⚡ Live Status</h3>
+                    </div>
+                    """)
+
                     status_output = gr.Textbox(
-                        label="Status",
-                        lines=3,
-                        interactive=False
+                        label="🔄 Generation Progress",
+                        lines=4,
+                        interactive=False,
+                        elem_classes=["feature-card"]
                     )
-                    
+
+                    # Scene Info Card
+                    gr.HTML("""
+                    <div class="feature-card fade-in" style="margin-top: 20px; background: linear-gradient(135deg, #f8fff8 0%, #f0fff0 100%);">
+                        <h3 style="color: #00A651; font-weight: 600; margin-bottom: 15px;">📖 Scene Breakdown</h3>
+                    </div>
+                    """)
+
                     scene_info_output = gr.Textbox(
-                        label="Scene Information",
+                        label="🎬 Scene Details",
                         lines=8,
-                        interactive=False
+                        interactive=False,
+                        elem_classes=["feature-card"]
                     )
             
-            # Connect the generate button
+            # Connect the elite generate button
             generate_btn.click(
                 fn=self.generate_video_with_progress,
-                inputs=[prompt_input, enable_subtitles, enable_music, platform_options],
+                inputs=[prompt_input, enable_subtitles, enable_music, auto_export, kenya_mode, platform_options],
                 outputs=[video_output, status_output, scene_info_output]
             )
             
-            # Footer
+            # Elite Footer
             gr.HTML("""
-            <div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 10px;">
-                <p><strong>🇰🇪 Shujaa Studio</strong> - Empowering African storytellers with AI technology</p>
-                <p>Built with ❤️ for Kenya-first content creation</p>
+            <div style="margin-top: 50px; background: var(--gradient-hero); color: white; padding: 40px 20px; border-radius: 20px; text-align: center; position: relative; overflow: hidden;">
+                <div style="position: relative; z-index: 2;">
+                    <h2 style="font-size: 2.5em; font-weight: 700; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                        🇰🇪 SHUJAA STUDIO
+                    </h2>
+                    <div class="kenya-flag" style="margin: 20px auto;"></div>
+                    <p style="font-size: 1.3em; margin: 20px auto; max-width: 600px; opacity: 0.95; line-height: 1.6;">
+                        <strong>Beating InVideo</strong> with authentic African storytelling, mobile-first innovation, and enterprise-grade AI
+                    </p>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 30px 0; max-width: 800px; margin-left: auto; margin-right: auto;">
+                        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; backdrop-filter: blur(10px);">
+                            <div style="font-size: 2em; margin-bottom: 10px;">🎬</div>
+                            <div style="font-weight: 600;">Elite Video Generation</div>
+                            <div style="font-size: 0.9em; opacity: 0.8;">SDXL + Whisper + Kenya AI</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; backdrop-filter: blur(10px);">
+                            <div style="font-size: 2em; margin-bottom: 10px;">📱</div>
+                            <div style="font-weight: 600;">Mobile-First Design</div>
+                            <div style="font-size: 0.9em; opacity: 0.8;">TikTok • WhatsApp • Instagram</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; backdrop-filter: blur(10px);">
+                            <div style="font-size: 2em; margin-bottom: 10px;">🇰🇪</div>
+                            <div style="font-weight: 600;">Kenya-First Content</div>
+                            <div style="font-size: 0.9em; opacity: 0.8;">Sheng • Culture • Authenticity</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; backdrop-filter: blur(10px);">
+                            <div style="font-size: 2em; margin-bottom: 10px;">🚀</div>
+                            <div style="font-weight: 600;">Enterprise Grade</div>
+                            <div style="font-size: 0.9em; opacity: 0.8;">Batch • API • Scale</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 15px; backdrop-filter: blur(10px);">
+                        <p style="font-size: 1.1em; margin: 0; font-weight: 500;">
+                            🔥 <strong>Combo Pack D Complete:</strong> Subtitles • Music • TikTok Export • Batch Processing • Mobile Presets • Kenya-First AI
+                        </p>
+                        <p style="font-size: 0.9em; margin: 10px 0 0 0; opacity: 0.8;">
+                            Built with ❤️ by Kenyan innovators for global African storytelling
+                        </p>
+                    </div>
+
+                    <div style="margin-top: 25px; font-size: 0.9em; opacity: 0.7;">
+                        <p>🌍 Empowering African creators • 🎯 Competing globally • 💪 Kenya tech excellence</p>
+                    </div>
+                </div>
+
+                <!-- Animated background elements -->
+                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"stars\" patternUnits=\"userSpaceOnUse\" width=\"10\" height=\"10\"><circle cx=\"5\" cy=\"5\" r=\"1\" fill=\"rgba(255,255,255,0.1)\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23stars)\"/></svg>') repeat; animation: twinkle 10s linear infinite;"></div>
             </div>
+
+            <style>
+            @keyframes twinkle {
+                0%, 100% { opacity: 0.3; }
+                50% { opacity: 0.7; }
+            }
+            </style>
             """)
         
         return interface

@@ -22,7 +22,7 @@ import argparse
 # Add offline_video_maker to path
 sys.path.append(str(Path(__file__).parent / "offline_video_maker"))
 
-from offline_video_maker.generate_video import VideoGenerator
+from offline_video_maker.generate_video import OfflineVideoMaker
 from offline_video_maker.helpers import MediaUtils, SubtitleEngine, MusicIntegration, VerticalExport
 
 logging.basicConfig(level=logging.INFO)
@@ -37,7 +37,7 @@ class BatchVideoGenerator:
         self.output_dir.mkdir(exist_ok=True)
         
         # Initialize components
-        self.video_generator = VideoGenerator()
+        self.video_generator = OfflineVideoMaker()
         self.media_utils = MediaUtils()
         self.subtitle_engine = SubtitleEngine()
         self.music_integration = MusicIntegration()
