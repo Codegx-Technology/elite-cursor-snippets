@@ -1,0 +1,99 @@
+2025-08-08 13:17:31,378 - ShujaaDebug - INFO - Debug logging initialized. Log file: C:\Users\LENOVO\Documents\Shujaa\debug_logs\debug_20250808_131731.log
+2025-08-08 13:17:31,380 - ShujaaDebug - INFO - 
+============================================================
+🚀 Shujaa Studio Debug Tool
+============================================================
+2025-08-08 13:17:31,380 - ShujaaDebug - INFO - Python version: 3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]
+2025-08-08 13:17:31,502 - ShujaaDebug - INFO - Platform: Windows-11-10.0.26100-SP0
+2025-08-08 13:17:31,538 - ShujaaDebug - INFO - Current working directory: C:\Users\LENOVO\Documents\Shujaa
+2025-08-08 13:17:31,548 - ShujaaDebug - INFO - Python path: ['C:\\Users\\LENOVO\\Documents\\Shujaa', 'C:\\Program Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\\python312.zip', 'C:\\Program Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\\DLLs', 'C:\\Program Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\\Lib', 'C:\\Program Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0', 'C:\\Users\\LENOVO\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python312\\site-packages', 'C:\\Users\\LENOVO\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python312\\site-packages\\win32', 'C:\\Users\\LENOVO\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python312\\site-packages\\win32\\lib', 'C:\\Users\\LENOVO\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python312\\site-packages\\Pythonwin', 'C:\\Program Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\\Lib\\site-packages']
+2025-08-08 13:17:31,552 - ShujaaDebug - INFO - 
+============================================================
+Checking Required Imports
+============================================================
+2025-08-08 13:17:39,256 - ShujaaDebug - INFO - ✓ torch (v2.8.0+cpu)
+2025-08-08 13:17:45,579 - ShujaaDebug - INFO - ✓ torchvision (v0.23.0+cpu)
+2025-08-08 13:17:45,686 - torio._extension.utils - DEBUG - Loading FFmpeg6
+2025-08-08 13:17:45,699 - torio._extension.utils - DEBUG - Failed to load FFmpeg6 extension.
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torio\_extension\utils.py", line 116, in _find_ffmpeg_extension
+    ext = _find_versionsed_ffmpeg_extension(ffmpeg_ver)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torio\_extension\utils.py", line 108, in _find_versionsed_ffmpeg_extension
+    _load_lib(lib)
+  File "C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torio\_extension\utils.py", line 94, in _load_lib
+    torch.ops.load_library(path)
+  File "C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torch\_ops.py", line 1478, in load_library
+    ctypes.CDLL(path)
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\Lib\ctypes\__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: Could not find module 'C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torio\lib\libtorio_ffmpeg6.pyd' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-08-08 13:17:45,704 - torio._extension.utils - DEBUG - Loading FFmpeg5
+2025-08-08 13:17:45,712 - torio._extension.utils - DEBUG - Failed to load FFmpeg5 extension.
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torio\_extension\utils.py", line 116, in _find_ffmpeg_extension
+    ext = _find_versionsed_ffmpeg_extension(ffmpeg_ver)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torio\_extension\utils.py", line 108, in _find_versionsed_ffmpeg_extension
+    _load_lib(lib)
+  File "C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torio\_extension\utils.py", line 94, in _load_lib
+    torch.ops.load_library(path)
+  File "C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torch\_ops.py", line 1478, in load_library
+    ctypes.CDLL(path)
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\Lib\ctypes\__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: Could not find module 'C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torio\lib\libtorio_ffmpeg5.pyd' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-08-08 13:17:45,715 - torio._extension.utils - DEBUG - Loading FFmpeg4
+2025-08-08 13:17:45,722 - torio._extension.utils - DEBUG - Failed to load FFmpeg4 extension.
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torio\_extension\utils.py", line 116, in _find_ffmpeg_extension
+    ext = _find_versionsed_ffmpeg_extension(ffmpeg_ver)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torio\_extension\utils.py", line 108, in _find_versionsed_ffmpeg_extension
+    _load_lib(lib)
+  File "C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torio\_extension\utils.py", line 94, in _load_lib
+    torch.ops.load_library(path)
+  File "C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torch\_ops.py", line 1478, in load_library
+    ctypes.CDLL(path)
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\Lib\ctypes\__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: Could not find module 'C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torio\lib\libtorio_ffmpeg4.pyd' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-08-08 13:17:45,724 - torio._extension.utils - DEBUG - Loading FFmpeg
+2025-08-08 13:17:45,724 - torio._extension.utils - DEBUG - Failed to load FFmpeg extension.
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torio\_extension\utils.py", line 116, in _find_ffmpeg_extension
+    ext = _find_versionsed_ffmpeg_extension(ffmpeg_ver)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\torio\_extension\utils.py", line 106, in _find_versionsed_ffmpeg_extension
+    raise RuntimeError(f"FFmpeg{version} extension is not available.")
+RuntimeError: FFmpeg extension is not available.
+2025-08-08 13:17:45,903 - ShujaaDebug - INFO - ✓ torchaudio (v2.8.0+cpu)
+2025-08-08 13:17:45,906 - ShujaaDebug - INFO - ✓ PIL (v11.3.0)
+2025-08-08 13:17:48,078 - ShujaaDebug - INFO - ✓ moviepy (v2.1.2)
+2025-08-08 13:17:48,083 - ShujaaDebug - INFO - ✓ numpy (v1.26.4)
+2025-08-08 13:17:48,085 - ShujaaDebug - INFO - ✓ soundfile (v0.13.1)
+2025-08-08 13:17:51,952 - ShujaaDebug - INFO - ✓ transformers (v4.55.0)
+2025-08-08 13:17:58,040 - ShujaaDebug - INFO - ✓ diffusers (v0.34.0)
+2025-08-08 13:18:10,806 - ShujaaDebug - INFO - ✓ gradio (v5.41.1)
+2025-08-08 13:18:11,362 - ShujaaDebug - INFO - ✓ numba (v0.61.2)
+2025-08-08 13:18:11,372 - ShujaaDebug - INFO - ✓ pyttsx3 (vunknown)
+2025-08-08 13:18:11,412 - ShujaaDebug - INFO - ✓ ffmpeg (vunknown)
+2025-08-08 13:18:11,412 - ShujaaDebug - INFO - All required imports are available
+2025-08-08 13:18:11,429 - ShujaaDebug - WARNING - FFmpeg not found in PATH
+2025-08-08 13:18:11,429 - ShujaaDebug - INFO - 
+============================================================
+Testing ShujaaStudio
+============================================================
+2025-08-08 13:18:11,429 - ShujaaDebug - INFO - Importing ShujaaStudio from generate_video
+2025-08-08 13:18:12,214 - ShujaaDebug - INFO - Successfully imported ShujaaStudio
+2025-08-08 13:18:12,216 - ShujaaDebug - INFO - Output directory: C:\Users\LENOVO\Documents\Shujaa\output
+2025-08-08 13:18:12,216 - ShujaaDebug - INFO - Initializing ShujaaStudio with SDXL support
+2025-08-08 13:18:12,218 - ShujaaDebug - ERROR - Failed to initialize ShujaaStudio:
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\Documents\Shujaa\debug_test_new.py", line 178, in test_shujaa_studio
+    studio = ShujaaStudio(use_sdxl=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ShujaaStudio.__init__() got an unexpected keyword argument 'use_sdxl'

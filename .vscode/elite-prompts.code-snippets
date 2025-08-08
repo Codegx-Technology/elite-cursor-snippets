@@ -1,0 +1,331 @@
+{
+  "=== CORE AI PROMPTS ===": {
+    "prefix": "ai",
+    "body": [
+      "// 🧠 Core AI Prompts - Choose one:",
+      "// thinkwithai - Strategic reasoning partner",
+      "// surgicalfix - Precision bug fixes", 
+      "// refactorintent - Clean refactoring",
+      "// writetest - Unit test generation",
+      "// doccode - Kenya-first documentation",
+      "// unstuck - Cursor rerouting",
+      "// augmentsearch - Semantic search",
+      "// kenyafirst - Kenyan tone/brand",
+      "// mindreset - State clearing"
+    ],
+    "description": "Show all core AI prompt options"
+  },
+  "Think with AI": {
+    "prefix": "thinkwithai",
+    "body": [
+      "// 🤖 THINKING WITH AI",
+      "// Context: ${1:Describe what you're working on}",
+      "// Goal: ${2:What do you want to achieve?}",
+      "// Constraints: ${3:Any limitations or requirements?}",
+      "",
+      "Please analyze this situation and provide strategic guidance:"
+    ],
+    "description": "Invoke AI thinking mode for strategic reasoning"
+  },
+  "Surgical Fix": {
+    "prefix": "surgicalfix", 
+    "body": [
+      "// 🔧 SURGICAL FIX MODE",
+      "// Issue: ${1:Describe the bug or problem}",
+      "// Expected: ${2:What should happen?}",
+      "// Actual: ${3:What's happening instead?}",
+      "",
+      "Please provide a precise, surgical fix:"
+    ],
+    "description": "Fix logic surgically with precision"
+  },
+  "Refactor Clean": {
+    "prefix": "refactorclean",
+    "body": [
+      "// 🔄 REFACTOR CLEAN",
+      "// Target: ${1:Code to refactor}",
+      "// Goal: ${2:Improve readability, performance, maintainability?}",
+      "// Constraints: ${3:Keep existing API, avoid breaking changes?}",
+      "",
+      "Please refactor this code following clean code principles:"
+    ],
+    "description": "AI-powered code refactoring"
+  },
+  "Write Test": {
+    "prefix": "writetest",
+    "body": [
+      "// 🧪 WRITE TEST",
+      "// Function: ${1:Function to test}",
+      "// Framework: ${2:Jest, Mocha, etc?}",
+      "// Coverage: ${3:Unit, integration, edge cases?}",
+      "",
+      "Please generate comprehensive tests:"
+    ],
+    "description": "Generate unit tests with AI"
+  },
+  "Doc Code": {
+    "prefix": "doccode",
+    "body": [
+      "// 📝 DOCUMENT CODE",
+      "// Component: ${1:Component/function to document}",
+      "// Style: ${2:JSDoc, README, inline comments?}",
+      "// Audience: ${3:Developers, users, Kenya-first?}",
+      "",
+      "Please document this code with Kenya-first principles:"
+    ],
+    "description": "Kenya-first documentation generation"
+  },
+  "Unstuck": {
+    "prefix": "unstuck",
+    "body": [
+      "// 🚀 UNSTUCK MODE",
+      "// Problem: ${1:What's blocking you?}",
+      "// Attempted: ${2:What have you tried?}",
+      "// Environment: ${3:Tech stack, context?}",
+      "",
+      "Please help me get unstuck:"
+    ],
+    "description": "Cursor rerouting when stuck"
+  },
+  "Augment Search": {
+    "prefix": "augmentsearch",
+    "body": [
+      "// 🔍 AUGMENT SEARCH",
+      "// Query: ${1:What are you looking for?}",
+      "// Context: ${2:File, component, feature?}",
+      "// Scope: ${3:Codebase, specific files, patterns?}",
+      "",
+      "Please search and analyze:"
+    ],
+    "description": "Semantic search with AI augmentation"
+  },
+  "Kenya First": {
+    "prefix": "kenyafirst",
+    "body": [
+      "// 🇰🇪 KENYA FIRST",
+      "// Feature: ${1:Feature to localize}",
+      "// Context: ${2:Currency, language, culture?}",
+      "// Requirements: ${3:Specific Kenya requirements?}",
+      "",
+      "Please adapt this for Kenya-first principles:"
+    ],
+    "description": "Kenyan tone and brand adaptation"
+  },
+  "Mind Reset": {
+    "prefix": "mindreset",
+    "body": [
+      "// 🧹 MIND RESET",
+      "// Current State: ${1:What's in your mind?}",
+      "// Goal: ${2:What do you want to focus on?}",
+      "// Clear: ${3:What should be cleared?}",
+      "",
+      "Please help me reset and refocus:"
+    ],
+    "description": "State clearing and refocusing"
+  },
+  "AI Handle": {
+    "prefix": "aihandle",
+    "body": [
+      "// 🎮 AI HANDLE",
+      "// Task: ${1:Describe the task}",
+      "// Context: ${2:Current situation}",
+      "// Preferences: ${3:Your preferences or constraints}",
+      "",
+      "Please handle this intelligently:"
+    ],
+    "description": "Smart AI controller for complex tasks"
+  },
+  "Pair Programming": {
+    "prefix": "pairprog",
+    "body": [
+      "// 👥 PAIR PROGRAMMING",
+      "// Session: ${1:What are we working on?}",
+      "// Role: ${2:Driver, navigator, or collaborative?}",
+      "// Focus: ${3:Specific area to focus on?}",
+      "",
+      "Let's pair program on this:"
+    ],
+    "description": "Live pair programming with AI"
+  },
+  "Think Branch": {
+    "prefix": "thinkbranch",
+    "body": [
+      "// 🌿 THINKING BRANCH",
+      "// Problem: ${1:Complex problem description}",
+      "// Subproblems: ${2:What are the smaller issues?}",
+      "// Assumptions: ${3:What must we validate?}",
+      "",
+      "Let's break this down systematically:"
+    ],
+    "description": "Structured problem-solving with semantic branching"
+  },
+  "Phase 1 Init": {
+    "prefix": "phase1init",
+    "body": [
+      "// 🚀 PHASE 1: INITIALIZATION",
+      "// Branch: ${1:Branch name}",
+      "// Analysis: ${2:What needs to be analyzed?}",
+      "// Foundation: ${3:What foundation is needed?}",
+      "",
+      "Starting Phase 1 - Analysis & Foundation:"
+    ],
+    "description": "Phase 1: Analysis and foundation"
+  },
+  "Phase 2 Core": {
+    "prefix": "phase2core",
+    "body": [
+      "// ⚡ PHASE 2: CORE IMPLEMENTATION",
+      "// Branch: ${1:Branch name}",
+      "// Implementation: ${2:What needs to be implemented?}",
+      "// Architecture: ${3:What architecture decisions?}",
+      "",
+      "Starting Phase 2 - Core Implementation:"
+    ],
+    "description": "Phase 2: Core implementation"
+  },
+  "Phase 3 Test": {
+    "prefix": "phase3test",
+    "body": [
+      "// 🧪 PHASE 3: TESTING & VALIDATION",
+      "// Branch: ${1:Branch name}",
+      "// Tests: ${2:What needs testing?}",
+      "// Validation: ${3:What needs validation?}",
+      "",
+      "Starting Phase 3 - Testing & Validation:"
+    ],
+    "description": "Phase 3: Testing and validation"
+  },
+  "Phase 4 Optimize": {
+    "prefix": "phase4optimize",
+    "body": [
+      "// 🎯 PHASE 4: OPTIMIZATION",
+      "// Branch: ${1:Branch name}",
+      "// Optimization: ${2:What needs optimization?}",
+      "// Cleanup: ${3:What needs cleanup?}",
+      "",
+      "Starting Phase 4 - Optimization & Cleanup:"
+    ],
+    "description": "Phase 4: Optimization and cleanup"
+  },
+  "Guard On": {
+    "prefix": "guardon",
+    "body": [
+      "// 🛡️ GUARDRAILS ACTIVATED",
+      "// Focus: ${1:What area to guard?}",
+      "// Standards: ${2:Quality, security, performance?}",
+      "// Checks: ${3:Specific checks needed?}",
+      "",
+      "Activating guardrails for:"
+    ],
+    "description": "Activate quality guardrails"
+  },
+  "Daily Boost": {
+    "prefix": "dailyboost",
+    "body": [
+      "// 🌅 DAILY BOOST",
+      "// Goals: ${1:What are your goals today?}",
+      "// Energy: ${2:How's your energy level?}",
+      "// Focus: ${3:What should you focus on?}",
+      "",
+      "Let's boost your productivity:"
+    ],
+    "description": "Daily startup ritual and energy boost"
+  },
+  "Mentor Me": {
+    "prefix": "mentorme",
+    "body": [
+      "// 🎓 MENTOR ME",
+      "// Topic: ${1:What do you want to learn?}",
+      "// Level: ${2:Beginner, intermediate, advanced?}",
+      "// Style: ${3:Hands-on, theory, examples?}",
+      "",
+      "Please mentor me on:"
+    ],
+    "description": "AI mentoring and learning guidance"
+  },
+  "Universal Prompt Dispatcher": {
+    "prefix": "autopickprefix",
+    "body": [
+      "// 🤖 UNIVERSAL PROMPT DISPATCHER (UPD)",
+      "// Context: ${1:Current file/context}",
+      "// Task: ${2:What are you trying to do?}",
+      "// Preferences: ${3:Any preferences or constraints?}",
+      "",
+      "Analyze this context and choose the most appropriate prefix from:",
+      "",
+      "🧠 THINKING & ANALYSIS:",
+      "- thinkwithai: for strategic reasoning and analysis",
+      "- thinkbranch: for structured problem-solving with semantic branching",
+      "- mindreset: for state clearing and refocusing",
+      "",
+      "🔧 FIXING & IMPLEMENTATION:",
+      "- surgicalfix: for precision bug fixes and logic corrections",
+      "- refactorclean: for AI-powered code refactoring",
+      "- aihandle: for smart AI control of complex tasks",
+      "",
+      "🧪 TESTING & QUALITY:",
+      "- writetest: for unit test generation",
+      "- guardon: for quality guardrails and standards",
+      "",
+      "📝 DOCUMENTATION & COMMUNICATION:",
+      "- doccode: for Kenya-first documentation",
+      "- kenyafirst: for Kenyan tone and brand adaptation",
+      "",
+      "👥 COLLABORATION & LEARNING:",
+      "- pairprog: for live pair programming with AI",
+      "- mentorme: for AI mentoring and learning guidance",
+      "- dailyboost: for productivity and mindset boost",
+      "",
+      "🔍 SEARCH & DISCOVERY:",
+      "- augmentsearch: for semantic search with AI augmentation",
+      "- unstuck: for getting unstuck and rerouting",
+      "",
+      "🎯 PHASE-BASED WORKFLOW:",
+      "- phase1init: Analysis & Foundation",
+      "- phase2core: Core Implementation",
+      "- phase3test: Testing & Validation", 
+      "- phase4optimize: Optimization & Cleanup",
+      "",
+      "Based on the context above, respond with ONLY the best prefix to use."
+    ],
+    "description": "AI-powered prompt selection based on context"
+  },
+  "Smart Context Analyzer": {
+    "prefix": "smartcontext",
+    "body": [
+      "// 🧠 SMART CONTEXT ANALYZER",
+      "// Current File: ${1:File path and type}",
+      "// Current Task: ${2:What you're working on}",
+      "// Recent Changes: ${3:Recent edits or context}",
+      "",
+      "Analyze the current development context and provide:",
+      "1. Recommended AI prompt prefix",
+      "2. Suggested workflow approach",
+      "3. Potential issues to watch for",
+      "4. Kenya-first considerations",
+      "",
+      "Context analysis:"
+    ],
+    "description": "Analyze development context and suggest optimal AI prompts"
+  },
+  "Intelligent Workflow Router": {
+    "prefix": "workflowrouter",
+    "body": [
+      "// 🚀 INTELLIGENT WORKFLOW ROUTER",
+      "// Development Stage: ${1:Planning, coding, testing, deploying?}",
+      "// Current Challenge: ${2:What's the main challenge?}",
+      "// Team Context: ${3:Solo, pair, team collaboration?}",
+      "",
+      "Route me to the optimal workflow:",
+      "",
+      "🎯 RECOMMENDED WORKFLOW:",
+      "1. Primary AI prompt: [AI will suggest]",
+      "2. Secondary support: [AI will suggest]",
+      "3. Quality checks: [AI will suggest]",
+      "4. Next steps: [AI will suggest]",
+      "",
+      "Route me to the best approach:"
+    ],
+    "description": "Route to optimal AI workflow based on development stage"
+  }
+} 

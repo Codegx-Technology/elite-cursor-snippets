@@ -1,0 +1,864 @@
+{
+  "=== CORE AI PROMPTS ===": {
+    "prefix": "ai",
+    "body": [
+      "// 🧠 Core AI Prompts - Choose one:",
+      "// thinkwithai - Strategic reasoning partner",
+      "// surgicalfix - Precision bug fixes",
+      "// refactorintent - Clean refactoring",
+      "// writetest - Unit test generation",
+      "// doccode - Kenya-first documentation",
+      "// unstuck - Cursor rerouting",
+      "// augmentsearch - Semantic search",
+      "// kenyafirst - Kenyan tone/brand",
+      "// mindreset - State clearing"
+    ],
+    "description": "Show all core AI prompt options"
+  },
+  "=== REFACTOR COACH ===": {
+    "prefix": "refactor",
+    "body": [
+      "// 🔄 Refactor Coach - Choose one:",
+      "// refactorclean - AI-powered code refactoring",
+      "// drepassist - Document + Refactor + Optimize",
+      "// postreview - Post-commit AI review",
+      "// autocomp - Auto-optimize React component",
+      "// patternmine - Mine for code patterns and duplication",
+      "// refactorsuggest - Suggest exact refactors based on analysis"
+    ],
+    "description": "Show all refactor coach options"
+  },
+  "=== DAILY COMPANION ===": {
+    "prefix": "daily",
+    "body": [
+      "// 🚀 Daily Companion - Choose one:",
+      "// dailyboost - Daily startup ritual",
+      "// dailyreflection - End-of-day reflection",
+      "// weeklyreview - Weekly performance review",
+      "// qualitycheck - Code quality self-assessment",
+      "// problemsolve - Structured problem-solving",
+      "// learningsession - Structured learning",
+      "// optimize - Performance optimization",
+      "// teamcollab - Team collaboration"
+    ],
+    "description": "Show all daily companion options"
+  },
+  "=== GUARDRAILS ===": {
+    "prefix": "guard",
+    "body": [
+      "// 🛡️ Guardrails - Choose one:",
+      "// guardon - Activate guardrails",
+      "// srpcheck - Single responsibility reminder",
+      "// noconlog - No console.log reminder",
+      "// hookcheck - React hooks best practices",
+      "// kenyacheck - Kenya-first requirements",
+      "// mobilecheck - Mobile-first design",
+      "// errorcheck - Error handling reminder",
+      "// securitycheck - Security best practices",
+      "// perfcheck - Performance optimization",
+      "// a11ycheck - Accessibility standards"
+    ],
+    "description": "Show all guardrails options"
+  },
+  "=== CONTEXT CHAINS ===": {
+    "prefix": "context",
+    "body": [
+      "// 🧬 Context Chains - Choose one:",
+      "// taskchain - Task context",
+      "// memorychain - Memory context",
+      "// debugchain - Debug context",
+      "// refactorchain - Refactor context",
+      "// searchchain - Search context",
+      "// recoverychain - Recovery context"
+    ],
+    "description": "Show all context chain options"
+  },
+  "=== QUICK ACCESS ===": {
+    "prefix": "quick",
+    "body": [
+      "// ⚡ Quick Access - Most Used:",
+      "// thinkwithai - Think with AI",
+      "// surgicalfix - Fix bugs",
+      "// refactorclean - Refactor code",
+      "// dailyboost - Start day",
+      "// guardon - Activate guardrails",
+      "// postreview - Review commit",
+      "// patternmine - Mine for patterns",
+      "// aidiagnose - Run diagnostics",
+      "// aihandle - Smart AI controller"
+    ],
+    "description": "Show most commonly used prefixes"
+  },
+  "AI Controller": {
+    "prefix": "aihandle",
+    "body": [
+      "You are an elite engineering assistant with access to 39 specialized prompt patterns.",
+      "Given the code below, identify the type of issue and automatically choose the most appropriate surgical fix strategy:",
+      "",
+      "${1:Paste or describe the code/issue here}",
+      "",
+      "**Issue Classification & Strategy Selection:**",
+      "",
+      "**🔧 Bug Fixes & Errors:**",
+      "- If it's broken/buggy code → use `surgicalfix`",
+      "- If it's runtime errors → use `surgicalfix`",
+      "- If it's compilation errors → use `surgicalfix`",
+      "",
+      "**🔄 Refactoring & Cleanup:**",
+      "- If it's long/messy functions → use `refactorclean`",
+      "- If it's code duplication → use `patternmine` then `refactorsuggest`",
+      "- If it's unclear naming → use `refactorclean`",
+      "- If it's complex logic → use `thinkwithai` then `refactorclean`",
+      "",
+      "**📝 Documentation & Clarity:**",
+      "- If it's missing docs → use `doccode`",
+      "- If it's unclear purpose → use `thinkwithai`",
+      "- If it's complex functions → use `drepassist`",
+      "",
+      "**🧪 Testing & Quality:**",
+      "- If it's untested code → use `writetest`",
+      "- If it's quality issues → use `aidiagnose`",
+      "- If it's performance problems → use `perfcheck`",
+      "",
+      "**🛡️ Security & Best Practices:**",
+      "- If it's security concerns → use `securitycheck`",
+      "- If it's React violations → use `hookcheck`",
+      "- If it's accessibility issues → use `a11ycheck`",
+      "",
+      "**🇰🇪 Kenya-Specific:**",
+      "- If it's localization issues → use `kenyafirst`",
+      "- If it's currency/phone format → use `kenyacheck`",
+      "",
+      "**📱 Mobile & Performance:**",
+      "- If it's mobile optimization → use `mobilecheck`",
+      "- If it's performance issues → use `perfcheck`",
+      "",
+      "**🎯 Analysis & Planning:**",
+      "- If it's architectural decisions → use `thinkwithai`",
+      "- If it's codebase exploration → use `augmentsearch`",
+      "- If it's pattern analysis → use `patternmine`",
+      "",
+      "**Response Format:**",
+      "1. **Issue Type:** [Classify the problem]",
+      "2. **Selected Strategy:** [Which prefix to use]",
+      "3. **Reasoning:** [Why this strategy fits]",
+      "4. **Action Plan:** [Step-by-step approach]",
+      "5. **Implementation:** [Apply the selected strategy]",
+      "",
+      "**Rules:**",
+      "- Choose the most specific strategy for the issue",
+      "- Apply surgical, focused fixes",
+      "- Respect Kenya-first principles",
+      "- Maintain clean code standards",
+      "- Preserve existing functionality",
+      "- Think step-by-step before acting"
+    ],
+    "description": "Intelligently handle issues with the right snippet strategy"
+  },
+  "Live Pair Programming": {
+    "prefix": "pairprog",
+    "body": [
+      "🤝 **Live Pair Programming Mode Activated**",
+      "",
+      "I'm your intelligent pair programming partner. I'll:",
+      "- Watch your code in real-time",
+      "- Suggest improvements automatically",
+      "- Maintain context across your session",
+      "- Catch issues before they become problems",
+      "",
+      "**Current Context:**",
+      "- Project: SalonGenz (Kenya-first salon platform)",
+      "- Tech Stack: React + Django + Tailwind",
+      "- Focus: ${1:Describe what you're working on}",
+      "",
+      "**My Role:**",
+      "- Code reviewer and mentor",
+      "- Performance optimizer",
+      "- Security watchdog",
+      "- Kenya-first advocate",
+      "",
+      "**Ready to collaborate!** What are we building today?"
+    ],
+    "description": "Activate live pair programming with AI"
+  },
+  "Semantic Context Chain": {
+    "prefix": "semanticchain",
+    "body": [
+      "🧠 **Semantic Context Chain Activated**",
+      "",
+      "**Previous Context:**",
+      "${1:Describe what we were working on previously}",
+      "",
+      "**Current Task:**",
+      "${2:Describe what we're working on now}",
+      "",
+      "**Context Bridge:**",
+      "- How does this relate to previous work?",
+      "- What patterns should we maintain?",
+      "- What improvements can we apply?",
+      "",
+      "**Next Steps:**",
+      "- Continue with consistent patterns",
+      "- Apply lessons from previous work",
+      "- Maintain Kenya-first principles",
+      "",
+      "**Ready to continue with full context awareness!**"
+    ],
+    "description": "Maintain semantic context across development sessions"
+  },
+  "Think Branch": {
+    "prefix": "thinkbranch",
+    "body": [
+      "🌿 **Thinking Branch: ${1:Problem description}**",
+      "",
+      "**⟶ Subproblem Analysis:**",
+      "- What are the possible subproblems?",
+      "- Which parts need review, which are stable?",
+      "- What assumptions must we validate?",
+      "",
+      "**⟶ Semantic Breakdown:**",
+      "- Phase 1: ${2:Initial analysis/foundation}",
+      "- Phase 2: ${3:Core implementation}",
+      "- Phase 3: ${4:Testing/validation}",
+      "- Phase 4: ${5:Optimization/cleanup}",
+      "",
+      "**⟶ Tracking Strategy:**",
+      "- Track where you left off",
+      "- Pause/resume intelligently",
+      "- Maintain context across sessions",
+      "",
+      "**Proceed to break down and fix this issue in surgical, phased steps.**"
+    ],
+    "description": "Start a semantic thought branch for deep problem solving"
+  },
+  "Phase 1 - Init": {
+    "prefix": "phase1init",
+    "body": [
+      "🚀 **Phase 1: Initial Analysis & Foundation**",
+      "",
+      "**Current Branch:** ${1:Problem/feature name}",
+      "",
+      "**Tasks:**",
+      "- Analyze current state",
+      "- Identify core issues",
+      "- Plan architecture",
+      "- Set up foundation",
+      "",
+      "**Status:** Starting Phase 1...",
+      "**Next:** Move to Phase 2 when foundation is solid"
+    ],
+    "description": "Jump to Phase 1 - Initial analysis and foundation"
+  },
+  "Phase 2 - Core": {
+    "prefix": "phase2core",
+    "body": [
+      "⚡ **Phase 2: Core Implementation**",
+      "",
+      "**Current Branch:** ${1:Problem/feature name}",
+      "",
+      "**Tasks:**",
+      "- Implement core logic",
+      "- Build main functionality",
+      "- Handle edge cases",
+      "- Ensure Kenya-first principles",
+      "",
+      "**Status:** Core implementation in progress...",
+      "**Next:** Move to Phase 3 for testing"
+    ],
+    "description": "Jump to Phase 2 - Core implementation"
+  },
+  "Phase 3 - Test": {
+    "prefix": "phase3test",
+    "body": [
+      "🧪 **Phase 3: Testing & Validation**",
+      "",
+      "**Current Branch:** ${1:Problem/feature name}",
+      "",
+      "**Tasks:**",
+      "- Write comprehensive tests",
+      "- Validate functionality",
+      "- Check performance",
+      "- Verify security",
+      "",
+      "**Status:** Testing and validation...",
+      "**Next:** Move to Phase 4 for optimization"
+    ],
+    "description": "Jump to Phase 3 - Testing and validation"
+  },
+  "Phase 4 - Optimize": {
+    "prefix": "phase4optimize",
+    "body": [
+      "🎯 **Phase 4: Optimization & Cleanup**",
+      "",
+      "**Current Branch:** ${1:Problem/feature name}",
+      "",
+      "**Tasks:**",
+      "- Optimize performance",
+      "- Clean up code",
+      "- Update documentation",
+      "- Final review",
+      "",
+      "**Status:** Optimization and cleanup...",
+      "**Next:** Branch complete - ready for deployment"
+    ],
+    "description": "Jump to Phase 4 - Optimization and cleanup"
+  },
+  "Branch Resume": {
+    "prefix": "branchresume",
+    "body": [
+      "🔄 **Resume Semantic Branch**",
+      "",
+      "**Branch:** ${1:Branch name}",
+      "**Last Phase:** ${2:Phase number and name}",
+      "**Last Status:** ${3:Where we left off}",
+      "",
+      "**Context Recovery:**",
+      "- Previous decisions made",
+      "- Current implementation state",
+      "- Next steps planned",
+      "",
+      "**Resuming from:** ${4:Specific point to resume}",
+      "**Ready to continue with full context!**"
+    ],
+    "description": "Resume a semantic branch from where you left off"
+  },
+  "Branch Complete": {
+    "prefix": "branchcomplete",
+    "body": [
+      "✅ **Semantic Branch Complete**",
+      "",
+      "**Branch:** ${1:Branch name}",
+      "**Duration:** ${2:Time taken}",
+      "**Phases Completed:** ${3:List of phases}",
+      "",
+      "**Summary:**",
+      "- Problems solved: ${4:List of solved issues}",
+      "- Key decisions: ${5:Important decisions made}",
+      "- Lessons learned: ${6:Insights gained}",
+      "",
+      "**Next Steps:**",
+      "- Commit changes",
+      "- Update documentation",
+      "- Plan next branch if needed",
+      "",
+      "**🎉 Branch successfully completed!**"
+    ],
+    "description": "Mark a semantic branch as complete with summary"
+  },
+  "Universal Prompt Dispatcher": {
+    "prefix": "autopickprefix",
+    "body": [
+      "🤖 **Universal Prompt Dispatcher**",
+      "",
+      "Analyze the current file and context, then choose the most appropriate AI prefix from:",
+      "",
+      "**🔧 Bug Fixes & Errors:**",
+      "- `surgicalfix` - For broken/buggy code, runtime errors, compilation errors",
+      "",
+      "**🔄 Refactoring & Cleanup:**",
+      "- `refactorclean` - For long/messy functions, unclear naming, complex logic",
+      "- `patternmine` - For code duplication analysis",
+      "- `refactorsuggest` - For refactoring suggestions",
+      "",
+      "**📝 Documentation & Clarity:**",
+      "- `doccode` - For missing documentation",
+      "- `thinkwithai` - For unclear purpose or complex functions",
+      "- `drepassist` - For documentation + refactoring + optimization",
+      "",
+      "**🧪 Testing & Quality:**",
+      "- `writetest` - For untested code",
+      "- `aidiagnose` - For quality issues",
+      "- `perfcheck` - For performance problems",
+      "",
+      "**🛡️ Security & Best Practices:**",
+      "- `securitycheck` - For security concerns",
+      "- `hookcheck` - For React violations",
+      "- `a11ycheck` - For accessibility issues",
+      "",
+      "**🇰🇪 Kenya-Specific:**",
+      "- `kenyafirst` - For localization issues",
+      "- `kenyacheck` - For currency/phone format issues",
+      "",
+      "**📱 Mobile & Performance:**",
+      "- `mobilecheck` - For mobile optimization",
+      "- `perfcheck` - For performance issues",
+      "",
+      "**🎯 Analysis & Planning:**",
+      "- `thinkwithai` - For architectural decisions",
+      "- `augmentsearch` - For codebase exploration",
+      "- `patternmine` - For pattern analysis",
+      "",
+      "**🤝 Collaboration:**",
+      "- `pairprog` - For live pair programming",
+      "- `thinkbranch` - For complex problem-solving",
+      "- `semanticchain` - For context maintenance",
+      "",
+      "**📅 Reflection & Growth:**",
+      "- `dailyboost` - For daily mindset",
+      "- `mentorme` - For AI engineering coaching",
+      "",
+      "**Current Context:**",
+      "- File type: ${1:JavaScript/Python/React/etc}",
+      "- Current issue: ${2:Describe what you're working on}",
+      "- Goal: ${3:What do you want to achieve?}",
+      "",
+      "**AI Decision:**",
+      "Based on the context above, respond with ONLY the most appropriate prefix.",
+      "If unsure, default to `thinkwithai`.",
+      "",
+      "**Selected Prefix:** [AI will choose the best one]"
+    ],
+    "description": "Let AI automatically choose the best prefix for the current context"
+  },
+  "AI Context Analyzer": {
+    "prefix": "aianalyze",
+    "body": [
+      "🔍 **AI Context Analyzer**",
+      "",
+      "Analyze the current development context and provide intelligent recommendations:",
+      "",
+      "**Current State:**",
+      "- File: ${1:Current file name}",
+      "- Language: ${2:Programming language}",
+      "- Project: SalonGenz (Kenya-first salon platform)",
+      "- Tech Stack: React + Django + Tailwind",
+      "",
+      "**Context Analysis:**",
+      "- What type of work is being done?",
+      "- What are the current challenges?",
+      "- What would be the most helpful AI assistance?",
+      "",
+      "**Recommended Actions:**",
+      "1. **Immediate:** [AI suggests best prefix]",
+      "2. **Short-term:** [AI suggests workflow]",
+      "3. **Long-term:** [AI suggests strategy]",
+      "",
+      "**Quality Checks:**",
+      "- Kenya-first principles applied?",
+      "- Clean code standards met?",
+      "- Performance considerations?",
+      "- Security implications?",
+      "",
+      "**Next Steps:**",
+      "- Use the recommended prefix",
+      "- Follow the suggested workflow",
+      "- Apply quality improvements",
+      "",
+      "**Ready for AI-powered development!**"
+    ],
+    "description": "Analyze current context and get AI recommendations"
+  },
+  "Pattern Miner": {
+    "prefix": "patternmine",
+    "body": [
+      "You are a high-level engineering assistant. Mine this file (or folder) for recurring patterns, anti-patterns, or repeated code blocks that could be abstracted.",
+      "",
+      "${1:Paste file content or describe the codebase}",
+      "",
+      "**Tasks:**",
+      "- Suggest reusable functions/components",
+      "- Identify areas for refactoring",
+      "- Point out duplicated logic",
+      "- Recommend naming improvements",
+      "- Find performance bottlenecks",
+      "- Detect security vulnerabilities",
+      "- Identify React best practice violations",
+      "- Suggest Kenya-specific optimizations",
+      "",
+      "**Analysis Focus:**",
+      "- Code duplication and DRY violations",
+      "- Long functions that need breaking down",
+      "- Inconsistent naming conventions",
+      "- Missing error handling",
+      "- Performance anti-patterns",
+      "- Security concerns",
+      "- Accessibility issues",
+      "- Mobile optimization opportunities",
+      "",
+      "Start by thinking aloud before suggesting code changes."
+    ],
+    "description": "Mine for code patterns, duplication, and refactoring opportunities"
+  },
+  "Suggest Refactors": {
+    "prefix": "refactorsuggest",
+    "body": [
+      "Based on your previous analysis, suggest exact refactors for the above file or folder.",
+      "Refactor in small, composable, and readable steps.",
+      "",
+      "${1:Paste the pattern analysis or file content}",
+      "",
+      "**Refactor Goals:**",
+      "- Break down large functions",
+      "- Extract reusable components",
+      "- Improve naming conventions",
+      "- Add proper error handling",
+      "- Optimize performance",
+      "- Enhance security",
+      "- Improve accessibility",
+      "- Follow React best practices",
+      "- Implement Kenya-specific requirements",
+      "",
+      "**Refactor Approach:**",
+      "- Small, atomic changes",
+      "- Preserve existing functionality",
+      "- Maintain backward compatibility",
+      "- Add comprehensive tests",
+      "- Document changes clearly",
+      "",
+      "Explain why each refactor matters in terms of readability, performance, or scalability.",
+      "",
+      "Think first, then write changes."
+    ],
+    "description": "Request precise, composable refactors based on mined patterns"
+  },
+  "AI Diagnostic Mode": {
+    "prefix": "aidiagnose",
+    "body": [
+      "You are a surgical engineering assistant.",
+      "Read this file and scan for the following:",
+      "",
+      "${1:Paste file content or describe the code}",
+      "",
+      "**Diagnostic Focus:**",
+      "- Smelly patterns",
+      "- Unused variables",
+      "- Over-nested code",
+      "- Long functions",
+      "- Misnamed identifiers",
+      "- Performance issues",
+      "- Security vulnerabilities",
+      "- React best practice violations",
+      "- Accessibility problems",
+      "- Mobile optimization opportunities",
+      "- Kenya-specific requirements",
+      "",
+      "**Response Format:**",
+      "- Line-by-line diagnostics",
+      "- Specific issue descriptions",
+      "- Proposed fixes for each issue",
+      "- Priority levels (High/Medium/Low)",
+      "- Impact assessment",
+      "",
+      "Respond ONLY with inline diagnostics and proposed fix next to each issue.",
+      "No full rewrites unless asked."
+    ],
+    "description": "Run surgical diagnostics on code"
+  },
+  "Think With AI": {
+    "prefix": "thinkwithai",
+    "body": [
+      "You are my elite engineering thinking partner.",
+      "Think through this code or problem with me step by step:",
+      "",
+      "${1:Paste problem or code here}"
+    ],
+    "description": "Ask Cursor to reason with you step-by-step."
+  },
+  "Surgical Fix": {
+    "prefix": "surgicalfix",
+    "body": [
+      "You're the best fullstack engineer with 1000% precision.",
+      "Fix this issue without breaking anything else:",
+      "${1:Paste broken or buggy code here}",
+      "",
+      "**Rules:**",
+      "- Do not change unrelated logic.",
+      "- Clean commit-ready code only.",
+      "- Avoid noisy explanations or guesses.",
+      "- If unsure, ask first before changing logic."
+    ],
+    "description": "Apply surgical fix with clean code."
+  },
+  "Refactor With Intent": {
+    "prefix": "refactorintent",
+    "body": [
+      "Refactor this code to be modular, readable, and future-proof:",
+      "${1:Paste code here}",
+      "",
+      "**Constraints:**",
+      "- Do not change functionality.",
+      "- Extract reusable logic if needed.",
+      "- Adhere to clean code principles.",
+      "- Output code only. No extra text."
+    ],
+    "description": "Refactor code like an elite engineer."
+  },
+  "Write Tests": {
+    "prefix": "writetest",
+    "body": [
+      "Generate clean unit tests for this code:",
+      "${1:Paste code to test}",
+      "",
+      "**Requirements:**",
+      "- Use appropriate testing framework.",
+      "- Include edge cases.",
+      "- Ensure readability and maintainability."
+    ],
+    "description": "Generate unit tests for pasted code."
+  },
+  "Doc From Code": {
+    "prefix": "doccode",
+    "body": [
+      "Generate developer-friendly docstring or code comments for this logic:",
+      "${1:Paste code here}",
+      "",
+      "**Rules:**",
+      "- Use Kenya-first dev tone.",
+      "- Explain purpose, inputs, outputs.",
+      "- Avoid obvious boilerplate."
+    ],
+    "description": "Generate docs or code comments from logic."
+  },
+  "Cursor Unstuck": {
+    "prefix": "unstuck",
+    "body": [
+      "Cursor seems stuck or noisy. Reroute thinking like this:",
+      "- Restate goal clearly: ${1:What do we want?}",
+      "- Summarize where we are stuck.",
+      "- Suggest next logical step.",
+      "- Continue from where we left off."
+    ],
+    "description": "When AI or Cursor gets stuck, inject this pattern."
+  },
+  "Augment Search": {
+    "prefix": "augmentsearch",
+    "body": [
+      "Search and reason across large files or multi-module codebases.",
+      "Focus on relevance, not noise.",
+      "Start with this snippet or function:",
+      "${1:Paste snippet or symbol}",
+      "",
+      "**Goal:** ${2:What are we trying to understand?}"
+    ],
+    "description": "Use this for semantic search guidance across large files."
+  },
+  "Voice of Kenya": {
+    "prefix": "kenyafirst",
+    "body": [
+      "Infuse this code, doc, or UX with Kenya-first principles.",
+      "${1:Paste UI content, documentation, or code here}",
+      "",
+      "**Style:** Professional, local, inspiring tone."
+    ],
+    "description": "Apply Kenyan identity, values, and tone."
+  },
+  "Inject Mind Reset": {
+    "prefix": "mindreset",
+    "body": [
+      "Reset current state. Clear hallucinations, focus back on goal:",
+      "",
+      "- What are we solving?",
+      "- Where are we currently?",
+      "- What has already been tried?",
+      "- What's the next clean step?"
+    ],
+    "description": "Use when AI or Cursor veers off topic"
+  },
+  "Activate Guardrails": {
+    "prefix": "guardon",
+    "body": [
+      "Load cursor.guardrails.yml and enforce all active rules. Begin scanning now.",
+      "",
+      "**Guardrails Active:**",
+      "- Clean code enforcement",
+      "- React best practices",
+      "- Kenya-specific requirements",
+      "- Security validation",
+      "- Performance optimization",
+      "- Quality standards"
+    ],
+    "description": "Activate real-time code quality guardrails"
+  },
+  "Refactor Me Cleanly": {
+    "prefix": "refactorclean",
+    "body": [
+      "// 🧠 Trigger: Refactor this logic into clean, modular parts.",
+      "// Rules: One function = one purpose. Remove duplication.",
+      "// Explain design choices. Optimize only where useful.",
+      "// Output: Final code + explanation.",
+      "",
+      "${1:Paste code to refactor here}",
+      "",
+      "**Refactor Goals:**",
+      "- Break into single-responsibility functions",
+      "- Remove code duplication",
+      "- Improve readability and maintainability",
+      "- Follow React functional component patterns",
+      "- Ensure Kenya-first principles",
+      "- Add proper error handling",
+      "- Optimize for mobile performance"
+    ],
+    "description": "AI-powered code refactoring with clean architecture"
+  },
+  "Doc + Refactor + Optimize": {
+    "prefix": "drepassist",
+    "body": [
+      "// 🔁 Trigger: Document, Refactor, and Optimize this function.",
+      "// 1. Add JS Doc comments for all params & return.",
+      "// 2. Refactor logic into small readable blocks.",
+      "// 3. Suggest if performance/security improvements are possible.",
+      "",
+      "${1:Paste function to improve here}",
+      "",
+      "**Improvement Goals:**",
+      "- Add comprehensive JSDoc documentation",
+      "- Refactor into smaller, focused functions",
+      "- Identify performance bottlenecks",
+      "- Suggest security improvements",
+      "- Ensure React hooks best practices",
+      "- Validate Kenya-specific requirements",
+      "- Optimize for mobile devices"
+    ],
+    "description": "Comprehensive function improvement with documentation"
+  },
+  "Post-Commit AI Review": {
+    "prefix": "postreview",
+    "body": [
+      "Review this commit as a senior engineer. Identify:",
+      "- Any refactor opportunities",
+      "- Naming improvements",
+      "- Security/performance gains",
+      "- Violations of our principles",
+      "- React best practices compliance",
+      "- Kenya-specific requirements",
+      "- Mobile optimization opportunities",
+      "",
+      "${1:Paste commit diff or modified code here}",
+      "",
+      "**Review Focus:**",
+      "- Code quality and maintainability",
+      "- Performance implications",
+      "- Security considerations",
+      "- User experience impact",
+      "- Scalability concerns",
+      "- Testing coverage"
+    ],
+    "description": "Post-commit code review by AI senior engineer"
+  },
+  "Auto-Optimize Component": {
+    "prefix": "autocomp",
+    "body": [
+      "// ⚡ Auto-optimize this React component:",
+      "// 1. Convert to functional component if needed",
+      "// 2. Optimize re-renders with useMemo/useCallback",
+      "// 3. Improve accessibility",
+      "// 4. Add proper error boundaries",
+      "// 5. Optimize for mobile performance",
+      "",
+      "${1:Paste React component here}",
+      "",
+      "**Optimization Goals:**",
+      "- Functional component with hooks",
+      "- Performance optimization",
+      "- Accessibility improvements",
+      "- Mobile-first design",
+      "- Error handling",
+      "- Kenya-specific localization"
+    ],
+    "description": "Automatic React component optimization"
+  },
+  "Defensive Pattern: Single Responsibility": {
+    "prefix": "srpcheck",
+    "body": [
+      "// 🛡️ Reminder: This function must do ONE thing.",
+      "// If more than one return or side effect, break it down.",
+      "// Single Responsibility Principle: One reason to change."
+    ],
+    "description": "Reminder for single responsibility principle"
+  },
+  "Defensive Pattern: No Console Log": {
+    "prefix": "noconlog",
+    "body": [
+      "// ❌ No console.log allowed in final code.",
+      "// Remove after testing.",
+      "// Use proper logging service for production."
+    ],
+    "description": "Reminder to remove console.log statements"
+  },
+  "Defensive Pattern: React Hooks": {
+    "prefix": "hookcheck",
+    "body": [
+      "// 🎣 React Hooks Best Practices:",
+      "// - Use functional components",
+      "// - Follow hooks rules (top level, same order)",
+      "// - Clean up effects properly",
+      "// - Use custom hooks for reusable logic"
+    ],
+    "description": "Reminder for React hooks best practices"
+  },
+  "Defensive Pattern: Kenya First": {
+    "prefix": "kenyacheck",
+    "body": [
+      "// 🇰🇪 Kenya-First Checklist:",
+      "// - Currency: KSh format",
+      "// - Phone: +254 format",
+      "// - Timezone: EAT (UTC+3)",
+      "// - Language: Kenyan English",
+      "// - Business: Local practices"
+    ],
+    "description": "Reminder for Kenya-specific requirements"
+  },
+  "Defensive Pattern: Mobile First": {
+    "prefix": "mobilecheck",
+    "body": [
+      "// 📱 Mobile-First Design:",
+      "// - Responsive breakpoints",
+      "// - Touch-friendly interfaces",
+      "// - Performance optimization",
+      "// - Offline capability",
+      "// - Progressive Web App features"
+    ],
+    "description": "Reminder for mobile-first design principles"
+  },
+  "Defensive Pattern: Error Handling": {
+    "prefix": "errorcheck",
+    "body": [
+      "// 🛡️ Error Handling Required:",
+      "// - Wrap in try/catch",
+      "// - Provide user-friendly messages",
+      "// - Log errors appropriately",
+      "// - Graceful degradation",
+      "// - Recovery mechanisms"
+    ],
+    "description": "Reminder for proper error handling"
+  },
+  "Defensive Pattern: Security": {
+    "prefix": "securitycheck",
+    "body": [
+      "// 🔒 Security Checklist:",
+      "// - Input validation",
+      "// - XSS prevention",
+      "// - CSRF protection",
+      "// - Secure storage",
+      "// - API authentication",
+      "// - Data encryption"
+    ],
+    "description": "Reminder for security best practices"
+  },
+  "Defensive Pattern: Performance": {
+    "prefix": "perfcheck",
+    "body": [
+      "// ⚡ Performance Optimization:",
+      "// - Lazy loading",
+      "// - Code splitting",
+      "// - Image optimization",
+      "// - Bundle size",
+      "// - Caching strategies",
+      "// - Memory management"
+    ],
+    "description": "Reminder for performance optimization"
+  },
+  "Defensive Pattern: Accessibility": {
+    "prefix": "a11ycheck",
+    "body": [
+      "// ♿ Accessibility Requirements:",
+      "// - Semantic HTML",
+      "// - ARIA labels",
+      "// - Keyboard navigation",
+      "// - Screen reader support",
+      "// - Color contrast",
+      "// - Focus management"
+    ],
+    "description": "Reminder for accessibility standards"
+  }
+}
