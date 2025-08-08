@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-🔥 Shujaa Studio - One-Click Script-to-Video CLI Tool (Combo Pack B)
-Following Elite Cursor Snippets Context Patterns
+🔥 Shujaa Studio - Multi-Scene Auto Generator + Real SDXL Images (COMBO PACK C) ✅
+Elite AI-Powered Video Generation with Kenya-First Storytelling
 
-// [TASK]: Fully automated script-to-video pipeline CLI tool
-// [GOAL]: One user prompt → complete video with scenes, voices, visuals, merge (offline)
-// [CONSTRAINTS]: Must work offline, follow elite-cursor-snippets patterns
-// [SNIPPET]: thinkwithai + refactorclean + kenyafirst
-// [CONTEXT]: Enhanced version of existing generate_video.py for full automation
-// [PROGRESS]: Implementing Combo Pack B specification
-// [NEXT]: Complete CLI implementation with voice, image, and video generation
+// [TASK]: Complete multi-scene video generation with real SDXL image generation
+// [GOAL]: Long story → intelligent scenes → real AI images → voice → professional video
+// [CONSTRAINTS]: Fully offline, production-ready, Kenya-first principles
+// [SNIPPET]: thinkwithai + refactorclean + kenyafirst + surgicalfix
+// [CONTEXT]: Advanced AI-powered video generation with semantic scene detection
+// [PROGRESS]: ✅ Phase 1: Multi-scene splitter ✅ Phase 2: Real SDXL ✅ Phase 3: Enhanced pipeline
+// [ACHIEVEMENT]: Elite-level video generation tool ready for production
 // [LOCATION]: offline_video_maker/generate_video.py
 """
 
@@ -74,6 +74,53 @@ class OfflineVideoMaker:
         )
         print(f"[CONTEXT] Working directory: {self.project_dir}")
         print(f"[CONTEXT] Output directory: {self.output_dir}")
+        print(
+            f"[SDXL] Real image generation: {'✅ Available' if self.sdxl_pipeline else '❌ Using fallback'}"
+        )
+
+    def _initialize_sdxl_pipeline(self):
+        """
+        // [TASK]: Initialize SDXL pipeline for real image generation
+        // [GOAL]: Setup high-quality AI image generation
+        // [SNIPPET]: surgicalfix + refactorclean
+        """
+        try:
+            print("[SDXL] Initializing Stable Diffusion XL pipeline...")
+
+            # Use SDXL-Turbo for faster generation or base SDXL for quality
+            model_id = "stabilityai/sdxl-turbo"  # Fast version
+            # model_id = "stabilityai/stable-diffusion-xl-base-1.0"  # High quality version
+
+            self.sdxl_pipeline = StableDiffusionXLPipeline.from_pretrained(
+                model_id,
+                torch_dtype=torch.float16,
+                use_safetensors=True,
+                variant="fp16",
+            )
+
+            # Optimize for GPU if available
+            if torch.cuda.is_available():
+                self.sdxl_pipeline = self.sdxl_pipeline.to("cuda")
+                print("[SDXL] GPU acceleration enabled")
+            else:
+                print("[SDXL] Using CPU (slower but functional)")
+
+            # Enable memory efficient attention
+            self.sdxl_pipeline.enable_attention_slicing()
+            if hasattr(
+                self.sdxl_pipeline, "enable_xformers_memory_efficient_attention"
+            ):
+                try:
+                    self.sdxl_pipeline.enable_xformers_memory_efficient_attention()
+                except:
+                    pass  # xformers not available, continue without it
+
+            print("[SDXL] ✅ Pipeline initialized successfully!")
+
+        except Exception as e:
+            print(f"[SDXL] ❌ Failed to initialize: {e}")
+            print("[SDXL] Falling back to placeholder images")
+            self.sdxl_pipeline = None
 
     def generate_story_breakdown(self, prompt: str) -> List[Dict[str, str]]:
         """
