@@ -59,21 +59,28 @@ class OfflineVideoMaker:
         for dir_path in [self.output_dir, self.temp_dir]:
             dir_path.mkdir(exist_ok=True)
 
-        # Configuration paths (to be updated with actual model paths)
-        self.bark_path = self.models_dir / "bark"
-        self.sdxl_path = self.models_dir / "stable-diffusion-xl"
+        # AI Model Configuration - Now using actual installed models
+        self.use_bark = True  # Use Bark for high-quality TTS
+        self.use_diffusers = True  # Use Diffusers for AI image generation
+        self.use_whisper = True  # Use Whisper for subtitle generation
         self.default_image = self.project_dir.parent / "temp" / "default_scene.png"
+        
+        # Initialize AI models
+        self.bark_model = None
+        self.diffusion_pipeline = None
+        self.whisper_model = None
 
         # Initialize SDXL pipeline for Combo Pack C
         self.sdxl_pipeline = None
         if SDXL_AVAILABLE:
             self._initialize_sdxl_pipeline()
 
-        print(
-            "🔥 [INIT] Shujaa Studio Combo Pack C - Multi-Scene Auto Generator initialized!"
-        )
+        print("[INIT] Shujaa Studio Offline Video Maker initialized!")
         print(f"[CONTEXT] Working directory: {self.project_dir}")
         print(f"[CONTEXT] Output directory: {self.output_dir}")
+        
+        # Initialize AI models on startup
+        self._initialize_ai_models()
         print(
             f"[SDXL] Real image generation: {'✅ Available' if self.sdxl_pipeline else '❌ Using fallback'}"
         )
@@ -121,6 +128,74 @@ class OfflineVideoMaker:
             print(f"[SDXL] ❌ Failed to initialize: {e}")
             print("[SDXL] Falling back to placeholder images")
             self.sdxl_pipeline = None
+
+    def _initialize_ai_models(self):
+        """
+        // [TASK]: Initialize all AI models for video generation
+        // [GOAL]: Load Whisper, Bark, and Diffusers models
+        // [SNIPPET]: surgicalfix + refactorclean
+        """
+        print("[AI] Initializing AI models...")
+        
+        # Initialize Bark for high-quality TTS
+        if self.use_bark:
+            try:
+                from bark import SAMPLE_RATE, generate_audio, preload_models
+                print("[BARK] Preloading Bark models...")
+                preload_models()
+                self.bark_model = True  # Flag to indicate Bark is ready
+                print("[BARK] ✅ Bark TTS models loaded successfully!")
+            except Exception as e:
+                print(f"[BARK] ❌ Failed to load Bark: {e}")
+                print("[BARK] Falling back to system TTS")
+                self.use_bark = False
+        
+        # Initialize Diffusers for image generation
+        if self.use_diffusers:
+            try:
+                from diffusers import StableDiffusionPipeline
+                import torch
+                
+                print("[DIFFUSERS] Loading Stable Diffusion pipeline...")
+                model_id = "runwayml/stable-diffusion-v1-5"
+                
+                self.diffusion_pipeline = StableDiffusionPipeline.from_pretrained(
+                    model_id,
+                    torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+                    safety_checker=None,
+                    requires_safety_checker=False
+                )
+                
+                if torch.cuda.is_available():
+                    self.diffusion_pipeline = self.diffusion_pipeline.to("cuda")
+                    print("[DIFFUSERS] GPU acceleration enabled")
+                else:
+                    print("[DIFFUSERS] Using CPU (slower)")
+                
+                self.diffusion_pipeline.enable_attention_slicing()
+                print("[DIFFUSERS] ✅ Stable Diffusion pipeline loaded successfully!")
+                
+            except Exception as e:
+                print(f"[DIFFUSERS] ❌ Failed to load Diffusers: {e}")
+                print("[DIFFUSERS] Falling back to placeholder images")
+                self.use_diffusers = False
+        
+        # Initialize Whisper for subtitle generation
+        if self.use_whisper:
+            try:
+                import whisper
+                print("[WHISPER] Loading Whisper model...")
+                self.whisper_model = whisper.load_model("base")
+                print("[WHISPER] ✅ Whisper model loaded successfully!")
+            except Exception as e:
+                print(f"[WHISPER] ❌ Failed to load Whisper: {e}")
+                print("[WHISPER] Subtitles will be disabled")
+                self.use_whisper = False
+        
+        print(f"[AI] Model initialization complete:")
+        print(f"    • Bark TTS: {'✅' if self.use_bark else '❌'}")
+        print(f"    • Diffusers: {'✅' if self.use_diffusers else '❌'}")
+        print(f"    • Whisper: {'✅' if self.use_whisper else '❌'}")
 
     def generate_story_breakdown(self, prompt: str) -> List[Dict[str, str]]:
         """
