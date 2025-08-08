@@ -27,6 +27,7 @@ from typing import List, Dict, Optional
 # Import our new voice and music engines
 from voice_engine import VoiceEngine
 from music_engine import MusicEngine
+from video_effects import VideoEffects
 
 # SDXL and AI imports for Combo Pack C
 try:
@@ -90,41 +91,55 @@ class OfflineVideoMaker:
         // [SNIPPET]: surgicalfix + refactorclean
         """
         try:
-            print("[SDXL] Initializing Stable Diffusion XL pipeline...")
+            print("[SDXL] Attempting to initialize pipeline...")
 
-            # Use SDXL-Turbo for faster generation or base SDXL for quality
-            model_id = "stabilityai/sdxl-turbo"  # Fast version
-            # model_id = "stabilityai/stable-diffusion-xl-base-1.0"  # High quality version
+            # Use SDXL-Turbo for faster generation
+            model_id = "stabilityai/sdxl-turbo"
 
-            self.sdxl_pipeline = StableDiffusionXLPipeline.from_pretrained(
-                model_id,
-                torch_dtype=torch.float16,
-                use_safetensors=True,
-                variant="fp16",
-            )
+            # Try loading with different configurations
+            try:
+                self.sdxl_pipeline = StableDiffusionXLPipeline.from_pretrained(
+                    model_id,
+                    torch_dtype=(
+                        torch.float16 if torch.cuda.is_available() else torch.float32
+                    ),
+                    use_safetensors=True,
+                    variant="fp16" if torch.cuda.is_available() else None,
+                )
+            except Exception as e:
+                print(f"[SDXL] First attempt failed: {e}")
+                # Fallback to basic loading
+                self.sdxl_pipeline = StableDiffusionXLPipeline.from_pretrained(
+                    model_id,
+                    torch_dtype=torch.float32,
+                )
 
             # Optimize for GPU if available
             if torch.cuda.is_available():
-                self.sdxl_pipeline = self.sdxl_pipeline.to("cuda")
-                print("[SDXL] GPU acceleration enabled")
+                try:
+                    self.sdxl_pipeline = self.sdxl_pipeline.to("cuda")
+                    print("[SDXL] GPU acceleration enabled")
+                except:
+                    print("[SDXL] GPU failed, using CPU")
             else:
                 print("[SDXL] Using CPU (slower but functional)")
 
             # Enable memory efficient attention
-            self.sdxl_pipeline.enable_attention_slicing()
-            if hasattr(
-                self.sdxl_pipeline, "enable_xformers_memory_efficient_attention"
-            ):
-                try:
+            try:
+                self.sdxl_pipeline.enable_attention_slicing()
+                if hasattr(
+                    self.sdxl_pipeline, "enable_xformers_memory_efficient_attention"
+                ):
                     self.sdxl_pipeline.enable_xformers_memory_efficient_attention()
-                except:
-                    pass  # xformers not available, continue without it
+            except:
+                pass  # Continue without optimizations
 
             print("[SDXL] ✅ Pipeline initialized successfully!")
 
         except Exception as e:
             print(f"[SDXL] ❌ Failed to initialize: {e}")
-            print("[SDXL] Falling back to placeholder images")
+            print("[SDXL] This is normal if models are still downloading")
+            print("[SDXL] Falling back to enhanced placeholder images")
             self.sdxl_pipeline = None
 
     def generate_story_breakdown(self, prompt: str) -> List[Dict[str, str]]:
@@ -626,51 +641,165 @@ class OfflineVideoMaker:
 
     def merge_scenes(self, scene_videos: List[Path]) -> Path:
         """
-        // [TASK]: Merge all scene videos into final output
-        // [GOAL]: Create complete video file
-        // [SNIPPET]: refactorclean
+        // [TASK]: Merge all scene videos with professional transitions
+        // [GOAL]: Create complete video file with smooth transitions
+        // [SNIPPET]: refactorclean + kenyafirst
         """
-        print("[MERGE] Finalizing output video...")
+        print("[MERGE] 🎬 Finalizing output video with professional transitions...")
 
-        # Create concat file for ffmpeg
-        concat_file = self.temp_dir / "scenes_list.txt"
-        with open(concat_file, "w") as f:
-            for video_file in scene_videos:
-                f.write(f"file '{video_file.absolute()}'\n")
+        # Initialize video effects
+        if not hasattr(self, "video_effects"):
+            self.video_effects = VideoEffects()
 
-        # Final output file
         final_output = self.output_dir / f"shujaa_video_{uuid.uuid4().hex[:8]}.mp4"
 
-        # Merge videos
-        merge_cmd = [
-            "ffmpeg",
-            "-y",
-            "-f",
-            "concat",
-            "-safe",
-            "0",
-            "-i",
-            str(concat_file),
-            "-c",
-            "copy",
-            str(final_output),
-        ]
-
-        print(f"[CMD] Merging videos: {' '.join(merge_cmd)}")
-
         try:
-            result = subprocess.run(
-                merge_cmd, capture_output=True, text=True, check=True
+            # Try MoviePy-based merging with transitions
+            from moviepy.editor import VideoFileClip, concatenate_videoclips
+
+            print("[MERGE] Using MoviePy for professional transitions...")
+            video_clips = []
+
+            for i, video_file in enumerate(scene_videos):
+                clip = VideoFileClip(str(video_file))
+                video_clips.append(clip)
+                print(f"[LOADED] Scene {i+1}: {video_file.name}")
+
+            # Create final video with crossfade transitions
+            if len(video_clips) > 1:
+                print("[MERGE] Adding crossfade transitions...")
+                final_clip = video_clips[0]
+
+                for i in range(1, len(video_clips)):
+                    # Add crossfade transition between scenes
+                    final_clip = self.video_effects.add_scene_transition(
+                        final_clip,
+                        video_clips[i],
+                        transition_type="crossfade",
+                        duration=0.8,  # 0.8 second crossfade
+                    )
+            else:
+                final_clip = video_clips[0]
+
+            # Save final video
+            print(f"[EXPORT] Creating final video: {final_output.name}")
+            final_clip.write_videofile(
+                str(final_output), codec="libx264", audio_codec="aac", fps=24
             )
-            print(f"[SUCCESS] Final video created: {final_output}")
-        except subprocess.CalledProcessError as e:
-            print(f"[ERROR] Video merge failed: {e}")
-            print(f"❌ [STDERR] {e.stderr}")
-            raise
+
+            # Cleanup clips
+            for clip in video_clips:
+                clip.close()
+            final_clip.close()
+
+            print(f"[SUCCESS] ✅ Professional video with transitions: {final_output}")
+
+        except Exception as e:
+            print(f"[WARNING] MoviePy merge failed: {e}")
+            print("[FALLBACK] Using basic ffmpeg concatenation...")
+
+            # Fallback to basic ffmpeg merge
+            concat_file = self.temp_dir / "scenes_list.txt"
+            with open(concat_file, "w") as f:
+                for video_file in scene_videos:
+                    f.write(f"file '{video_file.absolute()}'\n")
+
+            merge_cmd = [
+                "ffmpeg",
+                "-y",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                str(concat_file),
+                "-c",
+                "copy",
+                str(final_output),
+            ]
+
+            subprocess.run(merge_cmd, capture_output=True, text=True, check=True)
+            print(f"[SUCCESS] ✅ Basic video created: {final_output}")
 
         return final_output
 
-    def generate_video(self, prompt: str) -> Path:
+    def create_multiple_formats(self, final_video: Path) -> Dict[str, Path]:
+        """
+        // [TASK]: Create multiple aspect ratio versions for social media
+        // [GOAL]: InVideo-style multi-platform output
+        // [SNIPPET]: refactorclean + kenyafirst
+        """
+        print("[FORMATS] 📱 Creating multiple aspect ratio versions...")
+
+        formats = {}
+
+        try:
+            from moviepy.editor import VideoFileClip
+
+            # Load the final video
+            video_clip = VideoFileClip(str(final_video))
+
+            # Define target formats
+            format_configs = {
+                "landscape": (1920, 1080),  # YouTube, Facebook
+                "portrait": (1080, 1920),  # TikTok, Instagram Stories
+                "square": (1080, 1080),  # Instagram Posts
+            }
+
+            for format_name, (width, height) in format_configs.items():
+                try:
+                    print(
+                        f"[FORMAT] Creating {format_name} version ({width}x{height})..."
+                    )
+
+                    # Use video effects for proper resizing
+                    if not hasattr(self, "video_effects"):
+                        self.video_effects = VideoEffects()
+
+                    # Create output filename
+                    format_file = final_video.with_name(
+                        f"{final_video.stem}_{format_name}.mp4"
+                    )
+
+                    # Resize and crop appropriately
+                    if format_name == "portrait":
+                        # For portrait, crop from center
+                        resized_clip = video_clip.resize(height=height).crop(
+                            x_center=video_clip.w / 2, width=width, height=height
+                        )
+                    elif format_name == "square":
+                        # For square, crop from center
+                        resized_clip = video_clip.resize(height=height).crop(
+                            x_center=video_clip.w / 2, width=width, height=height
+                        )
+                    else:
+                        # Landscape - just resize
+                        resized_clip = video_clip.resize((width, height))
+
+                    # Save formatted video
+                    resized_clip.write_videofile(
+                        str(format_file), codec="libx264", audio_codec="aac"
+                    )
+
+                    formats[format_name] = format_file
+                    print(f"[SUCCESS] ✅ {format_name} format: {format_file.name}")
+
+                    # Cleanup
+                    resized_clip.close()
+
+                except Exception as e:
+                    print(f"[WARNING] Failed to create {format_name} format: {e}")
+
+            # Cleanup
+            video_clip.close()
+
+        except Exception as e:
+            print(f"[WARNING] Multiple formats creation failed: {e}")
+            print("[FALLBACK] Using original video only")
+
+        return formats
+
+    def generate_video(self, prompt: str, aspect_ratio: str = "landscape") -> Path:
         """
         // [TASK]: Main pipeline - prompt to video
         // [GOAL]: Complete end-to-end video generation
@@ -697,21 +826,99 @@ class OfflineVideoMaker:
 
                 # Create scene video
                 video_file = self.create_scene_video(scene, audio_file, image_file)
-                scene_videos.append(video_file)
 
-            # Step 3: Merge all scenes
+                # Add professional effects and text overlays
+                enhanced_video = self.add_professional_effects(video_file, scene)
+                scene_videos.append(enhanced_video)
+
+            # Step 3: Merge all scenes with transitions
             final_video = self.merge_scenes(scene_videos)
 
-            print("\n" + "=" * 60)
-            print(f"\n[COMPLETE] Video generation successful!")
-            print(f"[OUTPUT] {final_video}")
-            print(f"[READY] Your Shujaa Studio video is ready!")
+            # Step 4: Create multiple aspect ratio versions (InVideo style)
+            if aspect_ratio == "all":
+                print("\n[FORMATS] 🎬 Creating multi-platform versions...")
+                formats = self.create_multiple_formats(final_video)
+
+                print("\n" + "=" * 60)
+                print(f"\n[COMPLETE] 🎉 Multi-format video generation successful!")
+                print(f"[MASTER] {final_video}")
+                for format_name, format_file in formats.items():
+                    print(f"[{format_name.upper()}] {format_file}")
+                print(f"[READY] Your Shujaa Studio videos are ready for all platforms!")
+            else:
+                print("\n" + "=" * 60)
+                print(f"\n[COMPLETE] 🎉 Video generation successful!")
+                print(f"[OUTPUT] {final_video}")
+                print(f"[READY] Your Shujaa Studio video is ready!")
 
             return final_video
 
         except Exception as e:
             print(f"\n[ERROR] Video generation failed: {e}")
             raise
+
+    def add_professional_effects(self, video_file: Path, scene: Dict[str, str]) -> Path:
+        """
+        // [TASK]: Add professional text overlays and effects
+        // [GOAL]: Create InVideo-quality professional videos
+        // [SNIPPET]: refactorclean + kenyafirst
+        """
+        try:
+            # Initialize video effects if not done
+            if not hasattr(self, "video_effects"):
+                self.video_effects = VideoEffects()
+
+            # Import MoviePy for video processing
+            try:
+                from moviepy.editor import VideoFileClip
+            except ImportError:
+                print("[EFFECTS] MoviePy not available, skipping enhancements")
+                return video_file
+
+            print(f"[EFFECTS] ✨ Adding professional text overlays...")
+
+            # Load the basic video
+            video_clip = VideoFileClip(str(video_file))
+
+            # Add text overlay with scene text
+            scene_text = scene.get("text", "").strip()
+            if scene_text and len(scene_text) > 10:  # Only add if meaningful text
+                # Truncate long text for overlay
+                overlay_text = (
+                    scene_text[:60] + "..." if len(scene_text) > 60 else scene_text
+                )
+
+                # Use Kenya pride style for African content
+                style = (
+                    "kenya_pride"
+                    if any(
+                        word in scene_text.lower()
+                        for word in ["kenya", "africa", "kibera", "nairobi", "turkana"]
+                    )
+                    else "modern"
+                )
+
+                # Add text overlay
+                video_clip = self.video_effects.add_text_overlay(
+                    video_clip, overlay_text, position="bottom", style=style
+                )
+
+            # Save enhanced video
+            enhanced_file = video_file.with_name(f"enhanced_{video_file.name}")
+            video_clip.write_videofile(
+                str(enhanced_file), codec="libx264", audio_codec="aac"
+            )
+
+            # Cleanup
+            video_clip.close()
+
+            print(f"[SUCCESS] ✅ Professional effects added: {enhanced_file.name}")
+            return enhanced_file
+
+        except Exception as e:
+            print(f"[WARNING] Video enhancement failed: {e}")
+            print(f"[FALLBACK] Using original video")
+            return video_file
 
 
 def main():

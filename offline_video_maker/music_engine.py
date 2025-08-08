@@ -206,14 +206,14 @@ class MusicEngine:
                 audio_clip = concatenate_audioclips([audio_clip] * loops_needed)
 
             # Trim to exact duration
-            audio_clip = audio_clip.subclip(0, duration)
+            audio_clip = audio_clip.subclipped(0, duration)
 
             # Reduce volume for background music (20% of original)
-            audio_clip = audio_clip.volumex(0.2)
+            audio_clip = audio_clip.with_volume_scaled(0.2)
 
             # Save processed version
             output_file = self.music_dir / f"processed_{category}_{int(duration)}s.wav"
-            audio_clip.write_audiofile(str(output_file), verbose=False, logger=None)
+            audio_clip.write_audiofile(str(output_file))
             audio_clip.close()
 
             logger.info(f"[MUSIC] Prepared background music: {output_file.name}")
@@ -247,13 +247,13 @@ class MusicEngine:
             # Combine with voice prominent
             final_audio = CompositeAudioClip(
                 [
-                    voice_clip.volumex(1.0),  # Full volume voice
-                    music_clip.volumex(0.15),  # Quiet background music
+                    voice_clip.with_volume_scaled(1.0),  # Full volume voice
+                    music_clip.with_volume_scaled(0.15),  # Quiet background music
                 ]
             )
 
             # Save combined audio
-            final_audio.write_audiofile(str(output_file), verbose=False, logger=None)
+            final_audio.write_audiofile(str(output_file))
 
             # Cleanup
             voice_clip.close()
