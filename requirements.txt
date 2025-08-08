@@ -31,3 +31,7 @@ einops>=0.8.0
 funcy>=2.0
 boto3>=1.40.0
 encodec>=0.1.1
+
+# Voice & Music for InVideo Competition  
+edge-tts>=7.2.0
+scipy>=1.14.0

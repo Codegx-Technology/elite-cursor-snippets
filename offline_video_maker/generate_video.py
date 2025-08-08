@@ -21,7 +21,12 @@ import uuid
 from pathlib import Path
 from time import sleep
 import tempfile
+import asyncio
 from typing import List, Dict, Optional
+
+# Import our new voice and music engines
+from voice_engine import VoiceEngine
+from music_engine import MusicEngine
 
 # SDXL and AI imports for Combo Pack C
 try:
