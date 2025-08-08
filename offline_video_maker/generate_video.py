@@ -33,6 +33,7 @@ from video_effects import VideoEffects
 from analytics import log_event, timed, mark_stage
 from model_cache import initialize_cache, model_cache
 from parallel_processor import ParallelProcessor, SceneProcessor
+from social_optimizer import generate_all as generate_social_all
 
 # SDXL and AI imports for Combo Pack C
 try:
@@ -80,6 +81,10 @@ class OfflineVideoMaker:
         self.bark_model = None
         self.diffusion_pipeline = None
         self.whisper_model = None
+        
+        # Feature toggles (env-driven)
+        self.enable_parallel = os.environ.get("SHUJAA_PARALLEL", "false").lower() == "true"
+        self.enable_social = os.environ.get("SHUJAA_SOCIAL", "true").lower() != "false"
 
         # Initialize SDXL pipeline for Combo Pack C
         self.sdxl_pipeline = None
@@ -1092,23 +1097,59 @@ class OfflineVideoMaker:
             # Step 1: Generate story breakdown
             scenes = self.generate_story_breakdown(prompt)
 
-            # Step 2: Process each scene
+            # Step 2: Process each scene (optionally in parallel)
             scene_videos = []
-            for scene in scenes:
-                print(f"\n[SCENE] Processing {scene['id']}...")
+            if getattr(self, "parallel", None) and self.enable_parallel:
+                print("\n[PARALLEL] ⚡ Parallel scene processing enabled")
+                # Build processing functions using existing pipeline methods
+                def _voice(scene):
+                    return self.generate_voice(scene)
 
-                # Generate voice
-                audio_file = self.generate_voice(scene)
+                def _image(scene):
+                    return self.generate_image(scene)
 
-                # Generate image
-                image_file = self.generate_image(scene)
+                def _video(scene):
+                    return self.create_scene_video(scene, scene.get("voice_file"), scene.get("image_file"))
 
-                # Create scene video
-                video_file = self.create_scene_video(scene, audio_file, image_file)
+                processing_functions = {"voice": _voice, "image": _image, "video": _video}
 
-                # Add professional effects and text overlays
-                enhanced_video = self.add_professional_effects(video_file, scene)
-                scene_videos.append(enhanced_video)
+                # Ensure scenes have stable IDs
+                proc_scenes = []
+                for s in scenes:
+                    s = dict(s)
+                    s["scene_id"] = s.get("id") or s.get("scene_id") or str(uuid.uuid4())
+                    proc_scenes.append(s)
+
+                # Run parallel processor
+                results = asyncio.run(
+                    self.parallel.process_scenes_parallel(proc_scenes, processing_functions)
+                )
+
+                # Collect outputs
+                for res in results:
+                    if res.get("status") == "completed":
+                        # Add professional effects and overlays
+                        enhanced = self.add_professional_effects(Path(res["video_file"]),
+                                                                 next((sc for sc in proc_scenes if str(sc.get("scene_id")) == str(res.get("scene_id"))), {}))
+                        scene_videos.append(enhanced)
+                    else:
+                        print(f"[PARALLEL] Scene {res.get('scene_id')} failed, skipping")
+            else:
+                for scene in scenes:
+                    print(f"\n[SCENE] Processing {scene['id']}...")
+
+                    # Generate voice
+                    audio_file = self.generate_voice(scene)
+
+                    # Generate image
+                    image_file = self.generate_image(scene)
+
+                    # Create scene video
+                    video_file = self.create_scene_video(scene, audio_file, image_file)
+
+                    # Add professional effects and text overlays
+                    enhanced_video = self.add_professional_effects(video_file, scene)
+                    scene_videos.append(enhanced_video)
 
             # Step 3: Merge all scenes with transitions
             final_video = self.merge_scenes(scene_videos)
@@ -1129,6 +1170,17 @@ class OfflineVideoMaker:
                 print(f"\n[COMPLETE] 🎉 Video generation successful!")
                 print(f"[OUTPUT] {final_video}")
                 print(f"[READY] Your Shujaa Studio video is ready!")
+
+            # Step 5: Generate social metadata (optional)
+            if self.enable_social:
+                try:
+                    meta = generate_social_all(prompt)
+                    meta_path = self.output_dir / f"{Path(final_video).stem}_social.json"
+                    with open(meta_path, "w", encoding="utf-8") as f:
+                        json.dump(meta, f, ensure_ascii=False, indent=2)
+                    print(f"[SOCIAL] 🏷️ Social metadata saved: {meta_path.name}")
+                except Exception as e:
+                    print(f"[SOCIAL] Skipped ({e})")
 
             return final_video
 
