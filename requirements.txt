@@ -32,6 +32,18 @@ funcy>=2.0
 boto3>=1.40.0
 encodec>=0.1.1
 
-# Voice & Music for InVideo Competition  
+# Voice & Music for InVideo Competition
 edge-tts>=7.2.0
 scipy>=1.14.0
+
+# Combo Pack D - Subtitles, Music Mixing, TikTok Export, Avatar Support
+librosa>=0.10.0
+opencv-python>=4.8.0
+opencv-contrib-python>=4.8.0
+face-recognition>=1.3.0
+dlib>=19.24.0
+
+# Optional Avatar/Lip-Sync Dependencies (install manually if needed)
+# git+https://github.com/Rudrabha/Wav2Lip.git
+# git+https://github.com/OpenTalker/SadTalker.git
+# git+https://github.com/facebookresearch/audiocraft.git
