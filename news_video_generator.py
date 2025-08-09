@@ -77,7 +77,7 @@ async def generate_scenes_from_text(text):
     // [TASK]: Generate scenes from text using LLaMA 3 API via HybridGPUManager
     // [GOAL]: Create a list of strings, where each string is a scene
     """
-    API_URL = "https://api-inference.huggingface.co/models/meta-llama/Meta-LLaMA-3-8B-Instruct"
+    API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
     headers = {"Authorization": f"Bearer {HF_API_KEY}"}
     data = {"inputs": f"Split the following text into a list of short, descriptive scenes for a video. Each scene should be a single sentence. Text: {text}"}
 
