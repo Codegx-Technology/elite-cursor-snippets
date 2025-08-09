@@ -16,9 +16,14 @@ import moviepy.audio.fx.all as afx
 from dotenv import load_dotenv
 import asyncio
 import feedparser
+import pickle
+import sys
+
+# For Hugging Face Login
+from huggingface_hub import login as hf_login
 
 # For YouTube Upload
-from google_auth_oauthlib.flow import InstalledAppFlow
+from google_auth_oauthlib.flow import InstalledAppedFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -296,8 +301,9 @@ async def youtube_upload(video_file, title, description, tags):
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-    if os.path.exists('token.json'):
-        credentials = Credentials.from_authorized_user_file('token.json', SCOPES)
+    if os.path.exists('token.pickle'): # Changed from token.json to token.pickle
+        with open('token.pickle', 'rb') as token:
+            credentials = pickle.load(token)
     # If there are no (valid) credentials available, let the user log in.
     if not credentials or not credentials.valid:
         if credentials and credentials.expired and credentials.refresh_token:
@@ -306,8 +312,8 @@ async def youtube_upload(video_file, title, description, tags):
             flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
             credentials = flow.run_local_server(port=0)
         # Save the credentials for the next run
-        with open('token.json', 'w') as token:
-            token.write(credentials.to_json())
+        with open('token.pickle', 'wb') as token:
+            pickle.dump(credentials, token)
 
     youtube = build('youtube', 'v3', credentials=credentials)
 
@@ -332,7 +338,7 @@ async def youtube_upload(video_file, title, description, tags):
 
     print("Uploading video to YouTube...")
     response = request.execute()
-    print(f"Video uploaded: https://youtu.be/{response['id']}")
+    print(f"✅ Uploaded to YouTube: https://youtu.be/{response['id']}")
     return response['id']
 
 async def main():
@@ -349,6 +355,25 @@ async def main():
     if not HF_API_KEY:
         print("[ERROR] Hugging Face API key not found. Please set the HF_API_KEY environment variable.")
         return
+
+    # Hugging Face Login
+    try:
+        hf_login(token=HF_API_KEY)
+        print("✅ Hugging Face logged in.")
+    except Exception as e:
+        print(f"[ERROR] Hugging Face login failed: {e}")
+        print("Please check your HF_API_KEY.")
+        return
+
+    # Runtime Detection
+    runtime = "Local"
+    if "google.colab" in sys.modules:
+        runtime = "Colab"
+    elif "kaggle" in sys.modules:
+        runtime = "Kaggle"
+    elif "spaces" in os.getcwd():
+        runtime = "HuggingFace Space"
+    print(f" Running on: {runtime}")
 
     # The device is now managed by ShujaaGPUIntegration
     print(f"GPU Integration Status: {gpu_integration.get_integration_status()}")
