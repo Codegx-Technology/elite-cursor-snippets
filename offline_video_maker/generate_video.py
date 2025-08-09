@@ -15,6 +15,7 @@ Elite AI-Powered Video Generation with Kenya-First Storytelling
 
 import os
 import sys
+from logging_setup import get_logger; logger=get_logger(__name__)
 import subprocess
 import json
 import uuid
