@@ -1,0 +1,42 @@
+{
+  "test_results": {
+    "GPU Fallback System": {
+      "status": "\u2705 PASSED",
+      "duration": "0.18s",
+      "details": true
+    },
+    "News Video Generation": {
+      "status": "\u2705 PASSED",
+      "duration": "0.80s",
+      "details": true
+    },
+    "Enhanced App Integration": {
+      "status": "\u274c FAILED",
+      "duration": "0.00s",
+      "details": false
+    },
+    "Configuration Validation": {
+      "status": "\u2705 PASSED",
+      "duration": "0.05s",
+      "details": true
+    },
+    "Mobile Optimization": {
+      "status": "\u2705 PASSED",
+      "duration": "0.05s",
+      "details": true
+    },
+    "Performance Benchmarks": {
+      "status": "\u2705 PASSED",
+      "duration": "0.04s",
+      "details": true
+    }
+  },
+  "summary": {
+    "total_tests": 6,
+    "passed": 5,
+    "failed": 1,
+    "errors": 0,
+    "total_time": 1.18282151222229,
+    "timestamp": 1754758777.9860077
+  }
+}

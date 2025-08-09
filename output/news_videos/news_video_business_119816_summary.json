@@ -1,0 +1,41 @@
+{
+  "article": {
+    "title": "Kenya's economy shows strong growth with 5.2% increase this quarter. Technology and agriculture sectors lead the expansion.",
+    "category": "business",
+    "location": "Kenya",
+    "date": "2025-08-09"
+  },
+  "segments": [
+    {
+      "id": 1,
+      "title": "Introduction",
+      "duration": 3.0,
+      "visual_asset": "output\\news_videos\\segment_1_119815.png",
+      "audio_asset": "output\\news_videos\\audio_1_119816.wav"
+    },
+    {
+      "id": 2,
+      "title": "Content Part 1",
+      "duration": 4.5,
+      "visual_asset": "output\\news_videos\\segment_2_119816.png",
+      "audio_asset": "output\\news_videos\\audio_2_119816.wav"
+    },
+    {
+      "id": 3,
+      "title": "Content Part 2",
+      "duration": 4.5,
+      "visual_asset": "output\\news_videos\\segment_3_119816.png",
+      "audio_asset": "output\\news_videos\\audio_3_119816.wav"
+    },
+    {
+      "id": 4,
+      "title": "Conclusion",
+      "duration": 3.0,
+      "visual_asset": "output\\news_videos\\segment_4_119816.png",
+      "audio_asset": "output\\news_videos\\audio_4_119816.wav"
+    }
+  ],
+  "total_duration": 15.0,
+  "generated_at": "2025-08-09T19:59:37.756739",
+  "gpu_acceleration": true
+}

@@ -1,0 +1,136 @@
+{
+  "script": {
+    "title": "TECH ENTREPRENEUR'S DREAM",
+    "genre": "romance",
+    "duration_minutes": 5,
+    "acts": [
+      {
+        "act_number": 1,
+        "title": "Setup",
+        "duration_minutes": 1.25,
+        "content": "TECH ENTREPRENEUR'S DREAM\n        \n        In the heart of Nairobi's bustling tech scene, Zawadi, a brilliant young programmer, \n        dreams of creating an app that connects rural farmers with urban markets. \"Ubuntu means 'I am because we are',\" her grandmother tells her",
+        "purpose": "Introduce characters and world"
+      },
+      {
+        "act_number": 2,
+        "title": "Confrontation",
+        "duration_minutes": 2.5,
+        "content": "\"Your success must lift the entire community. \"\n        \n        Despite facing funding challenges and skeptical investors, Zawadi perseveres. She codes late into the night, fueled by chapati and determination. When she finally launches \"Mazao Connect,\" it revolutionizes agriculture across Kenya",
+        "purpose": "Develop conflict and challenges"
+      },
+      {
+        "act_number": 3,
+        "title": "Resolution",
+        "duration_minutes": 1.25,
+        "content": "Her app becomes the bridge between tradition and technology. Zawadi's story proves that African innovation can change the world",
+        "purpose": "Resolve conflict and conclude story"
+      }
+    ],
+    "characters": [
+      {
+        "name": "Protagonist",
+        "role": "main",
+        "description": "Character in Kenyan story"
+      },
+      {
+        "name": "Supporting Character",
+        "role": "main",
+        "description": "Character in Kenyan story"
+      }
+    ],
+    "settings": [
+      {
+        "name": "Nairobi",
+        "type": "interior",
+        "description": "Nairobi setting with African cultural elements"
+      },
+      {
+        "name": "Market",
+        "type": "exterior",
+        "description": "Market setting with African cultural elements"
+      }
+    ],
+    "cultural_context": "Kenyan",
+    "language": "English",
+    "target_audience": "General"
+  },
+  "scenes": [
+    {
+      "scene_id": 1,
+      "title": "Act 1 - Scene 1",
+      "location": "Nairobi",
+      "duration": 37,
+      "visual_asset": "output\\movies\\scene_1_122863.png",
+      "audio_asset": "output\\movies\\audio_scene_1_122864.wav",
+      "characters": [
+        "Protagonist"
+      ],
+      "emotion": "tender"
+    },
+    {
+      "scene_id": 2,
+      "title": "Act 1 - Scene 2",
+      "location": "Market",
+      "duration": 37,
+      "visual_asset": "output\\movies\\scene_2_122863.png",
+      "audio_asset": "output\\movies\\audio_scene_2_122864.wav",
+      "characters": [
+        "Protagonist"
+      ],
+      "emotion": "tender"
+    },
+    {
+      "scene_id": 3,
+      "title": "Act 2 - Scene 1",
+      "location": "Market",
+      "duration": 75,
+      "visual_asset": "output\\movies\\scene_3_122863.png",
+      "audio_asset": "output\\movies\\audio_scene_3_122864.wav",
+      "characters": [
+        "Protagonist"
+      ],
+      "emotion": "tender"
+    },
+    {
+      "scene_id": 4,
+      "title": "Act 2 - Scene 2",
+      "location": "Market",
+      "duration": 75,
+      "visual_asset": "output\\movies\\scene_4_122864.png",
+      "audio_asset": "output\\movies\\audio_scene_4_122864.wav",
+      "characters": [
+        "Protagonist"
+      ],
+      "emotion": "tender"
+    },
+    {
+      "scene_id": 5,
+      "title": "Act 3 - Scene 1",
+      "location": "Market",
+      "duration": 37,
+      "visual_asset": "output\\movies\\scene_5_122864.png",
+      "audio_asset": "output\\movies\\audio_scene_5_122864.wav",
+      "characters": [
+        "Protagonist"
+      ],
+      "emotion": "tender"
+    },
+    {
+      "scene_id": 6,
+      "title": "Act 3 - Scene 2",
+      "location": "Market",
+      "duration": 37,
+      "visual_asset": "output\\movies\\scene_6_122864.png",
+      "audio_asset": "output\\movies\\audio_scene_6_122864.wav",
+      "characters": [
+        "Protagonist"
+      ],
+      "emotion": "tender"
+    }
+  ],
+  "total_scenes": 6,
+  "total_duration_minutes": 5,
+  "generated_at": "2025-08-09T20:50:25.650455",
+  "gpu_acceleration": true,
+  "cultural_context": "Kenyan"
+}

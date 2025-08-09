@@ -9,10 +9,26 @@ musicgen_script: ./music_engine.py
 whisper_cmd: whisper
 ffmpeg: ffmpeg
 
-# Performance settings
-use_cuda: false
+# Performance settings - Enhanced with GPU Fallback
+use_cuda: true  # Now intelligently managed by hybrid GPU system
+enable_gpu_fallback: true  # Enable cloud GPU fallbacks
+enable_news_mode: true  # Enable news-to-video functionality
 default_scenes: 3
 vertical: true
+
+# GPU Fallback Configuration
+gpu_fallback:
+  enable_cloud: false  # Set to true when cloud providers configured
+  local_priority: true  # Prefer local GPU when available
+  cost_limit_per_hour: 5.0  # Max hourly spend on cloud GPU
+  fallback_timeout: 30  # Seconds before falling back to CPU
+
+# News Video Configuration  
+news_video:
+  default_duration: 30  # Default video length in seconds
+  african_context: true  # Enhance with African cultural context
+  supported_styles: ["breaking", "feature", "analysis", "sports", "business"]
+  auto_categorize: true  # Automatically detect news categories
 
 # Video settings
 video_fps: 24
