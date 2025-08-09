@@ -58,7 +58,8 @@ google-auth-oauthlib>=1.0.0
 google-auth-httplib2>=0.1.0
 pyyaml>=6.0.1
 dotmap>=1.9.1
-redis>=4.5.0 # For Redis counters
+redis>=4.5.0
+boto3>=1.28.0 # For S3 interaction
 python-dotenv>=1.0.0  # Environment management
 
 # Performance & Deployment (Optimization Phase)
