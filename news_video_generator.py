@@ -7,6 +7,7 @@
 
 import argparse
 import os
+from logging_setup import get_logger; logger=get_logger(__name__)
 import random
 import requests
 from bs4 import BeautifulSoup
