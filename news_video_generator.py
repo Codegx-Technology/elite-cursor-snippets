@@ -17,6 +17,13 @@ from dotenv import load_dotenv
 import asyncio
 import feedparser
 
+# For YouTube Upload
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+
 # Import the new GPU management classes
 from gpu_fallback import ShujaaGPUIntegration, TaskProfile, ProcessingMode, HybridGPUManager
 
@@ -277,6 +284,57 @@ async def compile_video(image_files, audio_file, music_file, captions, output_fi
         print(f"[ERROR] Failed to compile video: {e}")
         return None
 
+# YouTube Upload Automation
+SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+
+async def youtube_upload(video_file, title, description, tags):
+    """
+    // [TASK]: Upload video to YouTube
+    // [GOAL]: Automate YouTube video publishing
+    """
+    credentials = None
+    # The file token.json stores the user's access and refresh tokens, and is
+    # created automatically when the authorization flow completes for the first
+    # time.
+    if os.path.exists('token.json'):
+        credentials = Credentials.from_authorized_user_file('token.json', SCOPES)
+    # If there are no (valid) credentials available, let the user log in.
+    if not credentials or not credentials.valid:
+        if credentials and credentials.expired and credentials.refresh_token:
+            credentials.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
+            credentials = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+        with open('token.json', 'w') as token:
+            token.write(credentials.to_json())
+
+    youtube = build('youtube', 'v3', credentials=credentials)
+
+    body = {
+        'snippet': {
+            'title': title,
+            'description': description,
+            'tags': tags
+        },
+        'status': {
+            'privacyStatus': 'public'
+        }
+    }
+
+    media_file = MediaFileUpload(video_file)
+
+    request = youtube.videos().insert(
+        part='snippet,status',
+        body=body,
+        media_body=media_file
+    )
+
+    print("Uploading video to YouTube...")
+    response = request.execute()
+    print(f"Video uploaded: https://youtu.be/{response['id']}")
+    return response['id']
+
 async def main():
     """
     // [TASK]: Main function to parse arguments and run the pipeline
@@ -285,6 +343,7 @@ async def main():
     parser = argparse.ArgumentParser(description="News-to-Video Generator")
     parser.add_argument("--news", type=str, help="URL of the news article")
     parser.add_argument("--script", type=str, help="Path to the script file")
+    parser.add_argument("--upload-youtube", action="store_true", help="Upload the generated video to YouTube")
     args = parser.parse_args()
 
     if not HF_API_KEY:
@@ -335,6 +394,14 @@ async def main():
         await compile_video(image_files, voiceover_file, music_file, captions, output_file)
 
         print(f"🎉 Video generation complete! Output: {output_file}")
+
+        if args.upload_youtube:
+            print("Attempting to upload to YouTube...")
+            # For demonstration, using placeholder title, description, tags
+            video_title = news_item["title"] if args.news and news_item else "AI Generated News Video"
+            video_description = f"AI-generated news report based on: {text_content[:200]}..."
+            video_tags = ["AI News", "Shujaa Studio", "Automated Video"]
+            await youtube_upload(output_file, video_title, video_description, video_tags)
 
 if __name__ == "__main__":
     asyncio.run(main())
