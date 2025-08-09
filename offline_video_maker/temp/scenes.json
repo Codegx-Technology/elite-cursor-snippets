@@ -1,0 +1,18 @@
+[
+  {
+    "id": "scene1",
+    "text": "In the heart of Kenya, our story begins: Grace from Kibera studies computer science and starts a coding school in her community...",
+    "description": "Beautiful African landscape with golden sunrise, setting the stage for: Grace from Kibera studies computer science and sta...",
+    "duration": 6.6,
+    "scene_number": 1,
+    "total_scenes": 2
+  },
+  {
+    "id": "scene2",
+    "text": "Through determination and Ubuntu spirit, our story reaches its beautiful conclusion: Grace from Kibera studies computer science and starts a coding school in her community",
+    "description": "Triumphant African scene with celebration, community spirit, representing the achievement of: cience and starts a coding school in her community",
+    "duration": 7.5,
+    "scene_number": 2,
+    "total_scenes": 2
+  }
+]

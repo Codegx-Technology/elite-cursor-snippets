@@ -489,7 +489,7 @@ def launch_elite_ui():
                     with gr.Row():
                         video_style = gr.Dropdown(
                             label="🎨 Video Style",
-                            choices=["Real AI", "Splashy Effects", "Basic"],
+                            choices=["Real AI", "Splashy Effects", "Basic", "Peter Test (3sec)"],
                             value="Real AI"
                         )
                         

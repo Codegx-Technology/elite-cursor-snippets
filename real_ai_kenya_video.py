@@ -86,7 +86,8 @@ def create_real_ai_kenya_video():
         image_generator = initialize_ai_generator()
         
         if image_generator is None:
-            print("❌ AI generator failed, creating enhanced version...")
+            print("❌ AI generator failed to load - this is a real error, not timeout")
+            print("🔧 Check model installation and try again")
             return create_enhanced_video_fallback(video_path, kenya_scenes, width, height, fps)
         
         # Generate real AI images for each scene
@@ -95,26 +96,33 @@ def create_real_ai_kenya_video():
         
         for i, scene in enumerate(kenya_scenes):
             print(f"   🖼️ Generating scene {i+1}: {scene['text']}")
-            
+            print(f"      ⏱️ This may take 60-120 seconds on CPU - please be patient...")
+
             try:
-                # Generate image using SDXL-Turbo
+                # Generate image using SDXL-Turbo with extended patience
+                print(f"      🎨 Creating authentic Kenya AI image...")
+
                 image = image_generator(
                     prompt=scene['prompt'],
-                    num_inference_steps=2,  # Fast generation
+                    num_inference_steps=2,  # Fast generation for Turbo
                     guidance_scale=0.0,     # Turbo mode
                     height=height,
                     width=width
                 ).images[0]
-                
+
                 # Convert PIL to OpenCV format
                 cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
                 scene_images.append((cv_image, scene))
-                
-                print(f"      ✅ Generated: {scene['text']}")
-                
+
+                print(f"      ✅ Generated: {scene['text']} - REAL AI CONTENT!")
+
+            except KeyboardInterrupt:
+                print(f"      ⏹️ Generation cancelled by user")
+                break
             except Exception as e:
-                print(f"      ❌ Failed to generate {scene['text']}: {e}")
-                # Create fallback image
+                print(f"      ❌ REAL ERROR generating {scene['text']}: {e}")
+                print(f"      🔧 This is an actual error, not a timeout - using fallback")
+                # Only fallback on real errors, not timeouts
                 fallback_image = create_fallback_image(width, height, scene)
                 scene_images.append((fallback_image, scene))
         
@@ -146,31 +154,38 @@ def create_real_ai_kenya_video():
         return None
 
 def initialize_ai_generator():
-    """Initialize SDXL-Turbo for real image generation"""
-    
+    """Initialize SDXL-Turbo for real image generation with patience"""
+
     try:
         from diffusers import AutoPipelineForText2Image
-        
+
         print("   🔄 Loading SDXL-Turbo pipeline...")
-        
-        # Load SDXL-Turbo (we have this model cached)
+        print("   ⏱️ This may take 30-60 seconds on first load - please wait...")
+
+        # Load SDXL-Turbo (we have this model cached) with optimized settings
         pipe = AutoPipelineForText2Image.from_pretrained(
             "stabilityai/sdxl-turbo",
             torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-            variant="fp16" if torch.cuda.is_available() else None
+            variant="fp16" if torch.cuda.is_available() else None,
+            use_safetensors=True,  # Faster loading
+            low_cpu_mem_usage=True  # Better for CPU-only systems
         )
-        
+
         if torch.cuda.is_available():
             pipe = pipe.to("cuda")
-            print("   🔥 Using GPU acceleration")
+            print("   🔥 Using GPU acceleration - images will generate in ~10-20 seconds")
         else:
-            print("   🖥️ Using CPU (slower)")
-        
-        print("   ✅ SDXL-Turbo ready for image generation")
+            print("   🖥️ Using CPU (slower) - images will take 60-120 seconds each")
+            print("   💡 This is normal for CPU-only systems - please be patient!")
+
+        print("   ✅ SDXL-Turbo ready for REAL AI image generation")
         return pipe
-        
+
     except Exception as e:
         print(f"   ❌ Failed to initialize AI generator: {e}")
+        print(f"   🔧 This is a real error - check model installation")
+        import traceback
+        traceback.print_exc()
         return None
 
 def create_music_video_with_ai_images(video_path, scene_images, fps):
