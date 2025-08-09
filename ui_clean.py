@@ -124,7 +124,48 @@ class ShujaaStudioEliteUI:
             yield None, progress_msg, "🎬 Initializing AI models..."
             
             # Choose generation method based on style
-            if video_style == "Real AI" and REAL_AI_AVAILABLE:
+            if video_style in ["African Cartoon", "Anime Style", "Kenyan Animation"]:
+                progress_msg = f"🎨 Using {video_style} pipeline for animated content..."
+                yield None, progress_msg, "🎬 Loading cartoon models..."
+
+                # Import cartoon pipeline
+                from cartoon_anime_pipeline import create_african_cartoon_video
+
+                # Map UI styles to pipeline styles
+                style_mapping = {
+                    "African Cartoon": "african_cartoon",
+                    "Anime Style": "anime",
+                    "Kenyan Animation": "kenyan_animation"
+                }
+
+                # Map export format to mobile preset
+                mobile_preset = None
+                if export_format == "TikTok Vertical":
+                    mobile_preset = "tiktok"
+                elif export_format == "WhatsApp":
+                    mobile_preset = "whatsapp"
+                elif export_format == "YouTube Shorts":
+                    mobile_preset = "youtube_shorts"
+                elif export_format == "Instagram Reel":
+                    mobile_preset = "instagram_reel"
+
+                yield None, "🎨 Generating cartoon scenes...", "🎬 Creating African animation..."
+
+                # Generate cartoon video
+                result = create_african_cartoon_video(
+                    script=prompt,
+                    style=style_mapping[video_style],
+                    voice="sheng_male",  # Default voice
+                    mobile_preset=mobile_preset
+                )
+
+                if result["success"]:
+                    video_path = result.get("mobile_path", result["video_path"])
+                    yield video_path, f"🎉 {video_style} video complete!", f"✅ Generated {result['scenes']} scenes with {result['voice']} voice"
+                else:
+                    yield None, "❌ Cartoon generation failed", "🔧 Please try again or use a different style"
+
+            elif video_style == "Real AI" and REAL_AI_AVAILABLE:
                 progress_msg = "🤖 Using SDXL-Turbo for authentic Kenya visuals..."
                 yield None, progress_msg, "🎨 Generating real Kenya images..."
                 
@@ -489,16 +530,31 @@ def launch_elite_ui():
                     with gr.Row():
                         video_style = gr.Dropdown(
                             label="🎨 Video Style",
-                            choices=["Real AI", "Splashy Effects", "Basic", "Peter Test (3sec)"],
+                            choices=["Real AI", "Splashy Effects", "Basic", "Peter Test (3sec)", "African Cartoon", "Anime Style", "Kenyan Animation"],
                             value="Real AI"
                         )
                         
                         export_format = gr.Dropdown(
                             label="📱 Export Format",
-                            choices=["MP4", "MOV", "WebM"],
+                            choices=["MP4", "MOV", "WebM", "TikTok Vertical", "WhatsApp", "YouTube Shorts", "Instagram Reel"],
                             value="MP4"
                         )
-                    
+
+                    # Cartoon/Anime specific options
+                    with gr.Row(visible=False) as cartoon_options:
+                        voice_style = gr.Dropdown(
+                            label="🎤 Voice Style (Cartoon)",
+                            choices=["Sheng Male", "Sheng Female", "Kiswahili", "English News"],
+                            value="Sheng Male"
+                        )
+                        animation_speed = gr.Slider(
+                            label="🎬 Animation Speed",
+                            minimum=0.5,
+                            maximum=2.0,
+                            value=1.0,
+                            step=0.1
+                        )
+
                     with gr.Row():
                         enable_subtitles = gr.Checkbox(label="📝 Enable Subtitles", value=True)
                         enable_music = gr.Checkbox(label="🎵 Background Music", value=True)
