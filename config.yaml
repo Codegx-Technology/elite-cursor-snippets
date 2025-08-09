@@ -1,66 +1,47 @@
-# Shujaa Studio Configuration
-# Production-ready settings for local deployment
+# Core Configuration for Shujaa Studio
+app:
+  name: "Shujaa Studio"
+  version: "0.1.0"
+  environment: "development" # development, staging, production
 
-# Core paths
-work_base: ./outputs
-bark_cli: ./voice_engine.py
-sdxl_path: ./models/sdxl
-musicgen_script: ./music_engine.py
-whisper_cmd: whisper
-ffmpeg: ffmpeg
+# API Keys and Credentials (sensitive, loaded from .env or secrets management)
+api_keys:
+  huggingface: "${HF_API_KEY}" # Loaded from environment variable
+  google_news: "" # Optional: NewsAPI.org key
+  youtube_client_secret_file: "client_secret.json" # Path to Google client secret JSON
 
-# Performance settings - Enhanced with GPU Fallback
-use_cuda: true  # Now intelligently managed by hybrid GPU system
-enable_gpu_fallback: true  # Enable cloud GPU fallbacks
-enable_news_mode: true  # Enable news-to-video functionality
-default_scenes: 3
-vertical: true
-
-# GPU Fallback Configuration
-gpu_fallback:
-  enable_cloud: false  # Set to true when cloud providers configured
-  local_priority: true  # Prefer local GPU when available
-  cost_limit_per_hour: 5.0  # Max hourly spend on cloud GPU
-  fallback_timeout: 30  # Seconds before falling back to CPU
-
-# News Video Configuration  
-news_video:
-  default_duration: 30  # Default video length in seconds
-  african_context: true  # Enhance with African cultural context
-  supported_styles: ["breaking", "feature", "analysis", "sports", "business"]
-  auto_categorize: true  # Automatically detect news categories
-
-# Video settings
-video_fps: 24
-video_width: 1080
-video_height: 1920
-
-# API settings
-api_host: 0.0.0.0
-api_port: 8000
-ui_port: 7860
-
-# Model paths (update these to your actual paths)
+# Model Configuration
 models:
-  sdxl: ./models/sdxl
-  bark: ./bark
-  whisper: ./models/whisper
+  text_generation:
+    hf_api_id: "mistralai/Mistral-7B-Instruct-v0.2" # Default for scene generation
+    local_fallback_path: "" # Path to local LLM model (e.g., LLaMA.cpp compatible)
+  image_generation:
+    hf_api_id: "stabilityai/stable-diffusion-xl-base-1.0" # Example HF model
+    local_fallback_path: "" # Path to local Stable Diffusion model
+  voice_synthesis:
+    hf_api_id: "suno/bark"
+    local_fallback_path: "" # Path to local Bark/CoquiTTS model
+  speech_to_text:
+    hf_api_id: "openai/whisper-large-v2"
+    local_fallback_path: "" # Path to local Whisper model
 
-# Output settings
-output:
-  format: mp4
-  quality: high
-  enable_subtitles: true
-  enable_music: true
+# GPU Management (HybridGPUManager settings)
+gpu_manager:
+  enable_cloud_gpu: false # Set to true to enable RunPod/Vast.ai integration
+  cloud_providers_config: "gpu_cloud_config.json" # Configuration for cloud GPU providers
 
-# Platform export settings
-export:
-  tiktok:
-    resolution: [1080, 1920]
-    max_size_mb: 287
-  whatsapp:
-    resolution: [720, 1280]
-    max_size_mb: 16
-  instagram:
-    resolution: [1080, 1920]
-    max_size_mb: 100
+# Video Generation Settings
+video:
+  default_fps: 24
+  default_image_duration: 3 # seconds per image
+  output_resolution: [1920, 1080] # [width, height]
+  temp_dir: "temp"
+  output_dir: "output"
+  music_dir: "music"
+
+# Logging Configuration
+logging:
+  level: "INFO" # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  log_file: "logs/shujaa.log"
+  max_bytes: 10485760 # 10 MB
+  backup_count: 5
