@@ -1,0 +1,63 @@
+[
+  {
+    "name": "runpod",
+    "gpu_types": [
+      "RTX3090",
+      "RTX4090",
+      "A100"
+    ],
+    "cost_per_hour": {
+      "RTX3090": 0.4,
+      "RTX4090": 0.6,
+      "A100": 1.2
+    },
+    "memory": {
+      "RTX3090": 24,
+      "RTX4090": 24,
+      "A100": 40
+    },
+    "api_endpoint": null,
+    "available": false
+  },
+  {
+    "name": "vast_ai",
+    "gpu_types": [
+      "RTX3080",
+      "RTX3090",
+      "RTX4090"
+    ],
+    "cost_per_hour": {
+      "RTX3080": 0.3,
+      "RTX3090": 0.4,
+      "RTX4090": 0.5
+    },
+    "memory": {
+      "RTX3080": 10,
+      "RTX3090": 24,
+      "RTX4090": 24
+    },
+    "api_endpoint": null,
+    "available": false
+  },
+  {
+    "name": "google_colab",
+    "gpu_types": [
+      "T4",
+      "V100",
+      "A100"
+    ],
+    "cost_per_hour": {
+      "T4": 0.0,
+      "V100": 0.0,
+      "A100": 0.0
+    },
+    "memory": {
+      "T4": 16,
+      "V100": 16,
+      "A100": 40
+    },
+    "api_endpoint": null,
+    "available": true,
+    "limitations": "Free tier has usage limits"
+  }
+]
