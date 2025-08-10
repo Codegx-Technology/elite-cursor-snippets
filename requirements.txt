@@ -67,7 +67,8 @@ uvicorn[standard]>=0.23.2
 pyjwt>=2.8.0 # For JWT handling
 cryptography>=41.0.3
 SQLAlchemy>=2.0.0 # For database ORM
-passlib[bcrypt]>=1.7.4 # For password hashing
+passlib[bcrypt]>=1.7.4
+fastapi-limiter>=0.1.5 # For API rate limiting
 python-dotenv>=1.0.0  # Environment management
 
 # Performance & Deployment (Optimization Phase)

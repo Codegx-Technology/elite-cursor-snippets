@@ -18,6 +18,10 @@ from auth.user_models import Base, User, Tenant # Import SQLAlchemy models
 from auth.auth_service import create_user, authenticate_user, create_access_token # Import auth service functions
 from sqlalchemy.orm import Session # Import Session for type hinting
 
+from fastapi_limiter import FastAPILimiter
+from fastapi_limiter.depends import RateLimiter
+import redis.asyncio as redis # For FastAPI-Limiter
+
 logger = get_logger(__name__)
 config = get_config()
 
@@ -132,9 +136,17 @@ async def add_tenant_context(request: Request, call_next):
     response = await call_next(request)
     return response
 
+# --- FastAPI-Limiter Initialization ---
+@app.on_event("startup")
+async def startup():
+    redis_connection = redis.from_url(config.redis.url, encoding="utf-8", decode_responses=True)
+    await FastAPILimiter.init(redis_connection)
+    logger.info("FastAPI-Limiter initialized.")
+
 # --- API Endpoints ---
 
 @app.get("/health")
+@RateLimiter(times=5, seconds=10) # Example: 5 requests per 10 seconds
 async def health_check():
     """
     // [TASK]: Health check endpoint
@@ -144,6 +156,7 @@ async def health_check():
     return {"status": "ok", "message": "Shujaa Studio API is running!"}
 
 @app.post("/register", response_model=UserCreate)
+@RateLimiter(times=2, seconds=60) # Example: 2 registrations per minute
 async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db)):
     """
     // [TASK]: User registration endpoint
@@ -155,6 +168,7 @@ async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db)
     return db_user
 
 @app.post("/token", response_model=Token)
+@RateLimiter(times=5, seconds=30) # Example: 5 login attempts per 30 seconds
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """
     // [TASK]: User login endpoint to get JWT token
@@ -175,6 +189,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/generate_video")
+@RateLimiter(times=1, seconds=5) # Example: 1 video generation request per 5 seconds
 async def generate_video_endpoint(request_data: GenerateVideoRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
     """
     // [TASK]: Video generation endpoint
@@ -226,6 +241,7 @@ async def generate_video_endpoint(request_data: GenerateVideoRequest, current_us
     return {"status": "success", "video_id": "simulated_video_123", "message": f"Video generation request routed to {chosen_pipeline} (simulated)."}
 
 @app.post("/generate_landing_page")
+@RateLimiter(times=2, seconds=10) # Example: 2 landing page generations per 10 seconds
 async def generate_landing_page_endpoint(request_data: GenerateLandingPageRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
     """
     // [TASK]: Landing page generation endpoint
@@ -254,6 +270,7 @@ async def generate_landing_page_endpoint(request_data: GenerateLandingPageReques
         raise HTTPException(status_code=500, detail=f"Landing page generation failed: {result.get('message', 'Unknown error')}")
 
 @app.post("/scan_alert")
+@RateLimiter(times=10, seconds=60) # Example: 10 scan alerts per minute
 async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
     """
     // [TASK]: Scan alert endpoint
@@ -287,6 +304,7 @@ async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict
         raise HTTPException(status_code=500, detail=f"Scan alert failed: {result.get('message', 'Unknown error')}")
 
 @app.post("/crm_push_contact")
+@RateLimiter(times=5, seconds=60) # Example: 5 CRM pushes per minute
 async def crm_push_contact_endpoint(request_data: CRMPushContactRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
     """
     // [TASK]: CRM push contact endpoint
