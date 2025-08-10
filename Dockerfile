@@ -1,23 +1,23 @@
-# Use an official Python runtime as a parent image
-FROM python:3.10-slim
+# ============================================
+# GPU-Optimized Image Processor
+# With SAM + LaMa + Diffusers
+# ============================================
+FROM nvidia/cuda:12.1.105-cudnn8-runtime-ubuntu22.04
 
-# Set the working directory in the container
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    TORCH_CUDA_ARCH_LIST="8.6"  # Adjust for your GPU arch (8.6 = RTX 30xx)
+
+# System deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.10 python3.10-dev python3-pip git curl ffmpeg libsm6 libxext6 \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Copy the requirements file into the container at /app
-COPY requirements.txt .
-
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application's code into the container at /app
-COPY . .
-
-# Make port 8000 available to the world outside this container
-EXPOSE 8000
-
-# Define environment variable
-ENV NAME World
-
-# Run api_server.py when the container launches
-CMD ["uvicorn", "api_server:app", "--host", "0.0.0.0", "--port", "8000"]
+# Install torch with CUDA support
+RUN pip install --upgrade pip setuptools wheel \
+    && pip install --extra-index-url https://download.pytorch.org/whl/cu121 \
+        tor

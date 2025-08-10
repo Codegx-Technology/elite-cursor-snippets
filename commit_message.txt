@@ -1,1 +1,1 @@
-feat: Add watermark removal functionality
+feat: Add GPU-optimized Dockerfile for image processor
