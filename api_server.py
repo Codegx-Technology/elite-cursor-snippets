@@ -9,6 +9,7 @@ from config_loader import get_config
 from auth.jwt_utils import verify_jwt # Import verify_jwt
 from pipeline_orchestrator import PipelineOrchestrator # Import PipelineOrchestrator
 from billing_middleware import enforce_limits, BillingException # Import billing middleware
+from landing_page_service import LandingPageService # Import LandingPageService
 
 logger = get_logger(__name__)
 config = get_config()
@@ -22,6 +23,9 @@ app = FastAPI(
 # Initialize PipelineOrchestrator
 orchestrator = PipelineOrchestrator()
 
+# Initialize LandingPageService
+landing_page_service = LandingPageService()
+
 # OAuth2PasswordBearer for JWT token extraction
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token") # tokenUrl is a placeholder
 
@@ -30,6 +34,10 @@ class GenerateVideoRequest(BaseModel):
     news_url: Optional[str] = None
     script_file: Optional[str] = None
     upload_youtube: bool = False
+
+class GenerateLandingPageRequest(BaseModel):
+    qr_code_id: str
+    brand_metadata: dict
 
 # --- Dependency Functions for Authentication and Authorization ---
 
@@ -143,6 +151,34 @@ async def generate_video_endpoint(request_data: GenerateVideoRequest, current_us
 
     logger.info("Video generation request received and processing (simulated).")
     return {"status": "success", "video_id": "simulated_video_123", "message": f"Video generation request routed to {chosen_pipeline} (simulated)."}
+
+@app.post("/generate_landing_page")
+async def generate_landing_page_endpoint(request_data: GenerateLandingPageRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
+    """
+    // [TASK]: Landing page generation endpoint
+    // [GOAL]: Expose landing page generation service via API
+    """
+    logger.info(f"Landing page generation request received from user {current_user.get('user_id')} (Tenant: {current_tenant}): {request_data.dict()}")
+
+    # --- F.2: Integrate Billing Middleware (for landing page generation) ---
+    try:
+        enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="landing_page_generation")
+        logger.info(f"Billing limits checked for user {current_user.get('user_id')}. Proceeding.")
+    except BillingException as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"Unexpected error during billing check for landing page: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during billing check.")
+    # --- End F.2 ---
+
+    # Call the landing page service
+    result = await landing_page_service.generate_landing_page(request_data.qr_code_id, request_data.brand_metadata)
+
+    if result.get("status") == "success":
+        logger.info(f"Landing page generated successfully: {result.get('s3_url')}")
+        return {"status": "success", "s3_url": result.get('s3_url'), "message": "Landing page generation initiated."}
+    else:
+        raise HTTPException(status_code=500, detail=f"Landing page generation failed: {result.get('message', 'Unknown error')}")
 
 # Example of a protected endpoint
 @app.get("/protected_data")
