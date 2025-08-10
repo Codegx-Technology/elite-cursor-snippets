@@ -8,6 +8,7 @@ from logging_setup import get_logger
 from config_loader import get_config
 from auth.jwt_utils import verify_jwt # Import verify_jwt
 from pipeline_orchestrator import PipelineOrchestrator # Import PipelineOrchestrator
+from billing_middleware import enforce_limits, BillingException # Import billing middleware
 
 logger = get_logger(__name__)
 config = get_config()
@@ -100,6 +101,19 @@ async def generate_video_endpoint(request_data: GenerateVideoRequest, current_us
     """
     logger.info(f"Video generation request received from user {current_user.get('user_id')} (Tenant: {current_tenant}): {request_data.dict()}")
     
+    # --- F.2: Integrate Billing Middleware ---
+    # Use a placeholder user_id for now, as full user management is not yet implemented.
+    # The feature name can be dynamic based on the request, but for now, assume 'video_generation'.
+    try:
+        enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="video_generation")
+        logger.info(f"Billing limits checked for user {current_user.get('user_id')}. Proceeding.")
+    except BillingException as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"Unexpected error during billing check: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during billing check.")
+    # --- End F.2 ---
+
     if not request_data.prompt and not request_data.news_url and not request_data.script_file:
         raise HTTPException(status_code=400, detail="Either 'prompt', 'news_url', or 'script_file' must be provided.")
 
