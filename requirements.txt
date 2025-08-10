@@ -24,6 +24,10 @@ Pillow>=9.5.0
 numpy>=1.24.0
 scipy>=1.16.0
 
+# Watermark Removal Dependencies
+segment_anything
+lama-cleaner
+
 # Model Management & Performance (Lazy Loading Support)
 accelerate>=0.20.0
 safetensors>=0.3.0

@@ -160,8 +160,10 @@ async def generate_text(prompt, model_id=None, **kwargs):
     
     log_and_raise(ValueError("No text generation model available (HF or local)."), "Text generation failed")
 
+from services.watermark_remover import remove_watermark
+
 @retry_on_exception()
-async def generate_image(prompt, model_id=None, **kwargs):
+async def generate_image(prompt, model_id=None, remove_watermark_flag=False, watermark_hint="", **kwargs):
     """
     // [TASK]: Generate image using Hugging Face Inference API or local fallback
     // [GOAL]: Provide robust image generation with real local inference
@@ -179,11 +181,14 @@ async def generate_image(prompt, model_id=None, **kwargs):
             res = await loop.run_in_executor(None, do_hf_call)
             res.raise_for_status()
             logger.info(f"✅ Successfully generated image with HF model: {hf_model_id}")
-            return res.content
+            img_bytes = res.content # Store in a variable for watermark removal
         except Exception as e:
             logger.warning(f"HF API call for image generation failed: {e}. Trying local fallback.")
+            img_bytes = None # Ensure img_bytes is None on failure
+    else:
+        img_bytes = None # Initialize img_bytes for local fallback path
 
-    if await _load_local_image_model():
+    if img_bytes is None and await _load_local_image_model(): # Check img_bytes before trying local
         logger.info("Generating image using local image generation pipeline.")
         try:
             def do_local_call():
@@ -194,12 +199,23 @@ async def generate_image(prompt, model_id=None, **kwargs):
             img_byte_arr = io.BytesIO()
             image.save(img_byte_arr, format='PNG')
             logger.info("✅ Successfully generated image with local pipeline.")
-            return img_byte_arr.getvalue()
+            img_bytes = img_byte_arr.getvalue()
         except Exception as e:
             logger.exception(f"❌ Local image generation failed: {e}")
             log_and_raise(e, "Local image generation failed")
     
-    log_and_raise(ValueError("No image generation model available (HF or local)."), "Image generation failed")
+    if img_bytes and remove_watermark_flag:
+        try:
+            logger.info("Attempting to remove watermark from generated image.")
+            img_bytes = remove_watermark(img_bytes, hint_prompt=watermark_hint)
+            logger.info("✅ Watermark removal attempted successfully.")
+        except Exception as e:
+            logger.warning(f"❌ Watermark removal failed: {e}", exc_info=True)
+
+    if img_bytes is None: # Final check before raising error
+        log_and_raise(ValueError("No image generation model available (HF or local)."), "Image generation failed")
+    
+    return img_bytes
 
 @retry_on_exception()
 async def text_to_speech(text, model_id=None, **kwargs):
