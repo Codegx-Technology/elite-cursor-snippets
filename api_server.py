@@ -11,6 +11,7 @@ from pipeline_orchestrator import PipelineOrchestrator # Import PipelineOrchestr
 from billing_middleware import enforce_limits, BillingException # Import billing middleware
 from landing_page_service import LandingPageService # Import LandingPageService
 from scan_alert_system import ScanAlertSystem # Import ScanAlertSystem
+from crm_integration import CRMIntegrationService # Import CRMIntegrationService
 
 logger = get_logger(__name__)
 config = get_config()
@@ -30,6 +31,9 @@ landing_page_service = LandingPageService()
 # Initialize ScanAlertSystem
 scan_alert_system = ScanAlertSystem()
 
+# Initialize CRMIntegrationService
+crm_integration_service = CRMIntegrationService()
+
 # OAuth2PasswordBearer for JWT token extraction
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token") # tokenUrl is a placeholder
 
@@ -48,6 +52,10 @@ class ScanAlertRequest(BaseModel):
     location_data: dict
     device_type: str
     user_settings: dict
+
+class CRMPushContactRequest(BaseModel):
+    crm_name: str
+    contact_data: dict
 
 # --- Dependency Functions for Authentication and Authorization ---
 
@@ -222,6 +230,34 @@ async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict
         return {"status": "success", "qr_code_id": result.get('qr_code_id'), "message": "Scan alert triggered."}
     else:
         raise HTTPException(status_code=500, detail=f"Scan alert failed: {result.get('message', 'Unknown error')}")
+
+@app.post("/crm_push_contact")
+async def crm_push_contact_endpoint(request_data: CRMPushContactRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
+    """
+    // [TASK]: CRM push contact endpoint
+    // [GOAL]: Expose CRM integration service via API
+    """
+    logger.info(f"CRM push contact request received from user {current_user.get('user_id')} (Tenant: {current_tenant}): {request_data.dict()}")
+
+    # --- F.2: Integrate Billing Middleware (for CRM push) ---
+    try:
+        enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="crm_push_contact")
+        logger.info(f"Billing limits checked for user {current_user.get('user_id')}. Proceeding.")
+    except BillingException as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"Unexpected error during billing check for CRM push: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during billing check.")
+    # --- End F.2 ---
+
+    # Call the CRM integration service
+    result = await crm_integration_service.push_contact_to_crm(request_data.crm_name, request_data.contact_data)
+
+    if result.get("status") == "success":
+        logger.info(f"Contact pushed to CRM successfully: {result.get('crm_response')}")
+        return {"status": "success", "crm_response": result.get('crm_response'), "message": "Contact push to CRM initiated."}
+    else:
+        raise HTTPException(status_code=500, detail=f"Contact push to CRM failed: {result.get('message', 'Unknown error')}")
 
 # Example of a protected endpoint
 @app.get("/protected_data")
