@@ -60,7 +60,8 @@ pyyaml>=6.0.1
 dotmap>=1.9.1
 redis>=4.5.0
 boto3>=1.28.0
-celery>=5.3.4 # For background tasks
+celery>=5.3.4
+aiohttp>=3.8.5 # For async asset downloads
 python-dotenv>=1.0.0  # Environment management
 
 # Performance & Deployment (Optimization Phase)
