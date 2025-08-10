@@ -10,6 +10,7 @@ from auth.jwt_utils import verify_jwt # Import verify_jwt
 from pipeline_orchestrator import PipelineOrchestrator # Import PipelineOrchestrator
 from billing_middleware import enforce_limits, BillingException # Import billing middleware
 from landing_page_service import LandingPageService # Import LandingPageService
+from scan_alert_system import ScanAlertSystem # Import ScanAlertSystem
 
 logger = get_logger(__name__)
 config = get_config()
@@ -26,6 +27,9 @@ orchestrator = PipelineOrchestrator()
 # Initialize LandingPageService
 landing_page_service = LandingPageService()
 
+# Initialize ScanAlertSystem
+scan_alert_system = ScanAlertSystem()
+
 # OAuth2PasswordBearer for JWT token extraction
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token") # tokenUrl is a placeholder
 
@@ -38,6 +42,12 @@ class GenerateVideoRequest(BaseModel):
 class GenerateLandingPageRequest(BaseModel):
     qr_code_id: str
     brand_metadata: dict
+
+class ScanAlertRequest(BaseModel):
+    qr_code_id: str
+    location_data: dict
+    device_type: str
+    user_settings: dict
 
 # --- Dependency Functions for Authentication and Authorization ---
 
@@ -179,6 +189,39 @@ async def generate_landing_page_endpoint(request_data: GenerateLandingPageReques
         return {"status": "success", "s3_url": result.get('s3_url'), "message": "Landing page generation initiated."}
     else:
         raise HTTPException(status_code=500, detail=f"Landing page generation failed: {result.get('message', 'Unknown error')}")
+
+@app.post("/scan_alert")
+async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
+    """
+    // [TASK]: Scan alert endpoint
+    // [GOAL]: Expose scan alert system via API
+    """
+    logger.info(f"Scan alert request received from user {current_user.get('user_id')} (Tenant: {current_tenant}): {request_data.dict()}")
+
+    # --- F.2: Integrate Billing Middleware (for scan alerts) ---
+    try:
+        enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="scan_alert")
+        logger.info(f"Billing limits checked for user {current_user.get('user_id')}. Proceeding.")
+    except BillingException as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"Unexpected error during billing check for scan alert: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during billing check.")
+    # --- End F.2 ---
+
+    # Call the scan alert system
+    result = await scan_alert_system.trigger_scan_alert(
+        request_data.qr_code_id,
+        request_data.location_data,
+        request_data.device_type,
+        request_data.user_settings
+    )
+
+    if result.get("status") == "alert_triggered":
+        logger.info(f"Scan alert triggered successfully for QR code: {result.get('qr_code_id')}")
+        return {"status": "success", "qr_code_id": result.get('qr_code_id'), "message": "Scan alert triggered."}
+    else:
+        raise HTTPException(status_code=500, detail=f"Scan alert failed: {result.get('message', 'Unknown error')}")
 
 # Example of a protected endpoint
 @app.get("/protected_data")
