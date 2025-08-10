@@ -255,51 +255,67 @@ class AfricanCartoonPipeline:
             return None
     
     def create_cartoon_video(self, scenes: List[Dict], style: str, voice: str) -> Optional[str]:
-        """Create complete cartoon video"""
+        """Create complete cartoon video with parallel scene processing"""
         
         print(f"🎬 Creating cartoon video: {style} style, {voice} voice")
         
-        # Load cartoon model
         pipe = self.load_cartoon_model(style)
         if pipe is None:
             return None
+
+        from utils.parallel_processing import ParallelProcessor
+        import asyncio
+
+        async def scene_worker(scene_data):
+            loop = asyncio.get_running_loop()
+            
+            def process_scene_assets():
+                scene_image = self.generate_cartoon_scene(pipe, scene_data, style)
+                if scene_image is None:
+                    return None, None
+                
+                audio_path = self.generate_african_tts(scene_data['dialogue'], voice)
+                animated_frames = self.create_scene_animation(scene_image, scene_data['duration'])
+                return animated_frames, audio_path
+
+            try:
+                animated_frames, audio_path = await loop.run_in_executor(None, process_scene_assets)
+                if animated_frames is None:
+                    return {"status": "failed", "reason": "Image generation failed"}
+                return {"status": "success", "frames": animated_frames, "audio": audio_path}
+            except Exception as e:
+                return {"status": "failed", "reason": str(e)}
+
+        async def run_parallel_processing(all_scenes):
+            processor = ParallelProcessor()
+            return await processor.run_parallel(all_scenes, scene_worker)
+
+        results = asyncio.run(run_parallel_processing(scenes))
         
-        # Generate all scenes
         all_frames = []
         all_audio_paths = []
-        
-        for scene in scenes:
-            # Generate scene image
-            scene_image = self.generate_cartoon_scene(pipe, scene, style)
-            if scene_image is None:
-                continue
-            
-            # Create animation
-            animated_frames = self.create_scene_animation(scene_image, scene['duration'])
-            all_frames.extend(animated_frames)
-            
-            # Generate TTS
-            audio_path = self.generate_african_tts(scene['dialogue'], voice)
-            if audio_path:
-                all_audio_paths.append(audio_path)
+        for res in results:
+            if res and res.get("status") == "success":
+                all_frames.extend(res["frames"])
+                if res.get("audio"):
+                    all_audio_paths.append(res["audio"])
         
         if not all_frames:
             print("❌ No frames generated")
             return None
         
-        # Create video
         video_path = self.output_folder / f"cartoon_{style}_{voice}_{int(time.time())}.mp4"
-        
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         writer = cv2.VideoWriter(str(video_path), fourcc, self.fps, (self.width, self.height))
         
         print(f"📹 Writing {len(all_frames)} frames...")
-        
         for frame in all_frames:
             writer.write(frame)
-        
         writer.release()
         
+        # Placeholder: Audio is not yet muxed into the video in this pipeline.
+        # This would require a final ffmpeg step.
+
         if video_path.exists():
             size_mb = video_path.stat().st_size / (1024*1024)
             print(f"✅ Cartoon video created: {size_mb:.1f} MB")

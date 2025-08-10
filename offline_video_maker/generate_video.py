@@ -1084,10 +1084,10 @@ class OfflineVideoMaker:
 
         return formats
 
-    def generate_video(self, prompt: str, aspect_ratio: str = "landscape") -> Path:
+    def generate_video(self, prompt: str, aspect_ratio: str = "all") -> Path:
         """
         // [TASK]: Main pipeline - prompt to video
-        // [GOAL]: Complete end-to-end video generation
+        // [GOAL]: Complete end-to-end video generation with parallel processing
         // [SNIPPET]: thinkwithai + taskchain
         """
         print(f"\n[START] Shujaa Studio Video Generation Pipeline")
@@ -1102,55 +1102,44 @@ class OfflineVideoMaker:
             scene_videos = []
             if getattr(self, "parallel", None) and self.enable_parallel:
                 print("\n[PARALLEL] ⚡ Parallel scene processing enabled")
-                # Build processing functions using existing pipeline methods
-                def _voice(scene):
-                    return self.generate_voice(scene)
 
-                def _image(scene):
-                    return self.generate_image(scene)
+                # Define the async worker for a single scene
+                async def scene_worker(scene_data):
+                    loop = asyncio.get_running_loop()
+                    try:
+                        # Run sync methods in an executor for concurrency
+                        audio_file = await loop.run_in_executor(None, self.generate_voice, scene_data)
+                        image_file = await loop.run_in_executor(None, self.generate_image, scene_data)
+                        video_file = await loop.run_in_executor(None, self.create_scene_video, scene_data, audio_file, image_file)
+                        enhanced_video = await loop.run_in_executor(None, self.add_professional_effects, video_file, scene_data)
+                        return {"status": "completed", "video_path": enhanced_video}
+                    except Exception as e:
+                        logger.error(f"Error processing scene {scene_data.get('id')}: {e}")
+                        return {"status": "failed", "error": str(e)}
 
-                def _video(scene):
-                    return self.create_scene_video(scene, scene.get("voice_file"), scene.get("image_file"))
+                # Define the main async task to be run
+                async def run_parallel_processing(all_scenes):
+                    return await self.parallel.run_parallel(all_scenes, scene_worker)
 
-                processing_functions = {"voice": _voice, "image": _image, "video": _video}
+                # Execute the async task from this synchronous method
+                results = asyncio.run(run_parallel_processing(scenes))
 
-                # Ensure scenes have stable IDs
-                proc_scenes = []
-                for s in scenes:
-                    s = dict(s)
-                    s["scene_id"] = s.get("id") or s.get("scene_id") or str(uuid.uuid4())
-                    proc_scenes.append(s)
+                # Collect successful results
+                scene_videos = [res["video_path"] for res in results if res and res["status"] == "completed"]
 
-                # Run parallel processor
-                results = asyncio.run(
-                    self.parallel.process_scenes_parallel(proc_scenes, processing_functions)
-                )
-
-                # Collect outputs
-                for res in results:
-                    if res.get("status") == "completed":
-                        # Add professional effects and overlays
-                        enhanced = self.add_professional_effects(Path(res["video_file"]),
-                                                                 next((sc for sc in proc_scenes if str(sc.get("scene_id")) == str(res.get("scene_id"))), {}))
-                        scene_videos.append(enhanced)
-                    else:
-                        print(f"[PARALLEL] Scene {res.get('scene_id')} failed, skipping")
             else:
+                print("\n[SEQUENTIAL] 🐌 Sequential scene processing enabled")
                 for scene in scenes:
                     print(f"\n[SCENE] Processing {scene['id']}...")
-
-                    # Generate voice
                     audio_file = self.generate_voice(scene)
-
-                    # Generate image
                     image_file = self.generate_image(scene)
-
-                    # Create scene video
                     video_file = self.create_scene_video(scene, audio_file, image_file)
-
-                    # Add professional effects and text overlays
                     enhanced_video = self.add_professional_effects(video_file, scene)
                     scene_videos.append(enhanced_video)
+
+            if not scene_videos:
+                print("[ERROR] No scenes were processed successfully. Aborting video creation.")
+                raise RuntimeError("Video generation failed as no scenes could be created.")
 
             # Step 3: Merge all scenes with transitions
             final_video = self.merge_scenes(scene_videos)
@@ -1158,19 +1147,11 @@ class OfflineVideoMaker:
             # Step 4: Create multiple aspect ratio versions (InVideo style)
             if aspect_ratio == "all":
                 print("\n[FORMATS] 🎬 Creating multi-platform versions...")
-                formats = self.create_multiple_formats(final_video)
+                self.create_multiple_formats(final_video)
 
-                print("\n" + "=" * 60)
-                print(f"\n[COMPLETE] 🎉 Multi-format video generation successful!")
-                print(f"[MASTER] {final_video}")
-                for format_name, format_file in formats.items():
-                    print(f"[{format_name.upper()}] {format_file}")
-                print(f"[READY] Your Shujaa Studio videos are ready for all platforms!")
-            else:
-                print("\n" + "=" * 60)
-                print(f"\n[COMPLETE] 🎉 Video generation successful!")
-                print(f"[OUTPUT] {final_video}")
-                print(f"[READY] Your Shujaa Studio video is ready!")
+            print("\n" + "=" * 60)
+            print(f"\n[COMPLETE] 🎉 Video generation successful!")
+            print(f"[OUTPUT] {final_video}")
 
             # Step 5: Generate social metadata (optional)
             if self.enable_social:

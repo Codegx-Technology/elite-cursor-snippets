@@ -102,3 +102,21 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     token = create_jwt(to_encode)
     audit_logger.info(f"Access token created for user: {data.get('username')}")
     return token
+
+def update_user_profile(db: Session, user_id: int, user_update_data: dict):
+    """
+    // [TASK]: Update a user's profile information
+    // [GOAL]: Allow users to modify their profile
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        audit_logger.warning(f"Profile update failed: User with ID {user_id} not found.")
+        return None
+
+    for key, value in user_update_data.items():
+        setattr(user, key, value)
+    
+    db.commit()
+    db.refresh(user)
+    audit_logger.info(f"User profile updated for user ID: {user_id}")
+    return user

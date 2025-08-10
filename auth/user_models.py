@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
+from security.encrypted_type import EncryptedType
 
 class User(Base):
     __tablename__ = "users"
@@ -10,6 +11,8 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
+    full_name = Column(String, nullable=True)
+    bio = Column(EncryptedType, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     

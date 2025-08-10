@@ -1,0 +1,63 @@
+# Placeholder for Kubernetes Deployment
+# This file would define how to deploy the Shujaa Studio API to a Kubernetes cluster.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shujaa-studio-api
+  labels:
+    app: shujaa-studio
+spec:
+  replicas: 2 # Start with two replicas for high availability
+  selector:
+    matchLabels:
+      app: shujaa-studio
+  template:
+    metadata:
+      labels:
+        app: shujaa-studio
+    spec:
+      containers:
+      - name: api-server
+        # Replace with the actual image path from a container registry (e.g., Docker Hub, GCR)
+        image: your-registry/shujaa-studio-api:latest
+        ports:
+        - containerPort: 8000
+        env:
+          # In a real deployment, secrets should be managed via Kubernetes Secrets, not plain env vars
+          - name: HF_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: shujaa-secrets
+                key: hf-api-key
+          - name: ENCRYPTION_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: shujaa-secrets
+                key: encryption-password
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "1000m"
+          limits:
+            memory: "16Gi"
+            cpu: "4000m"
+
+---
+
+# Placeholder for a Kubernetes Service
+# This would expose the deployment within the cluster or externally
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: shujaa-studio-service
+spec:
+  selector:
+    app: shujaa-studio
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  # Use ClusterIP for internal traffic, or LoadBalancer for external exposure
+  type: ClusterIP

@@ -87,99 +87,48 @@ class TaskProfile:
 
 class HybridGPUManager:
     """
-    // [TASK]: Intelligent GPU resource management
-    // [GOAL]: Optimal performance + cost efficiency
-    // [SNIPPET]: thinkwithai + surgicalfix + perfcheck
+    // [TASK]: Intelligent, cost-aware GPU resource management
+    // [GOAL]: Optimal performance, cost efficiency, and intelligent routing
+    // [SNIPPET]: thinkwithai + surgicalfix + perfcheck + costaware
     """
 
     def __init__(self, config_path: Optional[str] = None):
         self.config_path = config_path or "config.yaml"
         self.session_id = str(int(time.time()))
-        self.processing_stats = {"local": 0, "cloud": 0, "hybrid": 0}
+        self.processing_stats = {"local_gpu": 0, "local_cpu": 0, "cloud_gpu": 0}
 
-        # Resource tracking
         self.local_gpu = self._detect_local_gpu()
         self.cloud_providers = self._load_cloud_config()
         self.task_queue = []
         self.active_tasks = {}
 
-        # Performance tracking
         self.performance_log = []
-        self.cost_tracking = {"local": 0.0, "cloud": 0.0}
+        self.cost_tracking = {"total_cost": 0.0}
 
         logger.info(f"🚀 Hybrid GPU Manager initialized")
-        logger.info(f"   Local GPU: {'✅' if self.local_gpu.available else '❌'}")
+        logger.info(f"   Local GPU: {self.local_gpu.name if self.local_gpu.available else '❌'}")
         logger.info(f"   Cloud providers: {len(self.cloud_providers)}")
 
     def _detect_local_gpu(self) -> GPUResource:
-        """Detect and profile local GPU"""
         try:
             if not TORCH_AVAILABLE or not torch.cuda.is_available():
                 return GPUResource("none", 0, 0, 0, 0, False)
-
-            # Get GPU info
             device = torch.cuda.current_device()
             name = torch.cuda.get_device_name(device)
             total_memory, free_memory = check_gpu_memory()
-
-            # Estimate utilization (simplified)
-            utilization = (
-                (total_memory - free_memory) / total_memory * 100
-                if total_memory > 0
-                else 0
-            )
-
+            utilization = ((total_memory - free_memory) / total_memory * 100) if total_memory > 0 else 0
             gpu = GPUResource(
-                name=name,
-                memory_total=total_memory,
-                memory_free=free_memory,
-                utilization=utilization,
-                temperature=0,  # Would need nvidia-ml-py for real temp
-                available=free_memory > 0.5,  # Require at least 0.5GB free
-                cost_per_hour=0.0,  # Local is "free"
+                name=name, memory_total=total_memory, memory_free=free_memory,
+                utilization=utilization, temperature=0, available=free_memory > 0.5,
+                cost_per_hour=config.get('local_gpu_cost_per_hour', 0.0) # Allow setting a cost for local for comparison
             )
-
-            logger.info(
-                f"   GPU: {name} ({total_memory:.1f}GB total, {free_memory:.1f}GB free)"
-            )
+            logger.info(f"   GPU: {name} ({total_memory:.1f}GB total, {free_memory:.1f}GB free)")
             return gpu
-
         except Exception as e:
             logger.warning(f"GPU detection failed: {e}")
             return GPUResource("error", 0, 0, 0, 0, False)
 
     def _load_cloud_config(self) -> List[Dict]:
-        """Load cloud GPU provider configurations"""
-        # Default cloud providers (can be configured via file)
-        default_providers = [
-            {
-                "name": "runpod",
-                "gpu_types": ["RTX3090", "RTX4090", "A100"],
-                "cost_per_hour": {"RTX3090": 0.4, "RTX4090": 0.6, "A100": 1.2},
-                "memory": {"RTX3090": 24, "RTX4090": 24, "A100": 40},
-                "api_endpoint": None,  # Would be configured for real use
-                "available": False,  # Set to True when properly configured
-            },
-            {
-                "name": "vast_ai",
-                "gpu_types": ["RTX3080", "RTX3090", "RTX4090"],
-                "cost_per_hour": {"RTX3080": 0.3, "RTX3090": 0.4, "RTX4090": 0.5},
-                "memory": {"RTX3080": 10, "RTX3090": 24, "RTX4090": 24},
-                "api_endpoint": None,
-                "available": False,
-            },
-            {
-                "name": "google_colab",
-                "gpu_types": ["T4", "V100", "A100"],
-                "cost_per_hour": {"T4": 0.0, "V100": 0.0, "A100": 0.0},  # Free tier
-                "memory": {"T4": 16, "V100": 16, "A100": 40},
-                "api_endpoint": None,
-                "available": True,  # Always available as fallback
-                "limitations": "Free tier has usage limits",
-            },
-        ]
-
-        # Try to load from config file
         config_file = Path("gpu_cloud_config.json")
         if config_file.exists():
             try:
@@ -187,209 +136,145 @@ class HybridGPUManager:
                     return json.load(f)
             except Exception as e:
                 logger.warning(f"Failed to load cloud config: {e}")
-
-        # Save default config for user customization
+        default_providers = [
+            {
+                "name": "runpod", "available": False,
+                "gpus": {
+                    "RTX4090": {"memory": 24, "cost_per_hour": 0.79},
+                    "A100": {"memory": 80, "cost_per_hour": 2.19}
+                }
+            }
+        ]
         try:
             with open(config_file, "w") as f:
                 json.dump(default_providers, f, indent=2)
             logger.info(f"📝 Created default cloud config: {config_file}")
         except Exception as e:
             logger.warning(f"Failed to save default config: {e}")
-
         return default_providers
 
-    def get_optimal_processing_mode(self, task_profile: TaskProfile) -> ProcessingMode:
+    def select_best_resource(self, task_profile: TaskProfile) -> Dict:
         """
-        // [TASK]: Intelligent processing mode selection
-        // [GOAL]: Optimal performance + cost efficiency
-        // [SNIPPET]: thinkwithai + perfcheck
+        Selects the best available resource (local or cloud) based on task requirements and cost.
         """
-        # Check local GPU first
-        if (
-            self.local_gpu.available
-            and self.local_gpu.memory_free >= task_profile.estimated_memory
-            and self.local_gpu.utilization < 80
-        ):
-            return ProcessingMode.LOCAL_GPU
+        eligible_resources = []
+        if self.local_gpu.available and self.local_gpu.memory_free >= task_profile.estimated_memory:
+            eligible_resources.append({
+                "name": self.local_gpu.name, "mode": ProcessingMode.LOCAL_GPU,
+                "cost": self.local_gpu.cost_per_hour, "provider": "local"
+            })
 
-        # Check if we can use CPU for lightweight tasks
-        if (
-            task_profile.can_use_cpu
-            and task_profile.estimated_memory <= 8.0
-            and psutil.virtual_memory().percent < 80
-        ):
-            return ProcessingMode.LOCAL_CPU
+        for provider in self.cloud_providers:
+            if not provider.get("available", False):
+                continue
+            for gpu_type, specs in provider.get("gpus", {}).items():
+                if specs["memory"] >= task_profile.estimated_memory:
+                    eligible_resources.append({
+                        "name": gpu_type, "mode": ProcessingMode.CLOUD_GPU,
+                        "cost": specs["cost_per_hour"], "provider": provider["name"]
+                    })
+        
+        if not eligible_resources:
+            if task_profile.can_use_cpu:
+                logger.info("No suitable GPU found, falling back to Local CPU.")
+                return {"name": "cpu", "mode": ProcessingMode.LOCAL_CPU, "cost": 0, "provider": "local"}
+            else:
+                raise RuntimeError(f"No resource found that meets memory requirement of {task_profile.estimated_memory}GB")
 
-        # Check cloud options for heavy tasks
-        available_cloud = [p for p in self.cloud_providers if p.get("available", False)]
-        if available_cloud and task_profile.priority > 7:
-            return ProcessingMode.CLOUD_GPU
+        best_resource = sorted(eligible_resources, key=lambda x: x["cost"])[0]
+        logger.info(f"🎯 Selected best resource: {best_resource['name']} from {best_resource['provider']} at ${best_resource['cost']:.2f}/hr")
+        return best_resource
 
-        # Fallback to local CPU
-        return ProcessingMode.LOCAL_CPU
-
-    async def process_task(
-        self, task_profile: TaskProfile, task_function: Callable, *args, **kwargs
-    ):
-        """
-        // [TASK]: Execute task with optimal GPU assignment
-        // [GOAL]: Seamless processing with intelligent fallbacks
-        // [SNIPPET]: surgicalfix + perfcheck
-        """
+    async def process_task(self, task_profile: TaskProfile, task_function: Callable, *args, **kwargs):
         task_id = f"task_{int(time.time())}_{len(self.active_tasks)}"
         start_time = time.time()
 
         try:
-            # Determine optimal processing mode
-            mode = self.get_optimal_processing_mode(task_profile)
-            logger.info(f"🎯 Task {task_id}: Using {mode.value}")
-
-            # Execute based on mode
+            selected_resource = self.select_best_resource(task_profile)
+            mode = selected_resource["mode"]
+            
             result = None
             if mode == ProcessingMode.LOCAL_GPU:
                 result = await self._execute_local_gpu(task_function, *args, **kwargs)
-                self.processing_stats["local"] += 1
-
             elif mode == ProcessingMode.LOCAL_CPU:
                 result = await self._execute_local_cpu(task_function, *args, **kwargs)
-                self.processing_stats["local"] += 1
-
             elif mode == ProcessingMode.CLOUD_GPU:
-                result = await self._execute_cloud_gpu(
-                    task_profile, task_function, *args, **kwargs
-                )
-                self.processing_stats["cloud"] += 1
+                result = await self._execute_cloud_gpu(task_profile, task_function, selected_resource, *args, **kwargs)
 
-            else:  # HYBRID
-                result = await self._execute_hybrid(
-                    task_profile, task_function, *args, **kwargs
-                )
-                self.processing_stats["hybrid"] += 1
+            processing_time_sec = time.time() - start_time
+            task_cost = selected_resource["cost"] * (processing_time_sec / 3600)
+            provider = selected_resource["provider"]
+            
+            self.cost_tracking[provider] = self.cost_tracking.get(provider, 0.0) + task_cost
+            self.cost_tracking["total_cost"] += task_cost
+            self.processing_stats[mode.value] += 1
 
-            # Track performance
-            processing_time = time.time() - start_time
-            self.performance_log.append(
-                {
-                    "task_id": task_id,
-                    "mode": mode.value,
-                    "processing_time": processing_time,
-                    "success": result is not None,
-                    "timestamp": time.time(),
-                }
-            )
+            self.performance_log.append({
+                "task_id": task_id, "mode": mode.value, "provider": provider,
+                "resource": selected_resource['name'], "processing_time": processing_time_sec,
+                "cost": task_cost, "success": result is not None, "timestamp": time.time(),
+            })
 
-            logger.info(
-                f"✅ Task {task_id} completed in {processing_time:.2f}s using {mode.value}"
-            )
+            logger.info(f"✅ Task {task_id} ({task_profile.task_type}) completed in {processing_time_sec:.2f}s on {provider}:{selected_resource['name']} (Cost: ${task_cost:.4f})")
             return result
 
         except Exception as e:
             logger.error(f"❌ Task {task_id} failed: {e}")
-
-            # Try fallback mode
-            if mode != ProcessingMode.LOCAL_CPU:
+            if task_profile.can_use_cpu:
                 logger.info(f"🔄 Attempting fallback to CPU for task {task_id}")
                 try:
-                    result = await self._execute_local_cpu(
-                        task_function, *args, **kwargs
-                    )
-                    logger.info(f"✅ Fallback successful for task {task_id}")
-                    return result
+                    return await self._execute_local_cpu(task_function, *args, **kwargs)
                 except Exception as fallback_error:
                     logger.error(f"❌ Fallback also failed: {fallback_error}")
-
             raise e
 
     async def _execute_local_gpu(self, task_function: Callable, *args, **kwargs):
-        """Execute task on local GPU"""
-        # Ensure CUDA context
-        if TORCH_AVAILABLE and torch.cuda.is_available():
-            with torch.cuda.device(0):
-                return await asyncio.get_event_loop().run_in_executor(
-                    None, lambda: task_function(*args, device="cuda", **kwargs)
-                )
-        else:
+        if not (TORCH_AVAILABLE and torch.cuda.is_available()):
             raise RuntimeError("Local GPU not available")
+        with torch.cuda.device(0):
+            return await asyncio.get_event_loop().run_in_executor(None, lambda: task_function(*args, device="cuda", **kwargs))
 
     async def _execute_local_cpu(self, task_function: Callable, *args, **kwargs):
-        """Execute task on local CPU"""
-        return await asyncio.get_event_loop().run_in_executor(
-            None, lambda: task_function(*args, device="cpu", **kwargs)
-        )
+        return await asyncio.get_event_loop().run_in_executor(None, lambda: task_function(*args, device="cpu", **kwargs))
 
-    async def _execute_cloud_gpu(
-        self, task_profile: TaskProfile, task_function: Callable, *args, **kwargs
-    ):
-        """Execute task on cloud GPU (placeholder for cloud integration)"""
-        # This would integrate with cloud providers like RunPod, Vast.ai etc.
-        logger.info(
-            "🌥️ Cloud GPU processing not yet implemented - using local CPU fallback"
-        )
-        return await self._execute_local_cpu(task_function, *args, **kwargs)
-
-    async def _execute_hybrid(
-        self, task_profile: TaskProfile, task_function: Callable, *args, **kwargs
-    ):
-        """Execute task using hybrid approach"""
-        # This could split tasks between local and cloud
-        logger.info("🔄 Hybrid processing not yet implemented - using local fallback")
+    async def _execute_cloud_gpu(self, task_profile: TaskProfile, task_function: Callable, resource: Dict, *args, **kwargs):
+        logger.info(f"🌥️  Executing task on cloud provider: {resource['provider']} (GPU: {resource['name']})")
+        # Placeholder for actual cloud API integration
+        logger.warning("Cloud GPU processing not yet implemented - using local CPU as simulation fallback.")
         return await self._execute_local_cpu(task_function, *args, **kwargs)
 
     def get_performance_stats(self) -> Dict:
-        """Get processing performance statistics"""
         total_tasks = sum(self.processing_stats.values())
-        avg_times = {}
-
-        for mode in ["local", "cloud", "hybrid"]:
-            mode_tasks = [log for log in self.performance_log if mode in log["mode"]]
-            if mode_tasks:
-                avg_times[mode] = sum(
-                    task["processing_time"] for task in mode_tasks
-                ) / len(mode_tasks)
-            else:
-                avg_times[mode] = 0
-
         return {
             "total_tasks": total_tasks,
             "task_distribution": self.processing_stats,
-            "average_processing_times": avg_times,
             "cost_tracking": self.cost_tracking,
             "local_gpu_status": asdict(self.local_gpu),
             "session_id": self.session_id,
+            "performance_log": self.performance_log
         }
 
     def optimize_for_mobile(self) -> Dict:
-        """
-        // [TASK]: Mobile-first GPU optimization
-        // [GOAL]: Efficient processing for mobile deployment
-        // [SNIPPET]: mobilecheck + perfcheck
-        """
+        # This method remains conceptually the same but now benefits from the new resource selector
         recommendations = []
-
-        # Check memory usage
         if self.local_gpu.available and self.local_gpu.memory_total < 4:
-            recommendations.append(
-                "Consider using SDXL-Turbo for faster mobile generation"
-            )
-
-        # Check processing preferences
+            recommendations.append("Local GPU memory is low. Consider cloud GPUs for larger models.")
+        
         mobile_tasks = [
             TaskProfile("image_generation", 2.0, 30, 8, True, 2.0),
             TaskProfile("voice_synthesis", 0.5, 10, 9, True, 1.0),
-            TaskProfile("video_assembly", 1.0, 15, 7, True, 1.5),
         ]
-
         mobile_config = {}
         for task in mobile_tasks:
-            optimal_mode = self.get_optimal_processing_mode(task)
-            mobile_config[task.task_type] = optimal_mode.value
+            try:
+                best_resource = self.select_best_resource(task)
+                mobile_config[task.task_type] = f"{best_resource['provider']}:{best_resource['name']}"
+            except RuntimeError as e:
+                mobile_config[task.task_type] = f"No resource available ({e})"
 
         return {
             "mobile_optimized_modes": mobile_config,
             "recommendations": recommendations,
-            "estimated_mobile_performance": (
-                "Good" if self.local_gpu.available else "CPU-Only"
-            ),
         }
 
 
