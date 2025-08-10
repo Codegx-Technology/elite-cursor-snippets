@@ -1,1 +1,1 @@
-feat(billing): Implement webhook, API endpoints, and unit tests for billing
+feat(i18n): Implement multi-language support with Babel and API integration

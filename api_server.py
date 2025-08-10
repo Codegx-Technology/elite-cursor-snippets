@@ -15,6 +15,7 @@ from landing_page_service import LandingPageService
 from scan_alert_system import ScanAlertSystem
 from crm_integration import CRMIntegrationService
 from utils.parallel_processing import ParallelProcessor
+from i18n_utils import gettext, get_locale_from_request # Elite Cursor Snippet: i18n_imports
 
 from database import engine, get_db
 from auth.user_models import Base, User, Tenant
@@ -133,6 +134,12 @@ async def get_current_tenant(user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Tenant ID not found in token.")
     return tenant_id
 
+async def get_current_locale(request: Request) -> str:
+    # // [TASK]: Provide current locale as a dependency
+    # // [GOAL]: Enable localized responses in API endpoints
+    # // [ELITE_CURSOR_SNIPPET]: aihandle
+    return get_locale_from_request(request)
+
 # --- Middleware ---
 
 @app.middleware("http")
@@ -162,17 +169,17 @@ async def startup():
 
 @app.get("/health")
 @RateLimiter(times=5, seconds=10)
-async def health_check():
+async def health_check(locale: str = Depends(get_current_locale)):
     logger.info("Health check requested.")
-    return {"status": "ok", "message": "Shujaa Studio API is running!"}
+    return {"status": gettext("status_ok", locale=locale), "message": gettext("api_running_message", locale=locale)}
 
 @app.post("/register", response_model=UserCreate)
 @RateLimiter(times=2, seconds=60)
-async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db)):
+async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db), locale: str = Depends(get_current_locale)):
     db_user = create_user(db, user.username, user.email, user.password, user.tenant_name)
     if not db_user:
         audit_logger.error(f"User registration failed: Username {user.username} or email {user.email} already registered.")
-        raise HTTPException(status_code=400, detail="Username or email already registered.")
+        raise HTTPException(status_code=400, detail=gettext("username_or_email_registered", locale=locale))
     audit_logger.info(f"User registered: {user.username} (Tenant: {user.tenant_name})")
     return db_user
 

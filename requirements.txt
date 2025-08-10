@@ -75,6 +75,9 @@ passlib[bcrypt]>=1.7.4
 fastapi-limiter>=0.1.5 # For API rate limiting
 python-dotenv>=1.0.0  # Environment management
 
+# Multi-Language Support
+Babel>=2.12.1
+
 # Performance & Deployment (Optimization Phase)
 psutil>=5.9.0  # System monitoring  
 tqdm>=4.65.0  # Progress bars
