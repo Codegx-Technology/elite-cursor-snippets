@@ -1,5 +1,5 @@
-from fastapi import FastAPI, HTTPException, Depends, Request
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import FastAPI, HTTPException, Depends, Request, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import Optional
 import uvicorn
@@ -13,8 +13,16 @@ from landing_page_service import LandingPageService # Import LandingPageService
 from scan_alert_system import ScanAlertSystem # Import ScanAlertSystem
 from crm_integration import CRMIntegrationService # Import CRMIntegrationService
 
+from database import engine, get_db # Import database engine and session dependency
+from auth.user_models import Base, User, Tenant # Import SQLAlchemy models
+from auth.auth_service import create_user, authenticate_user, create_access_token # Import auth service functions
+from sqlalchemy.orm import Session # Import Session for type hinting
+
 logger = get_logger(__name__)
 config = get_config()
+
+# Create database tables on startup
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=config.app.name,
@@ -57,16 +65,32 @@ class CRMPushContactRequest(BaseModel):
     crm_name: str
     contact_data: dict
 
+# Pydantic models for User Authentication
+class UserCreate(BaseModel):
+    username: str
+    email: str
+    password: str
+    tenant_name: Optional[str] = "default"
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
 # --- Dependency Functions for Authentication and Authorization ---
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
+async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     """
     // [TASK]: Extract and verify JWT token to get current user
     // [GOAL]: Implement JWT-based access control
     """
     try:
         payload = verify_jwt(token)
-        # In a real app, you'd fetch user from DB based on payload.get('user_id')
+        user_id = payload.get("user_id")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid authentication credentials: User ID missing")
+        
+        # In a real app, you'd fetch user from DB based on user_id to ensure it's active
+        # For now, we just return the payload
         return payload
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid authentication credentials: {e}")
@@ -118,6 +142,37 @@ async def health_check():
     """
     logger.info("Health check requested.")
     return {"status": "ok", "message": "Shujaa Studio API is running!"}
+
+@app.post("/register", response_model=UserCreate)
+async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db)):
+    """
+    // [TASK]: User registration endpoint
+    // [GOAL]: Allow new users to register
+    """
+    db_user = create_user(db, user.username, user.email, user.password, user.tenant_name)
+    if not db_user:
+        raise HTTPException(status_code=400, detail="Username or email already registered.")
+    return db_user
+
+@app.post("/token", response_model=Token)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """
+    // [TASK]: User login endpoint to get JWT token
+    // [GOAL]: Authenticate users and issue access tokens
+    """
+    user = authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=config.auth.access_token_expire_minutes)
+    access_token = create_access_token(
+        data={"user_id": user.id, "username": user.username, "tenant_id": user.tenant_id},
+        expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/generate_video")
 async def generate_video_endpoint(request_data: GenerateVideoRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
