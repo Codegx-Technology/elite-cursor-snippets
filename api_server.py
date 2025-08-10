@@ -1,10 +1,10 @@
 from fastapi import FastAPI, HTTPException, Depends, Request, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 import uvicorn
 
-from logging_setup import get_logger, get_audit_logger # Import get_audit_logger
+from logging_setup import get_logger
 from config_loader import get_config
 from auth.jwt_utils import verify_jwt # Import verify_jwt
 from pipeline_orchestrator import PipelineOrchestrator # Import PipelineOrchestrator
