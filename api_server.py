@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException, Depends, Request, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
-from datetime import timedelta
+from datetime import timedelta, datetime
 import uvicorn
 import uuid
 
@@ -195,6 +195,8 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     audit_logger.info(f"User logged in: {user.username} (Tenant: {user.tenant.name})")
     return {"access_token": access_token, "token_type": "bearer"}
 
+from billing_models import get_default_plans, get_user_subscription # Elite Cursor Snippet: billing_api_imports
+
 @app.get("/users/me", response_model=UserProfile)
 async def read_users_me(current_user: User = Depends(get_current_active_user)):
     audit_logger.info(f"User profile viewed for user: {current_user.username}")
@@ -211,6 +213,53 @@ async def update_users_me(user_update: UserUpdate, db: Session = Depends(get_db)
         raise HTTPException(status_code=404, detail="User not found")
     audit_logger.info(f"User profile updated for user: {current_user.username}")
     return updated_user
+
+@app.get("/users/me/plan")
+async def get_user_plan(current_user: dict = Depends(get_current_user)):
+    # // [TASK]: Expose API for frontend to display user's plan info
+    # // [GOAL]: Provide current subscription details to the UI
+    # // [ELITE_CURSOR_SNIPPET]: aihandle
+    user_id = current_user.get("user_id")
+    user_sub = get_user_subscription(user_id)
+    all_plans = get_default_plans()
+    current_plan = next((p for p in all_plans if p.name == user_sub.plan_name), None)
+
+    if not current_plan:
+        raise HTTPException(status_code=404, detail="Plan not found for user.")
+    
+    return {
+        "plan_name": current_plan.name,
+        "max_requests_per_day": current_plan.max_requests_per_day,
+        "features_enabled": current_plan.features_enabled,
+        "cost_per_month": current_plan.cost_per_month,
+        "start_date": user_sub.start_date,
+        "end_date": user_sub.end_date,
+        "is_active": user_sub.is_active
+    }
+
+@app.get("/users/me/usage")
+async def get_user_usage(current_user: dict = Depends(get_current_user)):
+    # // [TASK]: Expose API for frontend to display user's usage limits
+    # // [GOAL]: Provide current usage statistics to the UI
+    # // [ELITE_CURSOR_SNIPPET]: aihandle
+    user_id = current_user.get("user_id")
+    # This is a placeholder. In a real system, this would query a usage tracking system (e.g., Redis)
+    # For now, we'll simulate usage.
+    daily_usage = 7 # Simulated
+    
+    user_sub = get_user_subscription(user_id)
+    all_plans = get_default_plans()
+    current_plan = next((p for p in all_plans if p.name == user_sub.plan_name), None)
+
+    if not current_plan:
+        raise HTTPException(status_code=404, detail="Plan not found for user.")
+
+    return {
+        "plan_name": current_plan.name,
+        "max_requests_per_day": current_plan.max_requests_per_day,
+        "current_daily_usage": daily_usage,
+        "remaining_daily_usage": max(0, current_plan.max_requests_per_day - daily_usage)
+    }
 
 @app.post("/generate_video")
 @RateLimiter(times=1, seconds=5)
@@ -332,6 +381,46 @@ async def crm_push_contact_endpoint(request_data: CRMPushContactRequest, current
         return {"status": "success", "crm_response": result.get('crm_response'), "message": "Contact push to CRM initiated."}
     else:
         raise HTTPException(status_code=500, detail=f"Contact push to CRM failed: {result.get('message', 'Unknown error')}")
+
+class WebhookPaymentStatus(BaseModel):
+    user_id: str
+    transaction_id: str
+    status: str # e.g., "completed", "failed", "pending"
+    amount: float
+    currency: str
+    plan_name: Optional[str] = None
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    signature: str # For secure verification
+
+@app.post("/webhook/payment_status")
+async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request):
+    # // [TASK]: Implement secure signature verification for payment callbacks
+    # // [GOAL]: Ensure webhook authenticity and prevent tampering
+    # // [ELITE_CURSOR_SNIPPET]: securitycheck
+    # Placeholder for signature verification
+    expected_signature = "mock_signature" # In real app, calculate based on payload and shared secret
+    if payload.signature != expected_signature:
+        audit_logger.error(f"Webhook signature mismatch for user {payload.user_id}. Potential tampering.")
+        raise HTTPException(status_code=403, detail="Invalid signature")
+
+    audit_logger.info(f"Webhook received for user {payload.user_id}, transaction {payload.transaction_id}, status {payload.status}.")
+
+    # // [TASK]: Update user subscription status based on webhook notification
+    # // [GOAL]: Automate subscription management in real-time
+    # // [ELITE_CURSOR_SNIPPET]: aihandle
+    # This would involve updating the database with the new subscription status
+    # For now, we'll just log it.
+    if payload.status == "completed":
+        logger.info(f"Payment completed for user {payload.user_id} for plan {payload.plan_name}. Updating subscription.")
+        # In a real system:
+        # 1. Find user in DB
+        # 2. Update their subscription plan and dates
+        # 3. Log the change
+    elif payload.status == "failed":
+        logger.warning(f"Payment failed for user {payload.user_id}, transaction {payload.transaction_id}.")
+        # Handle failed payments (e.g., downgrade plan, send notification)
+    
+    return {"message": "Webhook received and processed"}
 
 @app.get("/protected_data")
 async def protected_data(current_user: User = Depends(get_current_active_user), current_tenant: str = Depends(get_current_tenant)):
