@@ -6,10 +6,11 @@ from passlib.context import CryptContext
 
 from auth.user_models import User, Tenant
 from auth.jwt_utils import create_jwt
-from logging_setup import get_logger
+from logging_setup import get_logger, get_audit_logger # Import get_audit_logger
 from config_loader import get_config
 
 logger = get_logger(__name__)
+audit_logger = get_audit_logger() # Get audit logger
 config = get_config()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -47,6 +48,14 @@ def create_user(db: Session, username: str, email: str, password: str, tenant_na
     // [TASK]: Create a new user in the database
     // [GOAL]: Handle user registration
     """
+    # Check if username or email already exists
+    if get_user_by_username(db, username):
+        audit_logger.warning(f"Registration failed: Username {username} already exists.")
+        return None
+    if get_user_by_email(db, email):
+        audit_logger.warning(f"Registration failed: Email {email} already exists.")
+        return None
+
     hashed_password = get_password_hash(password)
     
     # Ensure tenant exists or create it
@@ -56,13 +65,13 @@ def create_user(db: Session, username: str, email: str, password: str, tenant_na
         db.add(tenant)
         db.commit()
         db.refresh(tenant)
-        logger.info(f"Created new tenant: {tenant_name}")
+        audit_logger.info(f"New tenant created: {tenant_name}")
 
     db_user = User(username=username, email=email, hashed_password=hashed_password, tenant_id=tenant.id)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    logger.info(f"User {username} created successfully for tenant {tenant_name}.")
+    audit_logger.info(f"User {username} registered successfully for tenant {tenant_name}.")
     return db_user
 
 def authenticate_user(db: Session, username: str, password: str):
@@ -72,7 +81,9 @@ def authenticate_user(db: Session, username: str, password: str):
     """
     user = get_user_by_username(db, username)
     if not user or not verify_password(password, user.hashed_password):
+        audit_logger.warning(f"Authentication failed: Invalid credentials for username {username}.")
         return False
+    audit_logger.info(f"User {username} authenticated successfully.")
     return user
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -88,4 +99,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})
     
     # Use jwt_utils.py to create the token
-    return create_jwt(to_encode)
+    token = create_jwt(to_encode)
+    audit_logger.info(f"Access token created for user: {data.get('username')}")
+    return token

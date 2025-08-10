@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 import uvicorn
 
-from logging_setup import get_logger
+from logging_setup import get_logger, get_audit_logger # Import get_audit_logger
 from config_loader import get_config
 from auth.jwt_utils import verify_jwt # Import verify_jwt
 from pipeline_orchestrator import PipelineOrchestrator # Import PipelineOrchestrator
@@ -23,6 +23,7 @@ from fastapi_limiter.depends import RateLimiter
 import redis.asyncio as redis # For FastAPI-Limiter
 
 logger = get_logger(__name__)
+audit_logger = get_audit_logger() # Get audit logger
 config = get_config()
 
 # Create database tables on startup
@@ -91,12 +92,14 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         payload = verify_jwt(token)
         user_id = payload.get("user_id")
         if user_id is None:
+            audit_logger.warning(f"Authentication failed: User ID missing in token.")
             raise HTTPException(status_code=401, detail="Invalid authentication credentials: User ID missing")
         
         # In a real app, you'd fetch user from DB based on user_id to ensure it's active
         # For now, we just return the payload
         return payload
     except Exception as e:
+        audit_logger.warning(f"Authentication failed for token: {token[:10]}... Error: {e}")
         raise HTTPException(status_code=401, detail=f"Invalid authentication credentials: {e}")
 
 async def get_current_tenant(user: dict = Depends(get_current_user)):
@@ -106,6 +109,7 @@ async def get_current_tenant(user: dict = Depends(get_current_user)):
     """
     tenant_id = user.get("tenant_id")
     if not tenant_id:
+        audit_logger.warning(f"Authorization failed for user {user.get('user_id')}: Tenant ID missing in token.")
         raise HTTPException(status_code=403, detail="Tenant ID not found in token.")
     return tenant_id
 
@@ -164,7 +168,9 @@ async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db)
     """
     db_user = create_user(db, user.username, user.email, user.password, user.tenant_name)
     if not db_user:
+        audit_logger.error(f"User registration failed: Username {user.username} or email {user.email} already registered.")
         raise HTTPException(status_code=400, detail="Username or email already registered.")
+    audit_logger.info(f"User registered: {user.username} (Tenant: {user.tenant_name})")
     return db_user
 
 @app.post("/token", response_model=Token)
@@ -176,6 +182,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     """
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
+        audit_logger.warning(f"Login failed: Invalid credentials for username {form_data.username}.")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -186,6 +193,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         data={"user_id": user.id, "username": user.username, "tenant_id": user.tenant_id},
         expires_delta=access_token_expires
     )
+    audit_logger.info(f"User logged in: {user.username} (Tenant: {user.tenant.name})")
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/generate_video")
@@ -195,6 +203,7 @@ async def generate_video_endpoint(request_data: GenerateVideoRequest, current_us
     // [TASK]: Video generation endpoint
     // [GOAL]: Expose video generation pipeline via API
     """
+    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_video.")
     logger.info(f"Video generation request received from user {current_user.get('user_id')} (Tenant: {current_tenant}): {request_data.dict()}")
     
     # --- F.2: Integrate Billing Middleware ---
@@ -204,9 +213,11 @@ async def generate_video_endpoint(request_data: GenerateVideoRequest, current_us
         enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="video_generation")
         logger.info(f"Billing limits checked for user {current_user.get('user_id')}. Proceeding.")
     except BillingException as e:
+        audit_logger.warning(f"Access denied: User {current_user.get('user_id')} (Tenant: {current_tenant}) exceeded billing limits for video_generation.")
         raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         logger.error(f"Unexpected error during billing check: {e}")
+        audit_logger.error(f"Internal error during billing check for user {current_user.get('user_id')} (Tenant: {current_tenant}).")
         raise HTTPException(status_code=500, detail="Internal server error during billing check.")
     # --- End F.2 ---
 
@@ -229,6 +240,7 @@ async def generate_video_endpoint(request_data: GenerateVideoRequest, current_us
     reason = orchestrator_decision["reason"]
 
     if not chosen_pipeline:
+        audit_logger.error(f"Pipeline decision failed for user {current_user.get('user_id')} (Tenant: {current_tenant}): {reason}")
         raise HTTPException(status_code=500, detail=f"Could not determine pipeline: {reason}")
 
     logger.info(f"Orchestrator decided to use pipeline: {chosen_pipeline} (Reason: {reason})")
@@ -238,6 +250,7 @@ async def generate_video_endpoint(request_data: GenerateVideoRequest, current_us
     await asyncio.sleep(2) 
 
     logger.info("Video generation request received and processing (simulated).")
+    audit_logger.info(f"Video generation simulated for user {current_user.get('user_id')} (Tenant: {current_tenant}).")
     return {"status": "success", "video_id": "simulated_video_123", "message": f"Video generation request routed to {chosen_pipeline} (simulated)."}
 
 @app.post("/generate_landing_page")
@@ -247,6 +260,7 @@ async def generate_landing_page_endpoint(request_data: GenerateLandingPageReques
     // [TASK]: Landing page generation endpoint
     // [GOAL]: Expose landing page generation service via API
     """
+    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_landing_page.")
     logger.info(f"Landing page generation request received from user {current_user.get('user_id')} (Tenant: {current_tenant}): {request_data.dict()}")
 
     # --- F.2: Integrate Billing Middleware (for landing page generation) ---
@@ -254,9 +268,11 @@ async def generate_landing_page_endpoint(request_data: GenerateLandingPageReques
         enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="landing_page_generation")
         logger.info(f"Billing limits checked for user {current_user.get('user_id')}. Proceeding.")
     except BillingException as e:
+        audit_logger.warning(f"Access denied: User {current_user.get('user_id')} (Tenant: {current_tenant}) exceeded billing limits for landing_page_generation.")
         raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         logger.error(f"Unexpected error during billing check for landing page: {e}")
+        audit_logger.error(f"Internal error during billing check for user {current_user.get('user_id')} (Tenant: {current_tenant}).")
         raise HTTPException(status_code=500, detail="Internal server error during billing check.")
     # --- End F.2 ---
 
@@ -265,8 +281,10 @@ async def generate_landing_page_endpoint(request_data: GenerateLandingPageReques
 
     if result.get("status") == "success":
         logger.info(f"Landing page generated successfully: {result.get('s3_url')}")
+        audit_logger.info(f"Landing page generated for user {current_user.get('user_id')} (Tenant: {current_tenant}).")
         return {"status": "success", "s3_url": result.get('s3_url'), "message": "Landing page generation initiated."}
     else:
+        audit_logger.error(f"Landing page generation failed for user {current_user.get('user_id')} (Tenant: {current_tenant}).")
         raise HTTPException(status_code=500, detail=f"Landing page generation failed: {result.get('message', 'Unknown error')}")
 
 @app.post("/scan_alert")
@@ -276,6 +294,7 @@ async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict
     // [TASK]: Scan alert endpoint
     // [GOAL]: Expose scan alert system via API
     """
+    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /scan_alert.")
     logger.info(f"Scan alert request received from user {current_user.get('user_id')} (Tenant: {current_tenant}): {request_data.dict()}")
 
     # --- F.2: Integrate Billing Middleware (for scan alerts) ---
@@ -283,9 +302,11 @@ async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict
         enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="scan_alert")
         logger.info(f"Billing limits checked for user {current_user.get('user_id')}. Proceeding.")
     except BillingException as e:
+        audit_logger.warning(f"Access denied: User {current_user.get('user_id')} (Tenant: {current_tenant}) exceeded billing limits for scan_alert.")
         raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         logger.error(f"Unexpected error during billing check for scan alert: {e}")
+        audit_logger.error(f"Internal error during billing check for user {current_user.get('user_id')} (Tenant: {current_tenant}).")
         raise HTTPException(status_code=500, detail="Internal server error during billing check.")
     # --- End F.2 ---
 
@@ -299,8 +320,10 @@ async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict
 
     if result.get("status") == "alert_triggered":
         logger.info(f"Scan alert triggered successfully for QR code: {result.get('qr_code_id')}")
+        audit_logger.info(f"Scan alert triggered for user {current_user.get('user_id')} (Tenant: {current_tenant}).")
         return {"status": "success", "qr_code_id": result.get('qr_code_id'), "message": "Scan alert triggered."}
     else:
+        audit_logger.error(f"Scan alert failed for user {current_user.get('user_id')} (Tenant: {current_tenant}).")
         raise HTTPException(status_code=500, detail=f"Scan alert failed: {result.get('message', 'Unknown error')}")
 
 @app.post("/crm_push_contact")
@@ -310,6 +333,7 @@ async def crm_push_contact_endpoint(request_data: CRMPushContactRequest, current
     // [TASK]: CRM push contact endpoint
     // [GOAL]: Expose CRM integration service via API
     """
+    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /crm_push_contact.")
     logger.info(f"CRM push contact request received from user {current_user.get('user_id')} (Tenant: {current_tenant}): {request_data.dict()}")
 
     # --- F.2: Integrate Billing Middleware (for CRM push) ---
@@ -317,9 +341,11 @@ async def crm_push_contact_endpoint(request_data: CRMPushContactRequest, current
         enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="crm_push_contact")
         logger.info(f"Billing limits checked for user {current_user.get('user_id')}. Proceeding.")
     except BillingException as e:
+        audit_logger.warning(f"Access denied: User {current_user.get('user_id')} (Tenant: {current_tenant}) exceeded billing limits for crm_push_contact.")
         raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         logger.error(f"Unexpected error during billing check for CRM push: {e}")
+        audit_logger.error(f"Internal error during billing check for user {current_user.get('user_id')} (Tenant: {current_tenant}).")
         raise HTTPException(status_code=500, detail="Internal server error during billing check.")
     # --- End F.2 ---
 
@@ -328,8 +354,10 @@ async def crm_push_contact_endpoint(request_data: CRMPushContactRequest, current
 
     if result.get("status") == "success":
         logger.info(f"Contact pushed to CRM successfully: {result.get('crm_response')}")
+        audit_logger.info(f"Contact pushed to CRM for user {current_user.get('user_id')} (Tenant: {current_tenant}).")
         return {"status": "success", "crm_response": result.get('crm_response'), "message": "Contact push to CRM initiated."}
     else:
+        audit_logger.error(f"Contact push to CRM failed for user {current_user.get('user_id')} (Tenant: {current_tenant}).")
         raise HTTPException(status_code=500, detail=f"Contact push to CRM failed: {result.get('message', 'Unknown error')}")
 
 # Example of a protected endpoint
@@ -339,6 +367,7 @@ async def protected_data(current_user: dict = Depends(get_current_user), current
     // [TASK]: Example of a protected endpoint
     // [GOAL]: Demonstrate JWT and tenancy integration
     """
+    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /protected_data.")
     return {"message": f"Welcome, {current_user.get('user_id')} from tenant {current_tenant}! This is protected data.", "user": current_user, "tenant": current_tenant}
 
 if __name__ == "__main__":
