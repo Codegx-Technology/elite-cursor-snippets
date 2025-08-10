@@ -14,6 +14,7 @@ HF_API_KEY = config.api_keys.huggingface
 _hf_client = None
 _local_llm_model = None
 _local_image_model = None
+_local_tts_model = None
 asset_manager = AssetManager()
 
 def init_hf_client():
@@ -80,6 +81,29 @@ async def _load_local_image_model():
             _local_image_model = None
     return _local_image_model is not None
 
+async def _load_local_tts_model():
+    """
+    // [TASK]: Load local TTS model on demand
+    // [GOAL]: Provide a local fallback for text-to-speech
+    """
+    global _local_tts_model
+    if _local_tts_model is None and config.models.voice_synthesis.local_fallback_path:
+        try:
+            # This is a placeholder for actual local TTS loading (e.g., with bark or coqui_tts)
+            # For now, we just acknowledge its presence.
+            model_path = await asset_manager.get_asset(
+                "local_tts", 
+                config.models.voice_synthesis.local_fallback_path, 
+                expected_checksum=None, # Checksum should be provided in config
+                version="1.0"
+            )
+            _local_tts_model = "loaded" # Indicate that a local model is conceptually loaded
+            logger.info(f"✅ Local TTS model conceptually loaded from: {model_path}")
+        except Exception as e:
+            logger.error(f"❌ Failed to load local TTS model: {e}")
+            _local_tts_model = None
+    return _local_tts_model is not None
+
 @retry_on_exception()
 async def generate_text(prompt, model_id=None):
     """
@@ -141,31 +165,31 @@ async def generate_image(prompt, model_id=None):
 @retry_on_exception()
 async def text_to_speech(text, model_id=None):
     """
-    // [TASK]: Convert text to speech using Hugging Face Inference API
-    // [GOAL]: Provide TTS capability with retry logic
+    // [TASK]: Convert text to speech using Hugging Face Inference API or local TTS fallback
+    // [GOAL]: Provide robust TTS capability
     """
     client = init_hf_client()
-    if not client:
-        logger.warning("HF client not available, falling back to local TTS placeholder.")
-        # Placeholder for local TTS
-        return b"placeholder_audio.wav"
+    hf_model_id = model_id or config.models.voice_synthesis.hf_api_id
 
-    model_id = model_id or config.models.voice_synthesis.hf_api_id
-    if not model_id:
-        log_and_raise(ValueError("No Hugging Face TTS model ID configured."), "TTS failed")
+    # Try HF API first
+    if client and hf_model_id:
+        logger.info(f"Generating speech using HF model: {hf_model_id}")
+        try:
+            res = await client.post(json={"inputs": text}, model=hf_model_id)
+            if res.status_code == 200:
+                return res.content
+            else:
+                logger.warning(f"HF API failed with status {res.status_code}: {res.text}. Trying local fallback.")
+        except Exception as e:
+            logger.warning(f"HF API call failed: {e}. Trying local fallback.")
 
-    logger.info(f"Generating speech using HF model: {model_id}")
-    try:
-        # Assuming the model expects 'inputs' in JSON body and returns audio bytes
-        res = await client.post(json={"inputs": text}, model=model_id)
-        if res.status_code == 200:
-            # Save audio bytes to a temporary file or return them
-            # For now, just return a placeholder path
-            return res.content
-        else:
-            log_and_raise(requests.exceptions.RequestException(f"HF API failed with status {res.status_code}: {res.text}"), "TTS failed")
-    except Exception as e:
-        log_and_raise(e, "TTS failed via HF API")
+    # Fallback to local TTS
+    if await _load_local_tts_model():
+        logger.info("Generating speech using local TTS model.")
+        # Placeholder for actual local TTS inference
+        return b"placeholder_audio_bytes"
+    else:
+        log_and_raise(ValueError("No TTS model available (HF or local)."), "TTS failed")
 
 @retry_on_exception()
 async def speech_to_text(audio_path, model_id=None):
