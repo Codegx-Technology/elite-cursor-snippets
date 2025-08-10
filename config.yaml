@@ -49,3 +49,7 @@ logging:
 
 auth:
   access_token_expire_minutes: 30 # JWT token expiry time in minutes
+
+security:
+  encryption_password: "your_super_secret_encryption_password" # CHANGE THIS IN PRODUCTION
+  encryption_salt: "a_random_salt_string_for_encryption" # CHANGE THIS IN PRODUCTION
