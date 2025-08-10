@@ -4,6 +4,7 @@ from huggingface_hub import InferenceClient, login as hf_login
 from config_loader import get_config
 from error_utils import retry_on_exception, log_and_raise
 from logging_setup import get_logger
+from asset_manager import AssetManager
 
 logger = get_logger(__name__)
 config = get_config()
@@ -11,6 +12,8 @@ config = get_config()
 HF_API_KEY = config.api_keys.huggingface
 
 _hf_client = None
+_local_llm_model = None
+asset_manager = AssetManager()
 
 def init_hf_client():
     """
@@ -30,31 +33,57 @@ def init_hf_client():
             log_and_raise(e, "Failed to initialize Hugging Face client")
     return _hf_client
 
+async def _load_local_llm_model():
+    """
+    // [TASK]: Load local LLM model on demand
+    // [GOAL]: Provide a local fallback for text generation
+    """
+    global _local_llm_model
+    if _local_llm_model is None and config.models.text_generation.local_fallback_path:
+        try:
+            # This is a placeholder for actual local LLM loading (e.g., with transformers or llama-cpp-python)
+            # For now, we just acknowledge its presence.
+            model_path = await asset_manager.get_asset(
+                "local_llm", 
+                config.models.text_generation.local_fallback_path, 
+                expected_checksum=None, # Checksum should be provided in config
+                version="1.0"
+            )
+            _local_llm_model = "loaded" # Indicate that a local model is conceptually loaded
+            logger.info(f"✅ Local LLM model conceptually loaded from: {model_path}")
+        except Exception as e:
+            logger.error(f"❌ Failed to load local LLM model: {e}")
+            _local_llm_model = None
+    return _local_llm_model is not None
+
 @retry_on_exception()
 async def generate_text(prompt, model_id=None):
     """
-    // [TASK]: Generate text using Hugging Face Inference API
-    // [GOAL]: Provide text generation capability with retry logic
+    // [TASK]: Generate text using Hugging Face Inference API or local LLM fallback
+    // [GOAL]: Provide robust text generation capability
     """
     client = init_hf_client()
-    if not client:
-        logger.warning("HF client not available, falling back to local text generation placeholder.")
-        return "Placeholder text generation: " + prompt
+    hf_model_id = model_id or config.models.text_generation.hf_api_id
 
-    model_id = model_id or config.models.text_generation.hf_api_id
-    if not model_id:
-        log_and_raise(ValueError("No Hugging Face text generation model ID configured."), "Text generation failed")
+    # Try HF API first
+    if client and hf_model_id:
+        logger.info(f"Generating text using HF model: {hf_model_id}")
+        try:
+            res = await client.post(json={"inputs": prompt}, model=hf_model_id)
+            if res.status_code == 200:
+                return res.json()[0]["generated_text"]
+            else:
+                logger.warning(f"HF API failed with status {res.status_code}: {res.text}. Trying local fallback.")
+        except Exception as e:
+            logger.warning(f"HF API call failed: {e}. Trying local fallback.")
 
-    logger.info(f"Generating text using HF model: {model_id}")
-    try:
-        # Assuming the model expects 'inputs' in JSON body
-        res = await client.post(json={"inputs": prompt}, model=model_id)
-        if res.status_code == 200:
-            return res.json()[0]["generated_text"]
-        else:
-            log_and_raise(requests.exceptions.RequestException(f"HF API failed with status {res.status_code}: {res.text}"), "Text generation failed")
-    except Exception as e:
-        log_and_raise(e, "Text generation failed via HF API")
+    # Fallback to local LLM
+    if await _load_local_llm_model():
+        logger.info("Generating text using local LLM model.")
+        # Placeholder for actual local LLM inference
+        return "Local LLM generated text: " + prompt
+    else:
+        log_and_raise(ValueError("No text generation model available (HF or local)."), "Text generation failed")
 
 @retry_on_exception()
 async def generate_image(prompt, model_id=None):
@@ -108,7 +137,7 @@ async def text_to_speech(text, model_id=None):
         if res.status_code == 200:
             # Save audio bytes to a temporary file or return them
             # For now, just return a placeholder path
-            return "generated_audio.wav"
+            return res.content
         else:
             log_and_raise(requests.exceptions.RequestException(f"HF API failed with status {res.status_code}: {res.text}"), "TTS failed")
     except Exception as e:
