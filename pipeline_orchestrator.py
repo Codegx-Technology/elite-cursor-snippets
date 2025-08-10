@@ -7,6 +7,9 @@ import offline_video_maker.generate_video
 import cartoon_anime_pipeline
 import generate_video # Original basic pipeline
 
+# Import parallel processing utilities
+from utils.parallel_processing import ParallelProcessor, SceneProcessor
+
 logger = get_logger(__name__)
 config = get_config()
 
@@ -22,6 +25,8 @@ class PipelineOrchestrator:
             "cartoon_anime_pipeline": cartoon_anime_pipeline.create_african_cartoon_video, # Reference to the main sync function
             "basic_video_generator": generate_video.create_gradio_interface # Reference to the gradio interface creator
         }
+        self.parallel_processor = ParallelProcessor() # Initialize parallel processor
+        self.scene_processor = SceneProcessor() # Initialize scene processor
         logger.info("PipelineOrchestrator initialized.")
 
     def decide_pipeline(self, input_type, user_preferences=None):

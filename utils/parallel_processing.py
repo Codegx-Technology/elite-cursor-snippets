@@ -20,6 +20,11 @@ import queue
 import psutil
 from pathlib import Path
 
+from logging_setup import get_logger
+from ai_model_manager import generate_text, generate_image, text_to_speech, speech_to_text # Import AI model manager functions
+
+logger = get_logger(__name__)
+
 class ParallelProcessor:
     """
     // [TASK]: Manage parallel scene generation
@@ -45,8 +50,8 @@ class ParallelProcessor:
             "parallel_efficiency": 0
         }
         
-        print(f"[PARALLEL] Initialized with {self.max_workers} workers")
-        print(f"[PARALLEL] GPU available: {self.gpu_available}")
+        logger.info(f"[PARALLEL] Initialized with {self.max_workers} workers")
+        logger.info(f"[PARALLEL] GPU available: {self.gpu_available}")
     
     def _check_gpu_availability(self) -> bool:
         """Check if GPU is available for processing"""
@@ -60,7 +65,7 @@ class ParallelProcessor:
         """Check current memory usage percentage"""
         return psutil.virtual_memory().percent / 100
     
-    async def process_scenes_parallel(self, scenes: List[Dict], 
+    async def process_scenes_parallel(self, scenes: List[Dict],
                                     processing_functions: Dict[str, Callable]) -> List[Dict]:
         """
         // [TASK]: Process multiple scenes in parallel
@@ -69,7 +74,7 @@ class ParallelProcessor:
         """
         start_time = time.time()
         
-        print(f"[PARALLEL] Processing {len(scenes)} scenes concurrently...")
+        logger.info(f"[PARALLEL] Processing {len(scenes)} scenes concurrently...")
         
         # Determine optimal batch size based on memory
         batch_size = self._calculate_optimal_batch_size(len(scenes))
@@ -89,13 +94,16 @@ class ParallelProcessor:
         total_time = time.time() - start_time
         self._update_processing_stats(len(scenes), total_time)
         
-        print(f"[PARALLEL] ✅ Completed {len(scenes)} scenes in {total_time:.1f}s")
-        print(f"[PARALLEL] Average: {total_time/len(scenes):.1f}s per scene")
+        logger.info(f"[PARALLEL] ✅ Completed {len(scenes)} scenes in {total_time:.1f}s")
+        logger.info(f"[PARALLEL] Average: {total_time/len(scenes):.1f}s per scene")
         
         return results
     
     def _calculate_optimal_batch_size(self, total_scenes: int) -> int:
-        """Calculate optimal batch size based on available resources"""
+        """
+        // [TASK]: Calculate optimal batch size based on available resources
+        // [GOAL]: Balance concurrency with memory constraints
+        """
         memory_usage = self._check_memory_usage()
         
         if memory_usage > 0.7:
@@ -105,9 +113,12 @@ class ParallelProcessor:
         else:
             return min(self.max_workers, total_scenes)  # Aggressive batching
     
-    async def _process_scene_batch(self, batch: List[Dict], 
+    async def _process_scene_batch(self, batch: List[Dict],
                                  processing_functions: Dict[str, Callable]) -> List[Dict]:
-        """Process a batch of scenes concurrently"""
+        """
+        // [TASK]: Process a batch of scenes concurrently
+        // [GOAL]: Efficiently manage concurrent execution of scene components
+        """
         
         # Create tasks for concurrent processing
         tasks = []
@@ -124,7 +135,7 @@ class ParallelProcessor:
         processed_results = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                print(f"[PARALLEL] ⚠️ Scene {i} failed: {result}")
+                logger.warning(f"[PARALLEL] ⚠️ Scene {i} failed: {result}")
                 # Create fallback result
                 processed_results.append({
                     "scene_id": batch[i].get("scene_id", i),
@@ -137,7 +148,7 @@ class ParallelProcessor:
         
         return processed_results
     
-    async def _process_single_scene(self, scene: Dict, 
+    async def _process_single_scene(self, scene: Dict,
                                   processing_functions: Dict[str, Callable]) -> Dict:
         """
         // [TASK]: Process individual scene with all components
@@ -149,24 +160,21 @@ class ParallelProcessor:
         
         try:
             # Step 1: Generate voice (can run independently)
-            voice_task = asyncio.create_task(
+            voice_result = await asyncio.create_task(
                 self._run_in_thread(processing_functions["voice"], scene)
             )
             
             # Step 2: Generate image (can run independently)  
-            image_task = asyncio.create_task(
+            image_result = await asyncio.create_task(
                 self._run_in_thread(processing_functions["image"], scene)
             )
-            
-            # Wait for voice and image to complete
-            voice_result, image_result = await asyncio.gather(voice_task, image_task)
             
             # Step 3: Create video (requires voice and image)
             scene["voice_file"] = voice_result
             scene["image_file"] = image_result
             
-            video_result = await self._run_in_thread(
-                processing_functions["video"], scene
+            video_result = await asyncio.create_task(
+                self._run_in_thread(processing_functions["video"], scene)
             )
             
             processing_time = time.time() - scene_start_time
@@ -181,7 +189,7 @@ class ParallelProcessor:
             }
             
         except Exception as e:
-            print(f"[PARALLEL] ❌ Scene {scene_id} processing failed: {e}")
+            logger.error(f"[PARALLEL] ❌ Scene {scene_id} processing failed: {e}")
             return {
                 "scene_id": scene_id,
                 "status": "failed",
@@ -190,13 +198,19 @@ class ParallelProcessor:
             }
     
     async def _run_in_thread(self, func: Callable, *args) -> Any:
-        """Run CPU-intensive function in thread pool"""
+        """
+        // [TASK]: Run CPU-intensive function in thread pool
+        // [GOAL]: Prevent blocking the asyncio event loop
+        """
         loop = asyncio.get_event_loop()
         with ThreadPoolExecutor(max_workers=2) as executor:
             return await loop.run_in_executor(executor, func, *args)
     
     async def _cleanup_memory(self):
-        """Clean up memory between batches"""
+        """
+        // [TASK]: Clean up memory between batches
+        // [GOAL]: Prevent memory leaks and optimize resource usage
+        """
         import gc
         gc.collect()
         
@@ -211,11 +225,14 @@ class ParallelProcessor:
         await asyncio.sleep(0.5)
     
     def _update_processing_stats(self, scenes_count: int, total_time: float):
-        """Update processing performance statistics"""
+        """
+        // [TASK]: Update processing performance statistics
+        // [GOAL]: Track and report performance metrics
+        """
         self.processing_stats["scenes_processed"] += scenes_count
         self.processing_stats["total_time"] += total_time
         self.processing_stats["average_time_per_scene"] = (
-            self.processing_stats["total_time"] / 
+            self.processing_stats["total_time"] /
             self.processing_stats["scenes_processed"]
         )
         
@@ -226,7 +243,10 @@ class ParallelProcessor:
         )
     
     def get_processing_stats(self) -> Dict:
-        """Get current processing performance statistics"""
+        """
+        // [TASK]: Get current processing performance statistics
+        // [GOAL]: Provide insights into parallel processing efficiency
+        """
         return {
             **self.processing_stats,
             "memory_usage": f"{self._check_memory_usage():.1%}",
@@ -245,64 +265,83 @@ class SceneProcessor:
         self.model_cache = model_cache
         self.temp_dir = Path("temp/parallel")
         self.temp_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"SceneProcessor initialized. Temp directory: {self.temp_dir}")
     
-    def process_voice(self, scene: Dict) -> str:
-        """Generate voice for scene"""
+    async def process_voice(self, scene: Dict) -> str:
+        """
+        // [TASK]: Generate voice for scene using ai_model_manager
+        // [GOAL]: Create audio file for scene dialogue
+        """
         scene_id = scene.get("scene_id", "unknown")
         text = scene.get("text", "")
         
-        # Placeholder for voice generation
-        voice_file = self.temp_dir / f"scene_{scene_id}_voice.wav"
+        voice_file_path = self.temp_dir / f"scene_{scene_id}_voice.wav"
         
-        # Simulate voice generation time
-        time.sleep(2)  # Replace with actual voice generation
-        
-        # Create placeholder audio file
-        voice_file.touch()
-        
-        return str(voice_file)
+        try:
+            audio_bytes = await text_to_speech(text)
+            with open(voice_file_path, "wb") as f:
+                f.write(audio_bytes)
+            logger.info(f"Generated voice for scene {scene_id}: {voice_file_path}")
+            return str(voice_file_path)
+        except Exception as e:
+            logger.error(f"Failed to generate voice for scene {scene_id}: {e}")
+            # Fallback to placeholder audio
+            voice_file_path.touch()
+            logger.warning(f"Using placeholder voice for scene {scene_id}")
+            return str(voice_file_path)
     
-    def process_image(self, scene: Dict) -> str:
-        """Generate image for scene"""
+    async def process_image(self, scene: Dict) -> str:
+        """
+        // [TASK]: Generate image for scene using ai_model_manager
+        // [GOAL]: Create image file for scene visual
+        """
         scene_id = scene.get("scene_id", "unknown")
         prompt = scene.get("image_prompt", "")
         
-        # Use cached SDXL model if available
-        if self.model_cache:
-            sdxl_model = self.model_cache.get_model("sdxl")
-            if sdxl_model:
-                # Generate with SDXL
-                pass
+        image_file_path = self.temp_dir / f"scene_{scene_id}_image.png"
         
-        image_file = self.temp_dir / f"scene_{scene_id}_image.png"
-        
-        # Simulate image generation time
-        time.sleep(3)  # Replace with actual image generation
-        
-        # Create placeholder image file
-        image_file.touch()
-        
-        return str(image_file)
+        try:
+            image_bytes = await generate_image(prompt)
+            with open(image_file_path, "wb") as f:
+                f.write(image_bytes)
+            logger.info(f"Generated image for scene {scene_id}: {image_file_path}")
+            return str(image_file_path)
+        except Exception as e:
+            logger.error(f"Failed to generate image for scene {scene_id}: {e}")
+            # Fallback to placeholder image
+            image_file_path.touch()
+            logger.warning(f"Using placeholder image for scene {scene_id}")
+            return str(image_file_path)
     
-    def process_video(self, scene: Dict) -> str:
-        """Create video from voice and image"""
+    async def process_video(self, scene: Dict) -> str:
+        """
+        // [TASK]: Create video from voice and image
+        // [GOAL]: Combine audio and visual into a scene video file
+        """
         scene_id = scene.get("scene_id", "unknown")
         voice_file = scene.get("voice_file", "")
         image_file = scene.get("image_file", "")
         
-        video_file = self.temp_dir / f"scene_{scene_id}_video.mp4"
+        video_file_path = self.temp_dir / f"scene_{scene_id}_video.mp4"
+        
+        # Placeholder for actual video creation (e.g., using moviepy)
+        # This would involve loading voice_file and image_file and combining them
         
         # Simulate video creation time
         time.sleep(1)  # Replace with actual video creation
         
         # Create placeholder video file
-        video_file.touch()
+        video_file_path.touch()
         
-        return str(video_file)
+        logger.info(f"Generated placeholder video for scene {scene_id}: {video_file_path}")
+        return str(video_file_path)
 
 # Example usage
 async def main():
-    """Test parallel processing"""
+    """
+    // [TASK]: Test parallel processing
+    // [GOAL]: Verify parallel processing functionality
+    """
     processor = ParallelProcessor(max_workers=3)
     scene_processor = SceneProcessor()
     
@@ -322,14 +361,14 @@ async def main():
     
     results = await processor.process_scenes_parallel(scenes, processing_functions)
     
-    print("\n📊 Processing Results:")
+    logger.info("\n📊 Processing Results:")
     for result in results:
-        print(f"  Scene {result['scene_id']}: {result['status']}")
+        logger.info(f"  Scene {result['scene_id']}: {result['status']}")
     
-    print("\n📈 Performance Stats:")
+    logger.info("\n📈 Performance Stats:")
     stats = processor.get_processing_stats()
     for key, value in stats.items():
-        print(f"  {key}: {value}")
+        logger.info(f"  {key}: {value}")
 
 if __name__ == "__main__":
     asyncio.run(main())
