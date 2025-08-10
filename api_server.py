@@ -7,6 +7,7 @@ import uvicorn
 from logging_setup import get_logger
 from config_loader import get_config
 from auth.jwt_utils import verify_jwt # Import verify_jwt
+from pipeline_orchestrator import PipelineOrchestrator # Import PipelineOrchestrator
 
 logger = get_logger(__name__)
 config = get_config()
@@ -16,6 +17,9 @@ app = FastAPI(
     version=config.app.version,
     description="API for Shujaa Studio - Enterprise AI Video Generation"
 )
+
+# Initialize PipelineOrchestrator
+orchestrator = PipelineOrchestrator()
 
 # OAuth2PasswordBearer for JWT token extraction
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token") # tokenUrl is a placeholder
@@ -92,22 +96,39 @@ async def health_check():
 async def generate_video_endpoint(request_data: GenerateVideoRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
     """
     // [TASK]: Video generation endpoint
-    // [GOAL]: Expose video generation pipeline via API with authentication and tenancy
+    // [GOAL]: Expose video generation pipeline via API
     """
     logger.info(f"Video generation request received from user {current_user.get('user_id')} (Tenant: {current_tenant}): {request_data.dict()}")
-    
-    # This is a placeholder. In a real scenario, this would call
-    # the pipeline_orchestrator or news_video_generator directly.
-    # For now, just simulate success.
     
     if not request_data.prompt and not request_data.news_url and not request_data.script_file:
         raise HTTPException(status_code=400, detail="Either 'prompt', 'news_url', or 'script_file' must be provided.")
 
+    # Determine input type for orchestrator
+    input_type = "general_prompt"
+    input_data = request_data.prompt
+    if request_data.news_url:
+        input_type = "news_url"
+        input_data = request_data.news_url
+    elif request_data.script_file:
+        input_type = "script_file"
+        input_data = request_data.script_file
+
+    # Call the orchestrator to run the appropriate pipeline
+    orchestrator_decision = orchestrator.decide_pipeline(input_type)
+    chosen_pipeline = orchestrator_decision["chosen"]
+    reason = orchestrator_decision["reason"]
+
+    if not chosen_pipeline:
+        raise HTTPException(status_code=500, detail=f"Could not determine pipeline: {reason}")
+
+    logger.info(f"Orchestrator decided to use pipeline: {chosen_pipeline} (Reason: {reason})")
+
+    # For now, orchestrator.run_pipeline is still dry-run. Actual execution will be integrated later.
     # Simulate processing time
     await asyncio.sleep(2) 
 
-    logger.info("Video generation simulated successfully.")
-    return {"status": "success", "video_id": "simulated_video_123", "message": "Video generation request received and processing (simulated)."}
+    logger.info("Video generation request received and processing (simulated).")
+    return {"status": "success", "video_id": "simulated_video_123", "message": f"Video generation request routed to {chosen_pipeline} (simulated)."}
 
 # Example of a protected endpoint
 @app.get("/protected_data")
