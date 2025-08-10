@@ -1,18 +1,11 @@
-#!/usr/bin/env python3
-"""
-// [TASK]: Integrate Hugging Face Inference APIs for video generation
-// [GOAL]: Use Bark, Whisper, and LLaMA 3 APIs for voice, captions, and scenes
-// [SNIPPET]: thinkwithai + refactorclean + kenyafirst
-"""
-
 import argparse
 import os
-from logging_setup import get_logger; logger=get_logger(__name__)
 import random
-import requests
+# import requests # Removed direct requests import
 from bs4 import BeautifulSoup
 from PIL import Image, ImageDraw, ImageFont
-from moviepy.editor import ImageClip, concatenate_videoclips, AudioFileClip, CompositeAudioClip, TextClip
+# from moviepy.editor import ImageClip, concatenate_videoclips, AudioFileClip, CompositeAudioClip, TextClip
+from moviepy.editor import *
 import moviepy.audio.fx.all as afx
 from dotenv import load_dotenv
 import asyncio
@@ -24,7 +17,7 @@ import sys
 from huggingface_hub import login as hf_login
 
 # For YouTube Upload
-from google_auth_oauthlib.flow import InstalledAppedFlow
+from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -32,9 +25,14 @@ from googleapiclient.http import MediaFileUpload
 
 # Import the new GPU management classes
 from gpu_fallback import ShujaaGPUIntegration, TaskProfile, ProcessingMode, HybridGPUManager
+from ai_model_manager import generate_text, generate_image as ai_generate_image, text_to_speech, speech_to_text, init_hf_client
+from logging_setup import get_logger; logger=get_logger(__name__)
+from config_loader import get_config
+
+config = get_config()
 
 load_dotenv()
-HF_API_KEY = os.getenv("HF_API_KEY")
+HF_API_KEY = config.api_keys.huggingface # Get HF API key from config_loader
 
 # Initialize GPU integration manager
 gpu_integration = ShujaaGPUIntegration()
@@ -53,7 +51,7 @@ def fetch_article(url):
             return article.get_text(separator="\n\n", strip=True)
         return soup.body.get_text(separator="\n\n", strip=True)
     except Exception as e:
-        print(f"[ERROR] Failed to fetch article: {e}")
+        logger.error(f"Failed to fetch article: {e}")
         return None
 
 def fetch_google_news(query="breaking news", num_results=1):
@@ -70,7 +68,7 @@ def fetch_google_news(query="breaking news", num_results=1):
             return {"title": entry.title, "link": entry.link}
         return None
     except Exception as e:
-        print(f"[ERROR] Failed to fetch Google News: {e}")
+        logger.error(f"Failed to fetch Google News: {e}")
         return None
 
 def read_script(file_path):
@@ -82,7 +80,7 @@ def read_script(file_path):
         with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
     except Exception as e:
-        print(f"[ERROR] Failed to read script file: {e}")
+        logger.error(f"Failed to read script file: {e}")
         return None
 
 async def generate_scenes_from_text(text):
@@ -90,9 +88,9 @@ async def generate_scenes_from_text(text):
     // [TASK]: Generate scenes from text using LLaMA 3 API via HybridGPUManager
     // [GOAL]: Create a list of strings, where each string is a scene
     """
-    API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
-    headers = {"Authorization": f"Bearer {HF_API_KEY}"}
-    data = {"inputs": f"Split the following text into a list of short, descriptive scenes for a video. Each scene should be a single sentence. Text: {text}"}
+    # API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2" # Moved to config
+    # headers = {"Authorization": f"Bearer {HF_API_KEY}"}
+    # data = {"inputs": f"Split the following text into a list of short, descriptive scenes for a video. Each scene should be a single sentence. Text: {text}"}
 
     task_profile = TaskProfile(
         task_type="text_generation",
@@ -107,20 +105,20 @@ async def generate_scenes_from_text(text):
         # This function will be executed by the HybridGPUManager
         # We only use HF API for now, so device argument is not directly used here
         try:
-            response = requests.post(API_URL, headers=headers, json=input_data)
-            response.raise_for_status()
-            scenes = response.json()[0]["generated_text"].split("\n")
+            # Use ai_model_manager.generate_text
+            generated_text = await generate_text(input_data["inputs"], model_id=config.models.text_generation.hf_api_id)
+            scenes = generated_text.split("\n")
             return [s.strip() for s in scenes if s.strip()]
         except Exception as e:
-            print(f"[ERROR] LLaMA 3 API call failed: {e}")
+            logger.error(f"LLaMA 3 API call failed: {e}")
             raise # Re-raise to trigger fallback if any
 
     try:
         # Use HybridGPUManager to process the task
-        scenes = await gpu_manager.process_task(task_profile, _llm_api_call, data)
+        scenes = await gpu_manager.process_task(task_profile, _llm_api_call, {"inputs": f"Split the following text into a list of short, descriptive scenes for a video. Each scene should be a single sentence. Text: {text}"})
         return scenes
     except Exception as e:
-        print(f"[WARNING] Falling back to local sentence splitting for scenes: {e}")
+        logger.warning(f"Falling back to local sentence splitting for scenes: {e}")
         # Fallback to simple sentence splitting if LLaMA 3 fails
         sentences = text.split(".")
         return [s.strip() for s in sentences if s.strip()]
@@ -131,11 +129,13 @@ async def generate_image(scene_text, output_path):
     // [GOAL]: Create an image file for the scene
     """
     try:
-        # Use the accelerated image generation from gpu_fallback.py
-        generated_image_path = await gpu_integration.accelerated_image_generation(scene_text, output_path)
-        if generated_image_path:
-            print(f"  Image generated: {generated_image_path}")
-            return generated_image_path
+        # Use ai_model_manager.generate_image
+        image_bytes = await ai_generate_image(scene_text, model_id=config.models.image_generation.hf_api_id)
+        if image_bytes:
+            with open(output_path, "wb") as f:
+                f.write(image_bytes)
+            logger.info(f"  Image generated: {output_path}")
+            return output_path
         else:
             # Fallback to simple placeholder if accelerated generation fails
             width, height = 1280, 720
@@ -164,10 +164,10 @@ async def generate_image(scene_text, output_path):
                 draw.text((x, y_offset), line, fill="white", font=font)
                 y_offset += 50
             img.save(output_path)
-            print(f"  Placeholder image generated: {output_path}")
+            logger.info(f"  Placeholder image generated: {output_path}")
             return output_path
     except Exception as e:
-        print(f"[ERROR] Failed to generate image: {e}")
+        logger.error(f"Failed to generate image: {e}")
         return None
 
 async def generate_voiceover_from_text(text, output_file):
@@ -175,9 +175,9 @@ async def generate_voiceover_from_text(text, output_file):
     // [TASK]: Generate a voiceover from text using Bark API via HybridGPUManager
     // [GOAL]: Create a WAV file with the voiceover
     """
-    API_URL = "https://api-inference.huggingface.co/models/suno/bark"
-    headers = {"Authorization": f"Bearer {HF_API_KEY}"}
-    data = {"inputs": text}
+    # API_URL = "https://api-inference.huggingface.co/models/suno/bark" # Moved to config
+    # headers = {"Authorization": f"Bearer {HF_API_KEY}"}
+    # data = {"inputs": text}
 
     task_profile = TaskProfile(
         task_type="voice_synthesis",
@@ -190,31 +190,31 @@ async def generate_voiceover_from_text(text, output_file):
 
     async def _bark_api_call(input_data, device="cpu"):
         try:
-            response = requests.post(API_URL, headers=headers, json=input_data)
-            response.raise_for_status()
+            # Use ai_model_manager.text_to_speech
+            audio_bytes = await text_to_speech(input_data["inputs"], model_id=config.models.voice_synthesis.hf_api_id)
             with open(output_file, "wb") as f:
-                f.write(response.content)
+                f.write(audio_bytes)
             return output_file
         except Exception as e:
-            print(f"[ERROR] Bark API call failed: {e}")
+            logger.error(f"Bark API call failed: {e}")
             raise # Re-raise to trigger fallback if any
 
     try:
         # Use HybridGPUManager to process the task
-        voiceover_path = await gpu_manager.process_task(task_profile, _bark_api_call, data)
-        print(f"Voiceover generated: {voiceover_path}")
+        voiceover_path = await gpu_manager.process_task(task_profile, _bark_api_call, {"inputs": text})
+        logger.info(f"Voiceover generated: {voiceover_path}")
         return voiceover_path
     except Exception as e:
-        print(f"[WARNING] Falling back to gTTS for voiceover: {e}")
+        logger.warning(f"Falling back to gTTS for voiceover: {e}")
         # Fallback to gTTS if Bark fails
         from gtts import gTTS
         try:
             tts = gTTS(text)
             tts.save(output_file)
-            print(f"Voiceover generated (gTTS fallback): {output_file}")
+            logger.info(f"Voiceover generated (gTTS fallback): {output_file}")
             return output_file
         except Exception as gtts_e:
-            print(f"[ERROR] gTTS fallback failed: {gtts_e}")
+            logger.error(f"gTTS fallback failed: {gtts_e}")
             return None
 
 async def generate_captions_from_audio(audio_file):
@@ -222,8 +222,8 @@ async def generate_captions_from_audio(audio_file):
     // [TASK]: Generate captions from an audio file using Whisper API via HybridGPUManager
     // [GOAL]: Return the captions as a string
     """
-    API_URL = "https://api-inference.huggingface.co/models/openai/whisper-large-v2"
-    headers = {"Authorization": f"Bearer {HF_API_KEY}"}
+    # API_URL = "https://api-inference.huggingface.co/models/openai/whisper-large-v2" # Moved to config
+    # headers = {"Authorization": f"Bearer {HF_API_KEY}"}
     
     task_profile = TaskProfile(
         task_type="speech_to_text",
@@ -236,11 +236,11 @@ async def generate_captions_from_audio(audio_file):
 
     async def _whisper_api_call(audio_data, device="cpu"):
         try:
-            response = requests.post(API_URL, headers=headers, data=audio_data)
-            response.raise_for_status()
-            return response.json().get("text", "")
+            # Use ai_model_manager.speech_to_text
+            captions = await speech_to_text(audio_data, model_id=config.models.speech_to_text.hf_api_id)
+            return captions
         except Exception as e:
-            print(f"[ERROR] Whisper API call failed: {e}")
+            logger.error(f"Whisper API call failed: {e}")
             raise # Re-raise to trigger fallback if any
 
     try:
@@ -250,7 +250,7 @@ async def generate_captions_from_audio(audio_file):
         captions = await gpu_manager.process_task(task_profile, _whisper_api_call, audio_data)
         return captions
     except Exception as e:
-        print(f"[WARNING] Falling back to empty captions: {e}")
+        logger.warning(f"Falling back to empty captions: {e}")
         return ""
 
 def get_background_music(music_dir="music"):
@@ -284,10 +284,10 @@ async def compile_video(image_files, audio_file, music_file, captions, output_fi
             caption_clip = TextClip(captions, fontsize=24, color='white', bg_color='black').set_pos(('center', 'bottom')).set_duration(video.duration)
             video = CompositeVideoClip([video, caption_clip])
         video.write_videofile(output_file, fps=24)
-        print(f"Video compiled: {output_file}")
+        logger.info(f"Video compiled: {output_file}")
         return output_file
     except Exception as e:
-        print(f"[ERROR] Failed to compile video: {e}")
+        logger.error(f"Failed to compile video: {e}")
         return None
 
 # YouTube Upload Automation
@@ -337,9 +337,9 @@ async def youtube_upload(video_file, title, description, tags):
         media_body=media_file
     )
 
-    print("Uploading video to YouTube...")
+    logger.info("Uploading video to YouTube...")
     response = request.execute()
-    print(f"✅ Uploaded to YouTube: https://youtu.be/{response['id']}")
+    logger.info(f"✅ Uploaded to YouTube: https://youtu.be/{response['id']}")
     return response['id']
 
 async def main():
@@ -353,18 +353,8 @@ async def main():
     parser.add_argument("--upload-youtube", action="store_true", help="Upload the generated video to YouTube")
     args = parser.parse_args()
 
-    if not HF_API_KEY:
-        print("[ERROR] Hugging Face API key not found. Please set the HF_API_KEY environment variable.")
-        return
-
-    # Hugging Face Login
-    try:
-        hf_login(token=HF_API_KEY)
-        print("✅ Hugging Face logged in.")
-    except Exception as e:
-        print(f"[ERROR] Hugging Face login failed: {e}")
-        print("Please check your HF_API_KEY.")
-        return
+    # Initialize HF client (will log in if HF_API_KEY is set)
+    init_hf_client()
 
     # Runtime Detection
     runtime = "Local"
@@ -374,32 +364,32 @@ async def main():
         runtime = "Kaggle"
     elif "spaces" in os.getcwd():
         runtime = "HuggingFace Space"
-    print(f" Running on: {runtime}")
+    logger.info(f" Running on: {runtime}")
 
     # The device is now managed by ShujaaGPUIntegration
-    print(f"GPU Integration Status: {gpu_integration.get_integration_status()}")
+    logger.info(f"GPU Integration Status: {gpu_integration.get_integration_status()}")
 
     text_content = None
     if args.news:
-        print(f"Fetching news for query: {args.news}")
+        logger.info(f"Fetching news for query: {args.news}")
         news_item = fetch_google_news(args.news) # Use fetch_google_news for news mode
         if news_item:
-            print(f"News found: {news_item["title"]}")
+            logger.info(f"News found: {news_item["title"]}")
             text_content = fetch_article(news_item["link"]) # Fetch full article content
         else:
-            print("[ERROR] No news found for the given query.")
+            logger.error("No news found for the given query.")
             return
     elif args.script:
-        print(f"Reading script from: {args.script}")
+        logger.info(f"Reading script from: {args.script}")
         text_content = read_script(args.script)
     else:
-        print("Please provide either a news URL or a script file.")
+        logger.error("Please provide either a news URL or a script file.")
         return
 
     if text_content:
-        print("Content processed successfully. Generating video...")
+        logger.info("Content processed successfully. Generating video...")
         scenes = await generate_scenes_from_text(text_content)
-        output_dir = "output"
+        output_dir = config.video.output_dir # Get from config
         os.makedirs(output_dir, exist_ok=True)
 
         image_files = []
@@ -414,15 +404,15 @@ async def main():
 
         captions = await generate_captions_from_audio(voiceover_file)
 
-        music_file = get_background_music()
+        music_file = get_background_music(config.video.music_dir) # Get from config
 
         output_file = os.path.join(output_dir, "final_video.mp4")
         await compile_video(image_files, voiceover_file, music_file, captions, output_file)
 
-        print(f"🎉 Video generation complete! Output: {output_file}")
+        logger.info(f"🎉 Video generation complete! Output: {output_file}")
 
         if args.upload_youtube:
-            print("Attempting to upload to YouTube...")
+            logger.info("Attempting to upload to YouTube...")
             # For demonstration, using placeholder title, description, tags
             video_title = news_item["title"] if args.news and news_item else "AI Generated News Video"
             video_description = f"AI-generated news report based on: {text_content[:200]}..."
