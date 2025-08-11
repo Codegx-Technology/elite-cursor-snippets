@@ -11,6 +11,11 @@ class Tenant(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
     plan = Column(String, default="free")
+    # New branding fields
+    theme_name = Column(String, default="default")
+    primary_color = Column(String, default="#667eea") # Example default color
+    logo_url = Column(String, nullable=True)
+    custom_domain = Column(String, unique=True, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     users = relationship("User", back_populates="tenant")

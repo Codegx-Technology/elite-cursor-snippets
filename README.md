@@ -152,6 +152,14 @@ pip install -r requirements.txt
 python generate_video.py
 ```
 
+## 📄 Legal & Compliance
+
+Shujaa Studio is committed to user privacy and data protection. Please review our policies:
+
+*   [Privacy Policy](docs/PRIVACY_POLICY.md)
+*   [Terms of Service](docs/TERMS_OF_SERVICE.md)
+*   [GDPR Compliance Statement](docs/GDPR_COMPLIANCE.md)
+
 ## 📄 License
 
 MIT License - Free for African content creators

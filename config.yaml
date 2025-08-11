@@ -4,6 +4,10 @@ app:
   version: "0.1.0"
   environment: "development" # development, staging, production
   database_name: "shujaa_db" # Name of the SQLite database file
+  cdn_endpoints: # List of CDN endpoints for asset fallback
+    - "https://cdn1.example.com/assets/"
+    - "https://cdn2.example.com/assets/"
+    - "https://fallback.example.com/assets/"
 
 # API Keys and Credentials (sensitive, loaded from .env or secrets management)
 api_keys:

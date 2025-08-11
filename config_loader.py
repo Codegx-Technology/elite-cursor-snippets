@@ -51,22 +51,43 @@ class ConfigLoader:
             else:
                 return get_secret_value_response['SecretBinary'].decode('utf-8')
 
+    def _get_secret_from_secrets_manager(self, secret_type: str, secret_path: str, **kwargs) -> str:
+        """
+        // [TASK]: Dispatch secret retrieval to appropriate secrets manager
+        // [GOAL]: Provide a unified interface for fetching secrets from various sources
+        // [ELITE_CURSOR_SNIPPET]: securitycheck
+        """
+        if secret_type == "aws_secrets_manager":
+            region_name = kwargs.get("region_name", os.environ.get("AWS_REGION", "us-east-1"))
+            return self._get_secret_from_aws_secrets_manager(secret_path, region_name)
+        elif secret_type == "hashicorp_vault":
+            logger.warning("HashiCorp Vault integration is conceptual. Implement actual Vault client here.")
+            # Example: return vault_client.read(secret_path)['data']['value']
+            raise NotImplementedError(f"HashiCorp Vault integration not implemented for {secret_path}")
+        elif secret_type == "kubernetes_secret":
+            logger.warning("Kubernetes Secret integration is conceptual. Implement actual K8s client here.")
+            # Example: return k8s_client.read_secret(secret_path)
+            raise NotImplementedError(f"Kubernetes Secret integration not implemented for {secret_path}")
+        else:
+            raise ValueError(f"Unsupported secret type: {secret_type}")
+
     def _process_config(self, config_map, prefix="SHUJAA_"):
         for key, value in config_map.items():
             env_var_name = f"{prefix}{key.upper()}"
             if isinstance(value, DotMap):
                 self._process_config(value, f"{env_var_name}_")
-            elif isinstance(value, str) and value.startswith("aws_secret:"):
-                # Handle AWS Secrets Manager values like aws_secret:my/secret/name
+            elif isinstance(value, str) and value.startswith("secret:"):
+                # Handle generic secret values like secret:aws_secrets_manager:my/secret/name
                 try:
-                    secret_path = value.split("aws_secret:")[1]
-                    # Assuming region is configured in AWS credentials or environment
-                    # For explicit region, you might add it to config.yaml
-                    region_name = os.environ.get("AWS_REGION", "us-east-1") # Default region
-                    config_map[key] = self._get_secret_from_aws_secrets_manager(secret_path, region_name)
-                    logger.info(f"Successfully loaded secret for {key} from AWS Secrets Manager.")
+                    parts = value.split(":")
+                    if len(parts) < 3:
+                        raise ValueError("Invalid secret format. Expected 'secret:<type>:<path>'")
+                    secret_type = parts[1]
+                    secret_path = ":".join(parts[2:]) # Rejoin path in case it contains colons
+                    config_map[key] = self._get_secret_from_secrets_manager(secret_type, secret_path)
+                    logger.info(f"Successfully loaded secret for {key} from {secret_type}.")
                 except Exception as e:
-                    logger.warning(f"Failed to load secret for {key} from AWS Secrets Manager: {e}. Falling back to environment variable.")
+                    logger.warning(f"Failed to load secret for {key} from secrets manager: {e}. Falling back to environment variable.")
                     config_map[key] = os.environ.get(env_var_name, "") # Fallback to env var
             elif isinstance(value, str) and value.startswith("${{") and value.endswith("}"):
                 # Handle sensitive values like ${HF_API_KEY}

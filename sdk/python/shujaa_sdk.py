@@ -124,6 +124,16 @@ class ShujaaSDK:
         """Deletes the current user's data."""
         return self._request("DELETE", "/users/me/data/delete")
 
+    def get_protected_data(self) -> Dict:
+        """Retrieves protected data from the API."""
+        return self._request("GET", "/protected_data")
+
+    def inject_chaos(self, scenario_type: str, duration_ms: Optional[int] = None, duration_s: Optional[int] = None, intensity: Optional[float] = None, size_mb: Optional[int] = None, probability: Optional[float] = None) -> Dict:
+        """Injects a chaos scenario into the system (admin access required)."""
+        data = {k: v for k, v in locals().items() if k not in ['self', 'scenario_type'] and v is not None}
+        data["scenario_type"] = scenario_type # Ensure scenario_type is included
+        return self._request("POST", "/admin/chaos/inject", data=data)
+
 # Example Usage (for testing)
 if __name__ == "__main__":
     BASE_URL = "http://localhost:8000" # Replace with your API base URL

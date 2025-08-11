@@ -35,6 +35,7 @@ def get_tenant(request: Request, db: Session = Depends(get_db)) -> Tenant:
     if tenant is None:
         raise HTTPException(status_code=404, detail="Tenant not found")
         
+    # Note: The returned Tenant object now includes branding fields (theme_name, primary_color, logo_url, custom_domain)
     return tenant
 
 # Alias for dependency

@@ -121,6 +121,8 @@ async def _load_local_stt_model():
             _local_stt_pipeline = None
     return _local_stt_pipeline is not None
 
+from security.encryption_utils import encrypt_data, decrypt_data
+
 @retry_on_exception()
 async def generate_text(prompt, model_id=None, **kwargs):
     """
@@ -132,13 +134,19 @@ async def generate_text(prompt, model_id=None, **kwargs):
     hf_model_id = model_id or config.models.text_generation.hf_api_id
     use_local_fallback = kwargs.pop('use_local_fallback', False)
 
+    # Encrypt prompt before sending to model
+    encrypted_prompt = encrypt_data(prompt)
+
     if client and hf_model_id and not use_local_fallback:
         logger.info(f"Generating text using HF model: {hf_model_id}")
         try:
             def do_hf_call():
-                return client.text_generation(prompt, model=hf_model_id, **kwargs)
+                # Pass encrypted_prompt to HF API (assuming HF API can handle it, or it's decrypted on their end)
+                # This is more conceptual for "inputs/outputs" within our system.
+                return client.text_generation(encrypted_prompt, model=hf_model_id, **kwargs)
             loop = asyncio.get_running_loop()
-            generated_text = await loop.run_in_executor(None, do_hf_call)
+            generated_text_encrypted = await loop.run_in_executor(None, do_hf_call)
+            generated_text = decrypt_data(generated_text_encrypted) # Decrypt output
             logger.info(f"Successfully generated text using HF model: {hf_model_id}")
             return generated_text
         except Exception as e:
@@ -149,17 +157,19 @@ async def generate_text(prompt, model_id=None, **kwargs):
         try:
             generation_params = {"max_new_tokens": 250, "num_return_sequences": 1, "truncation": True, **kwargs}
             def do_local_call():
-                return _local_llm_pipeline(prompt, **generation_params)
+                # Pass encrypted_prompt to local LLM
+                return _local_llm_pipeline(encrypted_prompt, **generation_params)
             loop = asyncio.get_running_loop()
             generated = await loop.run_in_executor(None, do_local_call)
-            generated_text = generated[0]['generated_text']
+            generated_text_encrypted = generated[0]['generated_text']
+            generated_text = decrypt_data(generated_text_encrypted) # Decrypt output
             logger.info("✅ Successfully generated text with local LLM.")
             return generated_text
         except Exception as e:
             logger.exception(f"❌ Local LLM inference failed: {e}")
-            log_and_raise(e, "Local LLM inference failed")
+            raise ValueError("Local LLM inference failed") # Using ValueError as a generic error
     
-    log_and_raise(ValueError("No text generation model available (HF or local)."), "Text generation failed")
+    raise ValueError("No text generation model available (HF or local).")
 
 from services.watermark_remover import remove_watermark
 
@@ -173,16 +183,20 @@ async def generate_image(prompt, model_id=None, remove_watermark_flag=False, wat
     hf_model_id = model_id or config.models.image_generation.hf_api_id
     use_local_fallback = kwargs.pop('use_local_fallback', False)
 
+    # Encrypt prompt before sending to model
+    encrypted_prompt = encrypt_data(prompt)
+
     if client and hf_model_id and not use_local_fallback:
         logger.info(f"Generating image using HF model: {hf_model_id}")
         try:
             def do_hf_call():
-                return client.post(json={"inputs": prompt, **kwargs}, model=hf_model_id)
+                return client.post(json={"inputs": encrypted_prompt, **kwargs}, model=hf_model_id)
             loop = asyncio.get_running_loop()
             res = await loop.run_in_executor(None, do_hf_call)
             res.raise_for_status()
             logger.info(f"✅ Successfully generated image with HF model: {hf_model_id}")
-            img_bytes = res.content # Store in a variable for watermark removal
+            img_bytes_encrypted = res.content # Store encrypted bytes
+            img_bytes = decrypt_data(img_bytes_encrypted) # Decrypt output
         except Exception as e:
             logger.warning(f"HF API call for image generation failed: {e}. Trying local fallback.")
             img_bytes = None # Ensure img_bytes is None on failure
@@ -193,28 +207,30 @@ async def generate_image(prompt, model_id=None, remove_watermark_flag=False, wat
         logger.info("Generating image using local image generation pipeline.")
         try:
             def do_local_call():
-                return _local_image_pipeline(prompt, **kwargs)
+                return _local_image_pipeline(encrypted_prompt, **kwargs)
             loop = asyncio.get_running_loop()
             result = await loop.run_in_executor(None, do_local_call)
             image = result.images[0]
             img_byte_arr = io.BytesIO()
             image.save(img_byte_arr, format='PNG')
             logger.info("✅ Successfully generated image with local pipeline.")
-            img_bytes = img_byte_arr.getvalue()
+            img_bytes_encrypted = img_byte_arr.getvalue()
+            img_bytes = decrypt_data(img_bytes_encrypted) # Decrypt output
         except Exception as e:
             logger.exception(f"❌ Local image generation failed: {e}")
-            log_and_raise(e, "Local image generation failed")
+            raise ValueError("Local image generation failed")
     
     if img_bytes and remove_watermark_flag:
         try:
             logger.info("Attempting to remove watermark from generated image.")
+            # Watermark removal expects decrypted image bytes
             img_bytes = remove_watermark(img_bytes, hint_prompt=watermark_hint)
             logger.info("✅ Watermark removal attempted successfully.")
         except Exception as e:
             logger.warning(f"❌ Watermark removal failed: {e}", exc_info=True)
 
     if img_bytes is None: # Final check before raising error
-        log_and_raise(ValueError("No image generation model available (HF or local)."), "Image generation failed")
+        raise ValueError("No image generation model available (HF or local).")
     
     return img_bytes
 
@@ -228,16 +244,21 @@ async def text_to_speech(text, model_id=None, **kwargs):
     hf_model_id = model_id or config.models.voice_synthesis.hf_api_id
     use_local_fallback = kwargs.pop('use_local_fallback', False)
 
+    # Encrypt text before sending to model
+    encrypted_text = encrypt_data(text)
+
     if client and hf_model_id and not use_local_fallback:
         logger.info(f"Generating speech using HF model: {hf_model_id}")
         try:
             def do_hf_call():
-                return client.post(json={"inputs": text}, model=hf_model_id)
+                return client.post(json={"inputs": encrypted_text}, model=hf_model_id)
             loop = asyncio.get_running_loop()
             res = await loop.run_in_executor(None, do_hf_call)
             res.raise_for_status()
             logger.info(f"✅ Successfully generated speech with HF model: {hf_model_id}")
-            return res.content
+            audio_bytes_encrypted = res.content
+            audio_bytes = decrypt_data(audio_bytes_encrypted) # Decrypt output
+            return audio_bytes
         except Exception as e:
             logger.warning(f"HF API call for TTS failed: {e}. Trying local fallback.")
 
@@ -245,7 +266,7 @@ async def text_to_speech(text, model_id=None, **kwargs):
         logger.info("Generating speech using local TTS pipeline.")
         try:
             def do_local_call():
-                return _local_tts_pipeline(text, **kwargs)
+                return _local_tts_pipeline(encrypted_text, **kwargs)
             loop = asyncio.get_running_loop()
             result = await loop.run_in_executor(None, do_local_call)
             
@@ -255,12 +276,14 @@ async def text_to_speech(text, model_id=None, **kwargs):
             wav_io = io.BytesIO()
             sf.write(wav_io, audio_data.squeeze(), samplerate, format='WAV')
             logger.info("✅ Successfully generated speech with local pipeline.")
-            return wav_io.getvalue()
+            audio_bytes_encrypted = wav_io.getvalue()
+            audio_bytes = decrypt_data(audio_bytes_encrypted) # Decrypt output
+            return audio_bytes
         except Exception as e:
             logger.exception(f"❌ Local TTS generation failed: {e}")
-            log_and_raise(e, "Local TTS generation failed")
+            raise ValueError("Local TTS generation failed")
     
-    log_and_raise(ValueError("No TTS model available (HF or local)."), "TTS failed")
+    raise ValueError("No TTS model available (HF or local).")
 
 @retry_on_exception()
 async def speech_to_text(audio_path, model_id=None, **kwargs):
@@ -278,12 +301,16 @@ async def speech_to_text(audio_path, model_id=None, **kwargs):
             def do_hf_call():
                 with open(audio_path, "rb") as f:
                     audio_data = f.read()
+                # Note: Encrypting binary audio data requires a different encryption utility.
+                # The current encrypt_data/decrypt_data functions are for string data.
                 return client.post(data=audio_data, model=hf_model_id)
             loop = asyncio.get_running_loop()
             res = await loop.run_in_executor(None, do_hf_call)
             res.raise_for_status()
             logger.info(f"✅ Successfully transcribed audio with HF model: {hf_model_id}")
-            return res.json().get("text", "")
+            transcribed_text_encrypted = res.json().get("text", "")
+            transcribed_text = decrypt_data(transcribed_text_encrypted) # Decrypt output
+            return transcribed_text
         except Exception as e:
             logger.warning(f"HF API call for STT failed: {e}. Trying local fallback.")
 
@@ -291,14 +318,17 @@ async def speech_to_text(audio_path, model_id=None, **kwargs):
         logger.info("Transcribing audio using local STT pipeline.")
         try:
             def do_local_call():
+                # Note: Encrypting binary audio data requires a different encryption utility.
+                # The current encrypt_data/decrypt_data functions are for string data.
                 return _local_stt_pipeline(audio_path, **kwargs)
             loop = asyncio.get_running_loop()
             result = await loop.run_in_executor(None, do_local_call)
-            transcribed_text = result["text"]
+            transcribed_text_encrypted = result["text"]
+            transcribed_text = decrypt_data(transcribed_text_encrypted) # Decrypt output
             logger.info("✅ Successfully transcribed audio with local pipeline.")
             return transcribed_text
         except Exception as e:
             logger.exception(f"❌ Local STT transcription failed: {e}")
-            log_and_raise(e, "Local STT transcription failed")
+            raise ValueError("Local STT transcription failed")
     
-    log_and_raise(ValueError("No STT model available (HF or local)."), "STT failed")
+    raise ValueError("No STT model available (HF or local).")

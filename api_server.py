@@ -288,6 +288,89 @@ async def get_user_usage(current_user: dict = Depends(get_current_user)):
         "remaining_daily_usage": max(0, current_plan.max_requests_per_day - daily_usage)
     }
 
+@app.put("/tenants/me/branding")
+async def update_tenant_branding(
+    branding_data: TenantBrandingUpdate,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    # // [TASK]: Implement API endpoint for updating tenant branding
+    # // [GOAL]: Allow tenants to customize their branding (theme, logo, custom domain)
+    # // [ELITE_CURSOR_SNIPPET]: aihandle
+    tenant_id = current_user.tenant_id
+    tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+
+    # Update branding fields
+    update_data = branding_data.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(tenant, key, value)
+    
+    db.add(tenant)
+    db.commit()
+    db.refresh(tenant)
+
+    audit_logger.info(f"Tenant branding updated for tenant ID: {tenant_id}", extra={'user_id': current_user.id, 'tenant_id': tenant_id})
+    return {"message": "Tenant branding updated successfully", "tenant_id": tenant_id}
+
+@app.get("/reports/sla/{tenant_id}/{month}")
+async def get_sla_report(tenant_id: str, month: str, current_user: User = Depends(get_current_active_user)):
+    # // [TASK]: Implement API endpoint for SLA reports
+    # // [GOAL]: Provide tenants with their service level agreement performance
+    # // [ELITE_CURSOR_SNIPPET]: aihandle
+    # In a real system, ensure user has permission to view this tenant's SLA
+    if str(current_user.tenant_id) != tenant_id and current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized to view this tenant's SLA.")
+    
+    record = sla_tracker.get_sla_record(tenant_id, month)
+    if not record:
+        raise HTTPException(status_code=404, detail="SLA record not found for specified tenant and month.")
+    return record
+
+@app.get("/reports/billing/transactions/{user_id}")
+async def get_billing_transactions(user_id: str, current_user: User = Depends(get_current_active_user)):
+    # // [TASK]: Implement API endpoint for billing transactions
+    # // [GOAL]: Provide users with their billing history
+    # // [ELITE_CURSOR_SNIPPET]: aihandle
+    # In a real system, fetch from database
+    if str(current_user.id) != user_id and current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized to view these transactions.")
+    
+    # Return mock data for now
+    return [
+        {"transaction_id": "mock_txn_1", "amount": 25.0, "currency": "KES", "timestamp": datetime.utcnow().isoformat(), "provider": "Mpesa"},
+        {"transaction_id": "mock_txn_2", "amount": 19.99, "currency": "USD", "timestamp": datetime.utcnow().isoformat(), "provider": "Stripe"}
+    ]
+
+@app.get("/reports/usage/{user_id}")
+async def get_usage_records(user_id: str, current_user: User = Depends(get_current_active_user)):
+    # // [TASK]: Implement API endpoint for usage records
+    # // [GOAL]: Provide users with their detailed usage statistics
+    # // [ELITE_CURSOR_SNIPPET]: aihandle
+    # In a real system, fetch from database
+    if str(current_user.id) != user_id and current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized to view these usage records.")
+    
+    # Return mock data for now
+    return [
+        {"feature": "video_generation", "count": 5, "timestamp": datetime.utcnow().isoformat()},
+        {"feature": "image_generation", "count": 150, "timestamp": datetime.utcnow().isoformat()}
+    ]
+
+@app.get("/reports/reconciliation/{month}")
+async def get_reconciliation_report(month: str, current_user: User = Depends(get_current_active_user)):
+    # // [TASK]: Implement API endpoint for reconciliation reports
+    # // [GOAL]: Provide administrators with billing reconciliation summaries
+    # // [ELITE_CURSOR_SNIPPET]: aihandle
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required for reconciliation reports.")
+    
+    report = billing_reconciler.get_reconciliation_report(month)
+    if not report:
+        raise HTTPException(status_code=404, detail="Reconciliation report not found for specified month.")
+    return report
+
 @app.post("/generate_video")
 @RateLimiter(times=1, seconds=5)
 async def generate_video_endpoint(request_data: GenerateVideoRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant):
@@ -422,7 +505,7 @@ class WebhookPaymentStatus(BaseModel):
 import hmac
 import hashlib
 
-WEBHOOK_SECRET = "your_webhook_secret_key" # TODO: Load from secure config
+WEBHOOK_SECRET = "your_webhook_secret_key" # TODO: Load from secure config (e.g., config.security.webhook_secret)
 
 @app.post("/webhook/payment_status")
 async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request):
