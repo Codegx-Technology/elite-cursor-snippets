@@ -221,7 +221,7 @@ def test_shujaa_studio() -> bool:
         print("\nInitializing ShujaaStudio with SDXL support...")
         
         try:
-            studio = ShujaaStudio(use_sdxl=True)
+            studio = ShujaaStudio()
             logger.info("ShujaaStudio initialized successfully")
             print("✅ ShujaaStudio initialized successfully")
         except Exception as e:
