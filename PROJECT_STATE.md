@@ -170,12 +170,27 @@ Based on the identified "Key areas that still require substantial work," here's 
 Based on our previous discussion, the UI will be a separate frontend application consuming the FastAPI backend.
 
 **Phase K: Enterprise-Grade UI Development**
-*   **Goal:** Develop a modern, enterprise-grade frontend UI that consumes the FastAPI backend.
-*   **Steps:**
-    *   **K.1: Frontend Framework Selection:** Choose a suitable frontend framework (e.g., React, Vue, Angular) based on project requirements and team expertise.
-    *   **K.2: Design System Implementation:** Implement the "SalonGenZ UI Design System" (`UI_DESIGN_SYSTEM.md`) in the chosen frontend framework.
-    *   **K.3: Core UI Components:** Develop reusable UI components (e.g., authentication forms, video generation forms, dashboard elements).
-    *   **K.4: API Integration:** Integrate frontend components with the FastAPI backend API endpoints (e.g., user authentication, video generation requests, landing page generation).
-    *   **K.5: User Experience (UX) Refinement:** Focus on intuitive navigation, responsive design, and overall user experience.
-    *   **K.6: Frontend Testing:** Implement unit, integration, and end-to-end tests for the frontend application.
-    *   **K.7: Deployment:** Set up a separate deployment pipeline for the frontend application.
+*   **Goal:** Develop a modern, enterprise-grade frontend UI that consumes the FastAPI backend, reflecting the product's unique "Kenya-first" identity, offline capabilities, and comprehensive AI video generation.
+
+*   **Core Principles for UI Development:**
+    1.  **Cultural Immersion ("Kenya-First"):** The UI will visually and experientially reflect its Kenyan roots, incorporating authentic design language, color palettes, typography, and culturally relevant iconography.
+    2.  **Intuitive AI Orchestration:** Complex AI processes will be made simple through guided workflows, advanced prompting interfaces with contextual suggestions and prompt builders, and rich visual feedback during generation.
+    3.  **Seamless Offline/Hybrid Experience:** The UI will clearly communicate and manage the product's unique offline capabilities, including local model management, storage management, and smart syncing for hybrid use cases.
+    4.  **Robust Enterprise Features:** Beyond core video generation, the UI will include comprehensive user and role management, project and asset libraries, usage analytics, collaboration tools, and API/integration management.
+
+*   **Key Steps & Features:**
+    *   **K.1: Frontend Framework Selection:** Choose a suitable frontend framework (e.g., React, Vue, Angular) based on project requirements and team expertise, prioritizing a robust, scalable Single Page Application (SPA).
+    *   **K.2: Design System Implementation:** Implement the "SalonGenZ UI Design System" (`UI_DESIGN_SYSTEM.md`) to ensure consistency, scalability, and cultural relevance across all UI components.
+    *   **K.3: Core UI Components Development:** Develop reusable UI components for authentication, video generation forms, dashboards, project management, and asset libraries.
+    *   **K.4: Advanced Prompting & Workflow Interfaces:** Design and implement intuitive interfaces for text prompts, including guided workflows, contextual suggestions, and visual feedback during AI generation.
+    *   **K.5: Local Model & Storage Management UI:** Create dedicated sections for users to view, download, update, and manage local AI models and project storage.
+    *   **K.6: Enterprise Feature Dashboards:** Develop dashboards for user management, role-based access control, usage analytics, and API/integration management.
+    *   **K.7: API Integration:** Seamlessly integrate frontend components with the FastAPI backend API endpoints for all functionalities.
+    *   **K.8: User Experience (UX) Refinement:** Focus on intuitive navigation, responsive design across all devices, accessibility (WCAG standards), and overall user experience.
+    *   **K.9: Frontend Testing:** Implement comprehensive unit, integration, and end-to-end tests for the frontend application.
+    *   **K.10: Deployment:** Set up a separate, robust deployment pipeline for the frontend application.
+    *   **K.11: Recommended Technology Stack:**
+        *   **Frontend Framework:** React (preferred for its ecosystem and scalability).
+        *   **Design System Implementation:** Leveraging the "SalonGenZ UI Design System" for consistent and culturally relevant UI.
+        *   **Component Library:** Utilizing a robust component library (e.g., Material-UI, Ant Design, or a custom-built one) for accelerated development.
+        *   **Backend Integration:** Seamless integration with the existing FastAPI backend.
