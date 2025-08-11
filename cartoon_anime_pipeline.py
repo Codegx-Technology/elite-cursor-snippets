@@ -8,8 +8,6 @@ Lightweight, CPU-friendly pipeline for cartoon/anime videos with African identit
 // [GOAL]: CPU-friendly animation with Sheng/Kiswahili TTS and mobile exports
 """
 
-import torch
-from diffusers import AutoPipelineForText2Image
 import cv2
 import numpy as np
 from pathlib import Path
@@ -17,6 +15,14 @@ import time
 import json
 import subprocess
 from typing import List, Dict, Optional
+import io
+from PIL import Image
+
+from config_loader import get_config
+from ai_model_manager import generate_image, text_to_speech
+from error_utils import log_and_raise, retry_on_exception
+
+config = get_config()
 
 class AfricanCartoonPipeline:
     """
@@ -71,45 +77,37 @@ class AfricanCartoonPipeline:
             "instagram_reel": {"width": 720, "height": 1280, "fps": 30, "duration": 30}
         }
         
-        print("🎨 AFRICAN CARTOON PIPELINE INITIALIZED")
-        print(f"📁 Studio folder: {self.output_folder.absolute()}")
-        print(f"🎬 Styles: {list(self.cartoon_styles.keys())}")
-        print(f"🎤 Languages: {list(self.tts_languages.keys())}")
-        print(f"📱 Export presets: {list(self.export_presets.keys())}")
+        logger.info("🎨 AFRICAN CARTOON PIPELINE INITIALIZED")
+        logger.info(f"📁 Studio folder: {self.output_folder.absolute()}")
+        logger.info(f"🎬 Styles: {list(self.cartoon_styles.keys())}")
+        logger.info(f"🎤 Languages: {list(self.tts_languages.keys())}")
+        logger.info(f"📱 Export presets: {list(self.export_presets.keys())}")
     
+    @retry_on_exception()
     def load_cartoon_model(self, style: str = "african_cartoon"):
-        """Load appropriate model for cartoon generation"""
-        
+        """
+        // [TASK]: Load appropriate model for cartoon generation using ai_model_manager
+        // [GOAL]: Centralize model loading and leverage fallback mechanisms
+        // [ELITE_CURSOR_SNIPPET]: aihandle
+        """
         try:
-            print(f"🤖 Loading cartoon model for {style}...")
-            
-            # Use SDXL-Turbo as base (already cached)
-            # In production, we'd use anything-v4.5 or cartoon-specific models
-            pipe = AutoPipelineForText2Image.from_pretrained(
-                "stabilityai/sdxl-turbo",
-                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-                variant="fp16" if torch.cuda.is_available() else None,
-                use_safetensors=True,
-                low_cpu_mem_usage=True
-            )
-            
-            if torch.cuda.is_available():
-                pipe = pipe.to("cuda")
-                print("🔥 GPU acceleration for cartoon generation")
-            else:
-                print("🖥️ CPU mode - optimized for cartoon style")
-            
-            print("✅ Cartoon model ready")
-            return pipe
+            logger.info(f"🤖 Loading cartoon model for {style}...")
+            # This pipeline will use ai_model_manager for image generation, so no direct pipeline loading here.
+            # We just need to ensure the model path is configured.
+            model_path = config.models.image_generation.local_fallback_path
+            if not model_path:
+                log_and_raise(ValueError("Local image generation model path not configured in config.yaml"), "Cartoon model loading failed")
+            logger.info(f"✅ Cartoon model configured to use: {model_path}")
+            return True # Indicate that the model is configured
             
         except Exception as e:
-            print(f"❌ Cartoon model loading failed: {e}")
-            return None
+            log_and_raise(e, f"Cartoon model loading failed")
     
+    @retry_on_exception()
     def break_script_into_scenes(self, script: str) -> List[Dict]:
         """Break script into cartoon scenes with dialogue"""
         
-        print("📝 Breaking script into cartoon scenes...")
+        logger.info("📝 Breaking script into cartoon scenes...")
         
         # Simple scene breakdown (in production, use GPT)
         sentences = script.split('. ')
@@ -126,13 +124,17 @@ class AfricanCartoonPipeline:
                 }
                 scenes.append(scene)
         
-        print(f"✅ Created {len(scenes)} cartoon scenes")
+        logger.info(f"✅ Created {len(scenes)} cartoon scenes")
         return scenes
     
-    def generate_cartoon_scene(self, pipe, scene: Dict, style: str) -> Optional[np.ndarray]:
-        """Generate single cartoon scene image"""
-        
-        print(f"🎨 Generating cartoon scene {scene['id']}: {scene['visual_description'][:40]}...")
+    @retry_on_exception()
+    def generate_cartoon_scene(self, scene: Dict, style: str) -> Optional[np.ndarray]:
+        """
+        // [TASK]: Generate single cartoon scene image using ai_model_manager
+        // [GOAL]: Centralize image generation and leverage fallback mechanisms
+        // [ELITE_CURSOR_SNIPPET]: aihandle
+        """
+        logger.info(f"🎨 Generating cartoon scene {scene['id']}: {scene['visual_description'][:40]}...")
         
         try:
             # Build cartoon prompt
@@ -148,37 +150,46 @@ class AfricanCartoonPipeline:
             
             negative_prompt = style_config['negative']
             
-            print(f"📝 Prompt: {prompt[:60]}...")
+            logger.info(f"📝 Prompt: {prompt[:60]}...")
             
-            # Generate cartoon image
-            image = pipe(
+            # Generate cartoon image using ai_model_manager
+            image_bytes = asyncio.run(generate_image(
                 prompt=prompt,
+                model_id=config.models.image_generation.hf_api_id,
+                use_local_fallback=True,
                 negative_prompt=negative_prompt,
-                num_inference_steps=2,  # Fast for cartoons
+                num_inference_steps=2,
                 guidance_scale=0.0,
                 height=self.height,
                 width=self.width
-            ).images[0]
+            ))
             
-            # Save scene image
-            scene_path = self.output_folder / f"scene_{scene['id']:02d}_cartoon.png"
-            image.save(scene_path)
-            
-            file_size = scene_path.stat().st_size / 1024
-            print(f"✅ Scene {scene['id']} generated: {file_size:.1f} KB")
-            
-            # Convert to OpenCV format
-            cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-            return cv_image
+            if image_bytes:
+                # Convert bytes to PIL Image, then to OpenCV format
+                from PIL import Image
+                image = Image.open(io.BytesIO(image_bytes))
+                
+                # Save scene image
+                scene_path = self.output_folder / f"scene_{scene['id']:02d}_cartoon.png"
+                image.save(scene_path)
+                
+                file_size = scene_path.stat().st_size / 1024
+                logger.info(f"✅ Scene {scene['id']} generated: {file_size:.1f} KB")
+                
+                # Convert to OpenCV format
+                cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+                return cv_image
+            else:
+                log_and_raise(Exception("ai_model_manager.generate_image returned no bytes"), "Image generation failed")
             
         except Exception as e:
-            print(f"❌ Scene {scene['id']} generation failed: {e}")
-            return None
+            log_and_raise(e, f"Scene {scene['id']} generation failed")
     
     def create_scene_animation(self, scene_image: np.ndarray, duration: float) -> List[np.ndarray]:
-        """Create simple animation from static scene"""
-        
-        print(f"🎬 Creating {duration}s animation...")
+        """
+        // [TASK]: Create simple animation from static scene
+        """
+        logger.info(f"🎬 Creating {duration}s animation...")
         
         frames = []
         total_frames = int(self.fps * duration)
@@ -211,57 +222,42 @@ class AfricanCartoonPipeline:
             
             frames.append(animated_frame)
         
-        print(f"✅ Created {len(frames)} animated frames")
+        logger.info(f"✅ Created {len(frames)} animated frames")
         return frames
     
     def generate_african_tts(self, text: str, voice: str = "sheng_male") -> Optional[str]:
-        """Generate TTS audio in African languages"""
-        
-        print(f"🎤 Generating {voice} TTS for: {text[:30]}...")
+        """
+        // [TASK]: Generate TTS audio in African languages using ai_model_manager
+        // [GOAL]: Centralize TTS generation and leverage fallback mechanisms
+        // [ELITE_CURSOR_SNIPPET]: aihandle
+        """
+        logger.info(f"🎤 Generating {voice} TTS for: {text[:30]}...")
         
         try:
-            # Placeholder for TTS generation
-            # In production: integrate Bark, PiperTTS, or Coqui TTS
+            audio_bytes = asyncio.run(text_to_speech(
+                text=text,
+                model_id=config.models.voice_synthesis.hf_api_id,
+                use_local_fallback=True
+            ))
             
-            audio_path = self.output_folder / f"tts_{voice}_{int(time.time())}.wav"
-            
-            # Create simple tone sequence for now (replace with real TTS)
-            sample_rate = 22050
-            duration = len(text) * 0.1  # Rough estimate
-            
-            # Generate speech-like tones
-            frames = []
-            for i in range(int(sample_rate * duration)):
-                # Create speech-like frequency modulation
-                base_freq = 150 if "male" in voice else 200
-                freq = base_freq + np.sin(i * 0.01) * 50
-                
-                value = int(16384 * np.sin(2 * np.pi * freq * i / sample_rate))
-                frames.append(value.to_bytes(2, 'little', signed=True))
-            
-            # Save as WAV
-            import wave
-            with wave.open(str(audio_path), 'wb') as wav_file:
-                wav_file.setnchannels(1)
-                wav_file.setsampwidth(2)
-                wav_file.setframerate(sample_rate)
-                wav_file.writeframes(b''.join(frames))
-            
-            print(f"✅ TTS audio: {audio_path}")
-            return str(audio_path)
+            if audio_bytes:
+                audio_path = self.output_folder / f"tts_{voice}_{int(time.time())}.wav"
+                with open(audio_path, "wb") as f:
+                    f.write(audio_bytes)
+                logger.info(f"✅ TTS audio: {audio_path}")
+                return str(audio_path)
+            else:
+                log_and_raise(Exception("text_to_speech returned no bytes"), "TTS generation failed")
             
         except Exception as e:
-            print(f"❌ TTS generation failed: {e}")
-            return None
+            log_and_raise(e, f"TTS generation failed")
     
     def create_cartoon_video(self, scenes: List[Dict], style: str, voice: str) -> Optional[str]:
         """Create complete cartoon video with parallel scene processing"""
         
-        print(f"🎬 Creating cartoon video: {style} style, {voice} voice")
+        logger.info(f"🎬 Creating cartoon video: {style} style, {voice} voice")
         
-        pipe = self.load_cartoon_model(style)
-        if pipe is None:
-            return None
+        # Model loading is now handled by ai_model_manager
 
         from utils.parallel_processing import ParallelProcessor
         import asyncio
@@ -270,7 +266,7 @@ class AfricanCartoonPipeline:
             loop = asyncio.get_running_loop()
             
             def process_scene_assets():
-                scene_image = self.generate_cartoon_scene(pipe, scene_data, style)
+                scene_image = self.generate_cartoon_scene(scene_data, style)
                 if scene_image is None:
                     return None, None
                 
@@ -281,10 +277,10 @@ class AfricanCartoonPipeline:
             try:
                 animated_frames, audio_path = await loop.run_in_executor(None, process_scene_assets)
                 if animated_frames is None:
-                    return {"status": "failed", "reason": "Image generation failed"}
+                    log_and_raise(Exception("Image generation failed"), "Scene worker failed")
                 return {"status": "success", "frames": animated_frames, "audio": audio_path}
             except Exception as e:
-                return {"status": "failed", "reason": str(e)}
+                log_and_raise(e, "Scene worker failed")
 
         async def run_parallel_processing(all_scenes):
             processor = ParallelProcessor()
@@ -301,14 +297,13 @@ class AfricanCartoonPipeline:
                     all_audio_paths.append(res["audio"])
         
         if not all_frames:
-            print("❌ No frames generated")
-            return None
+            log_and_raise(ValueError("No frames generated"), "Video creation failed")
         
         video_path = self.output_folder / f"cartoon_{style}_{voice}_{int(time.time())}.mp4"
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         writer = cv2.VideoWriter(str(video_path), fourcc, self.fps, (self.width, self.height))
         
-        print(f"📹 Writing {len(all_frames)} frames...")
+        logger.info(f"📹 Writing {len(all_frames)} frames...")
         for frame in all_frames:
             writer.write(frame)
         writer.release()
@@ -318,18 +313,18 @@ class AfricanCartoonPipeline:
 
         if video_path.exists():
             size_mb = video_path.stat().st_size / (1024*1024)
-            print(f"✅ Cartoon video created: {size_mb:.1f} MB")
+            logger.info(f"✅ Cartoon video created: {size_mb:.1f} MB")
             return str(video_path)
         else:
-            print("❌ Video creation failed")
-            return None
+            log_and_raise(Exception("Video creation failed"), "Video creation failed")
     
     def export_for_mobile(self, video_path: str, preset: str) -> Optional[str]:
-        """Export video for mobile platforms"""
+        """
+        // [TASK]: Export video for mobile platforms
+        """
         
         if preset not in self.export_presets:
-            print(f"❌ Unknown preset: {preset}")
-            return None
+            log_and_raise(ValueError(f"Unknown preset: {preset}"), "Mobile export failed")
         
         config = self.export_presets[preset]
         output_path = self.output_folder / f"mobile_{preset}_{int(time.time())}.mp4"
@@ -350,15 +345,13 @@ class AfricanCartoonPipeline:
             result = subprocess.run(cmd, capture_output=True, text=True)
             
             if result.returncode == 0 and output_path.exists():
-                print(f"✅ Mobile export ({preset}): {output_path}")
+                logger.info(f"✅ Mobile export ({preset}): {output_path}")
                 return str(output_path)
             else:
-                print(f"❌ Mobile export failed: {result.stderr}")
-                return None
+                log_and_raise(Exception(f"Mobile export failed: {result.stderr}"), "Mobile export failed")
                 
         except Exception as e:
-            print(f"❌ Export error: {e}")
-            return None
+            log_and_raise(e, f"Export error")
 
 
 def create_african_cartoon_video(
@@ -380,8 +373,8 @@ def create_african_cartoon_video(
         Dict with video paths and metadata
     """
     
-    print("🎨 AFRICAN CARTOON VIDEO GENERATOR")
-    print("=" * 50)
+    logger.info("🎨 AFRICAN CARTOON VIDEO GENERATOR")
+    logger.info("=" * 50)
     
     pipeline = AfricanCartoonPipeline()
     
@@ -408,21 +401,4 @@ def create_african_cartoon_video(
     return result
 
 
-if __name__ == "__main__":
-    # Test the cartoon pipeline
-    test_script = """
-    Welcome to Kenya, the beautiful land of diverse cultures. 
-    Mount Kenya stands majestically with snow-capped peaks. 
-    The Maasai people preserve their rich traditions. 
-    Wildlife roams freely in the vast savannas. 
-    This is our home, this is Kenya.
-    """
-    
-    result = create_african_cartoon_video(
-        script=test_script,
-        style="african_cartoon",
-        voice="sheng_male",
-        mobile_preset="tiktok"
-    )
-    
-    print(f"\n🎉 RESULT: {result}")
+if __name__ == "__main__":    # Test the cartoon pipeline    test_script = """    Welcome to Kenya, the beautiful land of diverse cultures.     Mount Kenya stands majestically with snow-capped peaks.     The Maasai people preserve their rich traditions.     Wildlife roams freely in the vast savannas.     This is our home, this is Kenya.    """        try:        result = create_african_cartoon_video(            script=test_script,            style="african_cartoon",            voice="sheng_male",            mobile_preset="tiktok"        )        logger.info(f"\n🎉 RESULT: {result}")    except Exception as e:        log_and_raise(e, "Error during cartoon video creation")

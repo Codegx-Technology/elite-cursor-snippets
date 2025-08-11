@@ -23,6 +23,7 @@ from ai_model_manager import generate_text, generate_image as ai_generate_image,
 from logging_setup import get_logger
 from config_loader import get_config
 from utils.parallel_processing import ParallelProcessor # Import ParallelProcessor
+from error_utils import log_and_raise, retry_on_exception
 
 logger = get_logger(__name__)
 config = get_config()
@@ -33,6 +34,7 @@ HF_API_KEY = config.api_keys.huggingface
 gpu_integration = ShujaaGPUIntegration()
 gpu_manager = HybridGPUManager()
 
+@retry_on_exception()
 def fetch_article(url):
     import requests
     try:
@@ -43,9 +45,9 @@ def fetch_article(url):
             return article.get_text(separator="\n\n", strip=True)
         return soup.body.get_text(separator="\n\n", strip=True)
     except Exception as e:
-        logger.error(f"Failed to fetch article: {e}")
-        return None
+        log_and_raise(e, f"Failed to fetch article from {url}")
 
+@retry_on_exception()
 def fetch_google_news(query="breaking news", num_results=1):
     try:
         rss_url = f"https://news.google.com/rss/search?q={query}&hl=en-KE&gl=KE&ceid=KE:en"
@@ -55,16 +57,15 @@ def fetch_google_news(query="breaking news", num_results=1):
             return {"title": entry.title, "link": entry.link}
         return None
     except Exception as e:
-        logger.error(f"Failed to fetch Google News: {e}")
-        return None
+        log_and_raise(e, f"Failed to fetch Google News for query {query}")
 
+@retry_on_exception()
 def read_script(file_path):
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
     except Exception as e:
-        logger.error(f"Failed to read script file: {e}")
-        return None
+        log_and_raise(e, f"Failed to read script file {file_path}")
 
 async def generate_scenes_from_text(text):
     task_profile = TaskProfile(
@@ -77,8 +78,7 @@ async def generate_scenes_from_text(text):
             scenes = generated_text.split("\n")
             return [s.strip() for s in scenes if s.strip()]
         except Exception as e:
-            logger.error(f"LLaMA 3 API call failed: {e}")
-            raise
+            log_and_raise(e, f"LLM API call failed for scene generation")
     try:
         scenes = await gpu_manager.process_task(task_profile, _llm_api_call, {"inputs": f"Split the following text into a list of short, descriptive scenes for a video. Each scene should be a single sentence. Text: {text}"})
         return scenes
@@ -116,8 +116,7 @@ async def generate_image(scene_text, output_path):
             logger.info(f"  Placeholder image generated: {output_path}")
             return output_path
     except Exception as e:
-        logger.error(f"Failed to generate image: {e}")
-        return None
+        log_and_raise(e, f"Failed to generate image for scene {scene_text}")
 
 async def generate_voiceover_from_text(text, output_file):
     task_profile = TaskProfile(
@@ -131,8 +130,7 @@ async def generate_voiceover_from_text(text, output_file):
                 f.write(audio_bytes)
             return output_file
         except Exception as e:
-            logger.error(f"Bark API call failed: {e}")
-            raise
+            log_and_raise(e, f"Bark API call failed for voiceover")
     try:
         voiceover_path = await gpu_manager.process_task(task_profile, _bark_api_call, {"inputs": text})
         logger.info(f"Voiceover generated: {voiceover_path}")
@@ -159,8 +157,7 @@ async def generate_captions_from_audio(audio_file):
             captions = await speech_to_text(audio_path, model_id=config.models.speech_to_text.hf_api_id)
             return captions
         except Exception as e:
-            logger.error(f"Whisper API call failed: {e}")
-            raise
+            log_and_raise(e, f"Whisper API call failed for captions")
     try:
         captions = await gpu_manager.process_task(task_profile, _whisper_api_call, audio_file)
         return captions
@@ -197,35 +194,38 @@ async def compile_video(image_files, audio_file, music_file, captions, output_fi
         logger.info(f"Video compiled: {output_file}")
         return output_file
     except Exception as e:
-        logger.error(f"Failed to compile video: {e}")
-        return None
+        log_and_raise(e, f"Failed to compile video: {output_file}")
 
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 
+@retry_on_exception()
 async def youtube_upload(video_file, title, description, tags):
-    credentials = None
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            credentials = pickle.load(token)
-    if not credentials or not credentials.valid:
-        if credentials and credentials.expired and credentials.refresh_token:
-            credentials.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
-            credentials = flow.run_local_server(port=0)
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(credentials, token)
-    youtube = build('youtube', 'v3', credentials=credentials)
-    body = {
-        'snippet': {'title': title, 'description': description, 'tags': tags},
-        'status': {'privacyStatus': 'public'}
-    }
-    media_file = MediaFileUpload(video_file)
-    request = youtube.videos().insert(part='snippet,status', body=body, media_body=media_file)
-    logger.info("Uploading video to YouTube...")
-    response = request.execute()
-    logger.info(f"✅ Uploaded to YouTube: https://youtu.be/{response['id']}")
-    return response['id']
+    try:
+        credentials = None
+        if os.path.exists('token.pickle'):
+            with open('token.pickle', 'rb') as token:
+                credentials = pickle.load(token)
+        if not credentials or not credentials.valid:
+            if credentials and credentials.expired and credentials.refresh_token:
+                credentials.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
+                credentials = flow.run_local_server(port=0)
+            with open('token.pickle', 'wb') as token:
+                pickle.dump(credentials, token)
+        youtube = build('youtube', 'v3', credentials=credentials)
+        body = {
+            'snippet': {'title': title, 'description': description, 'tags': tags},
+            'status': {'privacyStatus': 'public'}
+        }
+        media_file = MediaFileUpload(video_file)
+        request = youtube.videos().insert(part='snippet,status', body=body, media_body=media_file)
+        logger.info("Uploading video to YouTube...")
+        response = request.execute()
+        logger.info(f"✅ Uploaded to YouTube: https://youtu.be/{response['id']}")
+        return response['id']
+    except Exception as e:
+        log_and_raise(e, f"Failed to upload video to YouTube: {video_file}")
 
 async def main(news: str = None, script_file: str = None, prompt: str = None, upload_youtube: bool = False):
     init_hf_client()
@@ -235,32 +235,38 @@ async def main(news: str = None, script_file: str = None, prompt: str = None, up
     video_title = "AI Generated Video"
     if news:
         logger.info(f"Fetching news for query: {news}")
-        news_item = fetch_google_news(news)
-        if news_item:
-            logger.info(f"News found: {news_item['title']}")
-            video_title = news_item['title']
-            text_content = fetch_article(news_item["link"])
-        else:
-            logger.error("No news found for the given query.")
-            return
+        try:
+            news_item = fetch_google_news(news)
+            if news_item:
+                logger.info(f"News found: {news_item['title']}")
+                video_title = news_item['title']
+                text_content = fetch_article(news_item["link"])
+            else:
+                log_and_raise(ValueError("No news found for the given query."), "News fetch failed")
+        except Exception as e:
+            log_and_raise(e, "Error fetching news")
     elif script_file:
         logger.info(f"Reading script from: {script_file}")
-        video_title = os.path.splitext(os.path.basename(script_file))[0]
-        text_content = read_script(script_file)
+        try:
+            video_title = os.path.splitext(os.path.basename(script_file))[0]
+            text_content = read_script(script_file)
+        except Exception as e:
+            log_and_raise(e, "Error reading script file")
     elif prompt:
         logger.info(f"Using prompt: {prompt}")
         video_title = prompt[:50]
         text_content = prompt
     else:
-        logger.error("Please provide either a news URL, a script file, or a prompt.")
-        return
+        log_and_raise(ValueError("Please provide either a news URL, a script file, or a prompt."), "Missing input")
 
     if text_content:
         logger.info("Content processed successfully. Generating video...")
-        scenes = await generate_scenes_from_text(text_content)
-        if not scenes:
-            logger.error("Could not generate scenes from text. Aborting.")
-            return
+        try:
+            scenes = await generate_scenes_from_text(text_content)
+            if not scenes:
+                log_and_raise(ValueError("Could not generate scenes from text."), "Scene generation failed")
+        except Exception as e:
+            log_and_raise(e, "Error generating scenes")
             
         output_dir = config.video.output_dir
         os.makedirs(output_dir, exist_ok=True)
@@ -271,8 +277,11 @@ async def main(news: str = None, script_file: str = None, prompt: str = None, up
             index = scene_data['index']
             scene_text = scene_data['text']
             image_path = os.path.join(output_dir, f"image_{index+1}.png")
-            generated_path = await generate_image(scene_text, image_path)
-            return {"status": "success" if generated_path else "failed", "path": generated_path}
+            try:
+                generated_path = await generate_image(scene_text, image_path)
+                return {"status": "success" if generated_path else "failed", "path": generated_path}
+            except Exception as e:
+                log_and_raise(e, f"Error generating image for scene {index}")
 
         scene_items = [{"index": i, "text": scene} for i, scene in enumerate(scenes)]
         parallel_processor = ParallelProcessor()
@@ -280,16 +289,26 @@ async def main(news: str = None, script_file: str = None, prompt: str = None, up
         image_files = [res["path"] for res in image_results if res and res["status"] == "success"]
         
         if not image_files:
-            logger.error("All image generation failed. Aborting video creation.")
-            return
+            log_and_raise(ValueError("All image generation failed."), "Image generation failed")
 
         voiceover_file = os.path.join(output_dir, "voice.wav")
-        await generate_voiceover_from_text(text_content, voiceover_file)
+        try:
+            await generate_voiceover_from_text(text_content, voiceover_file)
+        except Exception as e:
+            log_and_raise(e, "Error generating voiceover")
 
-        captions = await generate_captions_from_audio(voiceover_file)
+        captions = None
+        try:
+            captions = await generate_captions_from_audio(voiceover_file)
+        except Exception as e:
+            log_and_raise(e, "Error generating captions")
+
         music_file = get_background_music(config.video.music_dir)
         output_file = os.path.join(output_dir, "final_video.mp4")
-        await compile_video(image_files, voiceover_file, music_file, captions, output_file)
+        try:
+            await compile_video(image_files, voiceover_file, music_file, captions, output_file)
+        except Exception as e:
+            log_and_raise(e, "Error compiling video")
 
         logger.info(f"🎉 Video generation complete! Output: {output_file}")
 
@@ -297,7 +316,10 @@ async def main(news: str = None, script_file: str = None, prompt: str = None, up
             logger.info("Attempting to upload to YouTube...")
             video_description = f"AI-generated video based on: {text_content[:200]}..."
             video_tags = ["AI News", "Shujaa Studio", "Automated Video"]
-            await youtube_upload(output_file, video_title, video_description, video_tags)
+            try:
+                await youtube_upload(output_file, video_title, video_description, video_tags)
+            except Exception as e:
+                log_and_raise(e, "Error uploading to YouTube")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="News-to-Video Generator")
