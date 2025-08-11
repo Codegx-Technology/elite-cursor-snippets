@@ -65,6 +65,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 # --- Pydantic Models ---
 
 class GenerateVideoRequest(BaseModel):
+    # // [TASK]: Encrypt model inference inputs/outputs using AES-256 before transmission
+    # // [GOAL]: Enhance security of sensitive data during model inference
+    # // [ELITE_CURSOR_SNIPPET]: securitycheck
     prompt: str
     news_url: Optional[str] = None
     script_file: Optional[str] = None

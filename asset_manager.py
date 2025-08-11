@@ -23,6 +23,7 @@ class AssetManager:
         """
         // [TASK]: Download an asset asynchronously
         // [GOAL]: Support CDN fallback and signed URLs (conceptual)
+        // [TODO]: Implement actual CDN fallback logic and signed URL handling.
         """
         logger.info(f"Attempting to download asset from: {url} to {destination_path}")
         try:
@@ -62,6 +63,7 @@ class AssetManager:
         """
         // [TASK]: Get an asset, prioritizing cache and handling downloads
         // [GOAL]: Provide cached or newly downloaded assets with integrity checks
+        // [TODO]: Implement sophisticated async lazy-loading for models not immediately required.
         """
         asset_filename = f"{asset_id}_{version}_{os.path.basename(url)}"
         local_path = self.cache_dir / asset_filename

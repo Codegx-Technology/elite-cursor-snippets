@@ -126,6 +126,7 @@ async def generate_text(prompt, model_id=None, **kwargs):
     """
     // [TASK]: Generate text using Hugging Face Inference API or a local LLM fallback
     // [GOAL]: Provide robust text generation capability with real local inference
+    // [TODO]: Implement AES-256 encryption for model inference inputs/outputs before transmission.
     """
     client = init_hf_client()
     hf_model_id = model_id or config.models.text_generation.hf_api_id
