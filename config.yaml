@@ -10,6 +10,12 @@ api_keys:
   huggingface: "${HF_API_KEY}" # Loaded from environment variable
   google_news: "" # Optional: NewsAPI.org key
   youtube_client_secret_file: "client_secret.json" # Path to Google client secret JSON
+  secrets_manager:
+    enabled: false # Set to true to enable AWS Secrets Manager integration
+    region_name: "us-east-1" # AWS region for Secrets Manager
+    # Example secret IDs (replace with your actual secret IDs)
+    # hf_api_key_secret_id: "shujaa/huggingface/api_key"
+    # google_news_api_key_secret_id: "shujaa/google_news/api_key"
 
 # Model Configuration
 models:

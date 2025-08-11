@@ -1,1 +1,1 @@
-feat(audit): Implement tamper-proof audit logging with DB storage and tests
+feat(secrets): Implement AWS Secrets Manager integration for config loading
