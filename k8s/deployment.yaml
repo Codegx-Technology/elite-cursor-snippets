@@ -7,15 +7,33 @@ metadata:
   name: shujaa-studio-api
   labels:
     app: shujaa-studio
+    # Elite Cursor Snippet: canary_labels
+    # {{ if .Values.canary.enabled }}
+    #   app.kubernetes.io/component: canary
+    # {{ else }}
+    #   app.kubernetes.io/component: stable
+    # {{ end }}
 spec:
   replicas: 2 # Start with two replicas for high availability
   selector:
     matchLabels:
       app: shujaa-studio
+      # Elite Cursor Snippet: canary_selector
+      # {{ if .Values.canary.enabled }}
+      #   app.kubernetes.io/component: canary
+      # {{ else }}
+      #   app.kubernetes.io/component: stable
+      # {{ end }}
   template:
     metadata:
       labels:
         app: shujaa-studio
+        # Elite Cursor Snippet: canary_template_labels
+        # {{ if .Values.canary.enabled }}
+        #   app.kubernetes.io/component: canary
+        # {{ else }}
+        #   app.kubernetes.io/component: stable
+        # {{ end }}
     spec:
       containers:
       - name: api-server
@@ -42,6 +60,52 @@ spec:
           limits:
             memory: "16Gi"
             cpu: "4000m"
+---
+# Elite Cursor Snippet: canary_deployment
+# {{ if .Values.canary.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shujaa-studio-api-canary
+  labels:
+    app: shujaa-studio
+    app.kubernetes.io/component: canary
+spec:
+  replicas: {{ .Values.canary.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: shujaa-studio
+      app.kubernetes.io/component: canary
+  template:
+    metadata:
+      labels:
+        app: shujaa-studio
+        app.kubernetes.io/component: canary
+    spec:
+      containers:
+      - name: api-server
+        image: your-registry/shujaa-studio-api:canary # Use a specific canary image tag
+        ports:
+        - containerPort: 8000
+        env:
+          - name: HF_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: shujaa-secrets
+                key: hf-api-key
+          - name: ENCRYPTION_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: shujaa-secrets
+                key: encryption-password
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "1000m"
+          limits:
+            memory: "16Gi"
+            cpu: "4000m"
+# {{ end }}
 
 ---
 

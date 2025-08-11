@@ -66,3 +66,13 @@ security:
 i18n:
   supported_languages: ["en", "sw", "fr"] # English, Swahili, French
   default_language: "en"
+
+feature_flags:
+  new_ui:
+    enabled: false
+    rollout_percentage: 10 # Rollout to 10% of users
+    # users: ["user_id_1", "user_id_2"] # Enable for specific users
+    # tenants: ["tenant_id_1"] # Enable for specific tenants
+  beta_video_pipeline:
+    enabled: false
+    # users: ["admin_user"]

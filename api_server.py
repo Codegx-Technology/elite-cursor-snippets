@@ -28,6 +28,7 @@ import redis.asyncio as redis
 
 # J.1: Monitoring Integration
 from starlette_prometheus import PrometheusMiddleware, metrics
+from feature_flags import feature_flag_manager # Elite Cursor Snippet: feature_flag_import
 
 logger = get_logger(__name__)
 audit_logger = get_audit_logger()
@@ -433,6 +434,19 @@ async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request
 async def protected_data(current_user: User = Depends(get_current_active_user), current_tenant: str = Depends(get_current_tenant)):
     audit_logger.info(f"Access granted: User {current_user.username} (Tenant: {current_tenant}) accessing /protected_data.", extra={'user_id': current_user.id})
     return {"message": f"Welcome, {current_user.username} from tenant {current_tenant}! This is protected data.", "user": UserProfile.from_orm(current_user), "tenant": current_tenant}
+
+@app.get("/feature_status/{feature_name}")
+async def get_feature_status(feature_name: str, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
+    # // [TASK]: Expose API for frontend to check feature flag status
+    # // [GOAL]: Allow dynamic UI based on feature flags
+    # // [ELITE_CURSOR_SNIPPET]: aihandle
+    user_id = str(current_user.get("user_id")) # Convert to string for hashing
+    tenant_id = str(current_tenant) # Convert to string for consistency
+
+    is_enabled = feature_flag_manager.is_enabled(feature_name, user_id=user_id, tenant_id=tenant_id)
+    
+    audit_logger.info(f"Feature flag check for '{feature_name}': {is_enabled} for user {user_id} (tenant {tenant_id}).", extra={'user_id': current_user.get('user_id')})
+    return {"feature_name": feature_name, "is_enabled": is_enabled}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
