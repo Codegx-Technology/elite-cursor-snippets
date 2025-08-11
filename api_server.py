@@ -30,6 +30,7 @@ import redis.asyncio as redis
 # J.1: Monitoring Integration
 from starlette_prometheus import PrometheusMiddleware, metrics
 from feature_flags import feature_flag_manager # Elite Cursor Snippet: feature_flag_import
+from chaos_utils import chaos_injector # Elite Cursor Snippet: chaos_injector_import
 
 logger = get_logger(__name__)
 audit_logger = get_audit_logger()
@@ -456,6 +457,33 @@ async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request
 async def protected_data(current_user: User = Depends(get_current_active_user), current_tenant: str = Depends(get_current_tenant)):
     audit_logger.info(f"Access granted: User {current_user.username} (Tenant: {current_tenant}) accessing /protected_data.", extra={'user_id': current_user.id})
     return {"message": f"Welcome, {current_user.username} from tenant {current_tenant}! This is protected data.", "user": UserProfile.from_orm(current_user), "tenant": current_tenant}
+
+@app.post("/admin/chaos/inject")
+async def inject_chaos(
+    scenario_type: str,
+    duration_ms: Optional[int] = None,
+    duration_s: Optional[int] = None,
+    intensity: Optional[float] = None,
+    size_mb: Optional[int] = None,
+    probability: Optional[float] = None,
+    current_user: User = Depends(get_current_active_user) # Requires authenticated user
+):
+    # // [TASK]: Add endpoint to trigger chaos scenarios
+    # // [GOAL]: Enable controlled failure injection for resilience testing
+    # // [ELITE_CURSOR_SNIPPET]: securitycheck
+    if current_user.username != "admin": # Simple admin check for demonstration
+        raise HTTPException(status_code=403, detail="Admin access required to inject chaos.")
+
+    audit_logger.warning(f"Chaos injection requested by admin {current_user.username}: {scenario_type}", extra={'user_id': current_user.id})
+
+    kwargs = {k: v for k, v in locals().items() if v is not None and k not in ["scenario_type", "current_user"]}
+    
+    try:
+        chaos_injector.inject_scenario(scenario_type, **kwargs)
+        return {"status": "success", "message": f"Chaos scenario '{scenario_type}' injected."}
+    except Exception as e:
+        audit_logger.error(f"Failed to inject chaos scenario '{scenario_type}': {e}", exc_info=True, extra={'user_id': current_user.id})
+        raise HTTPException(status_code=500, detail=f"Failed to inject chaos: {e}")
 
 @app.get("/feature_status/{feature_name}")
 async def get_feature_status(feature_name: str, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):

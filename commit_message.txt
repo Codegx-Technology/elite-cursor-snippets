@@ -1,1 +1,1 @@
-feat(compliance): Implement data handling, export & deletion endpoints, PII redaction
+feat(chaos): Implement chaos engineering utilities and API endpoint
