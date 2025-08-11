@@ -50,3 +50,14 @@ class AuditLog(Base):
     def set_hash(self, previous_hash: str):
         self.previous_hash = previous_hash
         self.current_hash = self.calculate_hash(previous_hash)
+
+class Consent(Base):
+    __tablename__ = "consents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    consent_type = Column(String, index=True) # e.g., "marketing_email", "data_analytics", "pii_sharing"
+    is_granted = Column(Boolean, default=False)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User")

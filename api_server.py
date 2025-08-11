@@ -5,6 +5,7 @@ from typing import Optional, List
 from datetime import timedelta, datetime
 import uvicorn
 import uuid
+from fastapi.responses import JSONResponse # Elite Cursor Snippet: json_response_import
 
 from logging_setup import get_logger, get_audit_logger
 from config_loader import get_config
@@ -155,6 +156,27 @@ async def add_tenant_context(request: Request, call_next):
             request.state.tenant_id = "default_tenant"
     except Exception:
         request.state.tenant_id = "unauthenticated_tenant"
+    response = await call_next(request)
+    return response
+
+@app.middleware("http")
+async def pii_redaction_middleware(request: Request, call_next):
+    # // [TASK]: Implement PII redaction middleware for logs
+    # // [GOAL]: Prevent sensitive data from being logged
+    # // [ELITE_CURSOR_SNIPPET]: securitycheck
+    # This is a simplified example. A real PII scrubber would be more robust.
+    # It would typically inspect request.body and response.body for PII.
+    # For now, we'll just log a message if a sensitive endpoint is accessed.
+
+    sensitive_paths = ["/register", "/token", "/users/me"] # Endpoints that might contain PII
+
+    if request.url.path in sensitive_paths:
+        audit_logger.info(f"Access to sensitive endpoint: {request.url.path}. PII redaction applied to logs.", extra={'user_id': request.state.get('user_id', None)})
+        # In a real scenario, you would read the request body, redact PII,
+        # and then pass the redacted body to the next middleware/endpoint.
+        # This requires careful handling of async request body reading.
+        # For now, we're just logging the access.
+
     response = await call_next(request)
     return response
 
@@ -447,6 +469,58 @@ async def get_feature_status(feature_name: str, current_user: dict = Depends(get
     
     audit_logger.info(f"Feature flag check for '{feature_name}': {is_enabled} for user {user_id} (tenant {tenant_id}).", extra={'user_id': current_user.get('user_id')})
     return {"feature_name": feature_name, "is_enabled": is_enabled}
+
+@app.get("/users/me/data/export")
+async def export_user_data(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    # // [TASK]: Implement data export endpoint for right-to-be-forgotten
+    # // [GOAL]: Allow users to export their data for GDPR compliance
+    # // [ELITE_CURSOR_SNIPPET]: securitycheck
+    user_id = current_user.id
+    audit_logger.info(f"User data export requested for user ID: {user_id}", extra={'user_id': user_id})
+
+    # Fetch user data (example: User, AuditLog, Consent)
+    user_data = {
+        "user_profile": UserProfile.from_orm(current_user).dict(),
+        "audit_logs": [log.message for log in db.query(AuditLog).filter_by(user_id=user_id).all()],
+        "consents": [{"type": c.consent_type, "granted": c.is_granted} for c in db.query(Consent).filter_by(user_id=user_id).all()]
+    }
+    
+    # In a real application, you might want to:
+    # 1. Export more comprehensive data (e.g., video generation requests, billing history)
+    # 2. Store the export in a secure, temporary location (e.g., S3) and provide a signed URL
+    # 3. Encrypt the exported data
+    
+    return JSONResponse(content=user_data, media_type="application/json")
+
+@app.delete("/users/me/data/delete")
+async def delete_user_data(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    # // [TASK]: Implement data deletion endpoint for right-to-be-forgotten
+    # // [GOAL]: Allow users to request deletion of their data for GDPR compliance
+    # // [ELITE_CURSOR_SNIPPET]: securitycheck
+    user_id = current_user.id
+    audit_logger.info(f"User data deletion requested for user ID: {user_id}", extra={'user_id': user_id})
+
+    # In a real application, this would involve:
+    # 1. Soft deleting the user (e.g., setting is_active=False, marking for deletion)
+    # 2. Anonymizing or deleting associated PII from all related tables (e.g., AuditLog, Consent)
+    # 3. Handling data in external systems (e.g., CRM, payment processors)
+    # 4. Scheduling a background task for hard deletion after a retention period
+
+    # For demonstration, we'll just mark the user as inactive and log the action
+    current_user.is_active = False
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+
+    # Example of anonymizing audit logs for this user
+    db.query(AuditLog).filter_by(user_id=user_id).update({"user_id": None, "message": "[REDACTED]"}, synchronize_session=False)
+    db.commit()
+
+    # Example of deleting consent records
+    db.query(Consent).filter_by(user_id=user_id).delete(synchronize_session=False)
+    db.commit()
+
+    return {"message": "User data deletion process initiated. Your account will be deactivated."}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

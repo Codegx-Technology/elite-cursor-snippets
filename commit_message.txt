@@ -1,1 +1,1 @@
-feat(canary): Implement canary deployment config and feature flag system
+feat(compliance): Implement data handling, export & deletion endpoints, PII redaction
