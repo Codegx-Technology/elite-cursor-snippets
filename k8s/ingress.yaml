@@ -8,6 +8,10 @@ metadata:
   name: shujaa-studio-api
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
+    # // [TASK]: Implement custom domain mapping with TLS provisioning
+    # // [GOAL]: Allow tenants to use their own domains with automatic TLS (ACME/Let’s Encrypt)
+    # // [ELITE_CURSOR_SNIPPET]: securitycheck
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod" # Example for cert-manager
 spec:
   rules:
   - http:
@@ -19,3 +23,20 @@ spec:
             name: shujaa-studio-api
             port:
               number: 80
+  # // [TASK]: Add custom domain rules
+  # // [GOAL]: Route traffic for tenant custom domains
+  # // [ELITE_CURSOR_SNIPPET]: aihandle
+  # - host: tenant1.custom-domain.com
+  #   http:
+  #     paths:
+  #     - path: /
+  #       pathType: Prefix
+  #       backend:
+  #         service:
+  #           name: shujaa-studio-api
+  #           port:
+  #             number: 80
+  # tls: # Example TLS configuration for custom domains
+  # - hosts:
+  #   - tenant1.custom-domain.com
+  #   secretName: tenant1-tls-secret # Secret created by cert-manager

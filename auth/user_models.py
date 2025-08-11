@@ -63,3 +63,19 @@ class Consent(Base):
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User")
+
+class WebhookAttempt(Base):
+    __tablename__ = "webhook_attempts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    webhook_id = Column(String, index=True) # Unique ID for the webhook event
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False)
+    payload = Column(Text, nullable=False)
+    status = Column(String, default="pending") # e.g., "pending", "success", "failed"
+    retries = Column(Integer, default=0)
+    last_attempt_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    next_attempt_at = Column(DateTime(timezone=True), nullable=True)
+    error_message = Column(Text, nullable=True)
+
+    tenant = relationship("Tenant")

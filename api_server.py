@@ -419,14 +419,36 @@ class WebhookPaymentStatus(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     signature: str # For secure verification
 
+import hmac
+import hashlib
+
+WEBHOOK_SECRET = "your_webhook_secret_key" # TODO: Load from secure config
+
 @app.post("/webhook/payment_status")
 async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request):
     # // [TASK]: Implement secure signature verification for payment callbacks
     # // [GOAL]: Ensure webhook authenticity and prevent tampering
     # // [ELITE_CURSOR_SNIPPET]: securitycheck
-    # Placeholder for signature verification
-    expected_signature = "mock_signature" # In real app, calculate based on payload and shared secret
-    if payload.signature != expected_signature:
+    
+    # Get raw request body
+    body = await request.body()
+    
+    # Get signature from headers (e.g., "X-Hub-Signature" or "X-Signature")
+    signature_header = request.headers.get("X-Webhook-Signature") # Example header name
+    
+    if not signature_header:
+        audit_logger.error("Webhook received without signature header.", extra={'user_id': payload.user_id})
+        raise HTTPException(status_code=403, detail="Signature header missing")
+
+    # Calculate expected signature
+    expected_signature = hmac.new(
+        WEBHOOK_SECRET.encode('utf-8'),
+        body,
+        hashlib.sha256
+    ).hexdigest()
+
+    # Compare signatures
+    if not hmac.compare_digest(expected_signature, signature_header):
         audit_logger.error(f"Webhook signature mismatch for user {payload.user_id}. Potential tampering.", extra={'user_id': payload.user_id})
         raise HTTPException(status_code=403, detail="Invalid signature")
 
