@@ -31,6 +31,8 @@ import redis.asyncio as redis
 from starlette_prometheus import PrometheusMiddleware, metrics
 from feature_flags import feature_flag_manager # Elite Cursor Snippet: feature_flag_import
 from chaos_utils import chaos_injector # Elite Cursor Snippet: chaos_injector_import
+from auth.tenancy import current_tenant
+from auth.rbac import has_role, Role
 
 logger = get_logger(__name__)
 audit_logger = get_audit_logger()
@@ -44,8 +46,13 @@ app = FastAPI(
     description="API for Shujaa Studio - Enterprise AI Video Generation"
 )
 
-# J.1: Add Prometheus middleware to expose /metrics endpoint
-app.add_middleware(PrometheusMiddleware)
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
+FastAPIInstrumentor.instrument_app(app)
+
+from auth.tenancy import TenantMiddleware
+
+app.add_middleware(TenantMiddleware)
 app.add_route("/metrics", metrics)
 
 orchestrator = PipelineOrchestrator()
@@ -85,6 +92,7 @@ class UserCreate(BaseModel):
     email: str
     password: str
     tenant_name: Optional[str] = "default"
+    role: Optional[str] = "user"
 
 class Token(BaseModel):
     access_token: str
@@ -130,12 +138,8 @@ async def get_current_active_user(current_user_payload: dict = Depends(get_curre
         raise HTTPException(status_code=400, detail="Inactive user")
     return user
 
-async def get_current_tenant(user: dict = Depends(get_current_user)):
-    tenant_id = user.get("tenant_id")
-    if not tenant_id:
-        audit_logger.warning(f"Authorization failed for user {user.get('user_id')}: Tenant ID missing in token.", extra={'user_id': user.get('user_id')})
-        raise HTTPException(status_code=403, detail="Tenant ID not found in token.")
-    return tenant_id
+async def get_current_tenant():
+    pass
 
 async def get_current_locale(request: Request) -> str:
     # // [TASK]: Provide current locale as a dependency
@@ -145,20 +149,7 @@ async def get_current_locale(request: Request) -> str:
 
 # --- Middleware ---
 
-@app.middleware("http")
-async def add_tenant_context(request: Request, call_next):
-    try:
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(" ")[1]
-            payload = verify_jwt(token)
-            request.state.tenant_id = payload.get("tenant_id")
-        else:
-            request.state.tenant_id = "default_tenant"
-    except Exception:
-        request.state.tenant_id = "unauthenticated_tenant"
-    response = await call_next(request)
-    return response
+
 
 @app.middleware("http")
 async def pii_redaction_middleware(request: Request, call_next):
@@ -199,8 +190,10 @@ async def health_check(locale: str = Depends(get_current_locale)):
 
 @app.post("/register", response_model=UserCreate)
 @RateLimiter(times=2, seconds=60)
-async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db), locale: str = Depends(get_current_locale)):
-    db_user = create_user(db, user.username, user.email, user.password, user.tenant_name)
+async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db), locale: str = Depends(get_current_locale), current_user: User = Depends(get_current_active_user)):
+    if user.role == Role.ADMIN and (not current_user or current_user.role != Role.ADMIN):
+        raise HTTPException(status_code=403, detail="Only admins can create other admins")
+    db_user = create_user(db, user.username, user.email, user.password, user.tenant_name, user.role)
     if not db_user:
         audit_logger.error(f"User registration failed: Username {user.username} or email {user.email} already registered.", extra={'user_id': None})
         raise HTTPException(status_code=400, detail=gettext("username_or_email_registered", locale=locale))
@@ -294,7 +287,7 @@ async def get_user_usage(current_user: dict = Depends(get_current_user)):
 
 @app.post("/generate_video")
 @RateLimiter(times=1, seconds=5)
-async def generate_video_endpoint(request_data: GenerateVideoRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
+async def generate_video_endpoint(request_data: GenerateVideoRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant):
     audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_video.", extra={'user_id': current_user.get('user_id')})
     try:
         enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="video_generation")
@@ -368,7 +361,7 @@ async def batch_generate_video_endpoint(batch_request: BatchGenerateVideoRequest
     }
 
 @app.post("/generate_landing_page")
-async def generate_landing_page_endpoint(request_data: GenerateLandingPageRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
+async def generate_landing_page_endpoint(request_data: GenerateLandingPageRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant):
     audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_landing_page.", extra={'user_id': current_user.get('user_id')})
     try:
         enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="landing_page_generation")
@@ -382,7 +375,7 @@ async def generate_landing_page_endpoint(request_data: GenerateLandingPageReques
 
 @app.post("/scan_alert")
 @RateLimiter(times=10, seconds=60)
-async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
+async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant):
     audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /scan_alert.", extra={'user_id': current_user.get('user_id')})
     try:
         enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="scan_alert")
@@ -401,7 +394,7 @@ async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict
 
 @app.post("/crm_push_contact")
 @RateLimiter(times=5, seconds=60)
-async def crm_push_contact_endpoint(request_data: CRMPushContactRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
+async def crm_push_contact_endpoint(request_data: CRMPushContactRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant):
     audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /crm_push_contact.", extra={'user_id': current_user.get('user_id')})
     try:
         enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="crm_push_contact")
@@ -454,7 +447,7 @@ async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request
     return {"message": "Webhook received and processed"}
 
 @app.get("/protected_data")
-async def protected_data(current_user: User = Depends(get_current_active_user), current_tenant: str = Depends(get_current_tenant)):
+async def protected_data(current_user: User = Depends(get_current_active_user), current_tenant: str = current_tenant):
     audit_logger.info(f"Access granted: User {current_user.username} (Tenant: {current_tenant}) accessing /protected_data.", extra={'user_id': current_user.id})
     return {"message": f"Welcome, {current_user.username} from tenant {current_tenant}! This is protected data.", "user": UserProfile.from_orm(current_user), "tenant": current_tenant}
 
@@ -486,7 +479,7 @@ async def inject_chaos(
         raise HTTPException(status_code=500, detail=f"Failed to inject chaos: {e}")
 
 @app.get("/feature_status/{feature_name}")
-async def get_feature_status(feature_name: str, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
+async def get_feature_status(feature_name: str, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant):
     # // [TASK]: Expose API for frontend to check feature flag status
     # // [GOAL]: Allow dynamic UI based on feature flags
     # // [ELITE_CURSOR_SNIPPET]: aihandle

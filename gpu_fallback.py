@@ -92,10 +92,11 @@ class HybridGPUManager:
     // [SNIPPET]: thinkwithai + surgicalfix + perfcheck + costaware
     """
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None, cost_optimization_strategy: str = "balanced"):
         self.config_path = config_path or "config.yaml"
         self.session_id = str(int(time.time()))
         self.processing_stats = {"local_gpu": 0, "local_cpu": 0, "cloud_gpu": 0}
+        self.cost_optimization_strategy = cost_optimization_strategy # new attribute
 
         self.local_gpu = self._detect_local_gpu()
         self.cloud_providers = self._load_cloud_config()
@@ -157,6 +158,11 @@ class HybridGPUManager:
         """
         Selects the best available resource (local or cloud) based on task requirements and cost.
         """
+        best_resource = sorted(eligible_resources, key=lambda x: x["cost"])[0]
+        logger.info(f"🎯 Selected best resource: {best_resource['name']} from {best_resource['provider']} at ${best_resource['cost']:.2f}/hr")
+        return best_resource
+
+    def _get_eligible_resources(self, task_profile: TaskProfile) -> List[Dict]:
         eligible_resources = []
         if self.local_gpu.available and self.local_gpu.memory_free >= task_profile.estimated_memory:
             eligible_resources.append({
@@ -173,7 +179,14 @@ class HybridGPUManager:
                         "name": gpu_type, "mode": ProcessingMode.CLOUD_GPU,
                         "cost": specs["cost_per_hour"], "provider": provider["name"]
                     })
-        
+        return eligible_resources
+
+    def select_best_resource(self, task_profile: TaskProfile) -> Dict:
+        """
+        Selects the best available resource (local or cloud) based on task requirements and cost.
+        """
+        eligible_resources = self._get_eligible_resources(task_profile)
+
         if not eligible_resources:
             if task_profile.can_use_cpu:
                 logger.info("No suitable GPU found, falling back to Local CPU.")
@@ -181,8 +194,26 @@ class HybridGPUManager:
             else:
                 raise RuntimeError(f"No resource found that meets memory requirement of {task_profile.estimated_memory}GB")
 
-        best_resource = sorted(eligible_resources, key=lambda x: x["cost"])[0]
-        logger.info(f"🎯 Selected best resource: {best_resource['name']} from {best_resource['provider']} at ${best_resource['cost']:.2f}/hr")
+        if self.cost_optimization_strategy == "low_cost":
+            # Prioritize CPU if possible and cost is paramount
+            if task_profile.can_use_cpu:
+                return {"name": "cpu", "mode": ProcessingMode.LOCAL_CPU, "cost": 0, "provider": "local"}
+            best_resource = sorted(eligible_resources, key=lambda x: x["cost"])[0]
+        elif self.cost_optimization_strategy == "balanced":
+            # Balance between cost and performance (e.g., prefer local GPU if available)
+            local_gpu_option = next((r for r in eligible_resources if r["mode"] == ProcessingMode.LOCAL_GPU), None)
+            if local_gpu_option:
+                best_resource = local_gpu_option
+            else:
+                best_resource = sorted(eligible_resources, key=lambda x: x["cost"])[0]
+        elif self.cost_optimization_strategy == "high_performance":
+            # Prioritize fastest available, potentially higher cost
+            # This would require adding a 'performance_score' to GPUResource or similar
+            best_resource = sorted(eligible_resources, key=lambda x: x["cost"])[0] # For now, still cost-based
+        else:
+            best_resource = sorted(eligible_resources, key=lambda x: x["cost"])[0]
+
+        logger.info(f"🎯 Selected best resource: {best_resource['name']} from {best_resource['provider']} at ${best_resource['cost']:.2f}/hr (Strategy: {self.cost_optimization_strategy})")
         return best_resource
 
     async def process_task(self, task_profile: TaskProfile, task_function: Callable, *args, **kwargs):
@@ -253,6 +284,13 @@ class HybridGPUManager:
             "session_id": self.session_id,
             "performance_log": self.performance_log
         }
+
+    def update_cloud_costs(self, new_cloud_config: List[Dict]):
+        # // [TASK]: Dynamically update cloud provider costs
+        # // [GOAL]: Allow real-time cost adjustments for cloud resources
+        # // [ELITE_CURSOR_SNIPPET]: costaware
+        logger.info("Updating cloud provider costs dynamically.")
+        self.cloud_providers = new_cloud_config
 
     def optimize_for_mobile(self) -> Dict:
         # This method remains conceptually the same but now benefits from the new resource selector

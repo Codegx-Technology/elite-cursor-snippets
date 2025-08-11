@@ -1,0 +1,21 @@
+# // [TASK]: Create Kubernetes Ingress manifest
+# // [GOAL]: Expose the application to the internet
+# // [ELITE_CURSOR_SNIPPET]: aihandle
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shujaa-studio-api
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: shujaa-studio-api
+            port:
+              number: 80

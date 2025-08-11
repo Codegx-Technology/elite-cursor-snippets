@@ -43,7 +43,7 @@ def get_user_by_email(db: Session, email: str):
     """
     return db.query(User).filter(User.email == email).first()
 
-def create_user(db: Session, username: str, email: str, password: str, tenant_name: str = "default"):
+def create_user(db: Session, username: str, email: str, password: str, tenant_name: str = "default", role: str = "user"):
     """
     // [TASK]: Create a new user in the database
     // [GOAL]: Handle user registration
@@ -67,7 +67,7 @@ def create_user(db: Session, username: str, email: str, password: str, tenant_na
         db.refresh(tenant)
         audit_logger.info(f"New tenant created: {tenant_name}", extra={'user_id': None})
 
-    db_user = User(username=username, email=email, hashed_password=hashed_password, tenant_id=tenant.id)
+    db_user = User(username=username, email=email, hashed_password=hashed_password, tenant_id=tenant.id, role=role)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

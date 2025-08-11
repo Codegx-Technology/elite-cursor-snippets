@@ -74,6 +74,7 @@ SQLAlchemy>=2.0.0 # For database ORM
 passlib[bcrypt]>=1.7.4
 fastapi-limiter>=0.1.5 # For API rate limiting
 python-dotenv>=1.0.0  # Environment management
+opentelemetry-instrumentation-fastapi>=0.43.0
 
 # Multi-Language Support
 Babel>=2.12.1
@@ -83,6 +84,8 @@ psutil>=5.9.0  # System monitoring
 tqdm>=4.65.0  # Progress bars
 colorama>=0.4.6  # Terminal colors
 click>=8.1.0  # CLI interface
+locust>=2.15.1
+py-spy>=0.3.14
 
 # Optional: Advanced AI Features (Install when needed)
 # git+https://github.com/Rudrabha/Wav2Lip.git  # Lip-sync

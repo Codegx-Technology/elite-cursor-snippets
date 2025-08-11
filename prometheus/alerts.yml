@@ -1,0 +1,26 @@
+# // [TASK]: Create Prometheus alert rules
+# // [GOAL]: Define alert rules for the application
+# // [ELITE_CURSOR_SNIPPET]: aihandle
+
+groups:
+- name: shujaa-studio
+  rules:
+  - alert: HighErrorRate
+    expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+    for: 5m
+    labels:
+      severity: page
+    annotations:
+      summary: High error rate
+      description: "The error rate is greater than 5% for the last 5 minutes."
+      runbook_url: "https://github.com/Codegx-Technology/ShujaaStudio/wiki/Runbook#high-error-rate"
+
+  - alert: JobQueueLength
+    expr: sum(job_queue_length) > 100
+    for: 5m
+    labels:
+      severity: page
+    annotations:
+      summary: Job queue length is high
+      description: "The job queue length is greater than 100 for the last 5 minutes."
+      runbook_url: "https://github.com/Codegx-Technology/ShujaaStudio/wiki/Runbook#job-queue-length"

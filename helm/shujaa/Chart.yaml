@@ -1,0 +1,10 @@
+# // [TASK]: Create Helm Chart.yaml
+# // [GOAL]: Define the metadata for the Helm chart
+# // [ELITE_CURSOR_SNIPPET]: aihandle
+
+apiVersion: v2
+name: shujaa-studio
+description: A Helm chart for Shujaa Studio
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
