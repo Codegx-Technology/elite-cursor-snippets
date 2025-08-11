@@ -1,1 +1,1 @@
-feat(secrets): Implement AWS Secrets Manager integration for config loading
+feat(ci): Add SCA, image scanning, cosign image signing and SBOM publishing

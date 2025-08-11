@@ -34,7 +34,50 @@ jobs:
       run: |
         pytest
 
-    - name: Build Docker image (placeholder)
+    - name: Build Docker image
       run: |
-        echo "TODO: Add Dockerfile and docker build command"
-        # docker build . -t shujaa-studio:latest
+        docker build . -t shujaa-studio:latest
+
+    - name: Run Snyk SCA
+      uses: snyk/actions/python@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        command: test
+
+    - name: Run Trivy vulnerability scan (filesystem)
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        severity: 'HIGH,CRITICAL'
+        format: 'table'
+        output: 'trivy-results.txt'
+
+    - name: Run Trivy vulnerability scan (image)
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'shujaa-studio:latest'
+        format: 'table'
+        output: 'trivy-image-results.txt'
+        severity: 'HIGH,CRITICAL'
+
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@main
+      with:
+        cosign-release: 'v2.0.0' # Use a specific version
+
+    - name: Sign and Push Image
+      env:
+        COSIGN_EXPERIMENTAL: "true"
+        COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }} # Use a strong, dedicated password
+      run: |
+        cosign sign --yes shujaa-studio:latest
+
+    - name: Generate and Push SBOM
+      env:
+        COSIGN_EXPERIMENTAL: "true"
+        COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+      run: |
+        cosign generate-sbom shujaa-studio:latest > sbom.spdx.json
+        # You might push this to a registry or store it as an artifact
+        # cosign attach sbom --sbom sbom.spdx.json shujaa-studio:latest
