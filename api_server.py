@@ -19,7 +19,7 @@ from utils.parallel_processing import ParallelProcessor
 from i18n_utils import gettext, get_locale_from_request # Elite Cursor Snippet: i18n_imports
 
 from database import engine, get_db
-from auth.user_models import Base, User, Tenant
+from auth.user_models import Base, User, Tenant, AuditLog, Consent
 from auth.auth_service import create_user, authenticate_user, create_access_token, update_user_profile
 from sqlalchemy.orm import Session
 
