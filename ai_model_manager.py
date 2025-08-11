@@ -168,8 +168,15 @@ async def generate_text(prompt, model_id=None, **kwargs):
         except Exception as e:
             logger.exception(f"❌ Local LLM inference failed: {e}")
             raise ValueError("Local LLM inference failed") # Using ValueError as a generic error
-    
-    raise ValueError("No text generation model available (HF or local).")
+    else:
+        if config.models.text_generation.local_fallback_path:
+            raise ValueError(
+                f"No text generation model available. Hugging Face API failed, and "
+                f"the local model '{config.models.text_generation.local_fallback_path}' "
+                f"could not be loaded. Please ensure the local model is downloaded and accessible."
+            )
+        else:
+            raise ValueError("No text generation model available (HF or local fallback path not configured).")
 
 from services.watermark_remover import remove_watermark
 
@@ -282,8 +289,15 @@ async def text_to_speech(text, model_id=None, **kwargs):
         except Exception as e:
             logger.exception(f"❌ Local TTS generation failed: {e}")
             raise ValueError("Local TTS generation failed")
-    
-    raise ValueError("No TTS model available (HF or local).")
+    else:
+        if config.models.voice_synthesis.local_fallback_path:
+            raise ValueError(
+                f"No TTS model available. Hugging Face API failed, and "
+                f"the local model '{config.models.voice_synthesis.local_fallback_path}' "
+                f"could not be loaded. Please ensure the local model is downloaded and accessible."
+            )
+        else:
+            raise ValueError("No TTS model available (HF or local fallback path not configured).")
 
 @retry_on_exception()
 async def speech_to_text(audio_path, model_id=None, **kwargs):
@@ -330,5 +344,12 @@ async def speech_to_text(audio_path, model_id=None, **kwargs):
         except Exception as e:
             logger.exception(f"❌ Local STT transcription failed: {e}")
             raise ValueError("Local STT transcription failed")
-    
-    raise ValueError("No STT model available (HF or local).")
+    else:
+        if config.models.speech_to_text.local_fallback_path:
+            raise ValueError(
+                f"No STT model available. Hugging Face API failed, and "
+                f"the local model '{config.models.speech_to_text.local_fallback_path}' "
+                f"could not be loaded. Please ensure the local model is downloaded and accessible."
+            )
+        else:
+            raise ValueError("No STT model available (HF or local fallback path not configured).")
