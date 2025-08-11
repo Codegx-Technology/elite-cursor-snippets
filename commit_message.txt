@@ -1,1 +1,1 @@
-feat(i18n): Implement multi-language support with Babel and API integration
+feat(audit): Implement tamper-proof audit logging with DB storage and tests

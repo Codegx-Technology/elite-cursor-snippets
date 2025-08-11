@@ -111,11 +111,11 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         payload = verify_jwt(token)
         user_id = payload.get("user_id")
         if user_id is None:
-            audit_logger.warning("Authentication failed: User ID missing in token.")
+            audit_logger.warning("Authentication failed: User ID missing in token.", extra={'user_id': None})
             raise HTTPException(status_code=401, detail="Invalid authentication credentials: User ID missing")
         return payload
     except Exception as e:
-        audit_logger.warning(f"Authentication failed for token: {token[:10]}... Error: {e}")
+        audit_logger.warning(f"Authentication failed for token: {token[:10]}... Error: {e}", extra={'user_id': None})
         raise HTTPException(status_code=401, detail=f"Invalid authentication credentials: {e}")
 
 async def get_current_active_user(current_user_payload: dict = Depends(get_current_user), db: Session = Depends(get_db)) -> User:
@@ -130,7 +130,7 @@ async def get_current_active_user(current_user_payload: dict = Depends(get_curre
 async def get_current_tenant(user: dict = Depends(get_current_user)):
     tenant_id = user.get("tenant_id")
     if not tenant_id:
-        audit_logger.warning(f"Authorization failed for user {user.get('user_id')}: Tenant ID missing in token.")
+        audit_logger.warning(f"Authorization failed for user {user.get('user_id')}: Tenant ID missing in token.", extra={'user_id': user.get('user_id')})
         raise HTTPException(status_code=403, detail="Tenant ID not found in token.")
     return tenant_id
 
@@ -178,9 +178,9 @@ async def health_check(locale: str = Depends(get_current_locale)):
 async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db), locale: str = Depends(get_current_locale)):
     db_user = create_user(db, user.username, user.email, user.password, user.tenant_name)
     if not db_user:
-        audit_logger.error(f"User registration failed: Username {user.username} or email {user.email} already registered.")
+        audit_logger.error(f"User registration failed: Username {user.username} or email {user.email} already registered.", extra={'user_id': None})
         raise HTTPException(status_code=400, detail=gettext("username_or_email_registered", locale=locale))
-    audit_logger.info(f"User registered: {user.username} (Tenant: {user.tenant_name})")
+    audit_logger.info(f"User registered: {user.username} (Tenant: {user.tenant_name})", extra={'user_id': db_user.id})
     return db_user
 
 @app.post("/token", response_model=Token)
@@ -188,7 +188,7 @@ async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
-        audit_logger.warning(f"Login failed: Invalid credentials for username {form_data.username}.")
+        audit_logger.warning(f"Login failed: Invalid credentials for username {form_data.username}.", extra={'user_id': None})
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -199,14 +199,14 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         data={"user_id": user.id, "username": user.username, "tenant_id": user.tenant_id},
         expires_delta=access_token_expires
     )
-    audit_logger.info(f"User logged in: {user.username} (Tenant: {user.tenant.name})")
+    audit_logger.info(f"User logged in: {user.username} (Tenant: {user.tenant.name})", extra={'user_id': user.id})
     return {"access_token": access_token, "token_type": "bearer"}
 
 from billing_models import get_default_plans, get_user_subscription # Elite Cursor Snippet: billing_api_imports
 
 @app.get("/users/me", response_model=UserProfile)
 async def read_users_me(current_user: User = Depends(get_current_active_user)):
-    audit_logger.info(f"User profile viewed for user: {current_user.username}")
+    audit_logger.info(f"User profile viewed for user: {current_user.username}", extra={'user_id': current_user.id})
     return current_user
 
 @app.put("/users/me", response_model=UserProfile)
@@ -218,7 +218,7 @@ async def update_users_me(user_update: UserUpdate, db: Session = Depends(get_db)
     updated_user = update_user_profile(db, current_user.id, update_data)
     if not updated_user:
         raise HTTPException(status_code=404, detail="User not found")
-    audit_logger.info(f"User profile updated for user: {current_user.username}")
+    audit_logger.info(f"User profile updated for user: {current_user.username}", extra={'user_id': current_user.id})
     return updated_user
 
 @app.get("/users/me/plan")
@@ -271,7 +271,7 @@ async def get_user_usage(current_user: dict = Depends(get_current_user)):
 @app.post("/generate_video")
 @RateLimiter(times=1, seconds=5)
 async def generate_video_endpoint(request_data: GenerateVideoRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
-    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_video.")
+    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_video.", extra={'user_id': current_user.get('user_id')})
     try:
         enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="video_generation")
     except BillingException as e:
@@ -304,7 +304,7 @@ async def generate_video_endpoint(request_data: GenerateVideoRequest, current_us
 
 @app.post("/batch_generate_video")
 async def batch_generate_video_endpoint(batch_request: BatchGenerateVideoRequest, current_user: dict = Depends(get_current_user)):
-    audit_logger.info(f"Batch video generation request received from user {current_user.get('user_id')}. Count: {len(batch_request.requests)}")
+    audit_logger.info(f"Batch video generation request received from user {current_user.get('user_id')}. Count: {len(batch_request.requests)}", extra={'user_id': current_user.get('user_id')})
     MAX_BATCH_SIZE = config.video.get('max_batch_size', 10)
     if len(batch_request.requests) > MAX_BATCH_SIZE:
         raise HTTPException(status_code=400, detail=f"Batch size cannot exceed {MAX_BATCH_SIZE}.")
@@ -345,7 +345,7 @@ async def batch_generate_video_endpoint(batch_request: BatchGenerateVideoRequest
 
 @app.post("/generate_landing_page")
 async def generate_landing_page_endpoint(request_data: GenerateLandingPageRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
-    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_landing_page.")
+    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_landing_page.", extra={'user_id': current_user.get('user_id')})
     try:
         enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="landing_page_generation")
     except BillingException as e:
@@ -359,7 +359,7 @@ async def generate_landing_page_endpoint(request_data: GenerateLandingPageReques
 @app.post("/scan_alert")
 @RateLimiter(times=10, seconds=60)
 async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
-    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /scan_alert.")
+    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /scan_alert.", extra={'user_id': current_user.get('user_id')})
     try:
         enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="scan_alert")
     except BillingException as e:
@@ -378,7 +378,7 @@ async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict
 @app.post("/crm_push_contact")
 @RateLimiter(times=5, seconds=60)
 async def crm_push_contact_endpoint(request_data: CRMPushContactRequest, current_user: dict = Depends(get_current_user), current_tenant: str = Depends(get_current_tenant)):
-    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /crm_push_contact.")
+    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /crm_push_contact.", extra={'user_id': current_user.get('user_id')})
     try:
         enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="crm_push_contact")
     except BillingException as e:
@@ -407,10 +407,10 @@ async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request
     # Placeholder for signature verification
     expected_signature = "mock_signature" # In real app, calculate based on payload and shared secret
     if payload.signature != expected_signature:
-        audit_logger.error(f"Webhook signature mismatch for user {payload.user_id}. Potential tampering.")
+        audit_logger.error(f"Webhook signature mismatch for user {payload.user_id}. Potential tampering.", extra={'user_id': payload.user_id})
         raise HTTPException(status_code=403, detail="Invalid signature")
 
-    audit_logger.info(f"Webhook received for user {payload.user_id}, transaction {payload.transaction_id}, status {payload.status}.")
+    audit_logger.info(f"Webhook received for user {payload.user_id}, transaction {payload.transaction_id}, status {payload.status}.", extra={'user_id': payload.user_id})
 
     # // [TASK]: Update user subscription status based on webhook notification
     # // [GOAL]: Automate subscription management in real-time
@@ -431,7 +431,7 @@ async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request
 
 @app.get("/protected_data")
 async def protected_data(current_user: User = Depends(get_current_active_user), current_tenant: str = Depends(get_current_tenant)):
-    audit_logger.info(f"Access granted: User {current_user.username} (Tenant: {current_tenant}) accessing /protected_data.")
+    audit_logger.info(f"Access granted: User {current_user.username} (Tenant: {current_tenant}) accessing /protected_data.", extra={'user_id': current_user.id})
     return {"message": f"Welcome, {current_user.username} from tenant {current_tenant}! This is protected data.", "user": UserProfile.from_orm(current_user), "tenant": current_tenant}
 
 if __name__ == "__main__":

@@ -50,10 +50,10 @@ def create_user(db: Session, username: str, email: str, password: str, tenant_na
     """
     # Check if username or email already exists
     if get_user_by_username(db, username):
-        audit_logger.warning(f"Registration failed: Username {username} already exists.")
+        audit_logger.warning(f"Registration failed: Username {username} already exists.", extra={'user_id': None})
         return None
     if get_user_by_email(db, email):
-        audit_logger.warning(f"Registration failed: Email {email} already exists.")
+        audit_logger.warning(f"Registration failed: Email {email} already exists.", extra={'user_id': None})
         return None
 
     hashed_password = get_password_hash(password)
@@ -65,7 +65,7 @@ def create_user(db: Session, username: str, email: str, password: str, tenant_na
         db.add(tenant)
         db.commit()
         db.refresh(tenant)
-        audit_logger.info(f"New tenant created: {tenant_name}")
+        audit_logger.info(f"New tenant created: {tenant_name}", extra={'user_id': None})
 
     db_user = User(username=username, email=email, hashed_password=hashed_password, tenant_id=tenant.id)
     db.add(db_user)
@@ -81,9 +81,9 @@ def authenticate_user(db: Session, username: str, password: str):
     """
     user = get_user_by_username(db, username)
     if not user or not verify_password(password, user.hashed_password):
-        audit_logger.warning(f"Authentication failed: Invalid credentials for username {username}.")
+        audit_logger.warning(f"Authentication failed: Invalid credentials for username {username}.", extra={'user_id': None})
         return False
-    audit_logger.info(f"User {username} authenticated successfully.")
+    audit_logger.info(f"User {username} authenticated successfully.", extra={'user_id': user.id if user else None})
     return user
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -100,7 +100,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     
     # Use jwt_utils.py to create the token
     token = create_jwt(to_encode)
-    audit_logger.info(f"Access token created for user: {data.get('username')}")
+    audit_logger.info(f"Access token created for user: {data.get('username')}", extra={'user_id': data.get('user_id')})
     return token
 
 def update_user_profile(db: Session, user_id: int, user_update_data: dict):
@@ -110,7 +110,7 @@ def update_user_profile(db: Session, user_id: int, user_update_data: dict):
     """
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        audit_logger.warning(f"Profile update failed: User with ID {user_id} not found.")
+        audit_logger.warning(f"Profile update failed: User with ID {user_id} not found.", extra={'user_id': user_id})
         return None
 
     for key, value in user_update_data.items():
@@ -118,5 +118,5 @@ def update_user_profile(db: Session, user_id: int, user_update_data: dict):
     
     db.commit()
     db.refresh(user)
-    audit_logger.info(f"User profile updated for user ID: {user_id}")
+    audit_logger.info(f"User profile updated for user ID: {user_id}", extra={'user_id': user_id})
     return user
