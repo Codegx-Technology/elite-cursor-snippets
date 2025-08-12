@@ -16,6 +16,16 @@ HF_MODELS: List[Tuple[str, str]] = [
     ("saic-mdal/lama", "lama"),
 ]
 
+# Approximate model sizes in GB (disk space)
+MODEL_SIZES_GB = {
+    "sdxl-turbo": 7.0,
+    "sd_inpaint": 3.0,
+    "sam": 0.4,
+    "lama": 0.1,
+    "whisper-base": 1.0,
+    "bark": 3.0, # Estimated disk space, VRAM is 12GB
+}
+
 
 def is_cached(repo_id: str, subdir: str) -> bool:
     """Return True if the repo appears cached locally in our models dir."""
@@ -83,6 +93,41 @@ def main():
     for repo_id, subdir in HF_MODELS:
         status = "present" if is_cached(repo_id, subdir) else "missing"
         print(f" - {subdir:12s}: {status}")
+
+    total_required_gb = sum(MODEL_SIZES_GB.values())
+    downloaded_gb = 0.0
+    missing_gb = 0.0
+
+    for repo_id, subdir in HF_MODELS:
+        if is_cached(repo_id, subdir):
+            downloaded_gb += MODEL_SIZES_GB.get(subdir, 0.0)
+        else:
+            missing_gb += MODEL_SIZES_GB.get(subdir, 0.0)
+
+    # Check Whisper separately
+    try:
+        import whisper # type: ignore
+        whisper_dir = MODELS_DIR / "whisper"
+        if whisper_dir.exists() and any(whisper_dir.iterdir()):
+            downloaded_gb += MODEL_SIZES_GB.get("whisper-base", 0.0)
+        else:
+            missing_gb += MODEL_SIZES_GB.get("whisper-base", 0.0)
+    except ImportError:
+        # If whisper is not installed, consider its model missing for calculation
+        missing_gb += MODEL_SIZES_GB.get("whisper-base", 0.0)
+
+    # Add Bark to calculations (assuming it's always checked/downloaded by the main app, not this script)
+    # For now, we'll just add its size to total and missing if not present
+    # This script doesn't explicitly download Bark, so we'll assume it's missing unless explicitly handled
+    if not (MODELS_DIR / "bark").exists() or not any((MODELS_DIR / "bark").iterdir()):
+        missing_gb += MODEL_SIZES_GB.get("bark", 0.0)
+    else:
+        downloaded_gb += MODEL_SIZES_GB.get("bark", 0.0)
+
+    print(f"\nMemory Summary:")
+    print(f" - Total estimated disk space for models: {total_required_gb:.2f} GB")
+    print(f" - Disk space currently used by downloaded models: {downloaded_gb:.2f} GB")
+    print(f" - Estimated disk space for missing models: {missing_gb:.2f} GB")
 
     sys.exit(0 if all_ok else 1)
 
