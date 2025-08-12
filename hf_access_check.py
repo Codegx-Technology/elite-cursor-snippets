@@ -1,8 +1,10 @@
-import requests
 import os
+from hf_utils import validate_hf_model_access, check_hf_inference_endpoint
+from logging_setup import get_logger
 
-HF_API_KEY = os.environ.get("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")
+logger = get_logger(__name__)
 
+HF_TOKEN = os.environ.get("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")
 
 MODELS = [
     "meta-llama/Meta-Llama-3-8B-Instruct",  # LLaMA
@@ -12,26 +14,10 @@ MODELS = [
     "google/flan-t5-large"                  # FLAN-T5
 ]
 
-headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-data = {"inputs": "Test access"}
-
-for model in MODELS:
-    print(f"\nChecking {model}...")
-    try:
-        response = requests.post(
-            f"https://api-inference.huggingface.co/models/{model}",
-            headers=headers,
-            json=data,
-            timeout=10
-        )
-        if response.status_code == 200:
-            print(f"Access granted for {model}")
-        elif response.status_code == 403:
-            print(f"Access denied for {model} (not approved yet)")
-        elif response.status_code == 401:
-            print(f"Invalid/expired API token -- check Hugging Face account")
-            break
-        else:
-            print(f"Unexpected response {response.status_code}: {response.text}")
-    except Exception as e:
-        print(f"Error checking {model}: {e}")
+if not HF_TOKEN:
+    logger.error("HUGGING_FACE_TOKEN environment variable not set. Please set it to your Hugging Face token.")
+else:
+    for model in MODELS:
+        logger.info(f"--- Checking Model: {model} ---")
+        if validate_hf_model_access(model, HF_TOKEN):
+            check_hf_inference_endpoint(model, HF_TOKEN)
