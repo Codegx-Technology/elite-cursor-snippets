@@ -127,8 +127,17 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="loading-spinner"></div>
-        <span className="ml-3 text-soft-text">Loading dashboard...</span>
+        <div className="text-center">
+          <div className="relative mb-4">
+            <div className="w-16 h-16 border-4 border-transparent border-t-green-600 rounded-full animate-spin mx-auto"></div>
+            <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-8 h-8 border-2 border-transparent border-t-red-500 rounded-full animate-spin"
+                 style={{ animationDirection: 'reverse', animationDuration: '0.8s' }}></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <FaFlag className="text-yellow-500 animate-pulse" />
+            </div>
+          </div>
+          <span className="text-gray-600 font-medium">Loading your Kenya-first dashboard...</span>
+        </div>
       </div>
     );
   }
@@ -136,58 +145,107 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Kenya-First Hero Section */}
-      <div className="bg-gradient-to-r from-green-600 via-red-600 to-black p-6 rounded-xl text-white">
-        <div className="flex items-center space-x-4">
-          <FaFlag className="text-3xl" />
-          <div>
-            <h1 className="text-2xl font-bold">Karibu Shujaa Studio! 🇰🇪</h1>
-            <p className="text-green-100">Empowering African storytellers with AI-powered video generation</p>
-          </div>
-          <div className="ml-auto">
-            <FaMountain className="text-4xl text-yellow-300" />
+      <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+        <div
+          className="p-8 text-white relative z-10"
+          style={{
+            background: 'linear-gradient(135deg, #00A651 0%, #FF6B35 50%, #000000 100%)'
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-2">
+                <FaFlag className="text-4xl animate-pulse" />
+                <FaMountain className="text-4xl text-yellow-300 animate-float" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold mb-2">Karibu Shujaa Studio! 🇰🇪</h1>
+                <p className="text-green-100 text-lg">Empowering African storytellers with AI-powered video generation</p>
+                <p className="text-yellow-200 text-sm mt-1">Harambee spirit • Innovation • Cultural authenticity</p>
+              </div>
+            </div>
+            <div className="hidden md:flex items-center space-x-4">
+              <div className="text-right">
+                <div className="text-2xl font-bold">{stats.videosGenerated}</div>
+                <div className="text-green-200 text-sm">Videos Created</div>
+              </div>
+              <div className="w-px h-12 bg-white opacity-30"></div>
+              <div className="text-right">
+                <div className="text-2xl font-bold">{stats.activeUsers}</div>
+                <div className="text-yellow-200 text-sm">Active Creators</div>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400 rounded-full opacity-10 -translate-y-16 translate-x-16"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-green-400 rounded-full opacity-10 translate-y-12 -translate-x-12"></div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="p-6 hover-lift">
+        <Card variant="elite" padding="md" className="group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-soft-text text-sm">Videos Generated</p>
-              <p className="text-2xl font-bold text-charcoal-text">{stats.videosGenerated}</p>
+              <p className="text-gray-500 text-sm font-medium">Videos Generated</p>
+              <p className="text-3xl font-bold text-gray-800 mt-1">{stats.videosGenerated}</p>
+              <p className="text-green-600 text-xs mt-1 flex items-center">
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                +12% this week
+              </p>
             </div>
-            <FaVideo className="text-3xl text-blue-600" />
+            <div className="p-3 bg-blue-100 rounded-xl group-hover:bg-blue-200 transition-colors duration-200">
+              <FaVideo className="text-2xl text-blue-600" />
+            </div>
           </div>
         </Card>
 
-        <Card className="p-6 hover-lift">
+        <Card variant="elite" padding="md" className="group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-soft-text text-sm">Images Created</p>
-              <p className="text-2xl font-bold text-charcoal-text">{stats.imagesCreated}</p>
+              <p className="text-gray-500 text-sm font-medium">Images Created</p>
+              <p className="text-3xl font-bold text-gray-800 mt-1">{stats.imagesCreated}</p>
+              <p className="text-green-600 text-xs mt-1 flex items-center">
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                +8% this week
+              </p>
             </div>
-            <FaImages className="text-3xl text-green-600" />
+            <div className="p-3 bg-green-100 rounded-xl group-hover:bg-green-200 transition-colors duration-200">
+              <FaImages className="text-2xl text-green-600" />
+            </div>
           </div>
         </Card>
 
-        <Card className="p-6 hover-lift">
+        <Card variant="elite" padding="md" className="group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-soft-text text-sm">Audio Tracks</p>
-              <p className="text-2xl font-bold text-charcoal-text">{stats.audioTracks}</p>
+              <p className="text-gray-500 text-sm font-medium">Audio Tracks</p>
+              <p className="text-3xl font-bold text-gray-800 mt-1">{stats.audioTracks}</p>
+              <p className="text-green-600 text-xs mt-1 flex items-center">
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                +15% this week
+              </p>
             </div>
-            <FaMusic className="text-3xl text-purple-600" />
+            <div className="p-3 bg-purple-100 rounded-xl group-hover:bg-purple-200 transition-colors duration-200">
+              <FaMusic className="text-2xl text-purple-600" />
+            </div>
           </div>
         </Card>
 
-        <Card className="p-6 hover-lift">
+        <Card variant="elite" padding="md" className="group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-soft-text text-sm">Active Users</p>
-              <p className="text-2xl font-bold text-charcoal-text">{stats.activeUsers}</p>
+              <p className="text-gray-500 text-sm font-medium">Active Users</p>
+              <p className="text-3xl font-bold text-gray-800 mt-1">{stats.activeUsers}</p>
+              <p className="text-green-600 text-xs mt-1 flex items-center">
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                +5% this week
+              </p>
             </div>
-            <FaUsers className="text-3xl text-orange-600" />
+            <div className="p-3 bg-orange-100 rounded-xl group-hover:bg-orange-200 transition-colors duration-200">
+              <FaUsers className="text-2xl text-orange-600" />
+            </div>
           </div>
         </Card>
       </div>
@@ -271,41 +329,90 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <Card className="p-6">
-        <h2 className="section-title mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="btn-primary p-4 text-left rounded-lg hover-lift">
-            <FaVideo className="text-xl mb-2" />
-            <div>
-              <h3 className="font-semibold">Generate Video</h3>
-              <p className="text-sm opacity-90">Create a new Kenya-first video</p>
+      <Card variant="elite" padding="lg">
+        <h2 className="section-title mb-6 text-gradient-kenya">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <button className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl">
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <FaVideo className="text-3xl" />
+                <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                  <span className="text-xs font-bold">🎬</span>
+                </div>
+              </div>
+              <h3 className="font-bold text-lg mb-2">Generate Video</h3>
+              <p className="text-blue-100 text-sm">Create stunning Kenya-first videos with AI</p>
             </div>
+            <div className="absolute top-0 right-0 w-20 h-20 bg-white opacity-5 rounded-full -translate-y-10 translate-x-10 group-hover:scale-150 transition-transform duration-500"></div>
           </button>
 
-          <button className="btn-elite p-4 text-left rounded-lg hover-lift text-white">
-            <FaImages className="text-xl mb-2" />
-            <div>
-              <h3 className="font-semibold">Create Images</h3>
-              <p className="text-sm opacity-90">Generate cultural imagery</p>
+          <button className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-2xl hover:from-green-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl">
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <FaImages className="text-3xl" />
+                <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                  <span className="text-xs font-bold">🖼️</span>
+                </div>
+              </div>
+              <h3 className="font-bold text-lg mb-2">Create Images</h3>
+              <p className="text-green-100 text-sm">Generate beautiful cultural imagery</p>
             </div>
+            <div className="absolute top-0 right-0 w-20 h-20 bg-white opacity-5 rounded-full -translate-y-10 translate-x-10 group-hover:scale-150 transition-transform duration-500"></div>
           </button>
 
-          <button className="bg-gradient-to-r from-green-600 to-green-700 text-white p-4 text-left rounded-lg hover-lift">
-            <FaMusic className="text-xl mb-2" />
-            <div>
-              <h3 className="font-semibold">Audio Production</h3>
-              <p className="text-sm opacity-90">Swahili narration & music</p>
+          <button className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-2xl hover:from-purple-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl">
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <FaMusic className="text-3xl" />
+                <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                  <span className="text-xs font-bold">🎵</span>
+                </div>
+              </div>
+              <h3 className="font-bold text-lg mb-2">Audio Production</h3>
+              <p className="text-purple-100 text-sm">Swahili narration & traditional music</p>
             </div>
+            <div className="absolute top-0 right-0 w-20 h-20 bg-white opacity-5 rounded-full -translate-y-10 translate-x-10 group-hover:scale-150 transition-transform duration-500"></div>
           </button>
         </div>
       </Card>
 
       {/* Kenya-First Cultural Footer */}
-      <div className="bg-gradient-to-r from-yellow-400 via-red-500 to-green-600 p-4 rounded-lg text-white text-center">
-        <p className="font-medium">
-          🌍 Proudly serving African creators | 🎬 {stats.videosGenerated} videos celebrating our heritage |
-          🇰🇪 Harambee spirit in every creation
-        </p>
+      <div className="relative overflow-hidden rounded-2xl shadow-xl">
+        <div
+          className="p-8 text-white text-center relative z-10"
+          style={{
+            background: 'linear-gradient(135deg, #FFD700 0%, #FF6B35 50%, #00A651 100%)'
+          }}
+        >
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <FaGlobe className="text-2xl animate-pulse" />
+            <span className="text-xl font-bold">Proudly Kenyan</span>
+            <FaHeart className="text-2xl text-red-300 animate-pulse" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="flex items-center justify-center space-x-2">
+              <span className="text-2xl">🌍</span>
+              <span>Serving African creators worldwide</span>
+            </div>
+            <div className="flex items-center justify-center space-x-2">
+              <span className="text-2xl">🎬</span>
+              <span>{stats.videosGenerated} videos celebrating our heritage</span>
+            </div>
+            <div className="flex items-center justify-center space-x-2">
+              <span className="text-2xl">🇰🇪</span>
+              <span>Harambee spirit in every creation</span>
+            </div>
+          </div>
+
+          <div className="mt-4 text-xs opacity-90">
+            "Ubuntu: I am because we are" • Made with ❤️ in Kenya
+          </div>
+        </div>
+
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-0 w-16 h-16 bg-white opacity-10 rounded-full -translate-y-8 -translate-x-8"></div>
+        <div className="absolute bottom-0 right-0 w-12 h-12 bg-white opacity-10 rounded-full translate-y-6 translate-x-6"></div>
       </div>
     </div>
   );
