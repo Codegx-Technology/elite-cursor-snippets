@@ -1,6 +1,7 @@
 import requests
+import os
 
-HF_TOKEN = "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"
+HF_TOKEN = os.environ.get("HF_API_KEY")
 
 
 MODELS = [
@@ -15,7 +16,7 @@ headers = {"Authorization": f"Bearer {HF_TOKEN}"}
 data = {"inputs": "Test access"}
 
 for model in MODELS:
-    print(f"\n🔍 Checking {model}...")
+    print(f"\nChecking {model}...")
     try:
         response = requests.post(
             f"https://api-inference.huggingface.co/models/{model}",
@@ -24,13 +25,13 @@ for model in MODELS:
             timeout=10
         )
         if response.status_code == 200:
-            print(f"✅ Access granted for {model}")
+            print(f"Access granted for {model}")
         elif response.status_code == 403:
-            print(f"❌ Access denied for {model} (not approved yet)")
+            print(f"Access denied for {model} (not approved yet)")
         elif response.status_code == 401:
-            print(f"❌ Invalid/expired API token — check Hugging Face account")
+            print(f"Invalid/expired API token -- check Hugging Face account")
             break
         else:
-            print(f"⚠ Unexpected response {response.status_code}: {response.text}")
+            print(f"Unexpected response {response.status_code}: {response.text}")
     except Exception as e:
-        print(f"⚠ Error checking {model}: {e}")
+        print(f"Error checking {model}: {e}")
