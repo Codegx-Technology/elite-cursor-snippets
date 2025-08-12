@@ -1,6 +1,3 @@
 [submodule "elite-cursor-snippets"]
 	path = elite-cursor-snippets
 	url = https://github.com/Codegx-Technology/elite-cursor-snippets.git
-[submodule "ShujaaStudio"]
-	path = ShujaaStudio
-	url = https://github.com/Codegx-Technology/ShujaaStudio.git
