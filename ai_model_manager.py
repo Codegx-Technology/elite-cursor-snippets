@@ -29,6 +29,9 @@ def init_hf_client():
     // [GOAL]: Centralize HF client setup and login
     """
     global _hf_client
+    if config.models.disable_model_loading:
+        logger.warning("Model loading is disabled by configuration. Skipping Hugging Face client initialization.")
+        return None
     if _hf_client is None:
         try:
             if HF_API_KEY:
@@ -47,6 +50,9 @@ async def _load_local_llm_model():
     // [GOAL]: Provide a local fallback for text generation
     """
     global _local_llm_pipeline
+    if config.models.disable_model_loading:
+        logger.warning("Model loading is disabled by configuration. Skipping local LLM model loading.")
+        return False
     model_name = config.models.text_generation.local_fallback_path
     if _local_llm_pipeline is None and model_name:
         try:
@@ -67,6 +73,9 @@ async def _load_local_image_model():
     // [GOAL]: Provide a local fallback for image generation
     """
     global _local_image_pipeline
+    if config.models.disable_model_loading:
+        logger.warning("Model loading is disabled by configuration. Skipping local image generation model loading.")
+        return False
     model_name = config.models.image_generation.local_fallback_path
     if _local_image_pipeline is None and model_name:
         try:
@@ -87,6 +96,9 @@ async def _load_local_tts_model():
     // [GOAL]: Provide a local fallback for text-to-speech
     """
     global _local_tts_pipeline
+    if config.models.disable_model_loading:
+        logger.warning("Model loading is disabled by configuration. Skipping local TTS model loading.")
+        return False
     model_name = config.models.voice_synthesis.local_fallback_path
     if _local_tts_pipeline is None and model_name:
         try:
@@ -107,6 +119,9 @@ async def _load_local_stt_model():
     // [GOAL]: Provide a local fallback for speech-to-text
     """
     global _local_stt_pipeline
+    if config.models.disable_model_loading:
+        logger.warning("Model loading is disabled by configuration. Skipping local STT model loading.")
+        return False
     model_name = config.models.speech_to_text.local_fallback_path
     if _local_stt_pipeline is None and model_name:
         try:
@@ -130,6 +145,8 @@ async def generate_text(prompt, model_id=None, **kwargs):
     // [GOAL]: Provide robust text generation capability with real local inference
     // [TODO]: Implement AES-256 encryption for model inference inputs/outputs before transmission.
     """
+    if config.models.disable_model_loading:
+        raise ValueError("Model operations are disabled by configuration.")
     client = init_hf_client()
     hf_model_id = model_id or config.models.text_generation.hf_api_id
     use_local_fallback = kwargs.pop('use_local_fallback', False)
@@ -186,6 +203,8 @@ async def generate_image(prompt, model_id=None, remove_watermark_flag=False, wat
     // [TASK]: Generate image using Hugging Face Inference API or local fallback
     // [GOAL]: Provide robust image generation with real local inference
     """
+    if config.models.disable_model_loading:
+        raise ValueError("Model operations are disabled by configuration.")
     client = init_hf_client()
     hf_model_id = model_id or config.models.image_generation.hf_api_id
     use_local_fallback = kwargs.pop('use_local_fallback', False)
@@ -247,6 +266,8 @@ async def text_to_speech(text, model_id=None, **kwargs):
     // [TASK]: Convert text to speech using Hugging Face Inference API or local TTS fallback
     // [GOAL]: Provide robust TTS capability with real local inference
     """
+    if config.models.disable_model_loading:
+        raise ValueError("Model operations are disabled by configuration.")
     client = init_hf_client()
     hf_model_id = model_id or config.models.voice_synthesis.hf_api_id
     use_local_fallback = kwargs.pop('use_local_fallback', False)
@@ -305,6 +326,8 @@ async def speech_to_text(audio_path, model_id=None, **kwargs):
     // [TASK]: Convert speech to text using Hugging Face Inference API or local STT fallback
     // [GOAL]: Provide robust STT capability with real local inference
     """
+    if config.models.disable_model_loading:
+        raise ValueError("Model operations are disabled by configuration.")
     client = init_hf_client()
     hf_model_id = model_id or config.models.speech_to_text.hf_api_id
     use_local_fallback = kwargs.pop('use_local_fallback', False)
