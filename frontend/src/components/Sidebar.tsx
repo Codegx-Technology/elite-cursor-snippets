@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { FaHome, FaProjectDiagram, FaCog } from 'react-icons/fa'; // Importing icons
+import { FaHome, FaProjectDiagram, FaCog, FaVideo } from 'react-icons/fa'; // Importing icons
 
 export default function Sidebar({ isSidebarOpen, setSidebarOpen }: { isSidebarOpen: boolean, setSidebarOpen: (isOpen: boolean) => void }) {
   return (
@@ -44,6 +44,11 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: { isSidebarOp
           <li className="mb-2">
             <Link href="/settings" className="flex items-center py-2 px-4 rounded hover:bg-gray-700">
               <FaCog className="mr-3" /> Settings
+            </Link>
+          </li>
+          <li className="mb-2">
+            <Link href="/video-generate" className="flex items-center py-2 px-4 rounded hover:bg-gray-700">
+              <FaVideo className="mr-3" /> Generate Video
             </Link>
           </li>
         </ul>
