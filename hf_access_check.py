@@ -1,7 +1,7 @@
 import requests
 import os
 
-HF_TOKEN = os.environ.get("HF_API_KEY")
+HF_API_KEY = os.environ.get("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")
 
 
 MODELS = [
