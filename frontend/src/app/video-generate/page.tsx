@@ -34,6 +34,7 @@ export default function VideoGeneratePage() {
           id="visualStyle"
           name="visualStyle"
         />
+        <button type="submit" className="btn-primary mt-4">Generate Video</button>
       </div>
     </Card>
   );
