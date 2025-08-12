@@ -1,9 +1,10 @@
+import Image from 'next/image';
 import Card from './Card';
 
 export default function Welcome() {
   return (
     <Card className="text-center p-8">
-      <img src="/shujaa-logo-placeholder.png" alt="Shujaa Studio Logo" className="mx-auto mb-6 w-32 h-32 object-contain" />
+      <Image src="/shujaa-logo-placeholder.png" alt="Shujaa Studio Logo" className="mx-auto mb-6 w-32 h-32 object-contain" width={128} height={128} />
       <h1 className="section-title text-3xl mb-2">Welcome to Shujaa Studio</h1>
       <p className="section-subtitle text-xl text-soft-text mb-6">Your ultimate platform for AI-powered creative content generation.</p>
       <p className="text-lg text-charcoal-text mb-8">
