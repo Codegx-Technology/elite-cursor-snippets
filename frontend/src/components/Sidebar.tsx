@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { FaHome, FaProjectDiagram, FaCog } from 'react-icons/fa'; // Importing icons
 
 export default function Sidebar({ isSidebarOpen, setSidebarOpen }: { isSidebarOpen: boolean, setSidebarOpen: (isOpen: boolean) => void }) {
   return (
@@ -31,13 +32,19 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: { isSidebarOp
       <nav className="mt-10">
         <ul>
           <li className="mb-2">
-            <Link href="/dashboard" className="block py-2 px-4 rounded hover:bg-gray-700">Dashboard</Link>
+            <Link href="/dashboard" className="flex items-center py-2 px-4 rounded hover:bg-gray-700">
+              <FaHome className="mr-3" /> Dashboard
+            </Link>
           </li>
           <li className="mb-2">
-            <Link href="/projects" className="block py-2 px-4 rounded hover:bg-gray-700">Projects</Link>
+            <Link href="/projects" className="flex items-center py-2 px-4 rounded hover:bg-gray-700">
+              <FaProjectDiagram className="mr-3" /> Projects
+            </Link>
           </li>
           <li className="mb-2">
-            <Link href="/settings" className="block py-2 px-4 rounded hover:bg-gray-700">Settings</Link>
+            <Link href="/settings" className="flex items-center py-2 px-4 rounded hover:bg-gray-700">
+              <FaCog className="mr-3" /> Settings
+            </Link>
           </li>
         </ul>
       </nav>
