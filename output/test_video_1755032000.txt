@@ -1,0 +1,36 @@
+{
+  "title": "Kenya Tourism Video",
+  "duration": "30 seconds",
+  "scenes": [
+    {
+      "id": "scene_1",
+      "text": "Welcome to Kenya, the heart of East Africa",
+      "description": "Mount Kenya with snow-capped peaks",
+      "duration": 5
+    },
+    {
+      "id": "scene_2",
+      "text": "Experience the Great Migration in Maasai Mara",
+      "description": "Wildebeest crossing the Mara River",
+      "duration": 10
+    },
+    {
+      "id": "scene_3",
+      "text": "Relax on the pristine beaches of Diani",
+      "description": "White sandy beaches with palm trees",
+      "duration": 10
+    },
+    {
+      "id": "scene_4",
+      "text": "Discover innovation in Nairobi's tech hub",
+      "description": "Modern skyline of Nairobi city",
+      "duration": 5
+    }
+  ],
+  "metadata": {
+    "created_at": "2025-08-12 23:53:20",
+    "generator": "Shujaa Studio Test",
+    "kenya_first": true,
+    "language": "English with Swahili elements"
+  }
+}
