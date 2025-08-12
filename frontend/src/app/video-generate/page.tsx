@@ -27,6 +27,13 @@ export default function VideoGeneratePage() {
           id="voiceSelection"
           name="voiceSelection"
         />
+        <FormInput
+          label="Visual Style/Theme"
+          type="text"
+          placeholder="e.g., Modern, Cinematic, Cartoon"
+          id="visualStyle"
+          name="visualStyle"
+        />
       </div>
     </Card>
   );
