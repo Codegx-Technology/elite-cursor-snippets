@@ -32,6 +32,17 @@ export interface VideoGenerationRequest {
   cultural_preset?: 'mount_kenya' | 'maasai_mara' | 'diani_beach' | 'nairobi_city';
 }
 
+export interface NewsVideoGenerationRequest {
+  news_url?: string;
+  news_query?: string;
+  script_content?: string;
+  lang?: string;
+  scenes?: number;
+  duration?: number;
+  voice_type?: string;
+  upload_youtube?: boolean;
+}
+
 export interface VideoGenerationResponse {
   status: string;
   video_id: string;
@@ -45,13 +56,17 @@ export interface VideoGenerationResponse {
 export interface ContentGenerationJob {
   id: string;
   type: 'video' | 'image' | 'audio';
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'friendly_fallback';
   progress: number;
   created_at: string;
   completed_at?: string;
   result_url?: string;
   error_message?: string;
   metadata: Record<string, any>;
+  // Optional friendly fallback fields when service returns a soft-fail UX path
+  friendly_message?: string;
+  retry_options?: string[];
+  spinner_type?: string;
 }
 
 export interface PaymentPlan {
@@ -140,9 +155,9 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     try {
       const url = `${this.baseUrl}${endpoint}`;
-      const headers: HeadersInit = {
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...(options.headers as Record<string, string> | undefined),
       };
 
       if (this.authToken) {
@@ -192,6 +207,13 @@ class ApiClient {
   // Content Generation
   async generateVideo(request: VideoGenerationRequest): Promise<ApiResponse<VideoGenerationResponse>> {
     return this.request('/api/generate/video', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async generateNewsVideo(request: NewsVideoGenerationRequest): Promise<ApiResponse<VideoGenerationResponse>> {
+    return this.request('/api/generate/news-video', {
       method: 'POST',
       body: JSON.stringify(request),
     });

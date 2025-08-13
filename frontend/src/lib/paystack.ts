@@ -90,6 +90,20 @@ class PaystackService {
     this.config = config;
   }
 
+  // Load Paystack inline script in browser (no-op on server)
+  static async loadScript(): Promise<void> {
+    if (typeof window === 'undefined') return; // SSR guard
+    if ((window as any).PaystackPop) return;
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://js.paystack.co/v1/inline.js';
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load Paystack script'));
+      document.body.appendChild(script);
+    });
+  }
+
   // Generate unique transaction reference
   generateReference(): string {
     const timestamp = Date.now();
@@ -133,6 +147,11 @@ class PaystackService {
         message: 'Failed to initialize payment',
       };
     }
+  }
+
+  // Backward-compatible alias used by usePaystack()
+  async initializePayment(transaction: PaystackTransaction): Promise<PaystackResponse> {
+    return this.initializeTransaction(transaction);
   }
 
   // Verify transaction
@@ -312,6 +331,89 @@ export const paystackService = new PaystackService(defaultPaystackConfig);
 
 // Utility functions for frontend
 export const paymentUtils = {
+  /**
+   * Return subscription plans shown on the Pricing page
+   * Keeping data local/offline-friendly and Kenya-first by defaulting to KES
+   */
+  getSubscriptionPlans: () => [
+    {
+      id: 'starter',
+      name: 'Starter',
+      price: 2500,
+      currency: 'KES',
+      features: ['10 Videos', '50 Images', '20 Audio tracks', 'Basic Support'],
+      video_credits: 10,
+      image_credits: 50,
+      audio_credits: 20,
+      popular: false,
+    },
+    {
+      id: 'pro',
+      name: 'Pro',
+      price: 6500,
+      currency: 'KES',
+      features: [
+        '40 Videos',
+        '200 Images',
+        '120 Audio tracks',
+        'Priority Support',
+        'Kenya-first Templates',
+      ],
+      video_credits: 40,
+      image_credits: 200,
+      audio_credits: 120,
+      popular: true,
+    },
+    {
+      id: 'business',
+      name: 'Business',
+      price: 14500,
+      currency: 'KES',
+      features: [
+        'Unlimited Videos',
+        'Unlimited Images',
+        'Unlimited Audio tracks',
+        'Dedicated Support',
+        'Team Collaboration',
+      ],
+      video_credits: -1,
+      image_credits: -1,
+      audio_credits: -1,
+      popular: false,
+    },
+  ],
+
+  /**
+   * Kenya-first payment methods to display on Pricing page
+   * Icons are simple emoji/text to avoid React dependency in this lib
+   */
+  getKenyaPaymentMethods: () => [
+    {
+      id: 'mpesa',
+      name: 'M-Pesa',
+      description: 'Pay via mobile money',
+      icon: '📱',
+    },
+    {
+      id: 'card',
+      name: 'Debit/Credit Card',
+      description: 'Visa, Mastercard supported',
+      icon: '💳',
+    },
+    {
+      id: 'bank_transfer',
+      name: 'Bank Transfer',
+      description: 'Secure bank transfers',
+      icon: '🏦',
+    },
+    {
+      id: 'ussd',
+      name: 'USSD',
+      description: 'Pay with short code',
+      icon: '🔢',
+    },
+  ],
+
   formatAmount: (amount: number, currency: string = 'KES'): string => {
     return new Intl.NumberFormat('en-KE', {
       style: 'currency',

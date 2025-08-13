@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { FaExclamationTriangle, FaRefresh, FaFlag, FaMountain } from 'react-icons/fa';
+import { FaFlag, FaMountain } from 'react-icons/fa';
+import { FaTriangleExclamation, FaRotateRight } from 'react-icons/fa6';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent
 // [CONTEXT]: Error boundary component with Kenya-first design for production readiness
@@ -92,7 +93,7 @@ function DefaultErrorFallback({ error, retry }: { error: Error; retry: () => voi
         {/* Error Icon */}
         <div className="mb-6">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FaExclamationTriangle className="text-3xl text-red-600" />
+            <FaTriangleExclamation className="text-3xl text-red-600" />
           </div>
         </div>
 
@@ -122,7 +123,7 @@ function DefaultErrorFallback({ error, retry }: { error: Error; retry: () => voi
             onClick={retry}
             className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
           >
-            <FaRefresh />
+            <FaRotateRight />
             <span>Try Again</span>
           </button>
           
@@ -176,7 +177,7 @@ export function SimpleErrorFallback({
 }) {
   return (
     <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-      <FaExclamationTriangle className="text-red-600 text-2xl mx-auto mb-2" />
+      <FaTriangleExclamation className="text-red-600 text-2xl mx-auto mb-2" />
       <p className="text-red-800 font-medium mb-2">{message}</p>
       <button
         onClick={retry}

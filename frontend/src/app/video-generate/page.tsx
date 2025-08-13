@@ -20,6 +20,9 @@ interface VideoGenerationForm {
   culturalPreset: string;
   language: string;
   musicStyle: string;
+  removeWatermark: boolean;
+  enableSubtitles: boolean;
+  exportFormat: string;
 }
 
 interface GenerationProgress {
@@ -37,7 +40,10 @@ export default function VideoGeneratePage() {
     duration: '30',
     culturalPreset: 'modern-kenya',
     language: 'english-swahili',
-    musicStyle: 'afrobeat'
+    musicStyle: 'afrobeat',
+    removeWatermark: true,
+    enableSubtitles: true,
+    exportFormat: 'mp4'
   });
 
   const [progress, setProgress] = useState<GenerationProgress>({
@@ -113,7 +119,7 @@ export default function VideoGeneratePage() {
 
   // [SNIPPET]: surgicalfix + thinkwithai
   // [TASK]: Handle form input changes with type safety
-  const handleInputChange = (field: keyof VideoGenerationForm, value: string) => {
+  const handleInputChange = (field: keyof VideoGenerationForm, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -138,16 +144,50 @@ export default function VideoGeneratePage() {
 
     try {
       // Call real API
+      // Map UI values to API enums
+      const mapVisualStyle = (val: string): 'realistic' | 'cartoon' | 'anime' | 'documentary' => {
+        switch (val) {
+          case 'authentic-realistic':
+          case 'professional-corporate':
+          case 'vibrant-colorful':
+            return 'realistic';
+          case 'animated-cartoon':
+            return 'cartoon';
+          case 'artistic-creative':
+            return 'anime';
+          case 'cinematic-documentary':
+          default:
+            return 'documentary';
+        }
+      };
+
+      const mapCulturalPreset = (val: string): 'mount_kenya' | 'maasai_mara' | 'diani_beach' | 'nairobi_city' => {
+        switch (val) {
+          case 'mount-kenya':
+            return 'mount_kenya';
+          case 'coastal-beauty':
+            return 'diani_beach';
+          case 'wildlife-safari':
+          case 'traditional-heritage':
+            return 'maasai_mara';
+          case 'modern-kenya':
+          case 'cultural-fusion':
+          case 'innovation-story':
+          default:
+            return 'nairobi_city';
+        }
+      };
+
       const response = await apiClient.generateVideo({
         prompt: formData.script,
         lang: formData.language.includes('swahili') ? 'sw' : 'en',
         scenes: 3,
         vertical: formData.duration === '15' || formData.duration === '30',
-        style: formData.visualStyle,
+        style: mapVisualStyle(formData.visualStyle),
         duration: parseInt(formData.duration),
         voice_type: formData.voice.includes('female') ? 'female' : 'male',
         background_music: true,
-        cultural_preset: formData.culturalPreset
+        cultural_preset: mapCulturalPreset(formData.culturalPreset)
       });
 
       handleApiResponse(
@@ -223,7 +263,7 @@ export default function VideoGeneratePage() {
 
               // Show Kenya-first friendly message
               setFriendlyFallback({
-                message: job.friendly_message,
+                message: job.friendly_message ?? 'Service temporarily unavailable',
                 retryOptions: job.retry_options || [],
                 spinnerType: job.spinner_type || 'kenya_flag'
               });
@@ -399,6 +439,57 @@ Example: 'Welcome to Kenya, the heart of East Africa. From the snow-capped peaks
               value={formData.musicStyle}
               onChange={(e) => handleInputChange('musicStyle', e.target.value)}
             />
+
+            {/* Advanced Options */}
+            <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+              <h3 className="font-medium text-gray-800 mb-3">🔧 Advanced Options</h3>
+
+              {/* Watermark Removal */}
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="removeWatermark"
+                  checked={formData.removeWatermark}
+                  onChange={(e) => handleInputChange('removeWatermark', e.target.checked)}
+                  className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                />
+                <label htmlFor="removeWatermark" className="text-sm text-gray-700">
+                  🚫 Remove watermarks from generated images
+                </label>
+              </div>
+
+              {/* Subtitles */}
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="enableSubtitles"
+                  checked={formData.enableSubtitles}
+                  onChange={(e) => handleInputChange('enableSubtitles', e.target.checked)}
+                  className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                />
+                <label htmlFor="enableSubtitles" className="text-sm text-gray-700">
+                  📝 Generate subtitles (English & Swahili)
+                </label>
+              </div>
+
+              {/* Export Format */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  📱 Export Format
+                </label>
+                <select
+                  value={formData.exportFormat}
+                  onChange={(e) => handleInputChange('exportFormat', e.target.value)}
+                  className="form-input w-full"
+                >
+                  <option value="mp4">MP4 (Universal)</option>
+                  <option value="tiktok">TikTok Optimized (9:16)</option>
+                  <option value="instagram">Instagram Stories (9:16)</option>
+                  <option value="whatsapp">WhatsApp Friendly (16:9)</option>
+                  <option value="youtube">YouTube Shorts (9:16)</option>
+                </select>
+              </div>
+            </div>
 
             {/* Error Display */}
             {error && (

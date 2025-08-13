@@ -4,6 +4,7 @@ interface PaginationProps {
   currentPage: number;
   totalPages: number;
   totalItems: number;
+  itemsPerPage?: number;
   onPageChange: (page: number) => void;
 }
 
@@ -11,6 +12,7 @@ export default function Pagination({
   currentPage,
   totalPages,
   totalItems,
+  itemsPerPage,
   onPageChange,
 }: PaginationProps) {
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);

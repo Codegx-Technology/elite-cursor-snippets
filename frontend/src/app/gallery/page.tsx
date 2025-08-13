@@ -39,7 +39,9 @@ export default function GalleryPage() {
     handleApiResponse(
       response,
       (data) => {
-        if (data.length === 0) {
+        // data is expected to be a paginated object: { items: any[]; total: number; page: number; pages: number }
+        const arr = Array.isArray((data as any).items) ? (data as any).items : Array.isArray(data) ? (data as any) : [];
+        if (arr.length === 0) {
           // Show sample Kenya-first content when no real data is available
           setItems([
             {
@@ -73,7 +75,7 @@ export default function GalleryPage() {
             }
           ]);
         } else {
-          setItems(data);
+          setItems(arr as any);
         }
       },
       (error) => setError(error)

@@ -39,14 +39,15 @@ from video_effects import VideoEffects
 # Performance and concurrency enhancements (non-breaking integrations)
 from analytics import log_event, timed, mark_stage
 from model_cache import initialize_cache, model_cache
-from parallel_processor import ParallelProcessor, SceneProcessor
+try:
+    from utils.parallel_processing import ParallelProcessor, SceneProcessor
+except Exception:
+    ParallelProcessor = None
+    SceneProcessor = None
 from social_optimizer import generate_all as generate_social_all
 
 # SDXL and AI imports for Combo Pack C
-try:
-    
-
-
+pass
 
 
 class OfflineVideoMaker:
@@ -90,8 +91,8 @@ class OfflineVideoMaker:
 
         # Prepare parallel processing utilities (optional usage by pipeline)
         try:
-            self.parallel = ParallelProcessor()
-            self.scene_processor = SceneProcessor(model_cache=model_cache)
+            self.parallel = ParallelProcessor() if ParallelProcessor else None
+            self.scene_processor = SceneProcessor(temp_dir=str(self.temp_dir / "parallel")) if SceneProcessor else None
         except Exception as e:
             logger.warning(f"[PARALLEL] Initialization skipped: {e}")
 
@@ -129,14 +130,14 @@ class OfflineVideoMaker:
             # Test 3: Audio generation (fallback)
             test_audio = self.temp_dir / "test_audio.wav"
             # Use ai_model_manager for audio generation
-            await text_to_speech("Hello Kenya", model_id=config.models.voice_synthesis.hf_api_id, use_local_fallback=True)
+            asyncio.run(text_to_speech("Hello Kenya", model_id=config.models.voice_synthesis.hf_api_id, use_local_fallback=True))
             audio_works = True # Assuming text_to_speech handles saving or we mock it
             logger.info(f"✅ Audio generation: {'Working' if audio_works else 'Failed'}")
 
             # Test 4: Image placeholder
             test_image = self.temp_dir / "test_image.png"
             # Use ai_model_manager for image generation
-            await ai_generate_image("Test image prompt", model_id=config.models.image_generation.hf_api_id, use_local_fallback=True)
+            asyncio.run(ai_generate_image("Test image prompt", model_id=config.models.image_generation.hf_api_id, use_local_fallback=True))
             image_works = True # Assuming ai_generate_image handles saving or we mock it
             logger.info(f"✅ Image generation: {'Working' if image_works else 'Failed'}")
 
@@ -419,7 +420,7 @@ class OfflineVideoMaker:
         image_file = self.temp_dir / f"{scene_id}.png"
 
         try:
-            image_bytes = await ai_generate_image(description, model_id=config.models.image_generation.hf_api_id, use_local_fallback=True)
+            image_bytes = asyncio.run(ai_generate_image(description, model_id=config.models.image_generation.hf_api_id, use_local_fallback=True))
             if image_bytes:
                 with open(image_file, "wb") as f:
                     f.write(image_bytes)

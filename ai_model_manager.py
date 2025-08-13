@@ -9,8 +9,13 @@ from config_loader import get_config
 from error_utils import retry_on_exception, log_and_raise
 from logging_setup import get_logger
 from asset_manager import AssetManager
+from dotenv import load_dotenv
 
 logger = get_logger(__name__)
+
+# Ensure environment variables (including HF_API_KEY) are loaded before reading config
+load_dotenv()
+
 config = get_config()
 
 HF_API_KEY = config.api_keys.huggingface

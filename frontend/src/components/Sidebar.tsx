@@ -14,8 +14,8 @@ import {
   FaFlag,
   FaMountain,
   FaGlobe,
-  FaHeart,
-  FaCreditCard
+  FaCreditCard,
+  FaNewspaper
 } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean
@@ -31,9 +31,12 @@ interface SidebarProps {
 export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps) {
   const pathname = usePathname();
 
+  // Debug logging for navigation issues
+  console.log('Current pathname:', pathname);
+
   const navigationItems = [
     {
-      href: '/dashboard',
+      href: '/',
       icon: FaHome,
       label: 'Dashboard',
       description: 'Overview & Stats'
@@ -43,6 +46,12 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       icon: FaVideo,
       label: 'Generate Video',
       description: 'Create Kenya-first content'
+    },
+    {
+      href: '/news-generate',
+      icon: FaNewspaper,
+      label: 'News Videos',
+      description: 'Transform news into videos'
     },
     {
       href: '/projects',
@@ -88,11 +97,17 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
     }
   ];
 
-  const isActive = (href: string) => pathname === href;
+  const isActive = (href: string) => {
+    // Handle root route and dashboard
+    if (href === '/' && (pathname === '/' || pathname === '/dashboard')) {
+      return true;
+    }
+    return pathname === href;
+  };
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 ease-in-out ${
+      className={`fixed inset-y-0 left-0 z-50 w-72 flex flex-col transform transition-transform duration-300 ease-in-out ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } md:translate-x-0`}
       style={{
@@ -125,7 +140,7 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-2">
+      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
@@ -139,7 +154,10 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
                   ? 'bg-gradient-to-r from-green-600 to-blue-600 text-white shadow-lg'
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
               }`}
-              onClick={() => setSidebarOpen(false)}
+              onClick={() => {
+                // Close sidebar on mobile after a small delay to allow navigation
+                setTimeout(() => setSidebarOpen(false), 100);
+              }}
             >
               <Icon className={`mr-3 text-lg ${active ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
               <div className="flex-1">
@@ -156,21 +174,14 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       </nav>
 
       {/* Cultural Footer */}
-      <div className="p-4 border-t border-gray-700">
+      <div className="p-4 pb-6 border-t border-gray-700">
         <div className="bg-gradient-to-r from-green-600 via-red-600 to-black p-4 rounded-lg text-white text-center">
           <div className="flex items-center justify-center space-x-2 mb-2">
             <FaGlobe className="text-yellow-300" />
             <span className="font-medium">Proudly Kenyan</span>
-            <FaHeart className="text-red-400" />
           </div>
           <p className="text-xs text-green-100">
             Empowering African storytellers worldwide
-          </p>
-        </div>
-
-        <div className="mt-3 text-center">
-          <p className="text-xs text-gray-500">
-            Version 2.0 • Made with ❤️ in Kenya
           </p>
         </div>
       </div>
