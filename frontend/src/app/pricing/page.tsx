@@ -45,12 +45,26 @@ export default function PricingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const { initializePayment, isLoading, error } = usePaystack();
 
-  const plans = paymentUtils.getSubscriptionPlans();
+  // Local types for plan and payment method to satisfy TS when using require()
+  type Plan = {
+    id: string;
+    name: string;
+    price: number;
+    currency: string;
+    features: string[];
+    video_credits?: number;
+    image_credits?: number;
+    audio_credits?: number;
+    popular?: boolean;
+  };
+  type PaymentMethod = { id: string; name: string; description: string; icon: any };
+
+  const plans = paymentUtils.getSubscriptionPlans() as Plan[];
 
   const handleSubscribe = async (planId: string) => {
     setSelectedPlan(planId);
     
-    const plan = plans.find(p => p.id === planId);
+    const plan = plans.find((p: any) => p.id === planId);
     if (!plan) return;
 
     try {
@@ -125,7 +139,7 @@ export default function PricingPage() {
 
       {/* Pricing Plans */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {plans.map((plan) => (
+        {plans.map((plan: Plan) => (
           <Card
             key={plan.id}
             className={`relative overflow-hidden transition-all duration-300 hover:shadow-xl ${
@@ -160,7 +174,7 @@ export default function PricingPage() {
 
               {/* Features */}
               <div className="space-y-3 mb-8">
-                {plan.features.map((feature, index) => (
+                {plan.features.map((feature: string, index: number) => (
                   <div key={index} className="flex items-start space-x-3">
                     <FaCheck className="text-green-600 mt-1 flex-shrink-0" />
                     <span className="text-gray-700 text-sm">{feature}</span>
@@ -223,7 +237,7 @@ export default function PricingPage() {
           Secure Payment Methods 🔒
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {paymentUtils.getKenyaPaymentMethods().map((method) => (
+          {(paymentUtils.getKenyaPaymentMethods() as PaymentMethod[]).map((method: PaymentMethod) => (
             <div key={method.id} className="text-center p-4 bg-gray-50 rounded-lg">
               <div className="text-2xl mb-2">{method.icon}</div>
               <div className="font-medium text-gray-900 text-sm">{method.name}</div>
