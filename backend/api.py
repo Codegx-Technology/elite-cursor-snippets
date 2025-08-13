@@ -14,9 +14,12 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
     from pipeline_orchestrator import PipelineOrchestrator
     from ai_model_manager import generate_text, generate_image, generate_speech
+    from enhanced_model_router import enhanced_router, GenerationRequest, GenerationMethod
     PIPELINE_AVAILABLE = True
+    ENHANCED_ROUTER_AVAILABLE = True
 except ImportError:
     PIPELINE_AVAILABLE = False
+    ENHANCED_ROUTER_AVAILABLE = False
     print("Warning: Pipeline modules not available. Using mock responses.")
 
 app = FastAPI(
@@ -182,26 +185,92 @@ async def get_status():
         "status": "ok",
         "message": "Shujaa Studio Backend is running and ready for action! 🇰🇪",
         "pipeline_available": PIPELINE_AVAILABLE,
+        "enhanced_router_available": ENHANCED_ROUTER_AVAILABLE,
         "features": {
             "video_generation": True,
             "image_generation": True,
             "audio_generation": True,
             "analytics": True,
             "projects": True,
-            "gallery": True
+            "gallery": True,
+            "intelligent_fallbacks": ENHANCED_ROUTER_AVAILABLE,
+            "kenya_first_experience": True
         }
     }
 
 # Background processing functions
 async def process_video_generation(job_id: str, request: VideoGenerationRequest):
-    """Background task for video generation"""
+    """Background task for video generation with enhanced routing"""
     try:
         job = jobs_storage[job_id]
         job["status"] = "processing"
         job["progress"] = 10
 
-        if PIPELINE_AVAILABLE and orchestrator:
-            # Use real pipeline
+        if ENHANCED_ROUTER_AVAILABLE:
+            # Use enhanced router for intelligent fallbacks
+            generation_request = GenerationRequest(
+                prompt=request.prompt,
+                type="video",
+                user_id=None,  # TODO: Get from request context
+                preferences={
+                    "lang": request.lang,
+                    "scenes": request.scenes,
+                    "vertical": request.vertical,
+                    "style": request.style,
+                    "voice_type": request.voice_type,
+                    "background_music": request.background_music
+                },
+                cultural_preset=request.cultural_preset,
+                quality="standard"
+            )
+
+            # Update progress
+            job["progress"] = 20
+
+            # Route through enhanced system
+            result = await enhanced_router.route_generation(generation_request)
+
+            if result.success:
+                job["status"] = "completed"
+                job["progress"] = 100
+                job["result_url"] = result.content_url
+                job["completed_at"] = datetime.now().isoformat()
+                job["method_used"] = result.method_used.value if result.method_used else "unknown"
+                job["generation_time"] = result.generation_time
+                job["cached"] = result.cached
+
+                # Add to gallery
+                gallery_item = {
+                    "id": job_id,
+                    "type": "video",
+                    "title": f"Video: {request.prompt[:50]}...",
+                    "thumbnail": "/api/placeholder/400/300",
+                    "created_at": job["created_at"],
+                    "duration": f"{request.duration}s",
+                    "size": "45 MB",
+                    "tags": ["AI Generated", "Kenya"],
+                    "url": job["result_url"],
+                    "method_used": job["method_used"],
+                    "cached": job["cached"]
+                }
+                gallery_storage.append(gallery_item)
+
+                # Update analytics
+                analytics_storage["overview"]["total_videos"] += 1
+            else:
+                # Handle friendly fallback
+                if result.method_used == GenerationMethod.FRIENDLY_FALLBACK:
+                    job["status"] = "friendly_fallback"
+                    job["progress"] = 0
+                    job["friendly_message"] = result.metadata.get("friendly_message") if result.metadata else None
+                    job["retry_options"] = result.metadata.get("retry_options") if result.metadata else []
+                    job["spinner_type"] = result.metadata.get("spinner_type") if result.metadata else "kenya_flag"
+                else:
+                    job["status"] = "failed"
+                    job["error_message"] = result.error_message or "Video generation failed"
+
+        elif PIPELINE_AVAILABLE and orchestrator:
+            # Fallback to original pipeline
             result = await orchestrator.run_pipeline(
                 input_type="general_prompt",
                 input_data=request.prompt,

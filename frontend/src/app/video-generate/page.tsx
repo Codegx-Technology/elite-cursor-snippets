@@ -50,6 +50,11 @@ export default function VideoGeneratePage() {
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
+  const [friendlyFallback, setFriendlyFallback] = useState<{
+    message: string;
+    retryOptions: string[];
+    spinnerType: string;
+  } | null>(null);
 
   // [SNIPPET]: kenyafirst + thinkwithai
   // [TASK]: Define Kenya-first options and cultural presets
@@ -206,6 +211,22 @@ export default function VideoGeneratePage() {
               });
               setGeneratedVideo(job.result_url || `kenya_video_${Date.now()}.mp4`);
               setCurrentJobId(null);
+            } else if (job.status === 'friendly_fallback') {
+              setProgress({
+                stage: 'Friendly Fallback',
+                progress: 0,
+                message: job.friendly_message || 'Service temporarily unavailable',
+                isGenerating: false
+              });
+              setError(null); // Clear error since this is a friendly fallback
+              setCurrentJobId(null);
+
+              // Show Kenya-first friendly message
+              setFriendlyFallback({
+                message: job.friendly_message,
+                retryOptions: job.retry_options || [],
+                spinnerType: job.spinner_type || 'kenya_flag'
+              });
             } else if (job.status === 'failed') {
               setProgress({
                 stage: 'Error',
@@ -455,6 +476,60 @@ Example: 'Welcome to Kenya, the heart of East Africa. From the snow-capped peaks
                 <p><span className="text-soft-text">Music:</span> {musicStyles.find(m => m.value === formData.musicStyle)?.label}</p>
               </div>
             </div>
+
+            {/* Kenya-First Friendly Fallback */}
+            {friendlyFallback && (
+              <div className="bg-gradient-to-r from-green-50 via-red-50 to-yellow-50 border-2 border-green-200 p-6 rounded-lg">
+                <div className="text-center">
+                  {/* Kenya Flag Spinner */}
+                  <div className="mb-4">
+                    <div className="w-16 h-16 mx-auto relative">
+                      <div className="absolute inset-0 rounded-full border-4 border-green-600 border-t-red-600 border-r-black animate-spin"></div>
+                      <div className="absolute inset-2 flex items-center justify-center">
+                        <span className="text-2xl">🇰🇪</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Friendly Message */}
+                  <h3 className="font-bold text-lg text-gray-800 mb-2">
+                    {friendlyFallback.message}
+                  </h3>
+
+                  <p className="text-gray-600 mb-4">
+                    Harambee! We're working hard to bring you amazing content.
+                  </p>
+
+                  {/* Retry Options */}
+                  <div className="space-y-2">
+                    {friendlyFallback.retryOptions.map((option, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          if (option.includes('Try again')) {
+                            setFriendlyFallback(null);
+                            handleGenerateVideo();
+                          } else if (option.includes('Browse')) {
+                            // Navigate to gallery
+                            window.location.href = '/gallery';
+                          }
+                        }}
+                        className="block w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200"
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => setFriendlyFallback(null)}
+                    className="mt-4 text-gray-500 hover:text-gray-700 text-sm underline"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Generated Video Preview */}
             {generatedVideo && (
