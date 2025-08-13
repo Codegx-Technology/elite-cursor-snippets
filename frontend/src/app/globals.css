@@ -100,3 +100,113 @@ h1, h2, h3, h4, h5, h6 {
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
+
+/* Mobile-First Responsive Enhancements */
+/* [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent */
+/* [CONTEXT]: Mobile-first responsive design optimizations */
+/* [GOAL]: Ensure perfect mobile experience across all screen sizes */
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .hover-lift:hover {
+    transform: none;
+  }
+
+  button, .btn-primary, .btn-elite {
+    min-height: 44px; /* iOS recommended touch target */
+    min-width: 44px;
+  }
+}
+
+/* Mobile typography scaling */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    line-height: 1.3;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    line-height: 1.4;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Improved mobile spacing */
+@media (max-width: 768px) {
+  .elite-card {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+
+  /* Better mobile grid layouts */
+  .mobile-stack > * {
+    width: 100% !important;
+    margin-bottom: 1rem;
+  }
+
+  /* Mobile-friendly form inputs */
+  .form-input, .form-select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0.875rem 1rem;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .elite-card {
+    padding: 1.25rem;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .elite-card {
+    border-width: 0.5px;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .hover-lift,
+  .transition-all {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Dark mode support preparation */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-primary: #f7fafc;
+    --text-secondary: #e2e8f0;
+    --background-primary: #1a202c;
+    --background-secondary: #2d3748;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}

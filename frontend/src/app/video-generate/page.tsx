@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import Card from '@/components/Card';
 import FormInput from '@/components/FormInput';
 import FormSelect from '@/components/FormSelect';
-import { FaVideo, FaPlay, FaStop, FaDownload, FaEye, FaFlag, FaMountain, FaGlobe, FaMusic, FaImage, FaMicrophone } from 'react-icons/fa';
+import { FaVideo, FaPlay, FaStop, FaDownload, FaEye, FaFlag, FaMountain, FaGlobe, FaMusic, FaImage, FaMicrophone, FaExclamationTriangle } from 'react-icons/fa';
+import { apiClient, handleApiResponse } from '@/lib/api';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Enterprise-grade video generation interface with Kenya-first cultural elements
@@ -47,6 +48,13 @@ export default function VideoGeneratePage() {
   });
 
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
+  const [friendlyFallback, setFriendlyFallback] = useState<{
+    message: string;
+    retryOptions: string[];
+    spinnerType: string;
+  } | null>(null);
 
   // [SNIPPET]: kenyafirst + thinkwithai
   // [TASK]: Define Kenya-first options and cultural presets
@@ -112,41 +120,174 @@ export default function VideoGeneratePage() {
     }));
   };
 
-  // [SNIPPET]: refactorclean + kenyafirst
-  // [TASK]: Simulate video generation with Kenya-first progress messages
+  // [SNIPPET]: refactorclean + kenyafirst + augmentsearch
+  // [TASK]: Real video generation with Kenya-first progress messages and API integration
   const handleGenerateVideo = async () => {
     if (!formData.script.trim()) {
       alert('Please enter a video script to continue.');
       return;
     }
 
+    setError(null);
     setProgress({
-      stage: 'Initializing',
-      progress: 0,
-      message: 'Preparing your Kenya-first video generation...',
+      stage: 'Starting',
+      progress: 5,
+      message: 'Initializing Kenya-first video generation...',
       isGenerating: true
     });
 
-    const stages = [
-      { stage: 'Script Analysis', message: 'Analyzing your script for cultural context...', progress: 15 },
-      { stage: 'Voice Synthesis', message: 'Generating authentic Kenyan narration...', progress: 30 },
-      { stage: 'Image Generation', message: 'Creating beautiful Kenya-inspired visuals...', progress: 50 },
-      { stage: 'Scene Assembly', message: 'Assembling scenes with cultural authenticity...', progress: 70 },
-      { stage: 'Audio Mixing', message: 'Adding traditional Kenyan music elements...', progress: 85 },
-      { stage: 'Final Rendering', message: 'Finalizing your masterpiece...', progress: 95 },
-      { stage: 'Complete', message: 'Your Kenya-first video is ready! 🎉', progress: 100 }
-    ];
+    try {
+      // Call real API
+      const response = await apiClient.generateVideo({
+        prompt: formData.script,
+        lang: formData.language.includes('swahili') ? 'sw' : 'en',
+        scenes: 3,
+        vertical: formData.duration === '15' || formData.duration === '30',
+        style: formData.visualStyle,
+        duration: parseInt(formData.duration),
+        voice_type: formData.voice.includes('female') ? 'female' : 'male',
+        background_music: true,
+        cultural_preset: formData.culturalPreset
+      });
 
-    for (const stageData of stages) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      handleApiResponse(
+        response,
+        (data) => {
+          setCurrentJobId(data.video_id);
+          setProgress({
+            stage: 'Processing',
+            progress: 20,
+            message: 'Video generation started successfully...',
+            isGenerating: true
+          });
+          // Start polling for job status
+          pollJobStatus(data.video_id);
+        },
+        (error) => {
+          setError(error);
+          setProgress({
+            stage: 'Error',
+            progress: 0,
+            message: 'Failed to start video generation',
+            isGenerating: false
+          });
+        }
+      );
+    } catch (err) {
+      setError('Failed to start video generation');
       setProgress({
-        ...stageData,
-        isGenerating: stageData.stage !== 'Complete'
+        stage: 'Error',
+        progress: 0,
+        message: 'Network error occurred',
+        isGenerating: false
       });
     }
+  };
 
-    // Simulate generated video
-    setGeneratedVideo(`kenya_video_${Date.now()}.mp4`);
+  const pollJobStatus = async (jobId: string) => {
+    const maxAttempts = 60; // 5 minutes max
+    let attempts = 0;
+
+    const stages = [
+      { stage: 'Script Analysis', progress: 30, message: 'Understanding your Kenya-first narrative...' },
+      { stage: 'Generating Visuals', progress: 50, message: 'Creating authentic African imagery...' },
+      { stage: 'Adding Voice', progress: 70, message: 'Recording Kenyan voice narration...' },
+      { stage: 'Cultural Enhancement', progress: 85, message: 'Infusing cultural elements and music...' },
+      { stage: 'Final Processing', progress: 95, message: 'Polishing your masterpiece...' }
+    ];
+
+    const poll = async () => {
+      try {
+        const response = await apiClient.getGenerationJob(jobId);
+        handleApiResponse(
+          response,
+          (job) => {
+            if (job.status === 'completed') {
+              setProgress({
+                stage: 'Complete',
+                progress: 100,
+                message: 'Your Kenya-first video is ready! 🇰🇪',
+                isGenerating: false
+              });
+              setGeneratedVideo(job.result_url || `kenya_video_${Date.now()}.mp4`);
+              setCurrentJobId(null);
+            } else if (job.status === 'friendly_fallback') {
+              setProgress({
+                stage: 'Friendly Fallback',
+                progress: 0,
+                message: job.friendly_message || 'Service temporarily unavailable',
+                isGenerating: false
+              });
+              setError(null); // Clear error since this is a friendly fallback
+              setCurrentJobId(null);
+
+              // Show Kenya-first friendly message
+              setFriendlyFallback({
+                message: job.friendly_message,
+                retryOptions: job.retry_options || [],
+                spinnerType: job.spinner_type || 'kenya_flag'
+              });
+            } else if (job.status === 'failed') {
+              setProgress({
+                stage: 'Error',
+                progress: 0,
+                message: 'Video generation failed',
+                isGenerating: false
+              });
+              setError(job.error_message || 'Video generation failed');
+              setCurrentJobId(null);
+            } else {
+              // Still processing, update progress with cultural messages
+              const stageIndex = Math.min(Math.floor(job.progress / 20), stages.length - 1);
+              const currentStage = stages[stageIndex] || stages[0];
+
+              setProgress({
+                stage: currentStage.stage,
+                progress: job.progress || currentStage.progress,
+                message: currentStage.message,
+                isGenerating: true
+              });
+
+              // Continue polling
+              attempts++;
+              if (attempts < maxAttempts) {
+                setTimeout(poll, 5000); // Poll every 5 seconds
+              } else {
+                setProgress({
+                  stage: 'Timeout',
+                  progress: 0,
+                  message: 'Video generation timed out',
+                  isGenerating: false
+                });
+                setError('Video generation timed out. Please try again.');
+                setCurrentJobId(null);
+              }
+            }
+          },
+          (error) => {
+            setProgress({
+              stage: 'Error',
+              progress: 0,
+              message: 'Failed to check generation status',
+              isGenerating: false
+            });
+            setError(error);
+            setCurrentJobId(null);
+          }
+        );
+      } catch (err) {
+        setProgress({
+          stage: 'Error',
+          progress: 0,
+          message: 'Network error during generation',
+          isGenerating: false
+        });
+        setError('Network error during generation');
+        setCurrentJobId(null);
+      }
+    };
+
+    poll();
   };
 
   const handleStopGeneration = () => {
@@ -259,6 +400,23 @@ Example: 'Welcome to Kenya, the heart of East Africa. From the snow-capped peaks
               onChange={(e) => handleInputChange('musicStyle', e.target.value)}
             />
 
+            {/* Error Display */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 p-4 rounded-lg mb-4">
+                <div className="flex items-center space-x-2">
+                  <FaExclamationTriangle className="text-red-600" />
+                  <p className="text-red-800 font-medium">Generation Error</p>
+                </div>
+                <p className="text-red-700 text-sm mt-1">{error}</p>
+                <button
+                  onClick={() => setError(null)}
+                  className="text-red-600 hover:text-red-800 text-sm mt-2 underline"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+
             {/* Generation Controls */}
             <div className="flex space-x-4 pt-4">
               {!progress.isGenerating ? (
@@ -318,6 +476,60 @@ Example: 'Welcome to Kenya, the heart of East Africa. From the snow-capped peaks
                 <p><span className="text-soft-text">Music:</span> {musicStyles.find(m => m.value === formData.musicStyle)?.label}</p>
               </div>
             </div>
+
+            {/* Kenya-First Friendly Fallback */}
+            {friendlyFallback && (
+              <div className="bg-gradient-to-r from-green-50 via-red-50 to-yellow-50 border-2 border-green-200 p-6 rounded-lg">
+                <div className="text-center">
+                  {/* Kenya Flag Spinner */}
+                  <div className="mb-4">
+                    <div className="w-16 h-16 mx-auto relative">
+                      <div className="absolute inset-0 rounded-full border-4 border-green-600 border-t-red-600 border-r-black animate-spin"></div>
+                      <div className="absolute inset-2 flex items-center justify-center">
+                        <span className="text-2xl">🇰🇪</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Friendly Message */}
+                  <h3 className="font-bold text-lg text-gray-800 mb-2">
+                    {friendlyFallback.message}
+                  </h3>
+
+                  <p className="text-gray-600 mb-4">
+                    Harambee! We're working hard to bring you amazing content.
+                  </p>
+
+                  {/* Retry Options */}
+                  <div className="space-y-2">
+                    {friendlyFallback.retryOptions.map((option, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          if (option.includes('Try again')) {
+                            setFriendlyFallback(null);
+                            handleGenerateVideo();
+                          } else if (option.includes('Browse')) {
+                            // Navigate to gallery
+                            window.location.href = '/gallery';
+                          }
+                        }}
+                        className="block w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200"
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => setFriendlyFallback(null)}
+                    className="mt-4 text-gray-500 hover:text-gray-700 text-sm underline"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Generated Video Preview */}
             {generatedVideo && (
