@@ -108,7 +108,7 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 ease-in-out ${
+      className={`fixed inset-y-0 left-0 z-50 w-72 flex flex-col transform transition-transform duration-300 ease-in-out ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } md:translate-x-0`}
       style={{
@@ -141,7 +141,7 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-2">
+      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
