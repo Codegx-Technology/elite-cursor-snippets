@@ -22,7 +22,7 @@ export default function ScrollToTop() {
     <button
       aria-label="Scroll to top"
       onClick={scrollUp}
-      className={`fixed bottom-4 right-4 z-[90] inline-flex items-center justify-center rounded-full h-8 w-8 shadow-lg transition-all duration-200 border border-emerald-200 bg-white/90 hover:bg-white hover:shadow-xl ${
+      className={`fixed right-4 sm:right-6 z-10 inline-flex items-center justify-center rounded-full h-8 w-8 shadow-lg transition-all duration-200 border border-emerald-200 bg-white/90 hover:bg-white hover:shadow-xl bottom-[calc(env(safe-area-inset-bottom)+1rem)] sm:bottom-6 md:bottom-8 lg:bottom-10 ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3 pointer-events-none"
       }`}
     >

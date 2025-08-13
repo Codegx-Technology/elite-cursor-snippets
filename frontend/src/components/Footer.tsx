@@ -8,25 +8,25 @@ export default function Footer() {
 
   return (
     <>
-      <footer className="w-full border-t border-gray-100 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/50">
-        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-2">
-          <div className="grid grid-cols-3 items-center gap-3 text-[10px] tracking-[0.2em] text-gray-500">
+      <footer className="w-full border-t border-gray-100 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/50 relative z-20">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-3 text-[10px] tracking-[0.2em] text-gray-500">
             {/* Left unique accent + credit */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 justify-center sm:justify-start">
               {/* Unique tiny accent */}
               <span className="inline-block h-2 w-2 rounded-sm bg-gradient-to-br from-emerald-500 to-teal-600 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
               <span className="uppercase whitespace-nowrap select-none">
-                MADE WITH IN KENYA
+                MADE IN KENYA
               </span>
             </div>
 
             {/* Centered developer credit */}
             <div className="text-center">
-              <span className="uppercase font-semibold">CODEGX TECHNOLOGY</span>
+              <span className="uppercase font-semibold">Developed by codegx Technologies</span>
             </div>
 
             {/* Right links with sleek icons */}
-            <nav className="flex items-center gap-3 justify-self-end">
+            <nav className="flex items-center gap-3 justify-center sm:justify-end flex-wrap">
               <button
                 onClick={() => setOpen("terms")}
                 className="inline-flex items-center gap-1.5 hover:text-gray-800 transition"
