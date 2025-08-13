@@ -3,7 +3,37 @@
 import { useState } from 'react';
 import Card from '@/components/Card';
 import { FaCheck, FaCrown, FaFlag, FaMountain, FaRocket, FaUsers, FaInfinity, FaShieldAlt, FaHeadset } from 'react-icons/fa';
-import { paymentUtils, usePaystack } from '@/lib/paystack';
+// Import with error handling
+let paymentUtils: any;
+let usePaystack: any;
+
+try {
+  const paystackModule = require('@/lib/paystack');
+  paymentUtils = paystackModule.paymentUtils;
+  usePaystack = paystackModule.usePaystack;
+} catch (error) {
+  console.error('Paystack module import error:', error);
+  // Fallback implementations
+  paymentUtils = {
+    getSubscriptionPlans: () => [
+      {
+        id: 'starter',
+        name: 'Starter',
+        price: 2500,
+        currency: 'KES',
+        features: ['10 Videos', '50 Images', '20 Audio tracks'],
+        popular: false
+      }
+    ],
+    formatAmount: (amount: number, currency: string) => `${currency} ${amount.toLocaleString()}`,
+    getKenyaPaymentMethods: () => []
+  };
+  usePaystack = () => ({
+    initializePayment: async () => {},
+    isLoading: false,
+    error: null
+  });
+}
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent + augmentsearch
 // [CONTEXT]: Pricing page with Paystack integration and Kenya-first design

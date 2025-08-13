@@ -32,9 +32,12 @@ interface SidebarProps {
 export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps) {
   const pathname = usePathname();
 
+  // Debug logging for navigation issues
+  console.log('Current pathname:', pathname);
+
   const navigationItems = [
     {
-      href: '/dashboard',
+      href: '/',
       icon: FaHome,
       label: 'Dashboard',
       description: 'Overview & Stats'
@@ -95,7 +98,13 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
     }
   ];
 
-  const isActive = (href: string) => pathname === href;
+  const isActive = (href: string) => {
+    // Handle root route and dashboard
+    if (href === '/' && (pathname === '/' || pathname === '/dashboard')) {
+      return true;
+    }
+    return pathname === href;
+  };
 
   return (
     <aside
@@ -146,7 +155,10 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
                   ? 'bg-gradient-to-r from-green-600 to-blue-600 text-white shadow-lg'
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
               }`}
-              onClick={() => setSidebarOpen(false)}
+              onClick={() => {
+                // Close sidebar on mobile after a small delay to allow navigation
+                setTimeout(() => setSidebarOpen(false), 100);
+              }}
             >
               <Icon className={`mr-3 text-lg ${active ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
               <div className="flex-1">
