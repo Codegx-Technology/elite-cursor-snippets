@@ -26,9 +26,9 @@ from utils.parallel_processing import ParallelProcessor # Import ParallelProcess
 from error_utils import log_and_raise, retry_on_exception
 
 logger = get_logger(__name__)
-config = get_config()
-
 load_dotenv()
+
+config = get_config()
 HF_API_KEY = config.api_keys.huggingface
 
 gpu_integration = ShujaaGPUIntegration()

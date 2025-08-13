@@ -3,14 +3,14 @@ import requests
 import textwrap
 import moviepy.editor as mp
 from datetime import datetime
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from huggingface_hub import InferenceClient
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import google_auth_oauthlib.flow
 import googleapiclient.errors
 
-load_dotenv()
+load_dotenv(find_dotenv())
 
 HF_API_KEY = os.getenv("HF_API_KEY")
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")

@@ -1,6 +1,9 @@
 import requests
+import os
+from dotenv import load_dotenv, find_dotenv
 
-HF_TOKEN = "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"
+load_dotenv(find_dotenv())
+HF_TOKEN = os.getenv("HF_API_KEY") or ""
 
 
 MODELS = [
