@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Footer from './Footer';
-import ScrollToTop from './ScrollToTop';
+import dynamic from 'next/dynamic';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import ErrorBoundary from './ErrorBoundary';
+
+// Dynamically import ScrollToTop on client only to avoid hydration mismatch
+const ScrollToTop = dynamic(() => import('./ScrollToTop'), { ssr: false });
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean + refactorintent
 // [CONTEXT]: Enterprise-grade layout with Kenya-first design system and mobile-first approach

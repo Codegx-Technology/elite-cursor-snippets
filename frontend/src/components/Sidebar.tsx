@@ -174,7 +174,7 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       </nav>
 
       {/* Cultural Footer */}
-      <div className="p-4 border-t border-gray-700">
+      <div className="p-4 pb-6 border-t border-gray-700">
         <div className="bg-gradient-to-r from-green-600 via-red-600 to-black p-4 rounded-lg text-white text-center">
           <div className="flex items-center justify-center space-x-2 mb-2">
             <FaGlobe className="text-yellow-300" />
@@ -182,12 +182,6 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
           </div>
           <p className="text-xs text-green-100">
             Empowering African storytellers worldwide
-          </p>
-        </div>
-
-        <div className="mt-3 text-center">
-          <p className="text-xs text-gray-500">
-            Version 2.0 • MADE WITH IN KENYA
           </p>
         </div>
       </div>
