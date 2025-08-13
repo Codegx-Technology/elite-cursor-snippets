@@ -153,7 +153,7 @@ export default function AnalyticsPage() {
                   <p className="text-blue-600 text-sm font-medium">Total Views</p>
                   <p className="text-2xl font-bold text-blue-800">{analytics.totalViews.toLocaleString()}</p>
                 </div>
-                <FaTrendingUp className="text-2xl text-blue-600" />
+                <FaArrowTrendUp className="text-2xl text-blue-600" />
               </div>
             </div>
 
@@ -183,7 +183,7 @@ export default function AnalyticsPage() {
                   <p className="text-orange-600 text-sm font-medium">Success Rate</p>
                   <p className="text-2xl font-bold text-orange-800">{analytics.performanceMetrics.successRate}%</p>
                 </div>
-                <FaTrendingUp className="text-2xl text-orange-600" />
+                <FaArrowTrendUp className="text-2xl text-orange-600" />
               </div>
             </div>
           </div>
@@ -237,8 +237,8 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="text-center">
-            <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                <FaArrowTrendUp className="text-2xl text-orange-600" />
+            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+              <FaArrowTrendUp className="text-2xl text-green-600" />
             </div>
             <p className="text-gray-600 text-sm">Success Rate</p>
             <p className="text-xl font-bold text-gray-800">{analytics?.performanceMetrics.successRate || 0}%</p>
