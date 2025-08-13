@@ -7,6 +7,7 @@ HF_TOKEN = os.getenv("HF_API_KEY") or ""
 
 
 MODELS = [
+    "gpt2",                                  # public baseline (no gating)
     "meta-llama/Meta-Llama-3-8B-Instruct",  # LLaMA
     "mistralai/Mistral-7B-Instruct-v0.2",   # Mistral
     "tiiuae/falcon-7b-instruct",            # Falcon
@@ -17,6 +18,7 @@ MODELS = [
 headers = {"Authorization": f"Bearer {HF_TOKEN}"}
 data = {"inputs": "Test access"}
 
+print("Baseline: checking public model 'gpt2' first to validate token & Inference API permission...")
 for model in MODELS:
     print(f"\n🔍 Checking {model}...")
     try:
