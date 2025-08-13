@@ -194,24 +194,31 @@ export const validators = {
 // Device detection utilities
 export const device = {
   isMobile: (): boolean => {
+    if (typeof navigator === 'undefined') return false;
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent
     );
   },
 
   isIOS: (): boolean => {
+    if (typeof navigator === 'undefined') return false;
     return /iPad|iPhone|iPod/.test(navigator.userAgent);
   },
 
   isAndroid: (): boolean => {
+    if (typeof navigator === 'undefined') return false;
     return /Android/.test(navigator.userAgent);
   },
 
   isTouchDevice: (): boolean => {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
     return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   },
 
   getViewportSize: (): { width: number; height: number } => {
+    if (typeof window === 'undefined') {
+      return { width: 0, height: 0 };
+    }
     return {
       width: window.innerWidth,
       height: window.innerHeight,

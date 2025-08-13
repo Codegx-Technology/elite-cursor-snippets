@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Layout from "@/components/Layout";
+import ClientBoot from "@/components/ClientBoot";
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Root layout with Kenya-first design system and enterprise styling
@@ -103,35 +104,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className} suppressHydrationWarning={true}>
         <Layout>{children}</Layout>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // Register service worker for PWA functionality
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js')
-                    .then(function(registration) {
-                      console.log('SW registered: ', registration);
-                    })
-                    .catch(function(registrationError) {
-                      console.log('SW registration failed: ', registrationError);
-                    });
-                });
-              }
-
-              // Prevent zoom on iOS when focusing inputs
-              document.addEventListener('touchstart', function() {}, true);
-
-              // Add viewport meta tag for better mobile experience
-              if (!document.querySelector('meta[name="viewport"]')) {
-                const viewport = document.createElement('meta');
-                viewport.name = 'viewport';
-                viewport.content = 'width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes';
-                document.head.appendChild(viewport);
-              }
-            `,
-          }}
-        />
+        <ClientBoot />
       </body>
     </html>
   );
