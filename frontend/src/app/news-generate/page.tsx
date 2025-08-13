@@ -342,7 +342,7 @@ export default function NewsGeneratePage() {
               value={formData.newsQuery}
               onChange={(e) => handleInputChange('newsQuery', e.target.value)}
               placeholder="e.g., 'Kenya technology innovation', 'Nairobi development', 'Mount Kenya tourism'"
-              helpText="Search for Kenya-specific news topics"
+              helperText="Search for Kenya-specific news topics"
             />
           )}
 
@@ -355,7 +355,7 @@ export default function NewsGeneratePage() {
               value={formData.newsUrl}
               onChange={(e) => handleInputChange('newsUrl', e.target.value)}
               placeholder="https://example.com/news-article"
-              helpText="Paste URL of news article to convert to video"
+              helperText="Paste URL of news article to convert to video"
             />
           )}
 
