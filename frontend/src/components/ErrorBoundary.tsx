@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { FaExclamationTriangle, FaRefresh, FaFlag, FaMountain } from 'react-icons/fa';
+import { FaExclamationTriangle, FaFlag, FaMountain } from 'react-icons/fa';
+import { FaRotateRight } from 'react-icons/fa6';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent
 // [CONTEXT]: Error boundary component with Kenya-first design for production readiness
@@ -122,7 +123,7 @@ function DefaultErrorFallback({ error, retry }: { error: Error; retry: () => voi
             onClick={retry}
             className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
           >
-            <FaRefresh />
+            <FaRotateRight />
             <span>Try Again</span>
           </button>
           

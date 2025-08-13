@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Card from '@/components/Card';
-import { FaChartLine, FaUsers, FaVideo, FaImages, FaMusic, FaTrendingUp, FaTrendingDown, FaFlag, FaMountain, FaGlobe } from 'react-icons/fa';
+import { FaChartLine, FaUsers, FaVideo, FaImages, FaMusic, FaFlag, FaMountain, FaGlobe } from 'react-icons/fa';
+import { FaArrowTrendUp, FaArrowTrendDown } from 'react-icons/fa6';
 import { apiClient, handleApiResponse } from '@/lib/api';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent
@@ -236,8 +237,8 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="text-center">
-            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-              <FaTrendingUp className="text-2xl text-green-600" />
+            <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                <FaArrowTrendUp className="text-2xl text-orange-600" />
             </div>
             <p className="text-gray-600 text-sm">Success Rate</p>
             <p className="text-xl font-bold text-gray-800">{analytics?.performanceMetrics.successRate || 0}%</p>
