@@ -1,0 +1,16 @@
+# // [TASK]: Create Helm service template
+# // [GOAL]: Define the service template for the Helm chart
+# // [ELITE_CURSOR_SNIPPET]: aihandle
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+spec:
+  selector:
+    app: {{ .Release.Name }}-{{ .Chart.Name }}
+  ports:
+    - protocol: TCP
+      port: {{ .Values.service.port }}
+      targetPort: 8000
+  type: {{ .Values.service.type }}

@@ -1,0 +1,11 @@
+# // [TASK]: Create Prometheus configuration
+# // [GOAL]: Configure Prometheus to scrape metrics from the application
+# // [ELITE_CURSOR_SNIPPET]: aihandle
+
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'shujaa-studio'
+    static_configs:
+      - targets: ['localhost:8000']

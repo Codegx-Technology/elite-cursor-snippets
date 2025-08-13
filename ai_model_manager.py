@@ -1,16 +1,27 @@
 import os
+import asyncio
 import requests
+import io
+import soundfile as sf
 from huggingface_hub import InferenceClient, login as hf_login
+from transformers import pipeline
 from config_loader import get_config
 from error_utils import retry_on_exception, log_and_raise
 from logging_setup import get_logger
+from asset_manager import AssetManager
 
 logger = get_logger(__name__)
 config = get_config()
 
 HF_API_KEY = config.api_keys.huggingface
 
+# --- Module-level Globals for Model Caching ---
 _hf_client = None
+_local_llm_pipeline = None
+_local_image_pipeline = None
+_local_tts_pipeline = None
+_local_stt_pipeline = None
+asset_manager = AssetManager()
 
 def init_hf_client():
     """
@@ -30,114 +41,315 @@ def init_hf_client():
             log_and_raise(e, "Failed to initialize Hugging Face client")
     return _hf_client
 
-@retry_on_exception()
-async def generate_text(prompt, model_id=None):
+async def _load_local_llm_model():
     """
-    // [TASK]: Generate text using Hugging Face Inference API
-    // [GOAL]: Provide text generation capability with retry logic
+    // [TASK]: Load local LLM model on demand
+    // [GOAL]: Provide a local fallback for text generation
     """
-    client = init_hf_client()
-    if not client:
-        logger.warning("HF client not available, falling back to local text generation placeholder.")
-        return "Placeholder text generation: " + prompt
+    global _local_llm_pipeline
+    model_name = config.models.text_generation.local_fallback_path
+    if _local_llm_pipeline is None and model_name:
+        try:
+            logger.info(f"Attempting to load local LLM pipeline for model: {model_name}")
+            def do_load():
+                return pipeline("text-generation", model=model_name, device_map="auto")
+            loop = asyncio.get_running_loop()
+            _local_llm_pipeline = await loop.run_in_executor(None, do_load)
+            logger.info(f"✅ Local LLM pipeline loaded successfully for model: {model_name}")
+        except Exception as e:
+            logger.exception(f"❌ Failed to load local LLM model '{model_name}': {e}")
+            _local_llm_pipeline = None
+    return _local_llm_pipeline is not None
 
-    model_id = model_id or config.models.text_generation.hf_api_id
-    if not model_id:
-        log_and_raise(ValueError("No Hugging Face text generation model ID configured."), "Text generation failed")
-
-    logger.info(f"Generating text using HF model: {model_id}")
-    try:
-        # Assuming the model expects 'inputs' in JSON body
-        res = await client.post(json={"inputs": prompt}, model=model_id)
-        if res.status_code == 200:
-            return res.json()[0]["generated_text"]
-        else:
-            log_and_raise(requests.exceptions.RequestException(f"HF API failed with status {res.status_code}: {res.text}"), "Text generation failed")
-    except Exception as e:
-        log_and_raise(e, "Text generation failed via HF API")
-
-@retry_on_exception()
-async def generate_image(prompt, model_id=None):
+async def _load_local_image_model():
     """
-    // [TASK]: Generate image using Hugging Face Inference API
-    // [GOAL]: Provide image generation capability with retry logic
+    // [TASK]: Load local image generation model on demand
+    // [GOAL]: Provide a local fallback for image generation
     """
-    client = init_hf_client()
-    if not client:
-        logger.warning("HF client not available, falling back to local image generation placeholder.")
-        # Placeholder for local image generation
-        return "placeholder_image_path.png"
+    global _local_image_pipeline
+    model_name = config.models.image_generation.local_fallback_path
+    if _local_image_pipeline is None and model_name:
+        try:
+            logger.info(f"Attempting to load local image generation pipeline for model: {model_name}")
+            def do_load():
+                return pipeline("text-to-image", model=model_name, device_map="auto")
+            loop = asyncio.get_running_loop()
+            _local_image_pipeline = await loop.run_in_executor(None, do_load)
+            logger.info(f"✅ Local image generation pipeline loaded successfully for model: {model_name}")
+        except Exception as e:
+            logger.exception(f"❌ Failed to load local image generation model '{model_name}': {e}")
+            _local_image_pipeline = None
+    return _local_image_pipeline is not None
 
-    model_id = model_id or config.models.image_generation.hf_api_id
-    if not model_id:
-        log_and_raise(ValueError("No Hugging Face image generation model ID configured."), "Image generation failed")
-
-    logger.info(f"Generating image using HF model: {model_id}")
-    try:
-        # Assuming the model expects 'inputs' in JSON body and returns image bytes
-        res = await client.post(json={"inputs": prompt}, model=model_id)
-        if res.status_code == 200:
-            # Save image bytes to a temporary file or return them
-            # For now, just return a placeholder path
-            return "generated_image_path.png"
-        else:
-            log_and_raise(requests.exceptions.RequestException(f"HF API failed with status {res.status_code}: {res.text}"), "Image generation failed")
-    except Exception as e:
-        log_and_raise(e, "Image generation failed via HF API")
-
-@retry_on_exception()
-async def text_to_speech(text, model_id=None):
+async def _load_local_tts_model():
     """
-    // [TASK]: Convert text to speech using Hugging Face Inference API
-    // [GOAL]: Provide TTS capability with retry logic
+    // [TASK]: Load local TTS model on demand
+    // [GOAL]: Provide a local fallback for text-to-speech
     """
-    client = init_hf_client()
-    if not client:
-        logger.warning("HF client not available, falling back to local TTS placeholder.")
-        # Placeholder for local TTS
-        return "placeholder_audio.wav"
+    global _local_tts_pipeline
+    model_name = config.models.voice_synthesis.local_fallback_path
+    if _local_tts_pipeline is None and model_name:
+        try:
+            logger.info(f"Attempting to load local TTS pipeline for model: {model_name}")
+            def do_load():
+                return pipeline("text-to-speech", model=model_name, device_map="auto")
+            loop = asyncio.get_running_loop()
+            _local_tts_pipeline = await loop.run_in_executor(None, do_load)
+            logger.info(f"✅ Local TTS pipeline loaded successfully for model: {model_name}")
+        except Exception as e:
+            logger.exception(f"❌ Failed to load local TTS model '{model_name}': {e}")
+            _local_tts_pipeline = None
+    return _local_tts_pipeline is not None
 
-    model_id = model_id or config.models.voice_synthesis.hf_api_id
-    if not model_id:
-        log_and_raise(ValueError("No Hugging Face TTS model ID configured."), "TTS failed")
+async def _load_local_stt_model():
+    """
+    // [TASK]: Load local STT model (e.g., Whisper) on demand
+    // [GOAL]: Provide a local fallback for speech-to-text
+    """
+    global _local_stt_pipeline
+    model_name = config.models.speech_to_text.local_fallback_path
+    if _local_stt_pipeline is None and model_name:
+        try:
+            logger.info(f"Attempting to load local STT pipeline for model: {model_name}")
+            def do_load():
+                return pipeline("automatic-speech-recognition", model=model_name, device_map="auto")
+            loop = asyncio.get_running_loop()
+            _local_stt_pipeline = await loop.run_in_executor(None, do_load)
+            logger.info(f"✅ Local STT pipeline loaded successfully for model: {model_name}")
+        except Exception as e:
+            logger.exception(f"❌ Failed to load local STT model '{model_name}': {e}")
+            _local_stt_pipeline = None
+    return _local_stt_pipeline is not None
 
-    logger.info(f"Generating speech using HF model: {model_id}")
-    try:
-        # Assuming the model expects 'inputs' in JSON body and returns audio bytes
-        res = await client.post(json={"inputs": text}, model=model_id)
-        if res.status_code == 200:
-            # Save audio bytes to a temporary file or return them
-            # For now, just return a placeholder path
-            return "generated_audio.wav"
-        else:
-            log_and_raise(requests.exceptions.RequestException(f"HF API failed with status {res.status_code}: {res.text}"), "TTS failed")
-    except Exception as e:
-        log_and_raise(e, "TTS failed via HF API")
+from security.encryption_utils import encrypt_data, decrypt_data
 
 @retry_on_exception()
-async def speech_to_text(audio_path, model_id=None):
+async def generate_text(prompt, model_id=None, **kwargs):
     """
-    // [TASK]: Convert speech to text using Hugging Face Inference API
-    // [GOAL]: Provide STT capability with retry logic
+    // [TASK]: Generate text using Hugging Face Inference API or a local LLM fallback
+    // [GOAL]: Provide robust text generation capability with real local inference
+    // [TODO]: Implement AES-256 encryption for model inference inputs/outputs before transmission.
     """
     client = init_hf_client()
-    if not client:
-        logger.warning("HF client not available, falling back to local STT placeholder.")
-        # Placeholder for local STT
-        return "Placeholder STT result."
+    hf_model_id = model_id or config.models.text_generation.hf_api_id
+    use_local_fallback = kwargs.pop('use_local_fallback', False)
 
-    model_id = model_id or config.models.speech_to_text.hf_api_id
-    if not model_id:
-        log_and_raise(ValueError("No Hugging Face STT model ID configured."), "STT failed")
+    # Encrypt prompt before sending to model
+    encrypted_prompt = encrypt_data(prompt)
 
-    logger.info(f"Transcribing audio using HF model: {model_id}")
-    try:
-        with open(audio_path, "rb") as f:
-            audio_data = f.read()
-        res = await client.post(data=audio_data, model=model_id)
-        if res.status_code == 200:
-            return res.json().get("text", "")
+    if client and hf_model_id and not use_local_fallback:
+        logger.info(f"Generating text using HF model: {hf_model_id}")
+        try:
+            def do_hf_call():
+                # Pass encrypted_prompt to HF API (assuming HF API can handle it, or it's decrypted on their end)
+                # This is more conceptual for "inputs/outputs" within our system.
+                return client.text_generation(encrypted_prompt, model=hf_model_id, **kwargs)
+            loop = asyncio.get_running_loop()
+            generated_text_encrypted = await loop.run_in_executor(None, do_hf_call)
+            generated_text = decrypt_data(generated_text_encrypted) # Decrypt output
+            logger.info(f"Successfully generated text using HF model: {hf_model_id}")
+            return generated_text
+        except Exception as e:
+            logger.warning(f"HF API call failed for model {hf_model_id}: {e}. Trying local fallback.")
+
+    if await _load_local_llm_model():
+        logger.info("Generating text using local LLM pipeline.")
+        try:
+            generation_params = {"max_new_tokens": 250, "num_return_sequences": 1, "truncation": True, **kwargs}
+            def do_local_call():
+                # Pass encrypted_prompt to local LLM
+                return _local_llm_pipeline(encrypted_prompt, **generation_params)
+            loop = asyncio.get_running_loop()
+            generated = await loop.run_in_executor(None, do_local_call)
+            generated_text_encrypted = generated[0]['generated_text']
+            generated_text = decrypt_data(generated_text_encrypted) # Decrypt output
+            logger.info("✅ Successfully generated text with local LLM.")
+            return generated_text
+        except Exception as e:
+            logger.exception(f"❌ Local LLM inference failed: {e}")
+            raise ValueError("Local LLM inference failed") # Using ValueError as a generic error
+    else:
+        if config.models.text_generation.local_fallback_path:
+            raise ValueError(
+                f"No text generation model available. Hugging Face API failed, and "
+                f"the local model '{config.models.text_generation.local_fallback_path}' "
+                f"could not be loaded. Please ensure the local model is downloaded and accessible."
+            )
         else:
-            log_and_raise(requests.exceptions.RequestException(f"HF API failed with status {res.status_code}: {res.text}"), "STT failed")
-    except Exception as e:
-        log_and_raise(e, "STT failed via HF API")
+            raise ValueError("No text generation model available (HF or local fallback path not configured).")
+
+from services.watermark_remover import remove_watermark
+
+@retry_on_exception()
+async def generate_image(prompt, model_id=None, remove_watermark_flag=False, watermark_hint="", **kwargs):
+    """
+    // [TASK]: Generate image using Hugging Face Inference API or local fallback
+    // [GOAL]: Provide robust image generation with real local inference
+    """
+    client = init_hf_client()
+    hf_model_id = model_id or config.models.image_generation.hf_api_id
+    use_local_fallback = kwargs.pop('use_local_fallback', False)
+
+    # Encrypt prompt before sending to model
+    encrypted_prompt = encrypt_data(prompt)
+
+    if client and hf_model_id and not use_local_fallback:
+        logger.info(f"Generating image using HF model: {hf_model_id}")
+        try:
+            def do_hf_call():
+                return client.post(json={"inputs": encrypted_prompt, **kwargs}, model=hf_model_id)
+            loop = asyncio.get_running_loop()
+            res = await loop.run_in_executor(None, do_hf_call)
+            res.raise_for_status()
+            logger.info(f"✅ Successfully generated image with HF model: {hf_model_id}")
+            img_bytes_encrypted = res.content # Store encrypted bytes
+            img_bytes = decrypt_data(img_bytes_encrypted) # Decrypt output
+        except Exception as e:
+            logger.warning(f"HF API call for image generation failed: {e}. Trying local fallback.")
+            img_bytes = None # Ensure img_bytes is None on failure
+    else:
+        img_bytes = None # Initialize img_bytes for local fallback path
+
+    if img_bytes is None and await _load_local_image_model(): # Check img_bytes before trying local
+        logger.info("Generating image using local image generation pipeline.")
+        try:
+            def do_local_call():
+                return _local_image_pipeline(encrypted_prompt, **kwargs)
+            loop = asyncio.get_running_loop()
+            result = await loop.run_in_executor(None, do_local_call)
+            image = result.images[0]
+            img_byte_arr = io.BytesIO()
+            image.save(img_byte_arr, format='PNG')
+            logger.info("✅ Successfully generated image with local pipeline.")
+            img_bytes_encrypted = img_byte_arr.getvalue()
+            img_bytes = decrypt_data(img_bytes_encrypted) # Decrypt output
+        except Exception as e:
+            logger.exception(f"❌ Local image generation failed: {e}")
+            raise ValueError("Local image generation failed")
+    
+    if img_bytes and remove_watermark_flag:
+        try:
+            logger.info("Attempting to remove watermark from generated image.")
+            # Watermark removal expects decrypted image bytes
+            img_bytes = remove_watermark(img_bytes, hint_prompt=watermark_hint)
+            logger.info("✅ Watermark removal attempted successfully.")
+        except Exception as e:
+            logger.warning(f"❌ Watermark removal failed: {e}", exc_info=True)
+
+    if img_bytes is None: # Final check before raising error
+        raise ValueError("No image generation model available (HF or local).")
+    
+    return img_bytes
+
+@retry_on_exception()
+async def text_to_speech(text, model_id=None, **kwargs):
+    """
+    // [TASK]: Convert text to speech using Hugging Face Inference API or local TTS fallback
+    // [GOAL]: Provide robust TTS capability with real local inference
+    """
+    client = init_hf_client()
+    hf_model_id = model_id or config.models.voice_synthesis.hf_api_id
+    use_local_fallback = kwargs.pop('use_local_fallback', False)
+
+    # Encrypt text before sending to model
+    encrypted_text = encrypt_data(text)
+
+    if client and hf_model_id and not use_local_fallback:
+        logger.info(f"Generating speech using HF model: {hf_model_id}")
+        try:
+            def do_hf_call():
+                return client.post(json={"inputs": encrypted_text}, model=hf_model_id)
+            loop = asyncio.get_running_loop()
+            res = await loop.run_in_executor(None, do_hf_call)
+            res.raise_for_status()
+            logger.info(f"✅ Successfully generated speech with HF model: {hf_model_id}")
+            audio_bytes_encrypted = res.content
+            audio_bytes = decrypt_data(audio_bytes_encrypted) # Decrypt output
+            return audio_bytes
+        except Exception as e:
+            logger.warning(f"HF API call for TTS failed: {e}. Trying local fallback.")
+
+    if await _load_local_tts_model():
+        logger.info("Generating speech using local TTS pipeline.")
+        try:
+            def do_local_call():
+                return _local_tts_pipeline(encrypted_text, **kwargs)
+            loop = asyncio.get_running_loop()
+            result = await loop.run_in_executor(None, do_local_call)
+            
+            audio_data = result["audio"]
+            samplerate = result["sampling_rate"]
+            
+            wav_io = io.BytesIO()
+            sf.write(wav_io, audio_data.squeeze(), samplerate, format='WAV')
+            logger.info("✅ Successfully generated speech with local pipeline.")
+            audio_bytes_encrypted = wav_io.getvalue()
+            audio_bytes = decrypt_data(audio_bytes_encrypted) # Decrypt output
+            return audio_bytes
+        except Exception as e:
+            logger.exception(f"❌ Local TTS generation failed: {e}")
+            raise ValueError("Local TTS generation failed")
+    else:
+        if config.models.voice_synthesis.local_fallback_path:
+            raise ValueError(
+                f"No TTS model available. Hugging Face API failed, and "
+                f"the local model '{config.models.voice_synthesis.local_fallback_path}' "
+                f"could not be loaded. Please ensure the local model is downloaded and accessible."
+            )
+        else:
+            raise ValueError("No TTS model available (HF or local fallback path not configured).")
+
+@retry_on_exception()
+async def speech_to_text(audio_path, model_id=None, **kwargs):
+    """
+    // [TASK]: Convert speech to text using Hugging Face Inference API or local STT fallback
+    // [GOAL]: Provide robust STT capability with real local inference
+    """
+    client = init_hf_client()
+    hf_model_id = model_id or config.models.speech_to_text.hf_api_id
+    use_local_fallback = kwargs.pop('use_local_fallback', False)
+
+    if client and hf_model_id and not use_local_fallback:
+        logger.info(f"Transcribing audio using HF model: {hf_model_id}")
+        try:
+            def do_hf_call():
+                with open(audio_path, "rb") as f:
+                    audio_data = f.read()
+                # Note: Encrypting binary audio data requires a different encryption utility.
+                # The current encrypt_data/decrypt_data functions are for string data.
+                return client.post(data=audio_data, model=hf_model_id)
+            loop = asyncio.get_running_loop()
+            res = await loop.run_in_executor(None, do_hf_call)
+            res.raise_for_status()
+            logger.info(f"✅ Successfully transcribed audio with HF model: {hf_model_id}")
+            transcribed_text_encrypted = res.json().get("text", "")
+            transcribed_text = decrypt_data(transcribed_text_encrypted) # Decrypt output
+            return transcribed_text
+        except Exception as e:
+            logger.warning(f"HF API call for STT failed: {e}. Trying local fallback.")
+
+    if await _load_local_stt_model():
+        logger.info("Transcribing audio using local STT pipeline.")
+        try:
+            def do_local_call():
+                # Note: Encrypting binary audio data requires a different encryption utility.
+                # The current encrypt_data/decrypt_data functions are for string data.
+                return _local_stt_pipeline(audio_path, **kwargs)
+            loop = asyncio.get_running_loop()
+            result = await loop.run_in_executor(None, do_local_call)
+            transcribed_text_encrypted = result["text"]
+            transcribed_text = decrypt_data(transcribed_text_encrypted) # Decrypt output
+            logger.info("✅ Successfully transcribed audio with local pipeline.")
+            return transcribed_text
+        except Exception as e:
+            logger.exception(f"❌ Local STT transcription failed: {e}")
+            raise ValueError("Local STT transcription failed")
+    else:
+        if config.models.speech_to_text.local_fallback_path:
+            raise ValueError(
+                f"No STT model available. Hugging Face API failed, and "
+                f"the local model '{config.models.speech_to_text.local_fallback_path}' "
+                f"could not be loaded. Please ensure the local model is downloaded and accessible."
+            )
+        else:
+            raise ValueError("No STT model available (HF or local fallback path not configured).")

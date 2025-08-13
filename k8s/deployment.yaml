@@ -1,0 +1,28 @@
+# // [TASK]: Create Kubernetes Deployment manifest
+# // [GOAL]: Define the desired state for the application deployment
+# // [ELITE_CURSOR_SNIPPET]: aihandle
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shujaa-studio-api
+  labels:
+    app: shujaa-studio-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: shujaa-studio-api
+  template:
+    metadata:
+      labels:
+        app: shujaa-studio-api
+    spec:
+      containers:
+      - name: api
+        image: shujaa-studio-api:latest
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - secretRef:
+            name: shujaa-studio-secrets

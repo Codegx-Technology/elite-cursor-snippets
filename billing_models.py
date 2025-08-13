@@ -17,6 +17,42 @@ class UserSubscription:
     end_date: datetime
     is_active: bool = True
 
+# // [TASK]: Implement SLA tracking and billing reconciliation models
+# // [GOAL]: Provide enterprise SLAs, automated billing reconciliation, and analytics
+# // [ELITE_CURSOR_SNIPPET]: aihandle
+
+@dataclass
+class SLARecord:
+    tenant_id: str
+    month: str # YYYY-MM
+    uptime_percentage: float
+    response_time_slo_met: bool
+    credits_due: float = 0.0
+
+@dataclass
+class BillingTransaction:
+    transaction_id: str
+    user_id: str
+    amount: float
+    currency: str
+    timestamp: datetime
+    provider: str # e.g., Stripe, Mpesa
+
+@dataclass
+class UsageRecord:
+    user_id: str
+    feature: str
+    count: int
+    timestamp: datetime
+
+@dataclass
+class ReconciliationReport:
+    month: str # YYYY-MM
+    total_billed: float
+    total_usage_cost: float
+    mismatches: List[str]
+    tickets_created: List[str]
+
 # --- Mock Data / Placeholder Functions ---
 
 def get_default_plans() -> List[Plan]:

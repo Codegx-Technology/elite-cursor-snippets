@@ -1,0 +1,16 @@
+# // [TASK]: Create Kubernetes Service manifest
+# // [GOAL]: Expose the application to the network
+# // [ELITE_CURSOR_SNIPPET]: aihandle
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: shujaa-studio-api
+spec:
+  selector:
+    app: shujaa-studio-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: ClusterIP

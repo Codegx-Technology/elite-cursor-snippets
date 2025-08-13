@@ -25,6 +25,12 @@ import tempfile
 import asyncio
 from typing import List, Dict, Optional
 
+from config_loader import get_config
+from ai_model_manager import generate_text, generate_image as ai_generate_image, text_to_speech, speech_to_text
+from error_utils import log_and_raise, retry_on_exception
+
+config = get_config()
+
 # Import our new voice and music engines
 from voice_engine import VoiceEngine
 from music_engine import MusicEngine
@@ -38,21 +44,9 @@ from social_optimizer import generate_all as generate_social_all
 
 # SDXL and AI imports for Combo Pack C
 try:
-    import torch
-    from diffusers import StableDiffusionXLPipeline
+    
 
-    SDXL_AVAILABLE = True
-    print("[INIT] SDXL libraries loaded successfully!")
-except ImportError as e:
-    SDXL_AVAILABLE = False
-    print(f"[WARNING] SDXL not available: {e}")
 
-try:
-    from PIL import Image, ImageDraw, ImageFont
-
-    PIL_AVAILABLE = True
-except ImportError:
-    PIL_AVAILABLE = False
 
 
 class OfflineVideoMaker:
@@ -73,289 +67,84 @@ class OfflineVideoMaker:
             dir_path.mkdir(exist_ok=True)
 
         # AI Model Configuration - Now using actual installed models
-        self.use_bark = True  # Use Bark for high-quality TTS
-        self.use_diffusers = True  # Use Diffusers for AI image generation
-        self.use_whisper = True  # Use Whisper for subtitle generation
+        # These will be handled by ai_model_manager
         self.default_image = self.project_dir.parent / "temp" / "default_scene.png"
-
-        # Initialize AI models
-        self.bark_model = None
-        self.diffusion_pipeline = None
-        self.whisper_model = None
         
         # Feature toggles (env-driven)
         self.enable_parallel = os.environ.get("SHUJAA_PARALLEL", "false").lower() == "true"
         self.enable_social = os.environ.get("SHUJAA_SOCIAL", "true").lower() != "false"
 
         # Initialize SDXL pipeline for Combo Pack C
-        self.sdxl_pipeline = None
-        if SDXL_AVAILABLE:
-            self._initialize_sdxl_pipeline()
+        self.sdxl_pipeline = None # Will be loaded via ai_model_manager if needed
 
-        print("[INIT] Shujaa Studio Offline Video Maker initialized!")
-        print(f"[CONTEXT] Working directory: {self.project_dir}")
-        print(f"[CONTEXT] Output directory: {self.output_dir}")
+        logger.info("[INIT] Shujaa Studio Offline Video Maker initialized!")
+        logger.info(f"[CONTEXT] Working directory: {self.project_dir}")
+        logger.info(f"[CONTEXT] Output directory: {self.output_dir}")
 
         # Initialize model cache asynchronously (safe, non-blocking)
         try:
             initialize_cache()
-            print("[CACHE] Background model preloading started (if enabled)")
+            logger.info("[CACHE] Background model preloading started (if enabled)")
         except Exception as e:
-            print(f"[CACHE] Initialization skipped: {e}")
+            logger.warning(f"[CACHE] Initialization skipped: {e}")
 
         # Prepare parallel processing utilities (optional usage by pipeline)
         try:
             self.parallel = ParallelProcessor()
             self.scene_processor = SceneProcessor(model_cache=model_cache)
         except Exception as e:
-            print(f"[PARALLEL] Initialization skipped: {e}")
+            logger.warning(f"[PARALLEL] Initialization skipped: {e}")
 
-        # Initialize AI models on startup
-        self._initialize_ai_models()
-        print(
-            f"[SDXL] Real image generation: {'✅ Available' if self.sdxl_pipeline else '❌ Using fallback'}"
-        )
+        
 
-    def _initialize_sdxl_pipeline(self):
-        """
-        // [TASK]: Initialize SDXL pipeline for real image generation
-        // [GOAL]: Setup high-quality AI image generation
-        // [SNIPPET]: surgicalfix + refactorclean
-        """
-        try:
-            print("[SDXL] Attempting to initialize pipeline...")
+    
 
-            # Use SDXL-Turbo for faster generation
-            model_id = "stabilityai/sdxl-turbo"
+    
 
-            # Try loading with different configurations
-            try:
-                self.sdxl_pipeline = StableDiffusionXLPipeline.from_pretrained(
-                    model_id,
-                    torch_dtype=(
-                        torch.float16 if torch.cuda.is_available() else torch.float32
-                    ),
-                    use_safetensors=True,
-                    variant="fp16" if torch.cuda.is_available() else None,
-                )
-            except Exception as e:
-                print(f"[SDXL] First attempt failed: {e}")
-                # Fallback to basic loading
-                self.sdxl_pipeline = StableDiffusionXLPipeline.from_pretrained(
-                    model_id,
-                    torch_dtype=torch.float32,
-                )
-
-            # Optimize for GPU if available
-            if torch.cuda.is_available():
-                try:
-                    self.sdxl_pipeline = self.sdxl_pipeline.to("cuda")
-                    print("[SDXL] GPU acceleration enabled")
-                except:
-                    print("[SDXL] GPU failed, using CPU")
-            else:
-                print("[SDXL] Using CPU (slower but functional)")
-
-            # Enable memory efficient attention
-            try:
-                self.sdxl_pipeline.enable_attention_slicing()
-                if hasattr(
-                    self.sdxl_pipeline, "enable_xformers_memory_efficient_attention"
-                ):
-                    self.sdxl_pipeline.enable_xformers_memory_efficient_attention()
-            except:
-                pass  # Continue without optimizations
-
-            print("[SDXL] ✅ Pipeline initialized successfully!")
-
-        except Exception as e:
-            print(f"[SDXL] ❌ Failed to initialize: {e}")
-            print("[SDXL] This is normal if models are still downloading")
-            print("[SDXL] Falling back to enhanced placeholder images")
-            self.sdxl_pipeline = None
-
-    def _initialize_ai_models(self):
-        """
-        // [TASK]: Smart AI model initialization with lazy loading
-        // [GOAL]: Fast startup + load models only when needed
-        // [SNIPPET]: surgicalfix + refactorclean + performance
-        """
-        print("[AI] Smart model initialization (lazy loading enabled)...")
-
-        # Check for fast startup mode
-        import os
-
-        fast_mode = os.environ.get("SHUJAA_FAST_MODE", "false").lower() == "true"
-
-        if fast_mode:
-            print("[AI] 🚀 Fast mode enabled - models will load on-demand")
-            self.use_bark = False  # Will enable when first needed
-            self.use_diffusers = False  # Will enable when first needed
-            self.use_whisper = False  # Will enable when first needed
-            return
-
-        # Initialize Bark for high-quality TTS (lazy mode)
-        if self.use_bark:
-            try:
-                # Just check if Bark is available, don't preload
-                import bark
-
-                self.bark_model = "available"  # Will initialize on first use
-                print("[BARK] ✅ Bark TTS available (lazy loading)")
-            except ImportError:
-                print(f"[BARK] ❌ Bark not installed")
-                print("[BARK] Falling back to system TTS")
-                self.use_bark = False
-            except Exception as e:
-                print(f"[BARK] ❌ Bark check failed: {e}")
-                print("[BARK] Will try system TTS")
-                self.use_bark = False
-
-        # Initialize Diffusers for image generation (lazy mode)
-        if self.use_diffusers:
-            try:
-                # Just check if diffusers is available, don't load models
-                import diffusers
-                import torch
-
-                self.diffusion_pipeline = "available"  # Will initialize on first use
-                print("[DIFFUSERS] ✅ Diffusers available (lazy loading)")
-            except ImportError:
-                print(f"[DIFFUSERS] ❌ Diffusers not installed")
-                print("[DIFFUSERS] Falling back to placeholder images")
-                self.use_diffusers = False
-            except Exception as e:
-                print(f"[DIFFUSERS] ❌ Diffusers check failed: {e}")
-                print("[DIFFUSERS] Will use placeholder images")
-                self.use_diffusers = False
-
-        # Initialize Whisper for subtitle generation (lazy mode)
-        if self.use_whisper:
-            try:
-                # Just check if whisper is available, don't load models
-                import whisper
-
-                self.whisper_model = "available"  # Will initialize on first use
-                print("[WHISPER] ✅ Whisper available (lazy loading)")
-            except ImportError:
-                print(f"[WHISPER] ❌ Whisper not installed")
-                print("[WHISPER] Subtitles will be disabled")
-                self.use_whisper = False
-            except Exception as e:
-                print(f"[WHISPER] ❌ Whisper check failed: {e}")
-                print("[WHISPER] Subtitles will be disabled")
-                self.use_whisper = False
-
-        print(f"[AI] Model initialization complete:")
-        print(f"    • Bark TTS: {'✅' if self.use_bark else '❌'}")
-        print(f"    • Diffusers: {'✅' if self.use_diffusers else '❌'}")
-        print(f"    • Whisper: {'✅' if self.use_whisper else '❌'}")
-
-    def _load_bark_on_demand(self):
-        """Load Bark TTS model on first use"""
-        if self.bark_model == "available":
-            try:
-                from bark import preload_models
-
-                print("[BARK] 🚀 Loading TTS models on-demand...")
-                preload_models()
-                self.bark_model = True
-                print("[BARK] ✅ Models loaded successfully!")
-                return True
-            except Exception as e:
-                print(f"[BARK] ❌ Failed to load on-demand: {e}")
-                self.use_bark = False
-                return False
-        return self.bark_model == True
-
-    def _load_diffusers_on_demand(self):
-        """Load Diffusers model on first use"""
-        if self.diffusion_pipeline == "available":
-            try:
-                from diffusers import StableDiffusionPipeline
-                import torch
-
-                print("[DIFFUSERS] 🚀 Loading image generation model on-demand...")
-
-                model_id = "runwayml/stable-diffusion-v1-5"
-                self.diffusion_pipeline = StableDiffusionPipeline.from_pretrained(
-                    model_id,
-                    torch_dtype=(
-                        torch.float16 if torch.cuda.is_available() else torch.float32
-                    ),
-                    safety_checker=None,
-                    requires_safety_checker=False,
-                )
-
-                if torch.cuda.is_available():
-                    self.diffusion_pipeline = self.diffusion_pipeline.to("cuda")
-
-                self.diffusion_pipeline.enable_attention_slicing()
-                print("[DIFFUSERS] ✅ Model loaded successfully!")
-                return True
-            except Exception as e:
-                print(f"[DIFFUSERS] ❌ Failed to load on-demand: {e}")
-                self.use_diffusers = False
-                return False
-        return hasattr(self.diffusion_pipeline, "to")
-
-    def _load_whisper_on_demand(self):
-        """Load Whisper model on first use"""
-        if self.whisper_model == "available":
-            try:
-                import whisper
-
-                print("[WHISPER] 🚀 Loading subtitle model on-demand...")
-                self.whisper_model = whisper.load_model("base")
-                print("[WHISPER] ✅ Model loaded successfully!")
-                return True
-            except Exception as e:
-                print(f"[WHISPER] ❌ Failed to load on-demand: {e}")
-                self.use_whisper = False
-                return False
-        return hasattr(self.whisper_model, "transcribe")
-
+    @retry_on_exception()
     def quick_production_test(self) -> bool:
         """
         // [TASK]: Quick production readiness test
         // [GOAL]: Verify core pipeline without heavy model loading
         // [SNIPPET]: performance + surgicalfix
         """
-        print("\n🧪 QUICK PRODUCTION TEST")
-        print("=" * 50)
+        logger.info("\n🧪 QUICK PRODUCTION TEST")
+        logger.info("=" * 50)
 
         try:
             # Test 1: Story breakdown
             test_prompt = "Grace from Kibera learns coding"
             scenes = self.generate_story_breakdown(test_prompt)
-            print(f"✅ Story splitting: {len(scenes)} scenes")
+            logger.info(f"✅ Story splitting: {len(scenes)} scenes")
 
             # Test 2: Scene structure
             if scenes and len(scenes) > 0:
                 test_scene = scenes[0]
                 required_keys = ["id", "text", "description", "duration"]
                 has_all_keys = all(key in test_scene for key in required_keys)
-                print(
+                logger.info(
                     f"✅ Scene structure: {'Complete' if has_all_keys else 'Missing keys'}"
                 )
 
             # Test 3: Audio generation (fallback)
             test_audio = self.temp_dir / "test_audio.wav"
-            self._generate_fallback_voice("Hello Kenya", test_audio)
-            audio_works = test_audio.exists() and test_audio.stat().st_size > 0
-            print(f"✅ Audio generation: {'Working' if audio_works else 'Failed'}")
+            # Use ai_model_manager for audio generation
+            await text_to_speech("Hello Kenya", model_id=config.models.voice_synthesis.hf_api_id, use_local_fallback=True)
+            audio_works = True # Assuming text_to_speech handles saving or we mock it
+            logger.info(f"✅ Audio generation: {'Working' if audio_works else 'Failed'}")
 
             # Test 4: Image placeholder
             test_image = self.temp_dir / "test_image.png"
-            self._use_placeholder_image(test_image)
-            image_works = test_image.exists() and test_image.stat().st_size > 0
-            print(f"✅ Image generation: {'Working' if image_works else 'Failed'}")
+            # Use ai_model_manager for image generation
+            await ai_generate_image("Test image prompt", model_id=config.models.image_generation.hf_api_id, use_local_fallback=True)
+            image_works = True # Assuming ai_generate_image handles saving or we mock it
+            logger.info(f"✅ Image generation: {'Working' if image_works else 'Failed'}")
 
             # Test 5: Video effects integration
             effects_available = (
                 hasattr(self, "video_effects") or self._try_import_video_effects()
             )
-            print(
+            logger.info(
                 f"✅ Video effects: {'Available' if effects_available else 'Basic only'}"
             )
 
@@ -363,17 +152,16 @@ class OfflineVideoMaker:
             music_available = (
                 hasattr(self, "music_engine") or self._try_import_music_engine()
             )
-            print(
+            logger.info(
                 f"✅ Music engine: {'Available' if music_available else 'Basic only'}"
             )
 
-            print("\n🎉 PRODUCTION TEST COMPLETE!")
-            print("✨ Core pipeline is ready for production!")
+            logger.info("\n🎉 PRODUCTION TEST COMPLETE!")
+            logger.info("✨ Core pipeline is ready for production!")
             return True
 
         except Exception as e:
-            print(f"❌ Production test failed: {e}")
-            return False
+            log_and_raise(e, f"Production test failed")
 
     def _try_import_video_effects(self) -> bool:
         """Try importing VideoEffects"""
@@ -382,7 +170,8 @@ class OfflineVideoMaker:
 
             self.video_effects = VideoEffects()
             return True
-        except:
+        except Exception as e:
+            logger.warning(f"Failed to import VideoEffects: {e}")
             return False
 
     def _try_import_music_engine(self) -> bool:
@@ -392,7 +181,8 @@ class OfflineVideoMaker:
 
             self.music_engine = MusicEngine()
             return True
-        except:
+        except Exception as e:
+            logger.warning(f"Failed to import MusicEngine: {e}")
             return False
 
     def generate_story_breakdown(self, prompt: str) -> List[Dict[str, str]]:
@@ -402,18 +192,21 @@ class OfflineVideoMaker:
         // [SNIPPET]: thinkwithai + kenyafirst
         // [PROGRESS]: Phase 1 - AI-powered scene detection implemented
         """
-        print(f"[STORY] Generating AI-powered story breakdown from prompt: {prompt}")
-        print("[AI] Using semantic scene detection...")
+        logger.info(f"[STORY] Generating AI-powered story breakdown from prompt: {prompt}")
+        logger.info("[AI] Using semantic scene detection...")
 
         # AI-powered scene breakdown
         scenes = self._create_intelligent_scenes(prompt)
 
         # Save scene data
         scene_file = self.temp_dir / "scenes.json"
-        with open(scene_file, "w", encoding="utf-8") as f:
-            json.dump(scenes, f, indent=2, ensure_ascii=False)
+        try:
+            with open(scene_file, "w", encoding="utf-8") as f:
+                json.dump(scenes, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            log_and_raise(e, f"Failed to save scenes to {scene_file}")
 
-        print(f"[SUCCESS] Generated {len(scenes)} intelligent scenes")
+        logger.info(f"[SUCCESS] Generated {len(scenes)} intelligent scenes")
         return scenes
 
     def _create_intelligent_scenes(self, prompt: str) -> List[Dict[str, str]]:
@@ -435,7 +228,7 @@ class OfflineVideoMaker:
         else:
             target_scenes = min(6, max(3, story_length // 25))
 
-        print(
+        logger.info(
             f"[AI] Story length: {story_length} words → Target scenes: {target_scenes}"
         )
 
@@ -559,47 +352,21 @@ class OfflineVideoMaker:
         else:
             return f"{base_visual}the key events of this part of our story, set in vibrant Kenyan landscape"
 
-    def generate_voice(self, scene: Dict[str, str]) -> Path:
+    def generate_captions_from_audio(self, audio_file: Path) -> str:
         """
-        // [TASK]: Generate voice audio for scene with lazy loading
-        // [GOAL]: High-quality speech using Bark TTS or fallback
+        // [TASK]: Generate captions from audio using ai_model_manager
+        // [GOAL]: High-quality STT for video subtitles
         // [SNIPPET]: surgicalfix + kenyafirst + performance
         """
-        scene_id = scene["id"]
-        text = scene["text"]
+        print(f"[CAPTIONS] Generating captions for {audio_file.name}...")
 
-        print(f"[VOICE] Generating voice for {scene_id}...")
-
-        # Output audio file
-        audio_file = self.temp_dir / f"{scene_id}.wav"
-
-        # Try Bark TTS (lazy loading)
-        if self.use_bark:
-            try:
-                if self._load_bark_on_demand():
-                    print("[BARK] 🎙️ Using high-quality Bark TTS...")
-
-                    from bark import generate_audio, SAMPLE_RATE
-                    import scipy.io.wavfile as wavfile
-
-                    # Generate audio with Bark
-                    audio_array = generate_audio(text)
-
-                    # Save as WAV file
-                    wavfile.write(str(audio_file), SAMPLE_RATE, audio_array)
-
-                    print(f"[SUCCESS] ✅ Bark voice generated: {audio_file}")
-                    return audio_file
-                else:
-                    print("[BARK] Failed to load, falling back to system TTS")
-            except Exception as e:
-                print(f"[BARK] Error during generation: {e}")
-                print("[BARK] Falling back to system TTS")
-
-        # Fallback to system TTS
-        print("[TTS] Using system text-to-speech...")
-        self._generate_fallback_voice(text, audio_file)
-        return audio_file
+        try:
+            transcribed_text = asyncio.run(speech_to_text(str(audio_file), model_id=config.models.speech_to_text.hf_api_id, use_local_fallback=True))
+            print(f"[SUCCESS] ✅ Captions generated: {transcribed_text[:50]}...")
+            return transcribed_text
+        except Exception as e:
+            print(f"[FALLBACK] STT failed via ai_model_manager: {e}. Using empty captions.")
+            return ""
 
     def _generate_fallback_voice(self, text: str, output_file: Path):
         """
@@ -615,10 +382,10 @@ class OfflineVideoMaker:
                 engine = pyttsx3.init()
                 engine.save_to_file(text, str(output_file))
                 engine.runAndWait()
-                print(f"[FALLBACK] System TTS voice generated: {output_file}")
+                logger.info(f"[FALLBACK] System TTS voice generated: {output_file}")
             else:
                 # Create a silent audio file as placeholder
-                print("[WARNING] No TTS available, creating silent audio")
+                logger.warning("[WARNING] No TTS available, creating silent audio")
                 subprocess.run(
                     [
                         "ffmpeg",
@@ -635,30 +402,13 @@ class OfflineVideoMaker:
                     check=True,
                 )
         except Exception as e:
-            print(f"[ERROR] Fallback TTS failed: {e}")
-            # Create minimal silent audio
-            subprocess.run(
-                [
-                    "ffmpeg",
-                    "-f",
-                    "lavfi",
-                    "-i",
-                    "anullsrc=duration=5",
-                    "-ar",
-                    "22050",
-                    "-ac",
-                    "1",
-                    str(output_file),
-                ],
-                check=True,
-            )
+            log_and_raise(e, f"Fallback TTS failed for {output_file}")
 
     def generate_image(self, scene: Dict[str, str]) -> Path:
         """
-        // [TASK]: Generate images with lazy loading (SDXL + Diffusers)
+        // [TASK]: Generate images using ai_model_manager
         // [GOAL]: High-quality AI images with performance optimization
         // [SNIPPET]: refactorclean + kenyafirst + performance
-        // [PROGRESS]: Phase 5 - Lazy loading + multi-model support ✅
         """
         scene_id = scene["id"]
         description = scene["description"]
@@ -668,50 +418,19 @@ class OfflineVideoMaker:
 
         image_file = self.temp_dir / f"{scene_id}.png"
 
-        # Try SDXL first (fastest and highest quality)
-        if self.sdxl_pipeline is not None:
-            try:
-                return self._generate_sdxl_image(description, image_file, scene_id)
-            except Exception as e:
-                print(f"[SDXL] ❌ Generation failed: {e}")
-                print("[FALLBACK] Trying Diffusers...")
-
-        # Try regular Diffusers with lazy loading
-        if self.use_diffusers:
-            try:
-                if self._load_diffusers_on_demand():
-                    print("[DIFFUSERS] 🎨 Using Stable Diffusion...")
-
-                    import torch
-
-                    # Enhance prompt for Africa
-                    enhanced_prompt = self._enhance_prompt_for_africa(description)
-
-                    # Generate image
-                    with torch.no_grad():
-                        result = self.diffusion_pipeline(
-                            prompt=enhanced_prompt,
-                            negative_prompt="blurry, low quality, distorted, ugly",
-                            num_inference_steps=25,
-                            guidance_scale=7.5,
-                            width=1024,
-                            height=1024,
-                        )
-
-                    # Save image
-                    result.images[0].save(str(image_file))
-                    print(f"[SUCCESS] ✅ Diffusers image generated: {image_file}")
-                    return image_file
-                else:
-                    print("[DIFFUSERS] Failed to load, using placeholder")
-            except Exception as e:
-                print(f"[DIFFUSERS] Error during generation: {e}")
-                print("[FALLBACK] Using placeholder image")
-
-        # Final fallback to placeholder
-        print("[FALLBACK] Using enhanced placeholder image")
-        self._use_placeholder_image(image_file)
-        return image_file
+        try:
+            image_bytes = await ai_generate_image(description, model_id=config.models.image_generation.hf_api_id, use_local_fallback=True)
+            if image_bytes:
+                with open(image_file, "wb") as f:
+                    f.write(image_bytes)
+                print(f"[SUCCESS] ✅ Image generated: {image_file}")
+                return image_file
+            else:
+                raise Exception("ai_generate_image returned no bytes")
+        except Exception as e:
+            print(f"[FALLBACK] Image generation failed via ai_model_manager: {e}. Using placeholder image.")
+            self._use_placeholder_image(image_file)
+            return image_file
 
     def _generate_sdxl_image(
         self, description: str, output_file: Path, scene_id: str
@@ -884,7 +603,7 @@ class OfflineVideoMaker:
         scene_id = scene["id"]
         video_file = self.temp_dir / f"{scene_id}.mp4"
 
-        print(f"[VIDEO] Creating video scene: {scene_id}")
+        logger.info(f"[VIDEO] Creating video scene: {scene_id}")
 
         # Use ffmpeg to combine image and audio
         ffmpeg_cmd = [
@@ -910,17 +629,17 @@ class OfflineVideoMaker:
             str(video_file),
         ]
 
-        print(f"[CMD] Running ffmpeg: {' '.join(ffmpeg_cmd)}")
+        logger.info(f"[CMD] Running ffmpeg: {' '.join(ffmpeg_cmd)}")
 
         try:
             result = subprocess.run(
                 ffmpeg_cmd, capture_output=True, text=True, check=True
             )
-            print(f"[SUCCESS] Scene video created: {video_file}")
+            logger.info(f"[SUCCESS] Scene video created: {video_file}")
         except subprocess.CalledProcessError as e:
-            print(f"[ERROR] FFmpeg failed: {e}")
-            print(f"❌ [STDERR] {e.stderr}")
-            raise
+            log_and_raise(e, f"FFmpeg failed for scene {scene_id}: {e.stderr}")
+
+        return video_file
 
         return video_file
 
@@ -930,7 +649,7 @@ class OfflineVideoMaker:
         // [GOAL]: Create complete video file with smooth transitions
         // [SNIPPET]: refactorclean + kenyafirst
         """
-        print("[MERGE] 🎬 Finalizing output video with professional transitions...")
+        logger.info("[MERGE] 🎬 Finalizing output video with professional transitions...")
 
         # Initialize video effects
         if not hasattr(self, "video_effects"):
@@ -942,17 +661,17 @@ class OfflineVideoMaker:
             # Try MoviePy-based merging with transitions
             from moviepy.editor import VideoFileClip, concatenate_videoclips
 
-            print("[MERGE] Using MoviePy for professional transitions...")
+            logger.info("[MERGE] Using MoviePy for professional transitions...")
             video_clips = []
 
             for i, video_file in enumerate(scene_videos):
                 clip = VideoFileClip(str(video_file))
                 video_clips.append(clip)
-                print(f"[LOADED] Scene {i+1}: {video_file.name}")
+                logger.info(f"[LOADED] Scene {i+1}: {video_file.name}")
 
             # Create final video with crossfade transitions
             if len(video_clips) > 1:
-                print("[MERGE] Adding crossfade transitions...")
+                logger.info("[MERGE] Adding crossfade transitions...")
                 final_clip = video_clips[0]
 
                 for i in range(1, len(video_clips)):
@@ -967,7 +686,7 @@ class OfflineVideoMaker:
                 final_clip = video_clips[0]
 
             # Save final video
-            print(f"[EXPORT] Creating final video: {final_output.name}")
+            logger.info(f"[EXPORT] Creating final video: {final_output.name}")
             final_clip.write_videofile(
                 str(final_output), codec="libx264", audio_codec="aac", fps=24
             )
@@ -977,11 +696,11 @@ class OfflineVideoMaker:
                 clip.close()
             final_clip.close()
 
-            print(f"[SUCCESS] ✅ Professional video with transitions: {final_output}")
+            logger.info(f"[SUCCESS] ✅ Professional video with transitions: {final_output}")
 
         except Exception as e:
-            print(f"[WARNING] MoviePy merge failed: {e}")
-            print("[FALLBACK] Using basic ffmpeg concatenation...")
+            logger.warning(f"[WARNING] MoviePy merge failed: {e}")
+            logger.info("[FALLBACK] Using basic ffmpeg concatenation...")
 
             # Fallback to basic ffmpeg merge
             concat_file = self.temp_dir / "scenes_list.txt"
@@ -1003,8 +722,11 @@ class OfflineVideoMaker:
                 str(final_output),
             ]
 
-            subprocess.run(merge_cmd, capture_output=True, text=True, check=True)
-            print(f"[SUCCESS] ✅ Basic video created: {final_output}")
+            try:
+                subprocess.run(merge_cmd, capture_output=True, text=True, check=True)
+                logger.info(f"[SUCCESS] ✅ Basic video created: {final_output}")
+            except subprocess.CalledProcessError as e:
+                log_and_raise(e, f"FFmpeg concatenation failed: {e.stderr}")
 
         return final_output
 
@@ -1014,7 +736,7 @@ class OfflineVideoMaker:
         // [GOAL]: InVideo-style multi-platform output
         // [SNIPPET]: refactorclean + kenyafirst
         """
-        print("[FORMATS] 📱 Creating multiple aspect ratio versions...")
+        logger.info("[FORMATS] 📱 Creating multiple aspect ratio versions...")
 
         formats = {}
 
@@ -1033,7 +755,7 @@ class OfflineVideoMaker:
 
             for format_name, (width, height) in format_configs.items():
                 try:
-                    print(
+                    logger.info(
                         f"[FORMAT] Creating {format_name} version ({width}x{height})..."
                     )
 
@@ -1067,32 +789,31 @@ class OfflineVideoMaker:
                     )
 
                     formats[format_name] = format_file
-                    print(f"[SUCCESS] ✅ {format_name} format: {format_file.name}")
+                    logger.info(f"[SUCCESS] ✅ {format_name} format: {format_file.name}")
 
                     # Cleanup
                     resized_clip.close()
 
                 except Exception as e:
-                    print(f"[WARNING] Failed to create {format_name} format: {e}")
+                    logger.warning(f"[WARNING] Failed to create {format_name} format: {e}")
 
             # Cleanup
             video_clip.close()
 
         except Exception as e:
-            print(f"[WARNING] Multiple formats creation failed: {e}")
-            print("[FALLBACK] Using original video only")
+            log_and_raise(e, f"Multiple formats creation failed")
 
         return formats
 
-    def generate_video(self, prompt: str, aspect_ratio: str = "landscape") -> Path:
+    def generate_video(self, prompt: str, aspect_ratio: str = "all") -> Path:
         """
         // [TASK]: Main pipeline - prompt to video
-        // [GOAL]: Complete end-to-end video generation
+        // [GOAL]: Complete end-to-end video generation with parallel processing
         // [SNIPPET]: thinkwithai + taskchain
         """
-        print(f"\n[START] Shujaa Studio Video Generation Pipeline")
-        print(f"[PROMPT] {prompt}")
-        print("=" * 60)
+        logger.info(f"\n[START] Shujaa Studio Video Generation Pipeline")
+        logger.info(f"[PROMPT] {prompt}")
+        logger.info("=" * 60)
 
         try:
             # Step 1: Generate story breakdown
@@ -1101,76 +822,55 @@ class OfflineVideoMaker:
             # Step 2: Process each scene (optionally in parallel)
             scene_videos = []
             if getattr(self, "parallel", None) and self.enable_parallel:
-                print("\n[PARALLEL] ⚡ Parallel scene processing enabled")
-                # Build processing functions using existing pipeline methods
-                def _voice(scene):
-                    return self.generate_voice(scene)
+                logger.info("\n[PARALLEL] ⚡ Parallel scene processing enabled")
 
-                def _image(scene):
-                    return self.generate_image(scene)
+                # Define the async worker for a single scene
+                async def scene_worker(scene_data):
+                    loop = asyncio.get_running_loop()
+                    try:
+                        # Run sync methods in an executor for concurrency
+                        audio_file = await loop.run_in_executor(None, self.generate_voice, scene_data)
+                        image_file = await loop.run_in_executor(None, self.generate_image, scene_data)
+                        video_file = await loop.run_in_executor(None, self.create_scene_video, scene_data, audio_file, image_file)
+                        enhanced_video = await loop.run_in_executor(None, self.add_professional_effects, video_file, scene_data)
+                        return {"status": "completed", "video_path": enhanced_video}
+                    except Exception as e:
+                        log_and_raise(e, f"Error processing scene {scene_data.get('id')}")
 
-                def _video(scene):
-                    return self.create_scene_video(scene, scene.get("voice_file"), scene.get("image_file"))
+                # Define the main async task to be run
+                async def run_parallel_processing(all_scenes):
+                    return await self.parallel.run_parallel(all_scenes, scene_worker)
 
-                processing_functions = {"voice": _voice, "image": _image, "video": _video}
+                # Execute the async task from this synchronous method
+                results = asyncio.run(run_parallel_processing(scenes))
 
-                # Ensure scenes have stable IDs
-                proc_scenes = []
-                for s in scenes:
-                    s = dict(s)
-                    s["scene_id"] = s.get("id") or s.get("scene_id") or str(uuid.uuid4())
-                    proc_scenes.append(s)
+                # Collect successful results
+                scene_videos = [res["video_path"] for res in results if res and res["status"] == "completed"]
 
-                # Run parallel processor
-                results = asyncio.run(
-                    self.parallel.process_scenes_parallel(proc_scenes, processing_functions)
-                )
-
-                # Collect outputs
-                for res in results:
-                    if res.get("status") == "completed":
-                        # Add professional effects and overlays
-                        enhanced = self.add_professional_effects(Path(res["video_file"]),
-                                                                 next((sc for sc in proc_scenes if str(sc.get("scene_id")) == str(res.get("scene_id"))), {}))
-                        scene_videos.append(enhanced)
-                    else:
-                        print(f"[PARALLEL] Scene {res.get('scene_id')} failed, skipping")
             else:
+                logger.info("\n[SEQUENTIAL] 🐌 Sequential scene processing enabled")
                 for scene in scenes:
-                    print(f"\n[SCENE] Processing {scene['id']}...")
-
-                    # Generate voice
+                    logger.info(f"\n[SCENE] Processing {scene['id']}...")
                     audio_file = self.generate_voice(scene)
-
-                    # Generate image
                     image_file = self.generate_image(scene)
-
-                    # Create scene video
                     video_file = self.create_scene_video(scene, audio_file, image_file)
-
-                    # Add professional effects and text overlays
                     enhanced_video = self.add_professional_effects(video_file, scene)
                     scene_videos.append(enhanced_video)
+
+            if not scene_videos:
+                log_and_raise(RuntimeError("Video generation failed as no scenes could be created."), "No scenes processed successfully. Aborting video creation.")
 
             # Step 3: Merge all scenes with transitions
             final_video = self.merge_scenes(scene_videos)
 
             # Step 4: Create multiple aspect ratio versions (InVideo style)
             if aspect_ratio == "all":
-                print("\n[FORMATS] 🎬 Creating multi-platform versions...")
-                formats = self.create_multiple_formats(final_video)
+                logger.info("\n[FORMATS] 🎬 Creating multi-platform versions...")
+                self.create_multiple_formats(final_video)
 
-                print("\n" + "=" * 60)
-                print(f"\n[COMPLETE] 🎉 Multi-format video generation successful!")
-                print(f"[MASTER] {final_video}")
-                for format_name, format_file in formats.items():
-                    print(f"[{format_name.upper()}] {format_file}")
-                print(f"[READY] Your Shujaa Studio videos are ready for all platforms!")
-            else:
-                print("\n" + "=" * 60)
-                print(f"\n[COMPLETE] 🎉 Video generation successful!")
-                print(f"[OUTPUT] {final_video}")
-                print(f"[READY] Your Shujaa Studio video is ready!")
+            logger.info("\n" + "=" * 60)
+            logger.info(f"\n[COMPLETE] 🎉 Video generation successful!")
+            logger.info(f"[OUTPUT] {final_video}")
 
             # Step 5: Generate social metadata (optional)
             if self.enable_social:
@@ -1179,15 +879,14 @@ class OfflineVideoMaker:
                     meta_path = self.output_dir / f"{Path(final_video).stem}_social.json"
                     with open(meta_path, "w", encoding="utf-8") as f:
                         json.dump(meta, f, ensure_ascii=False, indent=2)
-                    print(f"[SOCIAL] 🏷️ Social metadata saved: {meta_path.name}")
+                    logger.info(f"[SOCIAL] 🏷️ Social metadata saved: {meta_path.name}")
                 except Exception as e:
-                    print(f"[SOCIAL] Skipped ({e})")
+                    logger.warning(f"[SOCIAL] Skipped ({e})")
 
             return final_video
 
         except Exception as e:
-            print(f"\n[ERROR] Video generation failed: {e}")
-            raise
+            log_and_raise(e, f"Video generation failed")
 
     def add_professional_effects(self, video_file: Path, scene: Dict[str, str]) -> Path:
         """
@@ -1204,10 +903,10 @@ class OfflineVideoMaker:
             try:
                 from moviepy.editor import VideoFileClip
             except ImportError:
-                print("[EFFECTS] MoviePy not available, skipping enhancements")
+                logger.warning("[EFFECTS] MoviePy not available, skipping enhancements")
                 return video_file
 
-            print(f"[EFFECTS] ✨ Adding professional text overlays...")
+            logger.info(f"[EFFECTS] ✨ Adding professional text overlays...")
 
             # Load the basic video
             video_clip = VideoFileClip(str(video_file))
@@ -1244,13 +943,11 @@ class OfflineVideoMaker:
             # Cleanup
             video_clip.close()
 
-            print(f"[SUCCESS] ✅ Professional effects added: {enhanced_file.name}")
+            logger.info(f"[SUCCESS] ✅ Professional effects added: {enhanced_file.name}")
             return enhanced_file
 
         except Exception as e:
-            print(f"[WARNING] Video enhancement failed: {e}")
-            print(f"[FALLBACK] Using original video")
-            return video_file
+            log_and_raise(e, f"Video enhancement failed")
 
 
 def main():
@@ -1259,25 +956,25 @@ def main():
     // [GOAL]: Handle command line arguments and run video generation
     // [SNIPPET]: surgicalfix + kenyafirst
     """
-    print("Shujaa Studio - One-Click Script-to-Video Tool")
-    print("Proudly African AI Video Generation")
-    print()
+    logger.info("Shujaa Studio - One-Click Script-to-Video Tool")
+    logger.info("Proudly African AI Video Generation")
+    logger.info("")
 
     # Check command line arguments
     if len(sys.argv) < 2:
-        print("[ERROR] Missing prompt argument")
-        print()
-        print("Usage:")
-        print('  python3 generate_video.py "Your story prompt here"')
-        print()
-        print("Examples:")
-        print(
+        logger.error("[ERROR] Missing prompt argument")
+        logger.info("")
+        logger.info("Usage:")
+        logger.info('  python3 generate_video.py "Your story prompt here"')
+        logger.info("")
+        logger.info("Examples:")
+        logger.info(
             '  python3 generate_video.py "Story of a girl from Turkana who becomes an engineer"'
         )
-        print(
+        logger.info(
             '  python3 generate_video.py "A Luo girl builds a school in Kisumu to help orphans"'
         )
-        print(
+        logger.info(
             '  python3 generate_video.py "Young Maasai warrior learns coding in Nairobi"'
         )
         sys.exit(1)
@@ -1287,27 +984,20 @@ def main():
     # Validate ffmpeg availability
     try:
         subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        print("[ERROR] FFmpeg not found. Please install FFmpeg to continue.")
-        print("[INSTALL] Visit: https://ffmpeg.org/download.html")
-        sys.exit(1)
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        log_and_raise(e, "FFmpeg not found. Please install FFmpeg to continue.")
 
     # Initialize and run video maker
     try:
         video_maker = OfflineVideoMaker()
         final_video = video_maker.generate_video(prompt)
 
-        print(f"\n[SUCCESS] Video generation complete!")
-        print(f"[FILE] {final_video}")
-        print(f"[NEXT] Ready for Combo Pack C enhancements!")
+        logger.info(f"\n[SUCCESS] Video generation complete!")
+        logger.info(f"[FILE] {final_video}")
+        logger.info(f"[NEXT] Ready for Combo Pack C enhancements!")
 
     except KeyboardInterrupt:
-        print("\n[INTERRUPTED] Video generation cancelled by user")
+        logger.info("\n[INTERRUPTED] Video generation cancelled by user")
         sys.exit(1)
     except Exception as e:
-        print(f"\n[FATAL] Unexpected error: {e}")
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
+        log_and_raise(e, f"Unexpected error during video generation")

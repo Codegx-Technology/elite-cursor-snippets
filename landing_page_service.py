@@ -31,6 +31,7 @@ class LandingPageService:
         """
         // [TASK]: Generate HTML/CSS for a landing page using AI content engine
         // [GOAL]: Create a dynamic, branded landing page
+        // [TODO]: Implement per-tenant theming (logo, CSS variables, fonts) served securely via signed CDN URLs.
         """
         logger.info(f"Generating landing page for QR code: {qr_code_id}")
         logger.info(f"Brand metadata: {brand_metadata}")

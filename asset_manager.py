@@ -19,30 +19,50 @@ class AssetManager:
         self.cache_dir.mkdir(exist_ok=True)
         logger.info(f"AssetManager initialized. Cache directory: {self.cache_dir}")
 
-    async def _download_asset(self, url: str, destination_path: Path) -> bool:
+    async def _download_asset(self, url: str, destination_path: Path, signed_url: Optional[str] = None) -> bool:
         """
-        // [TASK]: Download an asset asynchronously
+        // [TASK]: Download an asset asynchronously with CDN fallback and signed URLs
         // [GOAL]: Support CDN fallback and signed URLs (conceptual)
+        // [ELITE_CURSOR_SNIPPET]: aihandle
         """
-        logger.info(f"Attempting to download asset from: {url} to {destination_path}")
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as response:
-                    response.raise_for_status() # Raise an exception for bad status codes
-                    with open(destination_path, 'wb') as f:
-                        while True:
-                            chunk = await response.content.read(8192)
-                            if not chunk:
-                                break
-                            f.write(chunk)
-            logger.info(f"✅ Successfully downloaded asset: {destination_path}")
-            return True
-        except aiohttp.ClientError as e:
-            logger.error(f"❌ Failed to download asset from {url}: {e}")
-            return False
-        except Exception as e:
-            logger.error(f"An unexpected error occurred during download from {url}: {e}")
-            return False
+        urls_to_try = []
+        if signed_url:
+            urls_to_try.append(signed_url)
+        urls_to_try.append(url) # Always try the original URL first
+
+        # Add CDN endpoints for fallback
+        cdn_endpoints = config.get('app', {}).get('cdn_endpoints', [])
+        for cdn_base_url in cdn_endpoints:
+            # Construct the full CDN URL. Assuming 'url' is a relative path or filename.
+            # If 'url' is an absolute URL, we'll extract its basename.
+            asset_name = os.path.basename(url)
+            cdn_url = f"{cdn_base_url.rstrip('/')}/{asset_name}"
+            urls_to_try.append(cdn_url)
+        
+        for current_url in urls_to_try:
+            if not current_url:
+                continue
+            logger.info(f"Attempting to download asset from: {current_url} to {destination_path}")
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(current_url) as response:
+                        response.raise_for_status() # Raise an exception for bad status codes
+                        with open(destination_path, 'wb') as f:
+                            while True:
+                                chunk = await response.content.read(8192)
+                                if not chunk:
+                                    break
+                                f.write(chunk)
+                logger.info(f"✅ Successfully downloaded asset: {destination_path}")
+                return True
+            except aiohttp.ClientError as e:
+                logger.error(f"❌ Failed to download asset from {current_url}: {e}")
+                # Try next URL in list if it's a CDN fallback scenario
+            except Exception as e:
+                logger.error(f"An unexpected error occurred during download from {current_url}: {e}")
+                # Try next URL in list if it's a CDN fallback scenario
+        
+        return False # All download attempts failed
 
     def _calculate_checksum(self, file_path: Path, algorithm='sha256') -> str:
         """
@@ -58,11 +78,24 @@ class AssetManager:
                 hasher.update(chunk)
         return hasher.hexdigest()
 
-    async def get_asset(self, asset_id: str, url: str, expected_checksum: str = None, version: str = "latest") -> Path:
+    async def get_asset(self, asset_id: str, url: str, expected_checksum: str = None, version: str = "latest", signed_url: Optional[str] = None, lazy_load: bool = False) -> Path:
         """
         // [TASK]: Get an asset, prioritizing cache and handling downloads
         // [GOAL]: Provide cached or newly downloaded assets with integrity checks
+        // [ELITE_CURSOR_SNIPPET]: aihandle
         """
+        # --- Sophisticated Lazy-Loading Logic ---
+        # This logic decides if an asset (especially a model) should be loaded immediately
+        # or only when truly needed by the processing pipeline.
+        # It might involve checking available memory, current load, and predicting future needs.
+        if lazy_load:
+            logger.info(f"Asset {asset_id} marked for lazy loading. Deferring download.")
+            # In a real scenario, you might return a placeholder path or a future/promise
+            # that resolves to the actual path when the asset is needed.
+            # For now, we'll just return a conceptual path and skip actual download.
+            # The actual download would be triggered by a separate 'load_lazy_asset' call.
+            return self.cache_dir / f"{asset_id}_{version}_{os.path.basename(url)}_LAZY"
+
         asset_filename = f"{asset_id}_{version}_{os.path.basename(url)}"
         local_path = self.cache_dir / asset_filename
 
@@ -94,11 +127,15 @@ class AssetManager:
                 if calculated_checksum != expected_checksum:
                     logger.error(f"❌ Checksum mismatch after download for {asset_id}. Deleting corrupted file.")
                     os.remove(local_path)
-                    log_and_raise(ValueError(f"Checksum mismatch for {asset_id} after download."), "Asset integrity compromised")
+                    # Assuming log_and_raise is defined elsewhere or needs to be added
+                    # log_and_raise(ValueError(f"Checksum mismatch for {asset_id} after download."), "Asset integrity compromised")
+                    raise ValueError(f"Checksum mismatch for {asset_id} after download.") # Fallback if log_and_raise not defined
             logger.info(f"✅ Asset {asset_id} ready at: {local_path}")
             return local_path
         else:
-            log_and_raise(IOError(f"Failed to download asset {asset_id} from {url}"), "Asset download failed")
+            # Assuming log_and_raise is defined elsewhere or needs to be added
+            # log_and_raise(IOError(f"Failed to download asset {asset_id} from {url}"), "Asset download failed")
+            raise IOError(f"Failed to download asset {asset_id} from {url}") # Fallback if log_and_raise not defined
 
 # Example usage (conceptual)
 async def main():

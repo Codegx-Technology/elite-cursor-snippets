@@ -3,12 +3,23 @@ app:
   name: "Shujaa Studio"
   version: "0.1.0"
   environment: "development" # development, staging, production
+  database_name: "shujaa_db" # Name of the SQLite database file
+  cdn_endpoints: # List of CDN endpoints for asset fallback
+    - "https://cdn1.example.com/assets/"
+    - "https://cdn2.example.com/assets/"
+    - "https://fallback.example.com/assets/"
 
 # API Keys and Credentials (sensitive, loaded from .env or secrets management)
 api_keys:
   huggingface: "${HF_API_KEY}" # Loaded from environment variable
   google_news: "" # Optional: NewsAPI.org key
   youtube_client_secret_file: "client_secret.json" # Path to Google client secret JSON
+  secrets_manager:
+    enabled: false # Set to true to enable AWS Secrets Manager integration
+    region_name: "us-east-1" # AWS region for Secrets Manager
+    # Example secret IDs (replace with your actual secret IDs)
+    # hf_api_key_secret_id: "shujaa/huggingface/api_key"
+    # google_news_api_key_secret_id: "shujaa/google_news/api_key"
 
 # Model Configuration
 models:
@@ -45,3 +56,27 @@ logging:
   log_file: "logs/shujaa.log"
   max_bytes: 10485760 # 10 MB
   backup_count: 5
+  enable_audit_log: true
+  audit_log_level: "INFO"
+  audit_log_file: "logs/shujaa_audit.log"
+
+auth:
+  access_token_expire_minutes: 30 # JWT token expiry time in minutes
+
+security:
+  encryption_password: "your_super_secret_encryption_password" # CHANGE THIS IN PRODUCTION
+  encryption_salt: "a_random_salt_string_for_encryption" # CHANGE THIS IN PRODUCTION
+
+i18n:
+  supported_languages: ["en", "sw", "fr"] # English, Swahili, French
+  default_language: "en"
+
+feature_flags:
+  new_ui:
+    enabled: false
+    rollout_percentage: 10 # Rollout to 10% of users
+    # users: ["user_id_1", "user_id_2"] # Enable for specific users
+    # tenants: ["tenant_id_1"] # Enable for specific tenants
+  beta_video_pipeline:
+    enabled: false
+    # users: ["admin_user"]

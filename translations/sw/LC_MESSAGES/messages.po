@@ -1,0 +1,15 @@
+
+msgid "hello_world"
+msgstr "Habari, Dunia!"
+
+msgid "welcome_user"
+msgstr "Karibu, {name}!"
+
+msgid "status_ok"
+msgstr "sawa"
+
+msgid "api_running_message"
+msgstr "Shujaa Studio API inafanya kazi!"
+
+msgid "username_or_email_registered"
+msgstr "Jina la mtumiaji au barua pepe tayari imesajiliwa."

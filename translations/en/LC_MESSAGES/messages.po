@@ -1,0 +1,15 @@
+
+msgid "hello_world"
+msgstr "Hello, World!"
+
+msgid "welcome_user"
+msgstr "Welcome, {name}!"
+
+msgid "status_ok"
+msgstr "ok"
+
+msgid "api_running_message"
+msgstr "Shujaa Studio API is running!"
+
+msgid "username_or_email_registered"
+msgstr "Username or email already registered."
