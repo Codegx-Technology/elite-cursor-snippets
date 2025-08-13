@@ -3,6 +3,8 @@
 // [GOAL]: Implement comprehensive Paystack integration with proper error handling
 // [TASK]: Create payment flows, subscription management, and transaction handling
 
+import { useState } from 'react';
+
 export interface PaystackConfig {
   publicKey: string;
   currency: 'KES' | 'USD' | 'GHS' | 'ZAR';
@@ -339,5 +341,66 @@ export const paymentUtils = {
     return phone;
   },
 };
+
+// React hook for Paystack integration
+export function usePaystack() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const initializePayment = async (transaction: PaystackTransaction) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Load Paystack script if not already loaded
+      await PaystackService.loadScript();
+
+      // Initialize payment
+      const result = await paystackService.initializePayment(transaction);
+
+      setIsLoading(false);
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Payment failed';
+      setError(errorMessage);
+      setIsLoading(false);
+      throw err;
+    }
+  };
+
+  const verifyPayment = async (reference: string) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await paystackService.verifyTransaction(reference);
+      setIsLoading(false);
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Verification failed';
+      setError(errorMessage);
+      setIsLoading(false);
+      throw err;
+    }
+  };
+
+  return {
+    initializePayment,
+    verifyPayment,
+    isLoading,
+    error,
+  };
+}
+
+// TypeScript declarations for Paystack
+declare global {
+  interface Window {
+    PaystackPop: {
+      setup: (config: any) => {
+        openIframe: () => void;
+      };
+    };
+  }
+}
 
 export default PaystackService;

@@ -14,7 +14,8 @@ import {
   FaFlag,
   FaMountain,
   FaGlobe,
-  FaHeart
+  FaHeart,
+  FaCreditCard
 } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean
@@ -72,6 +73,12 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       icon: FaUsers,
       label: 'Team',
       description: 'Collaboration tools'
+    },
+    {
+      href: '/pricing',
+      icon: FaCreditCard,
+      label: 'Pricing',
+      description: 'Plans & billing'
     },
     {
       href: '/settings',
