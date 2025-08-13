@@ -119,7 +119,7 @@ export default function VideoGeneratePage() {
 
   // [SNIPPET]: surgicalfix + thinkwithai
   // [TASK]: Handle form input changes with type safety
-  const handleInputChange = (field: keyof VideoGenerationForm, value: string) => {
+  const handleInputChange = (field: keyof VideoGenerationForm, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -144,16 +144,50 @@ export default function VideoGeneratePage() {
 
     try {
       // Call real API
+      // Map UI values to API enums
+      const mapVisualStyle = (val: string): 'realistic' | 'cartoon' | 'anime' | 'documentary' => {
+        switch (val) {
+          case 'authentic-realistic':
+          case 'professional-corporate':
+          case 'vibrant-colorful':
+            return 'realistic';
+          case 'animated-cartoon':
+            return 'cartoon';
+          case 'artistic-creative':
+            return 'anime';
+          case 'cinematic-documentary':
+          default:
+            return 'documentary';
+        }
+      };
+
+      const mapCulturalPreset = (val: string): 'mount_kenya' | 'maasai_mara' | 'diani_beach' | 'nairobi_city' => {
+        switch (val) {
+          case 'mount-kenya':
+            return 'mount_kenya';
+          case 'coastal-beauty':
+            return 'diani_beach';
+          case 'wildlife-safari':
+          case 'traditional-heritage':
+            return 'maasai_mara';
+          case 'modern-kenya':
+          case 'cultural-fusion':
+          case 'innovation-story':
+          default:
+            return 'nairobi_city';
+        }
+      };
+
       const response = await apiClient.generateVideo({
         prompt: formData.script,
         lang: formData.language.includes('swahili') ? 'sw' : 'en',
         scenes: 3,
         vertical: formData.duration === '15' || formData.duration === '30',
-        style: formData.visualStyle,
+        style: mapVisualStyle(formData.visualStyle),
         duration: parseInt(formData.duration),
         voice_type: formData.voice.includes('female') ? 'female' : 'male',
         background_music: true,
-        cultural_preset: formData.culturalPreset
+        cultural_preset: mapCulturalPreset(formData.culturalPreset)
       });
 
       handleApiResponse(
@@ -229,7 +263,7 @@ export default function VideoGeneratePage() {
 
               // Show Kenya-first friendly message
               setFriendlyFallback({
-                message: job.friendly_message,
+                message: job.friendly_message ?? 'Service temporarily unavailable',
                 retryOptions: job.retry_options || [],
                 spinnerType: job.spinner_type || 'kenya_flag'
               });
