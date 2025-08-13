@@ -8,25 +8,24 @@ import { useEffect } from "react";
 
 export default function ClientBoot() {
   useEffect(() => {
-    // Register service worker for PWA functionality
-    if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
-      const onLoad = () => {
-        navigator.serviceWorker
-          .register("/sw.js")
-          .then((registration) => {
-            if (process.env.NODE_ENV === "development") {
-              console.log("SW registered: ", registration);
-            }
-          })
-          .catch((err) => {
-            if (process.env.NODE_ENV === "development") {
-              console.log("SW registration failed: ", err);
-            }
-          });
-      };
-      window.addEventListener("load", onLoad, { once: true });
-      return () => window.removeEventListener("load", onLoad);
+    if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+
+    // In development, unregister all service workers to avoid caching issues
+    if (process.env.NODE_ENV === "development") {
+      navigator.serviceWorker.getRegistrations?.().then((regs) => {
+        regs.forEach((reg) => reg.unregister());
+      }).catch(() => {});
+      return;
     }
+
+    // In production, register the service worker
+    const onLoad = () => {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .catch(() => {});
+    };
+    window.addEventListener("load", onLoad, { once: true });
+    return () => window.removeEventListener("load", onLoad);
   }, []);
 
   useEffect(() => {

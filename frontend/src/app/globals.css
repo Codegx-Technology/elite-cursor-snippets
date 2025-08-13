@@ -197,6 +197,11 @@ h1, h2, h3, h4, h5, h6 {
     --background-primary: #1a202c;
     --background-secondary: #2d3748;
   }
+
+  /* Ensure background contrasts with light text in dark mode */
+  body {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  }
 }
 
 /* Print styles */
