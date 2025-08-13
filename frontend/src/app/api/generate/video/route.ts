@@ -25,11 +25,11 @@ export async function POST(request: Request) {
     const scriptPath = path.join(projectRoot, 'api_video_generator.py')
 
     // Spawn python process in background
-    const env = {
-      ...process.env,
-      SHUJAA_TS: jobId,
-      HF_API_KEY: process.env.HF_API_KEY || process.env.HF_TOKEN || '',
-      HF_TOKEN: process.env.HF_API_KEY || process.env.HF_TOKEN || '',
+    const env: NodeJS.ProcessEnv = { ...process.env, SHUJAA_TS: jobId }
+    const hf = process.env.HF_API_KEY || process.env.HF_TOKEN
+    if (hf) {
+      env.HF_API_KEY = hf
+      env.HF_TOKEN = hf
     }
 
     const child = spawn('python', [scriptPath, '--ts', jobId], {
