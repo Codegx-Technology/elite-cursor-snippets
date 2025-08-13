@@ -73,6 +73,16 @@ class VideoGenerationRequest(BaseModel):
     background_music: Optional[bool] = True
     cultural_preset: Optional[str] = None
 
+class NewsVideoGenerationRequest(BaseModel):
+    news_url: Optional[str] = None
+    news_query: Optional[str] = None
+    script_content: Optional[str] = None
+    lang: Optional[str] = "en"
+    scenes: Optional[int] = 3
+    duration: Optional[int] = 60
+    voice_type: Optional[str] = "male"
+    upload_youtube: Optional[bool] = False
+
 class ImageGenerationRequest(BaseModel):
     prompt: str
     style: Optional[str] = "realistic"
@@ -123,6 +133,35 @@ async def generate_video(request: VideoGenerationRequest, background_tasks: Back
         "message": "Video generation started",
         "progress": 0,
         "estimated_time": 120  # 2 minutes estimate
+    }
+
+@app.post("/api/generate/news-video")
+async def generate_news_video(request: NewsVideoGenerationRequest, background_tasks: BackgroundTasks):
+    """Generate news video content using AI pipeline"""
+    job_id = str(uuid.uuid4())
+
+    # Create job entry
+    job = {
+        "id": job_id,
+        "type": "news_video",
+        "status": "pending",
+        "progress": 0,
+        "created_at": datetime.now().isoformat(),
+        "metadata": request.dict(),
+        "result_url": None,
+        "error_message": None
+    }
+    jobs_storage[job_id] = job
+
+    # Start background processing
+    background_tasks.add_task(process_news_video_generation, job_id, request)
+
+    return {
+        "status": "success",
+        "video_id": job_id,
+        "message": "News video generation started",
+        "progress": 0,
+        "estimated_time": 180  # 3 minutes estimate for news processing
     }
 
 @app.post("/api/generate/image")
@@ -331,6 +370,44 @@ async def process_video_generation(job_id: str, request: VideoGenerationRequest)
             }
             gallery_storage.append(gallery_item)
             analytics_storage["overview"]["total_videos"] += 1
+
+    except Exception as e:
+        job["status"] = "failed"
+        job["error_message"] = str(e)
+
+async def process_news_video_generation(job_id: str, request: NewsVideoGenerationRequest):
+    """Background task for news video generation"""
+    try:
+        job = jobs_storage[job_id]
+        job["status"] = "processing"
+        job["progress"] = 10
+
+        # Mock news video generation for now
+        await asyncio.sleep(3)  # Simulate news processing
+        job["progress"] = 50
+
+        await asyncio.sleep(2)  # Simulate video generation
+        job["status"] = "completed"
+        job["progress"] = 100
+        job["result_url"] = f"/generated/news_video_{job_id}.mp4"
+        job["completed_at"] = datetime.now().isoformat()
+
+        # Add to gallery
+        gallery_item = {
+            "id": job_id,
+            "type": "video",
+            "title": f"News: {(request.news_query or request.script_content or 'News Video')[:50]}...",
+            "thumbnail": "/api/placeholder/400/300",
+            "created_at": job["created_at"],
+            "duration": f"{request.duration}s",
+            "size": "52 MB",
+            "tags": ["News", "AI Generated", "Kenya"],
+            "url": job["result_url"]
+        }
+        gallery_storage.append(gallery_item)
+
+        # Update analytics
+        analytics_storage["overview"]["total_videos"] += 1
 
     except Exception as e:
         job["status"] = "failed"

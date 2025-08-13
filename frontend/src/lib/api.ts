@@ -32,6 +32,17 @@ export interface VideoGenerationRequest {
   cultural_preset?: 'mount_kenya' | 'maasai_mara' | 'diani_beach' | 'nairobi_city';
 }
 
+export interface NewsVideoGenerationRequest {
+  news_url?: string;
+  news_query?: string;
+  script_content?: string;
+  lang?: string;
+  scenes?: number;
+  duration?: number;
+  voice_type?: string;
+  upload_youtube?: boolean;
+}
+
 export interface VideoGenerationResponse {
   status: string;
   video_id: string;
@@ -192,6 +203,13 @@ class ApiClient {
   // Content Generation
   async generateVideo(request: VideoGenerationRequest): Promise<ApiResponse<VideoGenerationResponse>> {
     return this.request('/api/generate/video', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async generateNewsVideo(request: NewsVideoGenerationRequest): Promise<ApiResponse<VideoGenerationResponse>> {
+    return this.request('/api/generate/news-video', {
       method: 'POST',
       body: JSON.stringify(request),
     });

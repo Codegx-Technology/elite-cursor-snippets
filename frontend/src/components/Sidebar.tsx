@@ -15,7 +15,8 @@ import {
   FaMountain,
   FaGlobe,
   FaHeart,
-  FaCreditCard
+  FaCreditCard,
+  FaNewspaper
 } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean
@@ -43,6 +44,12 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       icon: FaVideo,
       label: 'Generate Video',
       description: 'Create Kenya-first content'
+    },
+    {
+      href: '/news-generate',
+      icon: FaNewspaper,
+      label: 'News Videos',
+      description: 'Transform news into videos'
     },
     {
       href: '/projects',
