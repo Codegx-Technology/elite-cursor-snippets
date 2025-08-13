@@ -233,7 +233,7 @@ export function reportError(error: Error, context?: Record<string, any>): void {
 // Feature flag utility
 export function isFeatureEnabled(feature: string): boolean {
   // In a real app, this would check against a feature flag service
-  const features = storage.get('features', {});
+  const features = storage.get<Record<string, boolean>>('features', {} as Record<string, boolean>);
   return features[feature] === true;
 }
 
