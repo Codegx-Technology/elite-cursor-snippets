@@ -15,7 +15,12 @@ export interface JobRecord {
   metadata: Record<string, any>;
 }
 
-const jobs = new Map<string, JobRecord>();
+// Persist across Next.js dev HMR by attaching to globalThis
+const g = globalThis as unknown as { __SHUJAA_JOBS__?: Map<string, JobRecord> };
+if (!g.__SHUJAA_JOBS__) {
+  g.__SHUJAA_JOBS__ = new Map<string, JobRecord>();
+}
+const jobs = g.__SHUJAA_JOBS__ as Map<string, JobRecord>;
 
 export function createJob(partial: Partial<JobRecord> & { id: string }): JobRecord {
   const job: JobRecord = {
