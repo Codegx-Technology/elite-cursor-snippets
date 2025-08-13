@@ -8,3 +8,4 @@ __pycache__/
 venv/
 models/
 new_token.md
+Set-HF-ApiKey
