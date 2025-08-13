@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Footer from './Footer';
+import ScrollToTop from './ScrollToTop';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import ErrorBoundary from './ErrorBoundary';
@@ -55,7 +57,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <Header isSidebarOpen={isSidebarOpen} setSidebarOpen={setSidebarOpen} />
 
         {/* Main Content with improved mobile spacing and error boundary */}
-        <main className={`min-h-screen pt-4 pb-8 transition-all duration-300 ${
+        <main className={`min-h-screen pt-4 pb-20 transition-all duration-300 ${
           isMobile
             ? 'px-3 sm:px-4'
             : 'px-4 sm:px-6 lg:px-8'
@@ -70,6 +72,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </ErrorBoundary>
           </div>
         </main>
+
+        {/* Footer */}
+        <Footer />
       </div>
 
       {/* Mobile Overlay with improved touch handling */}
@@ -80,6 +85,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           onTouchStart={() => setSidebarOpen(false)}
         />
       )}
+
+      {/* Tiny modern scroll-to-top arrow */}
+      <ScrollToTop />
     </div>
   );
 }
