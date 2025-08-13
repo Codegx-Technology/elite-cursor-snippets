@@ -14,7 +14,6 @@ import {
   FaFlag,
   FaMountain,
   FaGlobe,
-  FaHeart,
   FaCreditCard,
   FaNewspaper
 } from 'react-icons/fa';
@@ -180,7 +179,6 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
           <div className="flex items-center justify-center space-x-2 mb-2">
             <FaGlobe className="text-yellow-300" />
             <span className="font-medium">Proudly Kenyan</span>
-            <FaHeart className="text-red-400" />
           </div>
           <p className="text-xs text-green-100">
             Empowering African storytellers worldwide
@@ -189,7 +187,7 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
 
         <div className="mt-3 text-center">
           <p className="text-xs text-gray-500">
-            Version 2.0 • Made with ❤️ in Kenya
+            Version 2.0 • MADE WITH IN KENYA
           </p>
         </div>
       </div>

@@ -12,7 +12,6 @@ import {
   FaGlobe,
   FaPlay,
   FaArrowRight,
-  FaHeart,
   FaStar,
   FaUsers,
   FaChartLine
@@ -230,9 +229,7 @@ export default function Welcome() {
       {/* Cultural Footer */}
       <Card className="p-8 text-center">
         <div className="flex justify-center items-center space-x-2 mb-4">
-          <FaHeart className="text-red-500" />
-          <span className="text-lg font-medium">Made with love in Kenya</span>
-          <FaHeart className="text-red-500" />
+          <span className="text-lg font-medium uppercase tracking-wide">MADE WITH IN KENYA</span>
         </div>
         <p className="text-gray-600 mb-6">
           Join thousands of African creators telling their stories with authentic, AI-powered content generation.
