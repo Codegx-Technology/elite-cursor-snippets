@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - Shujaa Studio</title>
+    <style>
+        /* [SNIPPET]: kenyafirst + thinkwithai + surgicalfix */
+        /* [CONTEXT]: Offline page with Kenya-first design */
+        /* [GOAL]: Provide beautiful offline experience */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a202c;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 500px;
+            padding: 2rem;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .flag-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .flag-stripe {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+        
+        .flag-green { background-color: #00A651; }
+        .flag-red { background-color: #FF6B35; }
+        .flag-black { background-color: #000000; }
+        
+        .mountain {
+            color: #FFD700;
+            font-size: 2rem;
+            margin-left: 0.5rem;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #1a202c;
+        }
+        
+        .subtitle {
+            color: #4a5568;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+        
+        .offline-icon {
+            width: 80px;
+            height: 80px;
+            background: #f7fafc;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            border: 3px solid #e2e8f0;
+        }
+        
+        .wifi-icon {
+            width: 40px;
+            height: 40px;
+            position: relative;
+        }
+        
+        .wifi-icon::before {
+            content: '📶';
+            font-size: 2rem;
+            opacity: 0.3;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #2d3748;
+        }
+        
+        p {
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        
+        .retry-btn {
+            background: linear-gradient(135deg, #00A651 0%, #48bb78 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 1rem;
+        }
+        
+        .retry-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 166, 81, 0.3);
+        }
+        
+        .cultural-footer {
+            background: linear-gradient(135deg, #FFD700 0%, #FF6B35 50%, #00A651 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @media (max-width: 640px) {
+            .container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            h2 {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Kenya-First Branding -->
+        <div class="flag-container">
+            <div class="flag-stripe flag-green"></div>
+            <div class="flag-stripe flag-red"></div>
+            <div class="flag-stripe flag-black"></div>
+            <span class="mountain">🏔️</span>
+        </div>
+        
+        <h1>Shujaa Studio</h1>
+        <p class="subtitle">Kenya-First AI Video Platform</p>
+        
+        <!-- Offline Icon -->
+        <div class="offline-icon pulse">
+            <div class="wifi-icon"></div>
+        </div>
+        
+        <!-- Offline Message -->
+        <h2>You're Offline</h2>
+        <p>
+            It looks like you've lost your internet connection. Don't worry - 
+            some features may still work, and we'll reconnect you as soon as possible.
+        </p>
+        
+        <!-- Retry Button -->
+        <button class="retry-btn" onclick="window.location.reload()">
+            🔄 Try Again
+        </button>
+        
+        <!-- Offline Tips -->
+        <div style="text-align: left; background: #f7fafc; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
+            <h3 style="margin-bottom: 0.5rem; color: #2d3748;">While you're offline:</h3>
+            <ul style="color: #4a5568; padding-left: 1.5rem;">
+                <li>Previously loaded pages may still work</li>
+                <li>Your work is automatically saved locally</li>
+                <li>We'll sync your changes when you're back online</li>
+            </ul>
+        </div>
+        
+        <!-- Cultural Footer -->
+        <div class="cultural-footer">
+            🇰🇪 Proudly Kenyan • We'll be back online soon • Harambee!
+        </div>
+    </div>
+    
+    <script>
+        // Check for connection and auto-reload
+        function checkConnection() {
+            if (navigator.onLine) {
+                window.location.reload();
+            }
+        }
+        
+        // Listen for online event
+        window.addEventListener('online', checkConnection);
+        
+        // Periodic check every 30 seconds
+        setInterval(checkConnection, 30000);
+        
+        // Visual feedback for connection attempts
+        document.querySelector('.retry-btn').addEventListener('click', function() {
+            this.textContent = '🔄 Checking...';
+            this.disabled = true;
+            
+            setTimeout(() => {
+                if (!navigator.onLine) {
+                    this.textContent = '🔄 Try Again';
+                    this.disabled = false;
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
