@@ -25,13 +25,93 @@ export interface VideoGenerationRequest {
   lang?: string;
   scenes?: number;
   vertical?: boolean;
+  style?: 'realistic' | 'cartoon' | 'anime' | 'documentary';
+  duration?: number;
+  voice_type?: 'male' | 'female' | 'child';
+  background_music?: boolean;
+  cultural_preset?: 'mount_kenya' | 'maasai_mara' | 'diani_beach' | 'nairobi_city';
 }
 
 export interface VideoGenerationResponse {
   status: string;
   video_id: string;
-  video_path: string;
+  video_path?: string;
   message: string;
+  progress?: number;
+  estimated_time?: number;
+  thumbnail_url?: string;
+}
+
+export interface ContentGenerationJob {
+  id: string;
+  type: 'video' | 'image' | 'audio';
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  progress: number;
+  created_at: string;
+  completed_at?: string;
+  result_url?: string;
+  error_message?: string;
+  metadata: Record<string, any>;
+}
+
+export interface PaymentPlan {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+  interval: 'monthly' | 'yearly';
+  features: string[];
+  video_credits: number;
+  image_credits: number;
+  audio_credits: number;
+  is_popular?: boolean;
+}
+
+export interface PaymentSession {
+  session_id: string;
+  payment_url: string;
+  status: 'pending' | 'completed' | 'failed';
+  amount: number;
+  currency: string;
+}
+
+export interface UserSubscription {
+  id: string;
+  plan_id: string;
+  status: 'active' | 'cancelled' | 'expired';
+  current_period_start: string;
+  current_period_end: string;
+  video_credits_remaining: number;
+  image_credits_remaining: number;
+  audio_credits_remaining: number;
+}
+
+export interface AnalyticsData {
+  overview: {
+    total_videos: number;
+    total_images: number;
+    total_audio: number;
+    total_views: number;
+    total_downloads: number;
+  };
+  usage_trends: Array<{
+    date: string;
+    videos: number;
+    images: number;
+    audio: number;
+  }>;
+  popular_content: Array<{
+    id: string;
+    title: string;
+    type: 'video' | 'image' | 'audio';
+    views: number;
+    downloads: number;
+  }>;
+  performance_metrics: {
+    avg_generation_time: number;
+    success_rate: number;
+    user_satisfaction: number;
+  };
 }
 
 export interface RecentActivity {
@@ -102,58 +182,182 @@ class ApiClient {
 
   // Dashboard data
   async getDashboardStats(): Promise<ApiResponse<DashboardStats>> {
-    // For now, return mock data with a note that real data isn't available
-    // This will be replaced when backend endpoints are available
-    return {
-      data: {
-        videosGenerated: 0,
-        imagesCreated: 0,
-        audioTracks: 0,
-        activeUsers: 0,
-        systemStatus: 'online',
-        lastGeneration: 'No data available'
-      },
-      status: 200
-    };
+    return this.request('/api/dashboard/stats');
   }
 
   async getRecentActivity(): Promise<ApiResponse<RecentActivity[]>> {
-    // Mock data with friendly message
-    return {
-      data: [],
-      status: 200
-    };
+    return this.request('/api/dashboard/activity');
   }
 
-  // Video generation
+  // Content Generation
   async generateVideo(request: VideoGenerationRequest): Promise<ApiResponse<VideoGenerationResponse>> {
-    return this.request('/generate-video', {
+    return this.request('/api/generate/video', {
       method: 'POST',
       body: JSON.stringify(request),
     });
   }
 
-  // Analytics data
-  async getAnalytics(): Promise<ApiResponse<any>> {
-    return this.request('/metrics');
+  async generateImage(request: {
+    prompt: string;
+    style?: string;
+    size?: string;
+    cultural_preset?: string;
+  }): Promise<ApiResponse<VideoGenerationResponse>> {
+    return this.request('/api/generate/image', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
   }
 
-  // Projects
-  async getProjects(): Promise<ApiResponse<any[]>> {
-    // Mock empty projects for now
+  async generateAudio(request: {
+    text: string;
+    voice_type?: string;
+    language?: string;
+    speed?: number;
+  }): Promise<ApiResponse<VideoGenerationResponse>> {
+    return this.request('/api/generate/audio', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async getGenerationJob(jobId: string): Promise<ApiResponse<ContentGenerationJob>> {
+    return this.request(`/api/jobs/${jobId}`);
+  }
+
+  async getGenerationJobs(): Promise<ApiResponse<ContentGenerationJob[]>> {
+    return this.request('/api/jobs');
+  }
+
+  // Payment System
+  async getPaymentPlans(): Promise<ApiResponse<PaymentPlan[]>> {
+    // Mock plans for now - will be replaced with real Paystack integration
     return {
-      data: [],
+      data: [
+        {
+          id: 'starter',
+          name: 'Starter',
+          price: 2500,
+          currency: 'KES',
+          interval: 'monthly',
+          features: ['10 Videos/month', '50 Images/month', '20 Audio tracks/month', 'Basic support'],
+          video_credits: 10,
+          image_credits: 50,
+          audio_credits: 20,
+        },
+        {
+          id: 'professional',
+          name: 'Professional',
+          price: 7500,
+          currency: 'KES',
+          interval: 'monthly',
+          features: ['50 Videos/month', '200 Images/month', '100 Audio tracks/month', 'Priority support', 'HD Quality'],
+          video_credits: 50,
+          image_credits: 200,
+          audio_credits: 100,
+          is_popular: true,
+        },
+        {
+          id: 'enterprise',
+          name: 'Enterprise',
+          price: 15000,
+          currency: 'KES',
+          interval: 'monthly',
+          features: ['Unlimited Videos', 'Unlimited Images', 'Unlimited Audio', '24/7 Support', '4K Quality', 'Custom branding'],
+          video_credits: -1,
+          image_credits: -1,
+          audio_credits: -1,
+        }
+      ],
       status: 200
     };
   }
 
-  // Gallery
-  async getGalleryItems(): Promise<ApiResponse<any[]>> {
-    // Mock empty gallery for now
-    return {
-      data: [],
-      status: 200
-    };
+  async createPaymentSession(planId: string): Promise<ApiResponse<PaymentSession>> {
+    return this.request('/api/payments/create-session', {
+      method: 'POST',
+      body: JSON.stringify({ plan_id: planId }),
+    });
+  }
+
+  async getUserSubscription(): Promise<ApiResponse<UserSubscription>> {
+    return this.request('/api/user/subscription');
+  }
+
+  async cancelSubscription(): Promise<ApiResponse<{ success: boolean }>> {
+    return this.request('/api/user/subscription/cancel', {
+      method: 'POST',
+    });
+  }
+
+  // Analytics
+  async getAnalytics(timeRange: '7d' | '30d' | '90d' = '30d'): Promise<ApiResponse<AnalyticsData>> {
+    return this.request(`/api/analytics?range=${timeRange}`);
+  }
+
+  async getAnalyticsOverview(): Promise<ApiResponse<AnalyticsData['overview']>> {
+    return this.request('/api/analytics/overview');
+  }
+
+  // Projects with pagination
+  async getProjects(page: number = 1, limit: number = 6): Promise<ApiResponse<{
+    projects: any[];
+    total: number;
+    page: number;
+    pages: number;
+  }>> {
+    return this.request(`/api/projects?page=${page}&limit=${limit}`);
+  }
+
+  async getProject(projectId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/projects/${projectId}`);
+  }
+
+  async createProject(project: {
+    name: string;
+    description?: string;
+    type: 'video' | 'image' | 'audio';
+  }): Promise<ApiResponse<any>> {
+    return this.request('/api/projects', {
+      method: 'POST',
+      body: JSON.stringify(project),
+    });
+  }
+
+  async updateProject(projectId: string, updates: any): Promise<ApiResponse<any>> {
+    return this.request(`/api/projects/${projectId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deleteProject(projectId: string): Promise<ApiResponse<{ success: boolean }>> {
+    return this.request(`/api/projects/${projectId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Gallery with pagination and filtering
+  async getGalleryItems(
+    page: number = 1,
+    limit: number = 6,
+    type?: 'video' | 'image' | 'audio',
+    search?: string
+  ): Promise<ApiResponse<{
+    items: any[];
+    total: number;
+    page: number;
+    pages: number;
+  }>> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+
+    if (type) params.append('type', type);
+    if (search) params.append('search', search);
+
+    return this.request(`/api/gallery?${params.toString()}`);
   }
 }
 
