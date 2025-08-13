@@ -7,3 +7,4 @@ __pycache__/
 .venv
 venv/
 models/
+new_token.md
