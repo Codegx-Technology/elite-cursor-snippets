@@ -153,8 +153,7 @@ class PipelineOrchestrator:
 async def main():
     orchestrator = PipelineOrchestrator()
 
-    print("
---- Testing Pipeline Orchestrator (Execution) ---")
+    print("--- Testing Pipeline Orchestrator (Execution) ---")
 
     # News URL
     decision = await orchestrator.run_pipeline(input_type="news_url", input_data="https://example.com/news", user_preferences={"mode": "api", "api_call": True})

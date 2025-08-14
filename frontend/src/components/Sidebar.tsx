@@ -15,7 +15,8 @@ import {
   FaMountain,
   FaGlobe,
   FaCreditCard,
-  FaNewspaper
+  FaNewspaper,
+  FaShieldAlt
 } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean
@@ -40,6 +41,12 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       icon: FaHome,
       label: 'Dashboard',
       description: 'Overview & Stats'
+    },
+    {
+      href: '/admin/reporting',
+      icon: FaShieldAlt,
+      label: 'Reporting',
+      description: 'Super Admin Health'
     },
     {
       href: '/video-generate',

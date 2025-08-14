@@ -11,3 +11,60 @@ new_token.md
 Set-HF-ApiKey
 shujaa_health_scanner.log
 models/download_progress.log
+ 
+ # Environment files
+ .env.local
+ .env.*
+ !.env.example
+ 
+ # Python caches and tooling
+ .mypy_cache/
+ .pytype/
+ .ruff_cache/
+ .pyre/
+ .coverage
+ .coverage.*
+ htmlcov/
+ .cache/
+ 
+ # Python packaging/build
+ build/
+ dist/
+ *.egg-info/
+ 
+ # Logs
+ *.log
+ 
+ # Virtualenv names (additional)
+ env/
+ ENV/
+ .python-version
+ 
+ # Databases
+ *.sqlite
+ *.sqlite3
+ *.db
+ 
+ # Temp files and folders
+ tmp/
+ temp/
+ *.tmp
+ 
+ # Node/Next.js (if/when frontend is present)
+ node_modules/
+ .next/
+ out/
+ npm-debug.log*
+ yarn-debug.log*
+ yarn-error.log*
+ pnpm-debug.log*
+ 
+ # Generated/media/output
+ output/
+ outputs/
+ generated/
+ generated_videos/
+ downloads/
+ downloads_cache/
+ data/
+ assets/generated/
