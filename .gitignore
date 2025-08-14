@@ -9,3 +9,5 @@ venv/
 models/
 new_token.md
 Set-HF-ApiKey
+shujaa_health_scanner.log
+models/download_progress.log
