@@ -20,6 +20,10 @@ from datetime import datetime
 from typing import List, Tuple
 
 import requests
+try:
+    from huggingface_hub import HfFolder  # to read token from local cache
+except Exception:
+    HfFolder = None
 
 # ---------------------------
 # Config
@@ -78,9 +82,18 @@ assert len(SCENES) == SCENE_COUNT, "Scene count mismatch"
 # ---------------------------
 
 def ensure_env():
-    if not HF_TOKEN:
-        print("ERROR: Missing HF_API_KEY/HF_TOKEN with Inference permission.")
-        sys.exit(1)
+    global HF_TOKEN, HEADERS
+    if not HF_TOKEN and HfFolder is not None:
+        try:
+            cached = HfFolder.get_token()
+            if cached:
+                HF_TOKEN = cached
+        except Exception:
+            pass
+    if HF_TOKEN:
+        HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
+    else:
+        print("WARNING: No HF token detected (env or cache). Will attempt API calls and fall back to placeholders if they fail.")
 
 
 def mk_dirs(ts: str):

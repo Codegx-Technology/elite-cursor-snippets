@@ -14,9 +14,8 @@ function Set-EnvVarBothScopes {
         [Parameter(Mandatory = $true)] [string]$Name,
         [Parameter(Mandatory = $true)] [string]$Value
     )
-    # Current session
-    $env:${Name} = $Value
-    # Persist for the user
+    # Set for current process/session and persist for the user
+    [System.Environment]::SetEnvironmentVariable($Name, $Value, [System.EnvironmentVariableTarget]::Process)
     [System.Environment]::SetEnvironmentVariable($Name, $Value, [System.EnvironmentVariableTarget]::User)
 }
 
