@@ -70,7 +70,7 @@ except ImportError:
     FASTER_WHISPER_AVAILABLE = False
 
 # Hugging Face credentials
-HF_TOKEN = os.environ.get("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")
+HF_TOKEN = os.getenv("HF_TOKEN")
 NEWSAPI_KEY = os.environ.get("NEWSAPI_KEY")
 
 # HF Model IDs
