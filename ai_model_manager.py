@@ -7,11 +7,13 @@ from huggingface_hub import InferenceClient, login as hf_login
 from transformers import pipeline
 from config_loader import get_config
 from error_utils import retry_on_exception, log_and_raise
-from logging_setup import get_logger
+import logging
 from asset_manager import AssetManager
 from dotenv import load_dotenv
 
-logger = get_logger(__name__)
+# Use standard logging to avoid circular import with logging_setup
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Ensure environment variables (including HF_API_KEY) are loaded before reading config
 load_dotenv()

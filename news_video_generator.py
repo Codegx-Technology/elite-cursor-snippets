@@ -10,6 +10,7 @@ import asyncio
 import feedparser
 import pickle
 import sys
+import logging
 
 from huggingface_hub import login as hf_login
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -20,12 +21,13 @@ from googleapiclient.http import MediaFileUpload
 
 from gpu_fallback import ShujaaGPUIntegration, TaskProfile, HybridGPUManager
 from ai_model_manager import generate_text, generate_image as ai_generate_image, text_to_speech, speech_to_text, init_hf_client
-from logging_setup import get_logger
 from config_loader import get_config
 from utils.parallel_processing import ParallelProcessor # Import ParallelProcessor
 from error_utils import log_and_raise, retry_on_exception
 
-logger = get_logger(__name__)
+# Use standard logging to avoid circular import with logging_setup
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 load_dotenv()
 
 config = get_config()
