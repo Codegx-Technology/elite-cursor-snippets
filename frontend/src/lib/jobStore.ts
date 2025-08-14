@@ -5,7 +5,7 @@ export type JobStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
 export interface JobRecord {
   id: string;
-  type: 'video';
+  type: 'video' | 'news_video' | 'image' | 'audio';
   status: JobStatus;
   progress: number;
   created_at: string;
