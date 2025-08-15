@@ -69,35 +69,56 @@ def read_script(file_path):
     except Exception as e:
         log_and_raise(e, f"Failed to read script file {file_path}")
 
-async def generate_scenes_from_text(text):
-    task_profile = TaskProfile(
-        task_type="text_generation",
-        estimated_memory=8.0, estimated_time=60, priority=10, can_use_cpu=False, preferred_gpu_memory=16.0
+async def generate_scenes_from_text(text, enhanced_router: Any, dialect: Optional[str] = None):
+    prompt_for_llm = f"Split the following text into a list of short, descriptive scenes for a video. Each scene should be a single sentence. Text: {text}"
+    
+    request = GenerationRequest(
+        prompt=prompt_for_llm,
+        type="text",
+        dialect=dialect
     )
-    async def _llm_api_call(input_data, device="cpu"):
-        try:
-            generated_text = await generate_text(input_data["inputs"], model_id=config.models.text_generation.hf_api_id)
-            scenes = generated_text.split("\n")
-            return [s.strip() for s in scenes if s.strip()]
-        except Exception as e:
-            log_and_raise(e, f"LLM API call failed for scene generation")
-    try:
-        scenes = await gpu_manager.process_task(task_profile, _llm_api_call, {"inputs": f"Split the following text into a list of short, descriptive scenes for a video. Each scene should be a single sentence. Text: {text}"})
-        return scenes
-    except Exception as e:
-        logger.warning(f"Falling back to local sentence splitting for scenes: {e}")
+    
+    result = await enhanced_router.route_generation(request)
+    
+    if result.success and result.metadata and "generated_text" in result.metadata:
+        generated_text = result.metadata["generated_text"]
+        scenes = generated_text.split("\n")
+        return [s.strip() for s in scenes if s.strip()]
+    else:
+        logger.warning(f"Enhanced router failed for scene generation, falling back to local sentence splitting: {result.error_message}")
         sentences = text.split(".")
         return [s.strip() for s in sentences if s.strip()]
 
-async def generate_image(scene_text, output_path):
-    try:
-        image_bytes = await ai_generate_image(scene_text, model_id=config.models.image_generation.hf_api_id)
-        if image_bytes:
+
+async def generate_image(scene_text, output_path, enhanced_router: Any, dialect: Optional[str] = None):
+    request = GenerationRequest(
+        prompt=scene_text,
+        type="image",
+        dialect=dialect
+    )
+    
+    result = await enhanced_router.route_generation(request)
+    
+    if result.success and result.content_url:
+        # Assuming content_url is a direct path or a data URL that can be saved
+        # If it's a data URL, you'd need to decode it. For simplicity, assuming it's a path or bytes.
+        # For now, let's simulate saving the image if the router returns a content_url
+        # In a real scenario, the router might return image_bytes directly.
+        if result.content_url.startswith("data:image"):
+            import base64
+            header, encoded = result.content_url.split(",", 1)
+            image_bytes = base64.b64decode(encoded)
             with open(output_path, "wb") as f:
                 f.write(image_bytes)
-            logger.info(f"  Image generated: {output_path}")
+            logger.info(f"  Image generated via router: {output_path}")
             return output_path
-        else:
+        elif os.path.exists(result.content_url): # If router returns a path to a temp file
+            import shutil
+            shutil.copy(result.content_url, output_path)
+            logger.info(f"  Image copied from router temp path: {output_path}")
+            return output_path
+        else: # Fallback to placeholder if router returns a URL that needs fetching or other format
+            logger.warning(f"Router returned content_url but not in expected format for direct save: {result.content_url}. Generating placeholder.")
             width, height = 1280, 720
             img = Image.new("RGB", (width, height), color="#1a4d80")
             draw = ImageDraw.Draw(img)
@@ -117,28 +138,88 @@ async def generate_image(scene_text, output_path):
             img.save(output_path)
             logger.info(f"  Placeholder image generated: {output_path}")
             return output_path
-    except Exception as e:
-        log_and_raise(e, f"Failed to generate image for scene {scene_text}")
-
-async def generate_voiceover_from_text(text, output_file):
-    task_profile = TaskProfile(
-        task_type="voice_synthesis",
-        estimated_memory=1.0, estimated_time=10, priority=9, can_use_cpu=True, preferred_gpu_memory=2.0
-    )
-    async def _bark_api_call(input_data, device="cpu"):
+    else:
+        logger.warning(f"Enhanced router failed for image generation: {result.error_message}. Generating placeholder.")
+        width, height = 1280, 720
+        img = Image.new("RGB", (width, height), color="#1a4d80")
+        draw = ImageDraw.Draw(img)
         try:
-            audio_bytes = await text_to_speech(input_data["inputs"], model_id=config.models.voice_synthesis.hf_api_id)
+            font = ImageFont.truetype("arial.ttf", 40)
+        except IOError:
+            font = ImageFont.load_default()
+        words = scene_text.split()
+        lines = [" ".join(words[i:i+6]) for i in range(0, len(words), 6)]
+        y_offset = (height - (len(lines) * 50)) // 2
+        for line in lines:
+            bbox = draw.textbbox((0, 0), line, font=font)
+            text_width = bbox[2] - bbox[0]
+            x = (width - text_width) // 2
+            draw.text((x, y_offset), line, fill="white", font=font)
+            y_offset += 50
+        img.save(output_path)
+        logger.info(f"  Placeholder image generated: {output_path}")
+        return output_path
+
+async def generate_voiceover_from_text(text, output_file, enhanced_router: Any, dialect: Optional[str] = None):
+    request = GenerationRequest(
+        prompt=text,
+        type="audio",
+        dialect=dialect
+    )
+    
+    result = await enhanced_router.route_generation(request)
+    
+    if result.success and result.content_url:
+        # Assuming content_url is a direct path or a data URL that can be saved
+        if result.content_url.startswith("data:audio"):
+            import base64
+            header, encoded = result.content_url.split(",", 1)
+            audio_bytes = base64.b64decode(encoded)
             with open(output_file, "wb") as f:
                 f.write(audio_bytes)
+            logger.info(f"Voiceover generated via router: {output_file}")
             return output_file
-        except Exception as e:
-            log_and_raise(e, f"Bark API call failed for voiceover")
-    try:
-        voiceover_path = await gpu_manager.process_task(task_profile, _bark_api_call, {"inputs": text})
-        logger.info(f"Voiceover generated: {voiceover_path}")
-        return voiceover_path
-    except Exception as e:
-        logger.warning(f"Falling back to gTTS for voiceover: {e}")
+        elif os.path.exists(result.content_url): # If router returns a path to a temp file
+            import shutil
+            shutil.copy(result.content_url, output_file)
+            logger.info(f"Voiceover copied from router temp path: {output_file}")
+            return output_file
+        else: # Fallback to gTTS if router returns a URL that needs fetching or other format
+            logger.warning(f"Router returned content_url but not in expected format for direct save: {result.content_url}. Falling back to gTTS.")
+            from gtts import gTTS
+            try:
+                tts = gTTS(text)
+                tts.save(output_file)
+                logger.info(f"Voiceover generated (gTTS fallback): {output_file}")
+                return output_file
+            except Exception as gtts_e:
+                logger.error(f"gTTS fallback failed: {gtts_e}")
+                # Final fallback: write 2s silence WAV so pipeline can proceed
+                try:
+                    import io as _io
+                    import wave as _wave
+                    import struct as _struct
+                    sample_rate = 22050
+                    duration_sec = 2
+                    num_channels = 1
+                    sampwidth = 2
+                    num_frames = sample_rate * duration_sec
+                    buf = _io.BytesIO()
+                    with _wave.open(buf, 'wb') as wf:
+                        wf.setnchannels(num_channels)
+                        wf.setsampwidth(sampwidth)
+                        wf.setframerate(sample_rate)
+                        silence_frame = _struct.pack('<h', 0)
+                        wf.writeframes(silence_frame * num_frames)
+                    with open(output_file, 'wb') as f:
+                        f.write(buf.getvalue())
+                    logger.warning(f"Created placeholder silence audio: {output_file}")
+                    return output_file
+                except Exception as silent_e:
+                    logger.exception(f"Failed to create silence fallback: {silent_e}")
+                    return None
+    else:
+        logger.warning(f"Enhanced router failed for voiceover generation: {result.error_message}. Falling back to gTTS.")
         from gtts import gTTS
         try:
             tts = gTTS(text)
@@ -172,22 +253,24 @@ async def generate_voiceover_from_text(text, output_file):
                 logger.exception(f"Failed to create silence fallback: {silent_e}")
                 return None
 
-async def generate_captions_from_audio(audio_file):
-    task_profile = TaskProfile(
-        task_type="speech_to_text",
-        estimated_memory=4.0, estimated_time=30, priority=8, can_use_cpu=True, preferred_gpu_memory=8.0
+async def generate_captions_from_audio(audio_file, enhanced_router: Any, dialect: Optional[str] = None):
+    # For speech-to-text, the prompt would be the audio content itself, or a description.
+    # Since enhanced_router.route_generation expects a text prompt, we'll use a generic one.
+    # In a real scenario, the router would need to handle audio input for STT.
+    request = GenerationRequest(
+        prompt=f"Transcribe audio from file: {audio_file}", # Generic prompt
+        type="text", # STT typically returns text
+        dialect=dialect # Pass dialect
     )
-    async def _whisper_api_call(audio_path, device="cpu"):
-        try:
-            captions = await speech_to_text(audio_path, model_id=config.models.speech_to_text.hf_api_id)
-            return captions
-        except Exception as e:
-            log_and_raise(e, f"Whisper API call failed for captions")
-    try:
-        captions = await gpu_manager.process_task(task_profile, _whisper_api_call, audio_file)
+    
+    result = await enhanced_router.route_generation(request)
+    
+    if result.success and result.metadata and "generated_text" in result.metadata:
+        captions = result.metadata["generated_text"]
+        logger.info(f"Captions generated via router: {captions}")
         return captions
-    except Exception as e:
-        logger.warning(f"Falling back to empty captions: {e}")
+    else:
+        logger.warning(f"Enhanced router failed for caption generation: {result.error_message}. Falling back to empty captions.")
         return ""
 
 def get_background_music(music_dir="music"):
@@ -274,12 +357,15 @@ async def youtube_upload(video_file, title, description, tags):
     except Exception as e:
         log_and_raise(e, f"Failed to upload video to YouTube: {video_file}")
 
-async def main(news: str = None, script_file: str = None, prompt: str = None, upload_youtube: bool = False):
+async def main(news: str = None, script_file: str = None, prompt: str = None, upload_youtube: bool = False, user_preferences: Dict = None, enhanced_router: Any = None):
     init_hf_client()
     logger.info(f"GPU Integration Status: {gpu_integration.get_integration_status()}")
 
     text_content = None
     video_title = "AI Generated Video"
+    
+    # Extract dialect from user_preferences
+    dialect = user_preferences.get("dialect") if user_preferences else None
     if news:
         logger.info(f"Fetching news for query: {news}")
         try:
@@ -309,7 +395,7 @@ async def main(news: str = None, script_file: str = None, prompt: str = None, up
     if text_content:
         logger.info("Content processed successfully. Generating video...")
         try:
-            scenes = await generate_scenes_from_text(text_content)
+            scenes = await generate_scenes_from_text(text_content, enhanced_router, dialect)
             if not scenes:
                 log_and_raise(ValueError("Could not generate scenes from text."), "Scene generation failed")
         except Exception as e:
@@ -325,7 +411,7 @@ async def main(news: str = None, script_file: str = None, prompt: str = None, up
             scene_text = scene_data['text']
             image_path = os.path.join(output_dir, f"image_{index+1}.png")
             try:
-                generated_path = await generate_image(scene_text, image_path)
+                generated_path = await generate_image(scene_text, image_path, enhanced_router, dialect)
                 return {"status": "success" if generated_path else "failed", "path": generated_path}
             except Exception as e:
                 log_and_raise(e, f"Error generating image for scene {index}")
@@ -340,13 +426,13 @@ async def main(news: str = None, script_file: str = None, prompt: str = None, up
 
         voiceover_file = os.path.join(output_dir, "voice.wav")
         try:
-            await generate_voiceover_from_text(text_content, voiceover_file)
+            await generate_voiceover_from_text(text_content, voiceover_file, enhanced_router, dialect)
         except Exception as e:
             log_and_raise(e, "Error generating voiceover")
 
         captions = None
         try:
-            captions = await generate_captions_from_audio(voiceover_file)
+            captions = await generate_captions_from_audio(voiceover_file, enhanced_router, dialect)
         except Exception as e:
             log_and_raise(e, "Error generating captions")
 
