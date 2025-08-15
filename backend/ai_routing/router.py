@@ -8,6 +8,11 @@ import yaml
 from dotmap import DotMap
 
 from backend.ai_routing.providers.base_provider import BaseProvider
+from backend.ai_routing.providers.colab_provider import ColabProvider
+from backend.ai_routing.providers.kaggle_provider import KaggleProvider
+from backend.ai_routing.providers.huggingface_provider import HuggingFaceProvider
+from backend.ai_routing.providers.runpod_provider import RunPodProvider
+from backend.ai_routing.providers.gemini_provider import GeminiProvider
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -20,6 +25,24 @@ class Router:
         self.providers: Dict[str, BaseProvider] = {}
         self.health_check_interval = self.config.get('health_check_interval', 30) # seconds
         self.fallback_retries = self.config.get('fallback_retries', 2)
+
+        # Dynamically initialize and register providers from config
+        for provider_name, provider_config in self.config.providers.items():
+            provider_type = provider_config.get("type")
+            if provider_type in self.PROVIDER_CLASSES:
+                provider_class = self.PROVIDER_CLASSES[provider_type]
+                instance = provider_class(provider_name, provider_config)
+                self.register_provider(instance)
+            else:
+                logger.warning(f"Unknown provider type '{provider_type}' for provider '{provider_name}'. Skipping.")
+
+    PROVIDER_CLASSES = {
+        "colab": ColabProvider,
+        "kaggle": KaggleProvider,
+        "huggingface": HuggingFaceProvider,
+        "runpod": RunPodProvider,
+        "gemini": GeminiProvider,
+    }
 
     def load_config(self) -> DotMap:
         """Loads routing configuration from a YAML file."""
