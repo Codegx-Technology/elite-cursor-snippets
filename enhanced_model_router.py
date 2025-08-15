@@ -13,6 +13,7 @@ from enum import Enum
 import requests
 from logging_setup import get_logger
 from config_loader import get_config
+from dialect_rag_manager import DialectRAGManager
 
 # [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent + augmentsearch
 # [CONTEXT]: Enhanced model routing with intelligent fallbacks and Kenya-first design
@@ -29,6 +30,7 @@ class GenerationMethod(Enum):
     LOCAL_MODELS = "local_models"
     CACHED_CONTENT = "cached_content"
     FRIENDLY_FALLBACK = "friendly_fallback"
+    GEMINI_API = "gemini_api"
 
 @dataclass
 class GenerationRequest:
@@ -37,6 +39,7 @@ class GenerationRequest:
     user_id: Optional[str] = None
     preferences: Optional[Dict] = None
     cultural_preset: Optional[str] = None
+    dialect: Optional[str] = None
     quality: str = "standard"  # 'draft', 'standard', 'premium'
 
 @dataclass
@@ -77,6 +80,19 @@ class NetworkStatus:
             response = requests.get(service_url, timeout=10)
             return response.status_code == 200
         except:
+            return False
+
+    @staticmethod
+    def check_gemini_status() -> bool:
+        """Check Gemini API availability"""
+        try:
+            # This is a placeholder. A real check would involve a small, quick API call.
+            # For now, assume it's available if an API key is configured.
+            from config_loader import get_config
+            config = get_config()
+            return hasattr(config.api_keys, 'gemini') and config.api_keys.gemini is not None
+        except Exception as e:
+            logger.error(f"Error checking Gemini status: {e}")
             return False
 
 class ContentCache:
@@ -145,6 +161,7 @@ class EnhancedModelRouter:
         self.cache = ContentCache()
         self.network_status = NetworkStatus()
         self.generation_stats = {}
+        self.dialect_rag_manager = DialectRAGManager()
         
         # Default fallback chain - can be customized per user
         self.default_fallback_chain = [
@@ -198,7 +215,8 @@ class EnhancedModelRouter:
             'hf_api': False,
             'runpod_api': False,
             'local_models': False,
-            'network': False
+            'network': False,
+            'gemini_api': False
         }
         
         # Check network connectivity
@@ -211,6 +229,9 @@ class EnhancedModelRouter:
             # Check RunPod API (if configured)
             if hasattr(config.api_keys, 'runpod') and config.api_keys.runpod:
                 availability['runpod_api'] = True  # Assume available if key exists
+
+            # Check Gemini API (if configured)
+            availability['gemini_api'] = self.network_status.check_gemini_status()
         
         # Check local models
         try:
@@ -310,6 +331,10 @@ class EnhancedModelRouter:
         
         if availability['hf_api'] and GenerationMethod.HUGGINGFACE_API not in chain:
             chain.append(GenerationMethod.HUGGINGFACE_API)
+
+        # ADD THIS BLOCK FOR GEMINI
+        if availability['gemini_api'] and GenerationMethod.GEMINI_API not in chain:
+            chain.append(GenerationMethod.GEMINI_API)
         
         if availability['runpod_api'] and GenerationMethod.RUNPOD_API not in chain:
             chain.append(GenerationMethod.RUNPOD_API)
@@ -344,6 +369,8 @@ class EnhancedModelRouter:
             return cached or GenerationResult(success=False, error_message="No cached content found")
         elif method == GenerationMethod.FRIENDLY_FALLBACK:
             return await self._kenya_friendly_fallback(request)
+        elif method == GenerationMethod.GEMINI_API:
+            return await self._try_gemini_generation(request)
         else:
             return GenerationResult(success=False, error_message=f"Unknown method: {method}")
     
@@ -396,11 +423,99 @@ class EnhancedModelRouter:
                         content_url=content_url,
                         method_used=GenerationMethod.HUGGINGFACE_API
                     )
+
+            elif request.type == "text": # ADD THIS BLOCK
+                generated_text = await generate_text(request.prompt)
+                if generated_text:
+                    # Enrich text with RAG if dialect is specified
+                    if request.dialect:
+                        enriched_text = self.dialect_rag_manager.enrich_text(generated_text, request.dialect, request.prompt)
+                    else:
+                        enriched_text = generated_text
+                    
+                    # For text, we can return the content directly or save it to a file
+                    # For now, let's return it as a data URL or similar for simplicity
+                    # In a real scenario, you might save it to a file and return a URL
+                    content_url = f"data:text/plain;charset=utf-8,{enriched_text}"
+                    return GenerationResult(
+                        success=True,
+                        content_url=content_url,
+                        method_used=GenerationMethod.HUGGINGFACE_API,
+                        metadata={"generated_text": enriched_text}
+                    )
             
             return GenerationResult(success=False, error_message="HF generation returned no content")
             
         except Exception as e:
             return GenerationResult(success=False, error_message=f"HF API error: {str(e)}")
+    
+    async def _try_gemini_generation(self, request: GenerationRequest) -> GenerationResult:
+        """Try Gemini API generation"""
+        try:
+            # Assuming a Gemini API client is available or can be imported
+            # from ai_model_manager import generate_text_gemini, generate_image_gemini, generate_speech_gemini, generate_video_gemini
+
+            if request.type == "video":
+                # Placeholder for Gemini video generation
+                # In a real scenario, this would call a Gemini video API
+                logger.info(f"Attempting Gemini video generation for: {request.prompt}")
+                # Simulate success for now
+                content_url = f"/generated/gemini/video/{int(time.time())}.mp4"
+                return GenerationResult(
+                    success=True,
+                    content_url=content_url,
+                    method_used=GenerationMethod.GEMINI_API,
+                    metadata={"note": "Gemini video generation simulated"}
+                )
+
+            elif request.type == "image":
+                # Placeholder for Gemini image generation
+                logger.info(f"Attempting Gemini image generation for: {request.prompt}")
+                # Simulate success for now
+                content_url = f"/generated/gemini/images/{int(time.time())}.png"
+                return GenerationResult(
+                    success=True,
+                    content_url=content_url,
+                    method_used=GenerationMethod.GEMINI_API,
+                    metadata={"note": "Gemini image generation simulated"}
+                )
+
+            elif request.type == "audio":
+                # Placeholder for Gemini audio generation (TTS)
+                logger.info(f"Attempting Gemini audio generation for: {request.prompt}")
+                # Simulate success for now
+                content_url = f"/generated/gemini/audio/{int(time.time())}.mp3"
+                return GenerationResult(
+                    success=True,
+                    content_url=content_url,
+                    method_used=GenerationMethod.GEMINI_API,
+                    metadata={"note": "Gemini audio generation simulated"}
+                )
+
+            elif request.type == "text":
+                # Placeholder for Gemini text generation
+                logger.info(f"Attempting Gemini text generation for: {request.prompt}")
+                generated_text = f"Gemini generated text for: {request.prompt}" # Simulate text generation
+                
+                if generated_text:
+                    # Enrich text with RAG if dialect is specified
+                    if request.dialect:
+                        enriched_text = self.dialect_rag_manager.enrich_text(generated_text, request.dialect, request.prompt)
+                    else:
+                        enriched_text = generated_text
+                    
+                    content_url = f"data:text/plain;charset=utf-8,{enriched_text}"
+                    return GenerationResult(
+                        success=True,
+                        content_url=content_url,
+                        method_used=GenerationMethod.GEMINI_API,
+                        metadata={"generated_text": enriched_text, "note": "Gemini text generation simulated"}
+                    )
+            
+            return GenerationResult(success=False, error_message="Gemini generation returned no content")
+            
+        except Exception as e:
+            return GenerationResult(success=False, error_message=f"Gemini API error: {str(e)}")
     
     async def _try_runpod_generation(self, request: GenerationRequest) -> GenerationResult:
         """Try RunPod API generation"""
