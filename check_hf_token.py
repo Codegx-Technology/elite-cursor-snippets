@@ -10,10 +10,10 @@ def check_hf_token():
     Verifies the Hugging Face API token and retrieves account info.
     """
     load_dotenv()
-    token = os.getenv("HUGGING_FACE_API_KEY")
+    token = os.getenv("HF_TOKEN")
 
     if not token:
-        print("❌ HUGGING_FACE_API_KEY not found in .env file.")
+        print("❌ HF_TOKEN not found in .env file.")
         sys.exit(1)
 
     headers = {"Authorization": f"Bearer {token}"}

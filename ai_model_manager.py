@@ -15,12 +15,17 @@ from dotenv import load_dotenv
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Ensure environment variables (including HF_API_KEY) are loaded before reading config
+# Ensure environment variables (including HF_TOKEN / HUGGINGFACEHUB_API_TOKEN) are loaded before reading config
 load_dotenv()
 
 config = get_config()
 
-HF_API_KEY = config.api_keys.huggingface
+# Prefer explicit env tokens; fallback to config for backward compatibility
+HF_TOKEN = (
+    os.environ.get("HF_TOKEN")
+    or os.environ.get("HUGGINGFACEHUB_API_TOKEN")
+    or getattr(getattr(config, "api_keys", object()), "huggingface", None)
+)
 DISABLE_HF = os.environ.get("SHUJAA_DISABLE_HF", "0") == "1"
 
 # --- Module-level Globals for Model Caching ---
@@ -42,17 +47,18 @@ def init_hf_client():
             if DISABLE_HF:
                 logger.info("HF Inference disabled via SHUJAA_DISABLE_HF=1. Skipping client init.")
                 _hf_client = None
-            elif HF_API_KEY:
-                try:
-                    hf_login(token=HF_API_KEY)
-                    _hf_client = InferenceClient()
-                    logger.info("✅ Hugging Face client initialized and logged in.")
-                except Exception as e:
-                    # Degrade gracefully on invalid token or any login error
-                    logger.warning(f"HF login failed: {e}. Proceeding without HF client.")
-                    _hf_client = None
             else:
-                logger.warning("Hugging Face API key not found. HF client not initialized.")
+                try:
+                    if HF_TOKEN:
+                        _hf_client = InferenceClient(token=HF_TOKEN)
+                        logger.info("✅ Hugging Face client initialized with explicit token.")
+                    else:
+                        # Rely on cached login or provider defaults
+                        _hf_client = InferenceClient()
+                        logger.info("ℹ️ Hugging Face client initialized without explicit token (cache/env may apply).")
+                except Exception as e:
+                    logger.warning(f"HF client setup failed: {e}. Proceeding without HF client.")
+                    _hf_client = None
         except Exception as e:
             # Final safety: do not crash init; allow fallbacks to proceed
             logger.warning(f"HF client initialization error: {e}. Proceeding without HF client.")
