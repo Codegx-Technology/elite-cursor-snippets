@@ -186,7 +186,49 @@ class OfflineVideoMaker:
             logger.warning(f"Failed to import MusicEngine: {e}")
             return False
 
-    def generate_story_breakdown(self, prompt: str) -> List[Dict[str, str]]:
+    async def generate_voice(self, scene: Dict[str, str], enhanced_router: Any, dialect: Optional[str] = None) -> Path:
+        """
+        // [TASK]: Generate voiceover for a scene using enhanced_router
+        // [GOAL]: High-quality, dialect-aware voice generation
+        """
+        scene_id = scene["id"]
+        text_to_speak = scene["text"]
+        output_file = self.temp_dir / f"{scene_id}_voice.wav"
+
+        logger.info(f"[VOICE] Generating voice for {scene_id}...")
+
+        request = GenerationRequest(
+            prompt=text_to_speak,
+            type="audio",
+            dialect=dialect
+        )
+
+        result = await enhanced_router.route_generation(request)
+
+        if result.success and result.content_url:
+            if result.content_url.startswith("data:audio"):
+                import base64
+                header, encoded = result.content_url.split(",", 1)
+                audio_bytes = base64.b64decode(encoded)
+                with open(output_file, "wb") as f:
+                    f.write(audio_bytes)
+                logger.info(f"[SUCCESS] Voice generated via router: {output_file}")
+                return output_file
+            elif os.path.exists(result.content_url):
+                import shutil
+                shutil.copy(result.content_url, output_file)
+                logger.info(f"[SUCCESS] Voice copied from router temp path: {output_file}")
+                return output_file
+            else:
+                logger.warning(f"Router returned content_url but not in expected format for direct save: {result.content_url}. Falling back to local TTS.")
+                self._generate_fallback_voice(text_to_speak, output_file)
+                return output_file
+        else:
+            logger.warning(f"Enhanced router failed for voice generation: {result.error_message}. Falling back to local TTS.")
+            self._generate_fallback_voice(text_to_speak, output_file)
+            return output_file
+
+    def generate_story_breakdown(self, prompt: str, enhanced_router: Any, dialect: Optional[str] = None) -> List[Dict[str, str]]:
         """
         // [TASK]: Break down user prompt into intelligent scenes using AI
         // [GOAL]: Create structured scene data with semantic understanding
@@ -210,16 +252,70 @@ class OfflineVideoMaker:
         logger.info(f"[SUCCESS] Generated {len(scenes)} intelligent scenes")
         return scenes
 
-    def _create_intelligent_scenes(self, prompt: str) -> List[Dict[str, str]]:
+    async def _create_intelligent_scenes(self, prompt: str, enhanced_router: Any, dialect: Optional[str] = None) -> List[Dict[str, str]]:
         """
         // [TASK]: AI-powered semantic scene creation
         // [GOAL]: Intelligent story breakdown with Kenya-first context
         // [SNIPPET]: surgicalfix + kenyafirst
         """
-        # Analyze story structure and create scenes
-        story_length = len(prompt.split())
+        logger.info(f"[AI] Generating intelligent scenes using enhanced router for prompt: {prompt}")
 
-        # Determine optimal number of scenes based on story complexity
+        request = GenerationRequest(
+            prompt=f"Break down the following story into 3-6 distinct scenes, each with a short text summary and a visual description. Ensure the tone is cinematic and incorporates African context if relevant. Story: {prompt}",
+            type="text",
+            dialect=dialect
+        )
+        
+        result = await enhanced_router.route_generation(request)
+
+        if result.success and result.metadata and "generated_text" in result.metadata:
+            generated_text = result.metadata["generated_text"]
+            logger.info(f"[AI] Raw generated scenes text: {generated_text}")
+            
+            # Attempt to parse the generated text into structured scenes
+            scenes = []
+            # This parsing logic will depend on the exact format the LLM returns.
+            # For now, a simple split and then manual parsing.
+            # A more robust solution would involve a structured output from the LLM (e.g., JSON).
+            
+            # Example parsing (assuming "Scene X: Text. Visual: Description.")
+            scene_blocks = generated_text.split("Scene ")
+            for block in scene_blocks:
+                if not block.strip():
+                    continue
+                try:
+                    parts = block.split(":", 1)
+                    scene_number = int(parts[0].strip())
+                    content_parts = parts[1].split("Visual:", 1)
+                    scene_text = content_parts[0].strip()
+                    scene_description = content_parts[1].strip() if len(content_parts) > 1 else scene_text # Fallback if no visual description
+                    
+                    duration = max(3.0, min(8.0, len(scene_text.split()) * 0.3))
+                    
+                    scenes.append({
+                        "id": f"scene{scene_number}",
+                        "text": scene_text,
+                        "description": scene_description,
+                        "duration": duration,
+                        "scene_number": scene_number,
+                        "total_scenes": len(scene_blocks) - 1 # Adjust based on actual parsing
+                    })
+                except Exception as e:
+                    logger.warning(f"Failed to parse scene block: {block}. Error: {e}")
+            
+            if not scenes:
+                logger.warning("Failed to parse any scenes from AI generation. Falling back to simple splitting.")
+                return self._create_intelligent_scenes_fallback(prompt) # Fallback to original logic
+            
+            return scenes
+        else:
+            logger.warning(f"Enhanced router failed for intelligent scene generation: {result.error_message}. Falling back to simple splitting.")
+            return self._create_intelligent_scenes_fallback(prompt) # Fallback to original logic
+
+    def _create_intelligent_scenes_fallback(self, prompt: str) -> List[Dict[str, str]]:
+        """Fallback to original scene creation logic if AI generation fails."""
+        # Original logic from _create_intelligent_scenes
+        story_length = len(prompt.split())
         if story_length < 20:
             target_scenes = 2
         elif story_length < 50:
@@ -229,16 +325,9 @@ class OfflineVideoMaker:
         else:
             target_scenes = min(6, max(3, story_length // 25))
 
-        logger.info(
-            f"[AI] Story length: {story_length} words → Target scenes: {target_scenes}"
-        )
-
-        # Create scene breakdown prompts with Kenya-first context
         scenes = []
         for i in range(target_scenes):
             scene_id = f"scene{i+1}"
-
-            # Generate scene-specific content
             if target_scenes == 2:
                 if i == 0:
                     scene_text = self._extract_opening_scene(prompt)
@@ -249,10 +338,7 @@ class OfflineVideoMaker:
             else:
                 scene_text = self._extract_scene_content(prompt, i, target_scenes)
                 scene_description = self._create_scene_visual(prompt, i, target_scenes)
-
-            # Calculate scene duration based on content length
             duration = max(3.0, min(8.0, len(scene_text.split()) * 0.3))
-
             scenes.append(
                 {
                     "id": scene_id,
@@ -263,7 +349,6 @@ class OfflineVideoMaker:
                     "total_scenes": target_scenes,
                 }
             )
-
         return scenes
 
     def _extract_opening_scene(self, prompt: str) -> str:
@@ -353,20 +438,28 @@ class OfflineVideoMaker:
         else:
             return f"{base_visual}the key events of this part of our story, set in vibrant Kenyan landscape"
 
-    def generate_captions_from_audio(self, audio_file: Path) -> str:
+    async def generate_captions_from_audio(self, audio_file: Path, enhanced_router: Any, dialect: Optional[str] = None) -> str:
         """
-        // [TASK]: Generate captions from audio using ai_model_manager
+        // [TASK]: Generate captions from audio using enhanced_router
         // [GOAL]: High-quality STT for video subtitles
         // [SNIPPET]: surgicalfix + kenyafirst + performance
         """
         print(f"[CAPTIONS] Generating captions for {audio_file.name}...")
 
-        try:
-            transcribed_text = asyncio.run(speech_to_text(str(audio_file), model_id=config.models.speech_to_text.hf_api_id, use_local_fallback=True))
-            print(f"[SUCCESS] ✅ Captions generated: {transcribed_text[:50]}...")
+        request = GenerationRequest(
+            prompt=f"Transcribe audio from file: {audio_file}", # Generic prompt
+            type="text", # STT typically returns text
+            dialect=dialect # Pass dialect
+        )
+        
+        result = await enhanced_router.route_generation(request)
+        
+        if result.success and result.metadata and "generated_text" in result.metadata:
+            transcribed_text = result.metadata["generated_text"]
+            print(f"[SUCCESS] ✅ Captions generated via router: {transcribed_text[:50]}...")
             return transcribed_text
-        except Exception as e:
-            print(f"[FALLBACK] STT failed via ai_model_manager: {e}. Using empty captions.")
+        else:
+            print(f"[FALLBACK] Enhanced router failed for STT: {result.error_message}. Using empty captions.")
             return ""
 
     def _generate_fallback_voice(self, text: str, output_file: Path):
@@ -405,9 +498,9 @@ class OfflineVideoMaker:
         except Exception as e:
             log_and_raise(e, f"Fallback TTS failed for {output_file}")
 
-    def generate_image(self, scene: Dict[str, str]) -> Path:
+    async def generate_image(self, scene: Dict[str, str], enhanced_router: Any, dialect: Optional[str] = None) -> Path:
         """
-        // [TASK]: Generate images using ai_model_manager
+        // [TASK]: Generate images using enhanced_router
         // [GOAL]: High-quality AI images with performance optimization
         // [SNIPPET]: refactorclean + kenyafirst + performance
         """
@@ -419,17 +512,34 @@ class OfflineVideoMaker:
 
         image_file = self.temp_dir / f"{scene_id}.png"
 
-        try:
-            image_bytes = asyncio.run(ai_generate_image(description, model_id=config.models.image_generation.hf_api_id, use_local_fallback=True))
-            if image_bytes:
+        request = GenerationRequest(
+            prompt=description,
+            type="image",
+            dialect=dialect
+        )
+        
+        result = await enhanced_router.route_generation(request)
+        
+        if result.success and result.content_url:
+            if result.content_url.startswith("data:image"):
+                import base64
+                header, encoded = result.content_url.split(",", 1)
+                image_bytes = base64.b64decode(encoded)
                 with open(image_file, "wb") as f:
                     f.write(image_bytes)
-                print(f"[SUCCESS] ✅ Image generated: {image_file}")
+                print(f"[SUCCESS] ✅ Image generated via router: {image_file}")
+                return image_file
+            elif os.path.exists(result.content_url):
+                import shutil
+                shutil.copy(result.content_url, image_file)
+                print(f"[SUCCESS] ✅ Image copied from router temp path: {image_file}")
                 return image_file
             else:
-                raise Exception("ai_generate_image returned no bytes")
-        except Exception as e:
-            print(f"[FALLBACK] Image generation failed via ai_model_manager: {e}. Using placeholder image.")
+                print(f"[FALLBACK] Router returned content_url but not in expected format for direct save: {result.content_url}. Using placeholder image.")
+                self._use_placeholder_image(image_file)
+                return image_file
+        else:
+            print(f"[FALLBACK] Enhanced router failed for image generation: {result.error_message}. Using placeholder image.")
             self._use_placeholder_image(image_file)
             return image_file
 
@@ -806,7 +916,7 @@ class OfflineVideoMaker:
 
         return formats
 
-    def generate_video(self, prompt: str, aspect_ratio: str = "all") -> Path:
+    def generate_video(self, prompt: str, aspect_ratio: str = "all", enhanced_router: Any = None, dialect: Optional[str] = None) -> Path:
         """
         // [TASK]: Main pipeline - prompt to video
         // [GOAL]: Complete end-to-end video generation with parallel processing
@@ -818,7 +928,7 @@ class OfflineVideoMaker:
 
         try:
             # Step 1: Generate story breakdown
-            scenes = self.generate_story_breakdown(prompt)
+            scenes = self.generate_story_breakdown(prompt, enhanced_router, dialect)
 
             # Step 2: Process each scene (optionally in parallel)
             scene_videos = []
@@ -830,8 +940,8 @@ class OfflineVideoMaker:
                     loop = asyncio.get_running_loop()
                     try:
                         # Run sync methods in an executor for concurrency
-                        audio_file = await loop.run_in_executor(None, self.generate_voice, scene_data)
-                        image_file = await loop.run_in_executor(None, self.generate_image, scene_data)
+                        audio_file = await loop.run_in_executor(None, self.generate_voice, scene_data, enhanced_router, dialect)
+                        image_file = await loop.run_in_executor(None, self.generate_image, scene_data, enhanced_router, dialect)
                         video_file = await loop.run_in_executor(None, self.create_scene_video, scene_data, audio_file, image_file)
                         enhanced_video = await loop.run_in_executor(None, self.add_professional_effects, video_file, scene_data)
                         return {"status": "completed", "video_path": enhanced_video}
@@ -852,8 +962,8 @@ class OfflineVideoMaker:
                 logger.info("\n[SEQUENTIAL] 🐌 Sequential scene processing enabled")
                 for scene in scenes:
                     logger.info(f"\n[SCENE] Processing {scene['id']}...")
-                    audio_file = self.generate_voice(scene)
-                    image_file = self.generate_image(scene)
+                    audio_file = await self.generate_voice(scene, enhanced_router, dialect)
+                    image_file = await self.generate_image(scene, enhanced_router, dialect)
                     video_file = self.create_scene_video(scene, audio_file, image_file)
                     enhanced_video = self.add_professional_effects(video_file, scene)
                     scene_videos.append(enhanced_video)
@@ -951,7 +1061,7 @@ class OfflineVideoMaker:
             log_and_raise(e, f"Video enhancement failed")
 
 
-def main():
+def main(**kwargs):
     """
     // [TASK]: CLI entry point
     // [GOAL]: Handle command line arguments and run video generation
@@ -961,8 +1071,9 @@ def main():
     logger.info("Proudly African AI Video Generation")
     logger.info("")
 
-    # Check command line arguments
-    if len(sys.argv) < 2:
+    # Extract prompt from kwargs or sys.argv
+    prompt = kwargs.get("prompt")
+    if not prompt and len(sys.argv) < 2:
         logger.error("[ERROR] Missing prompt argument")
         logger.info("")
         logger.info("Usage:")
@@ -979,8 +1090,12 @@ def main():
             '  python3 generate_video.py "Young Maasai warrior learns coding in Nairobi"'
         )
         sys.exit(1)
+    elif not prompt:
+        prompt = sys.argv[1]
 
-    prompt = sys.argv[1]
+    # Extract enhanced_router and dialect from kwargs
+    enhanced_router = kwargs.get("enhanced_router")
+    dialect = kwargs.get("dialect") # Assuming dialect is passed in kwargs
 
     # Validate ffmpeg availability
     try:
@@ -991,14 +1106,4 @@ def main():
     # Initialize and run video maker
     try:
         video_maker = OfflineVideoMaker()
-        final_video = video_maker.generate_video(prompt)
-
-        logger.info(f"\n[SUCCESS] Video generation complete!")
-        logger.info(f"[FILE] {final_video}")
-        logger.info(f"[NEXT] Ready for Combo Pack C enhancements!")
-
-    except KeyboardInterrupt:
-        logger.info("\n[INTERRUPTED] Video generation cancelled by user")
-        sys.exit(1)
-    except Exception as e:
-        log_and_raise(e, f"Unexpected error during video generation")
+        final_video = video_maker.generate_video(prompt, enhanced_router=enhanced_router, dialect=dialect)
