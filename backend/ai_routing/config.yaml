@@ -1,0 +1,27 @@
+health_check_interval: 10 # seconds
+fallback_retries: 2
+
+providers:
+  openai:
+    type: openai
+    api_key: sk-mock-openai-key # Mock key
+    fail_rate: 0.1 # 10% chance of simulated failure
+    unhealth_rate: 0.05 # 5% chance of simulated unhealthiness
+  anthropic:
+    type: anthropic
+    api_key: sk-mock-anthropic-key # Mock key
+    fail_rate: 0.15 # 15% chance of simulated failure
+    unhealth_rate: 0.1 # 10% chance of simulated unhealthiness
+  huggingface:
+    type: huggingface # This provider is not implemented yet, but shows extensibility
+    api_key: hf_mock_key
+    fail_rate: 0.05
+    unhealth_rate: 0.02
+
+routing_rules:
+  text_completion:
+    priority: ["openai", "anthropic", "huggingface"]
+  image_generation:
+    priority: ["huggingface", "openai"]
+  summarization:
+    priority: ["anthropic", "openai", "huggingface"]
