@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 config = get_config()
-HF_API_KEY = config.api_keys.huggingface
+HF_TOKEN = config.api_keys.huggingface
 
 gpu_integration = ShujaaGPUIntegration()
 gpu_manager = HybridGPUManager()

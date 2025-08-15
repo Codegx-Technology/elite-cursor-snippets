@@ -91,8 +91,8 @@ class ConfigLoader:
                     logger.warning(f"Failed to load secret for {key} from secrets manager: {e}. Falling back to environment variable.")
                     config_map[key] = os.environ.get(env_var_name, "") # Fallback to env var
             elif isinstance(value, str) and value.startswith("${{") and value.endswith("}"):
-                # Handle sensitive values like ${HF_API_KEY}
-                env_key = value[2:-1] # Extract HF_API_KEY from ${HF_API_KEY}
+                # Handle sensitive values like ${HF_TOKEN}
+                env_key = value[2:-1] # Extract HF_TOKEN from ${HF_TOKEN}
                 if env_key in os.environ:
                     config_map[key] = os.environ[env_key]
                 else:

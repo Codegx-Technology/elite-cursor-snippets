@@ -6,7 +6,7 @@ API-only 1-minute Kenya Patriotic Video Generator
 - Assembles vertical 1080x1920 video with subtitles; tries to mux audio if moviepy is available
 
 Prereqs:
-- HF_API_KEY (or HF_TOKEN) must be set with Inference/Serverless permission
+- HF_TOKEN must be set with Inference/Serverless permission
 - Optional: moviepy installed for audio muxing (pip install moviepy)
 """
 import os
