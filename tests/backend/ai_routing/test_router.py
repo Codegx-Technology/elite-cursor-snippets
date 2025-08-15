@@ -200,11 +200,11 @@ routing_rules:
         self.assertEqual(self.mock_openai_provider.process_request.call_count, 2) # Called once, failed, called again, succeeded
 
     async def test_execute_with_fallback_all_attempts_fail(self):
-        async def raise_generic_exception(*args, **kwargs):
-            raise Exception("Simulated persistent failure")
+        async def always_fail(*args, **kwargs):
+            raise RuntimeError("Simulated provider failure")
 
-        self.mock_openai_provider.process_request.side_effect = raise_generic_exception
-        self.mock_anthropic_provider.process_request.side_effect = raise_generic_exception
+        self.mock_openai_provider.process_request.side_effect = always_fail
+        self.mock_anthropic_provider.process_request.side_effect = always_fail
 
         # Mock route_task to ensure mock_openai is always chosen first
         with patch.object(self.router, 'route_task', return_value=self.mock_openai_provider) as mock_route_task:
