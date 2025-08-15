@@ -115,6 +115,6 @@ class Router:
                     logger.info(f"Attempting fallback for task '{task_type}'...")
                 else:
                     logger.error(f"All fallback attempts failed for task '{task_type}'.")
-                    raise
+                    # The final RuntimeError after the loop will handle this.
 
         raise RuntimeError(f"Failed to execute task '{task_type}' after {self.fallback_retries + 1} attempts.")
