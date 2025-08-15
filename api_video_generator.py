@@ -14,6 +14,7 @@ import sys
 import time
 import json
 import math
+import random
 import traceback
 import subprocess
 from pathlib import Path
@@ -214,21 +215,31 @@ def main():
     mk_dirs(ts)
 
     # --- 1. Generate Images ---
+    NUM_IMAGES_PER_SCENE = 3 # Generate multiple images for variety
     scene_images: List[Path] = []
     for i, (title, line) in enumerate(SCENES, start=1):
-        prompt = (
-            f"High-quality vertical photo, Kenya {title.lower()}, cinematic lighting, 1080x1920, detailed, realistic, uplifting. "
-            f"Elements: {line}"
-        )
-        print(f"[Image {i}] requesting from {IMAGES_MODEL}...")
-        try:
-            img_bytes = hf_txt2img(prompt)
-            img_path = IMG_DIR / ts / f"scene_{i:02d}.png"
-            save_bytes(img_path, img_bytes)
-            scene_images.append(img_path)
-        except Exception as e:
-            print(f"  Image {i} error: {e}")
-            scene_images.append(None) # Add placeholder
+        base_prompt = f"photorealistic, high-resolution, diverse vertical photo, Kenya {title.lower()}, cinematic lighting, 1080x1920, detailed, realistic, uplifting. Elements: {line}"
+        
+        generated_images_for_scene = []
+        print(f"[Image {i}] requesting {NUM_IMAGES_PER_SCENE} images from {IMAGES_MODEL}...")
+        for img_idx in range(NUM_IMAGES_PER_SCENE):
+            prompt = f"{base_prompt} --v {img_idx}" # Add a variation seed to prompt
+            try:
+                img_bytes = hf_txt2img(prompt)
+                img_path = IMG_DIR / ts / f"scene_{i:02d}_var{img_idx}.png"
+                save_bytes(img_path, img_bytes)
+                generated_images_for_scene.append(img_path)
+            except Exception as e:
+                print(f"  Image {i} variation {img_idx} error: {e}")
+        
+        if generated_images_for_scene:
+            # Randomly select one image for the scene
+            selected_img_path = random.choice(generated_images_for_scene)
+            scene_images.append(selected_img_path)
+            print(f"  Selected image for scene {i}: {selected_img_path.name}")
+        else:
+            print(f"  No images generated for scene {i}. Adding placeholder.")
+            scene_images.append(None) # Add placeholder if no images were generated
 
     # --- 2. Generate Audio Scene-by-Scene and Get Durations ---
     scene_data = []

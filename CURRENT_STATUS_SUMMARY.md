@@ -118,7 +118,7 @@
 - ✅ **Facebook Stories** (1080x1920, <150MB)
 
 ### **AI Models Integrated:**
-- 🎨 **SDXL-Turbo** for image generation
+- 🎨 **SDXL-Turbo** for image generation (Note: Relies on Hugging Face Inference API credits. Exceeding monthly limits will result in image generation failures and placeholder images. Monitor API usage for external services.)
 - 🗣️ **Bark/Edge-TTS** for voice synthesis
 - 📝 **Whisper** for subtitle generation
 - 🎵 **MusicGen** for background music
