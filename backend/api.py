@@ -1,5 +1,6 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import uuid
@@ -7,6 +8,7 @@ import asyncio
 from datetime import datetime, timedelta
 import os
 import sys
+from dotenv import load_dotenv, find_dotenv
 
 # Add parent directory to path to import from main codebase
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -60,6 +62,104 @@ analytics_storage = {
 
 # Initialize pipeline orchestrator if available
 orchestrator = PipelineOrchestrator() if PIPELINE_AVAILABLE else None
+
+# ============== Admin Auth & Health Scanner Integration ==============
+def _load_env_once():
+    """Attempt to load .env from typical locations (found via find_dotenv or project root)."""
+    # Try default discovery
+    loaded = load_dotenv(find_dotenv(), override=True)
+    if not loaded:
+        # Try project root relative to this file: ../.env
+        project_root_env = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.env'))
+        if os.path.exists(project_root_env):
+            load_dotenv(project_root_env, override=True)
+
+_load_env_once()  # Load .env before reading SUPERADMIN_* and SMTP settings
+security = HTTPBasic()
+
+def verify_admin(credentials: HTTPBasicCredentials = Depends(security)):
+    # Constant-time compare (basic)
+    # Ensure .env is loaded in case of reload or different working dir
+    _load_env_once()
+    username_env = os.getenv("SUPERADMIN_USERNAME", "")
+    password_env = os.getenv("SUPERADMIN_PASSWORD", "")
+    # Minimal diagnostics without leaking secrets
+    try:
+        print(
+            f"[admin-auth] env_user_set={bool(username_env)} env_pass_set={bool(password_env)} "
+            f"user_match={credentials.username == (username_env or '<empty>')} "
+            f"lens u_env={len(username_env)} p_env={len(password_env)} u_in={len(credentials.username)} p_in={len(credentials.password)}"
+        )
+    except Exception:
+        pass
+    if not username_env or not password_env:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Admin not configured")
+    if (credentials.username == username_env) and (credentials.password == password_env):
+        return True
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+try:
+    # Import health scanner from root
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from ai_health_scanner import AIHealthScanner, ScannerConfig, ScanMode
+    SCANNER_AVAILABLE = True
+except Exception:
+    SCANNER_AVAILABLE = False
+
+scanner = AIHealthScanner(ScannerConfig(scan_mode=ScanMode.STANDARD, notifications=True)) if SCANNER_AVAILABLE else None
+
+@app.get("/admin/health/status")
+async def admin_health_status(_: bool = Depends(verify_admin)):
+    if not scanner:
+        raise HTTPException(status_code=503, detail="Scanner not available")
+    # If no history yet, run a quick scan synchronously
+    if not scanner.scan_history:
+        scanner._run_scan()  # safe internal method use here for immediate status
+    latest = scanner.scan_history[-1].to_dict() if scanner.scan_history else None
+    return {
+        "running": scanner.is_running,
+        "muted": scanner.is_muted,
+        "last_scan": latest,
+        "history_count": len(scanner.scan_history)
+    }
+
+@app.get("/admin/health/history")
+async def admin_health_history(limit: int = 20, _: bool = Depends(verify_admin)):
+    if not scanner:
+        raise HTTPException(status_code=503, detail="Scanner not available")
+    items = [m.to_dict() for m in scanner.scan_history[-limit:]]
+    return {"items": items, "count": len(items)}
+
+@app.post("/admin/scanner/start")
+async def admin_scanner_start(mode: Optional[str] = None, _: bool = Depends(verify_admin)):
+    if not scanner:
+        raise HTTPException(status_code=503, detail="Scanner not available")
+    if mode:
+        mode_map = {"quick": ScanMode.QUICK, "standard": ScanMode.STANDARD, "deep": ScanMode.DEEP}
+        scanner.config.scan_mode = mode_map.get(mode.lower(), ScanMode.STANDARD)
+    scanner.start_scanner()
+    return {"status": "started", "mode": scanner.config.scan_mode.value}
+
+@app.post("/admin/scanner/stop")
+async def admin_scanner_stop(_: bool = Depends(verify_admin)):
+    if not scanner:
+        raise HTTPException(status_code=503, detail="Scanner not available")
+    scanner.stop_scanner()
+    return {"status": "stopped"}
+
+@app.post("/admin/scanner/mute")
+async def admin_scanner_mute(minutes: int = 60, _: bool = Depends(verify_admin)):
+    if not scanner:
+        raise HTTPException(status_code=503, detail="Scanner not available")
+    scanner.mute_scanner(duration_minutes=minutes)
+    return {"status": "muted", "minutes": minutes}
+
+@app.post("/admin/scanner/unmute")
+async def admin_scanner_unmute(_: bool = Depends(verify_admin)):
+    if not scanner:
+        raise HTTPException(status_code=503, detail="Scanner not available")
+    scanner.unmute_scanner()
+    return {"status": "unmuted"}
 
 # Pydantic models
 class VideoGenerationRequest(BaseModel):

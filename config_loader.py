@@ -3,9 +3,10 @@ import os
 from dotmap import DotMap # For easy access to nested dicts
 import boto3 # Elite Cursor Snippet: boto3_import
 from botocore.exceptions import ClientError # Elite Cursor Snippet: botocore_exception_import
-from logging_setup import get_logger # Elite Cursor Snippet: logger_import
+import logging
 
-logger = get_logger(__name__)
+# Use standard logging here to avoid circular import with logging_setup
+logger = logging.getLogger(__name__)
 
 class ConfigLoader:
     _instance = None

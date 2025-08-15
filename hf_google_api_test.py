@@ -1,10 +1,10 @@
 
+"""
 Unified API Access Test
 - Tests Hugging Face Inference API
 - Tests Google/YouTube Data API
 Works on: Kaggle, Colab, Local
-
-
+"""
 import requests
 import os
 from dotenv import load_dotenv, find_dotenv
@@ -22,7 +22,7 @@ YOUTUBE_TEST_USERNAME = "Google"
 def test_huggingface():
     print(" Testing Hugging Face API access...")
     if not HF_TOKEN:
-        print("⚠ HF_API_KEY is missing. Set it in your .env at project root.")
+        print("! HF_API_KEY is missing. Set it in your .env at project root.")
         return
     headers = {"Authorization": f"Bearer {HF_TOKEN}"}
     data = {"inputs": "Test access from environment"}
@@ -34,16 +34,16 @@ def test_huggingface():
             timeout=15
         )
         if r.status_code == 200:
-            print(f"✅ Hugging Face API access works for {HF_MODEL}")
+            print(f"OK Hugging Face API access works for {HF_MODEL}")
         else:
-            print(f"❌ Status {r.status_code}: {r.text}")
+            print(f"X Status {r.status_code}: {r.text}")
     except Exception as e:
-        print(f"⚠ Error: {e}")
+        print(f"! Error: {e}")
 
 def test_youtube():
     print("\n Testing Google/YouTube Data API access...")
     if not YOUTUBE_API_KEY:
-        print("⚠ YOUTUBE_API_KEY is missing. Set it in your .env at project root.")
+        print("! YOUTUBE_API_KEY is missing. Set it in your .env at project root.")
         return
     try:
         # Build a YouTube service object for testing
@@ -57,12 +57,12 @@ def test_youtube():
         response = request.execute()
         
         if response and response.get("items"):
-            print(f"✅ Google/YouTube Data API access works. Found channel for {YOUTUBE_TEST_USERNAME}.")
+            print(f"OK Google/YouTube Data API access works. Found channel for {YOUTUBE_TEST_USERNAME}.")
         else:
-            print(f"❌ Google/YouTube Data API access failed or no channel found for {YOUTUBE_TEST_USERNAME}.")
+            print(f"X Google/YouTube Data API access failed or no channel found for {YOUTUBE_TEST_USERNAME}.")
             print(f"Response: {response}")
     except Exception as e:
-        print(f"⚠ Error: {e}")
+        print(f"! Error: {e}")
 
 if __name__ == "__main__":
     test_huggingface()

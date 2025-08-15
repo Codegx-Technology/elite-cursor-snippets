@@ -3,7 +3,7 @@
 // [GOAL]: Create robust API client with TypeScript support and error boundaries
 // [TASK]: Implement API client with authentication, retry logic, and proper typing
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 export interface ApiResponse<T> {
   data?: T;

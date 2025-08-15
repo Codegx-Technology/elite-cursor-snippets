@@ -17,10 +17,12 @@ import time
 import psutil
 from pathlib import Path
 
-from logging_setup import get_logger
+import logging
 from ai_model_manager import generate_text, generate_image, text_to_speech, speech_to_text
 
-logger = get_logger(__name__)
+# Use standard logging to avoid circular import with logging_setup
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 class ParallelProcessor:
     """

@@ -10,6 +10,7 @@ import asyncio
 import feedparser
 import pickle
 import sys
+import logging
 
 from huggingface_hub import login as hf_login
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -20,12 +21,13 @@ from googleapiclient.http import MediaFileUpload
 
 from gpu_fallback import ShujaaGPUIntegration, TaskProfile, HybridGPUManager
 from ai_model_manager import generate_text, generate_image as ai_generate_image, text_to_speech, speech_to_text, init_hf_client
-from logging_setup import get_logger
 from config_loader import get_config
 from utils.parallel_processing import ParallelProcessor # Import ParallelProcessor
 from error_utils import log_and_raise, retry_on_exception
 
-logger = get_logger(__name__)
+# Use standard logging to avoid circular import with logging_setup
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 load_dotenv()
 
 config = get_config()
@@ -145,7 +147,30 @@ async def generate_voiceover_from_text(text, output_file):
             return output_file
         except Exception as gtts_e:
             logger.error(f"gTTS fallback failed: {gtts_e}")
-            return None
+            # Final fallback: write 2s silence WAV so pipeline can proceed
+            try:
+                import io as _io
+                import wave as _wave
+                import struct as _struct
+                sample_rate = 22050
+                duration_sec = 2
+                num_channels = 1
+                sampwidth = 2
+                num_frames = sample_rate * duration_sec
+                buf = _io.BytesIO()
+                with _wave.open(buf, 'wb') as wf:
+                    wf.setnchannels(num_channels)
+                    wf.setsampwidth(sampwidth)
+                    wf.setframerate(sample_rate)
+                    silence_frame = _struct.pack('<h', 0)
+                    wf.writeframes(silence_frame * num_frames)
+                with open(output_file, 'wb') as f:
+                    f.write(buf.getvalue())
+                logger.warning(f"Created placeholder silence audio: {output_file}")
+                return output_file
+            except Exception as silent_e:
+                logger.exception(f"Failed to create silence fallback: {silent_e}")
+                return None
 
 async def generate_captions_from_audio(audio_file):
     task_profile = TaskProfile(
@@ -176,9 +201,31 @@ def get_background_music(music_dir="music"):
 
 async def compile_video(image_files, audio_file, music_file, captions, output_file):
     try:
-        if not image_files or not audio_file or not os.path.exists(audio_file):
-            logger.error("Cannot compile video, missing image files or main audio.")
+        if not image_files:
+            logger.error("Cannot compile video, no image files.")
             return None
+        # Ensure we have an audio file; if missing, create a short silence WAV
+        if not audio_file or not os.path.exists(audio_file):
+            try:
+                out_dir = os.path.dirname(output_file) or "."
+                os.makedirs(out_dir, exist_ok=True)
+                audio_file = os.path.join(out_dir, "voice.wav")
+                import wave as _wave, struct as _struct
+                sample_rate = 22050
+                duration_sec = 2
+                num_channels = 1
+                sampwidth = 2
+                num_frames = sample_rate * duration_sec
+                with _wave.open(audio_file, 'wb') as wf:
+                    wf.setnchannels(num_channels)
+                    wf.setsampwidth(sampwidth)
+                    wf.setframerate(sample_rate)
+                    silence_frame = _struct.pack('<h', 0)
+                    wf.writeframes(silence_frame * num_frames)
+                logger.warning(f"Main audio missing. Created placeholder silence: {audio_file}")
+            except Exception as gen_silent_e:
+                logger.exception(f"Failed to create placeholder silence audio: {gen_silent_e}")
+                return None
         clips = [ImageClip(img).set_duration(3) for img in image_files]
         video = concatenate_videoclips(clips, method="compose")
         audio = AudioFileClip(audio_file)

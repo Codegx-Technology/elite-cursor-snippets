@@ -15,7 +15,8 @@ import {
   FaMountain,
   FaGlobe,
   FaCreditCard,
-  FaNewspaper
+  FaNewspaper,
+  FaShieldAlt
 } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean
@@ -31,8 +32,11 @@ interface SidebarProps {
 export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps) {
   const pathname = usePathname();
 
-  // Debug logging for navigation issues
-  console.log('Current pathname:', pathname);
+  // Debug logging (guarded to avoid noisy prod consoles)
+  if (process.env.NODE_ENV !== 'production') {
+    // eslint-disable-next-line no-console
+    console.log('Current pathname:', pathname);
+  }
 
   const navigationItems = [
     {
@@ -40,6 +44,12 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       icon: FaHome,
       label: 'Dashboard',
       description: 'Overview & Stats'
+    },
+    {
+      href: '/admin/reporting',
+      icon: FaShieldAlt,
+      label: 'Reporting',
+      description: 'Super Admin Health'
     },
     {
       href: '/video-generate',
@@ -98,21 +108,22 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
   ];
 
   const isActive = (href: string) => {
-    // Handle root route and dashboard
-    if (href === '/' && (pathname === '/' || pathname === '/dashboard')) {
+    // Handle root route and dashboard alias
+    if (href === '/' && (pathname === '/' || pathname.startsWith('/dashboard'))) {
       return true;
     }
-    return pathname === href;
+    // Mark parent as active for nested routes (e.g., /projects/123)
+    if (href !== '/' && (pathname === href || pathname.startsWith(`${href}/`))) {
+      return true;
+    }
+    return false;
   };
 
   return (
     <aside
       className={`fixed inset-y-0 left-0 z-50 w-72 flex flex-col transform transition-transform duration-300 ease-in-out ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } md:translate-x-0`}
-      style={{
-        background: 'linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%)'
-      }}
+      } md:translate-x-0 bg-gradient-to-b from-neutral-900 to-neutral-800`}
     >
       {/* Header */}
       <div className="p-6 border-b border-gray-700">
@@ -154,9 +165,10 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
                   ? 'bg-gradient-to-r from-green-600 to-blue-600 text-white shadow-lg'
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
               }`}
+              aria-current={active ? 'page' : undefined}
               onClick={() => {
-                // Close sidebar on mobile after a small delay to allow navigation
-                setTimeout(() => setSidebarOpen(false), 100);
+                // Close sidebar immediately on mobile; Next.js handles route transitions
+                setSidebarOpen(false);
               }}
             >
               <Icon className={`mr-3 text-lg ${active ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
