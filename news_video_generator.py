@@ -12,7 +12,6 @@ import pickle
 import sys
 import logging
 
-from huggingface_hub import login as hf_login
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -31,7 +30,6 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 config = get_config()
-HF_API_KEY = config.api_keys.huggingface
 
 gpu_integration = ShujaaGPUIntegration()
 gpu_manager = HybridGPUManager()
@@ -345,10 +343,14 @@ async def main(news: str = None, script_file: str = None, prompt: str = None, up
             log_and_raise(e, "Error generating voiceover")
 
         captions = None
-        try:
-            captions = await generate_captions_from_audio(voiceover_file)
-        except Exception as e:
-            log_and_raise(e, "Error generating captions")
+        if os.environ.get('SHUJAA_DISABLE_STT', '1') == '1':
+            captions = ""
+            logger.info("STT disabled via SHUJAA_DISABLE_STT. Skipping captions generation.")
+        else:
+            try:
+                captions = await generate_captions_from_audio(voiceover_file)
+            except Exception as e:
+                log_and_raise(e, "Error generating captions")
 
         music_file = get_background_music(config.video.music_dir)
         output_file = os.path.join(output_dir, "final_video.mp4")
@@ -376,4 +378,8 @@ if __name__ == "__main__":
     parser.add_argument("--upload-youtube", action="store_true", help="Upload the generated video to YouTube")
     args = parser.parse_args()
     
-    asyncio.run(main(news=args.news, script_file=args.script, prompt=args.prompt, upload_youtube=args.upload_youtube))
+    try:
+        asyncio.run(main(news=args.news, script_file=args.script, prompt=args.prompt, upload_youtube=args.upload_youtube))
+    except Exception as e:
+        logger.exception(f"Fatal error in main: {e}")
+        sys.exit(1)
