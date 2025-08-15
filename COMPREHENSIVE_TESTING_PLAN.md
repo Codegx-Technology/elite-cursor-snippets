@@ -194,7 +194,7 @@ python api.py
 #### **HuggingFace Integration**
 ```bash
 # Set up HuggingFace access
-export HUGGINGFACE_API_KEY="your_api_key_here"
+export HF_TOKEN="your_api_key_here"
 
 # Test HuggingFace connectivity
 python hf_access_check.py

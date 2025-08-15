@@ -59,7 +59,7 @@ The application is ready for immediate testing without AI model dependencies. Al
 ### 🤖 Optional: AI Model Setup
 ```bash
 # For actual AI generation (optional)
-export HUGGINGFACE_API_KEY="your_key_here"
+export HF_TOKEN="your_key_here"
 python hf_access_check.py
 
 # Download local models for offline use
