@@ -308,16 +308,23 @@ async def text_to_speech(text, model_id=None, **kwargs):
             logger.exception(f"❌ Local TTS generation failed: {e}")
             raise ValueError("Local TTS generation failed")
     else:
-        # Graceful fallback: generate short silence WAV so pipeline can proceed
+        # Graceful fallback: generate short silence WAV so pipeline can proceed (no external deps)
         try:
-            import numpy as np
-            sr = 22050
+            import wave
+            import struct
+            sample_rate = 22050
             duration_sec = 2
-            samples = int(sr * duration_sec)
-            silence = np.zeros(samples, dtype=np.float32)
+            num_channels = 1
+            sampwidth = 2  # 16-bit PCM
+            num_frames = sample_rate * duration_sec
             buf = io.BytesIO()
-            sf.write(buf, silence, sr, format='WAV')
-            logger.warning("No TTS model available. Returning placeholder silence audio.")
+            with wave.open(buf, 'wb') as wf:
+                wf.setnchannels(num_channels)
+                wf.setsampwidth(sampwidth)
+                wf.setframerate(sample_rate)
+                silence_frame = struct.pack('<h', 0)  # one 16-bit sample at zero
+                wf.writeframes(silence_frame * num_frames)
+            logger.warning("No TTS model available. Returning placeholder silence audio (wave).")
             return buf.getvalue()
         except Exception as e:
             logger.exception(f"Failed to generate silence fallback for TTS: {e}")
