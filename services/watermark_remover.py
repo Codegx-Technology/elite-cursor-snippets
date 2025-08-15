@@ -5,8 +5,8 @@ import typing as t
 from PIL import Image
 import numpy as np
 import cv2
-from logging_setup import get_logger
-from config_loader import get_config, get_secret
+import logging
+from config_loader import get_config
 from error_utils import retry_on_exception
 from functools import lru_cache
 
@@ -30,7 +30,9 @@ except ImportError:
 
 # ELITE_CURSOR_SNIPPET_END: watermark_removal_imports
 
-logger = get_logger(__name__)
+# Use standard logging to avoid circular import with logging_setup
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 cfg = get_config()
 
 def encode_image_bytes(image: Image.Image, fmt: str = "PNG") -> bytes:
