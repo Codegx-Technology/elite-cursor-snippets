@@ -157,3 +157,26 @@
 3. **Validate mobile exports** for TikTok/WhatsApp
 4. **Run batch processing** with multiple stories
 5. **Share and celebrate** our achievement! 🎉
+
+---
+
+### 🎬 **Advanced Video Pipeline - Implemented!**
+
+Following user feedback, the video generation pipeline has been significantly overhauled to produce a more professional, movie-like final product.
+
+#### **✅ What We've Accomplished:**
+
+*   **Scene-by-Scene Synchronization:** The `api_video_generator.py` script now generates audio for each scene individually and times the video frames to match the narration duration perfectly. This ensures words and images are always in sync.
+*   **Dynamic Image Motion:** A "Ken Burns" (pan-and-zoom) effect has been added to each scene, transforming static images into dynamic, engaging visuals.
+*   **Smooth Transitions:** The script now adds a professional cross-fade transition between each scene, eliminating jarring cuts and creating a smoother viewing experience.
+*   **Robust Pipeline:** The entire process, from image generation to scene-by-scene audio creation, video assembly, and final muxing, is now fully automated in the `api_video_generator.py` script.
+*   **TTS Error Handling:** The `voice_engine.py` script was enhanced to handle special characters (like emojis) in the source text, preventing encoding errors.
+
+#### **⚠️ What is Lacking / Challenges:**
+
+*   **Authentic Kenyan Voice:** The primary goal of a Kenyan-accented voice was not achieved.
+    *   **Sauti-Ya-Kenya:** The most promising open-source model was inaccessible due to missing model download links in its repository.
+    *   **Coqui TTS:** The next best alternative, failed during installation because it requires system-level C++ build tools, which cannot be installed in this environment.
+    *   **Current Status:** The pipeline is using a standard Western voice (`edge-tts`) as a fallback. The system is ready to integrate a better voice model once one becomes accessible.
+
+---
