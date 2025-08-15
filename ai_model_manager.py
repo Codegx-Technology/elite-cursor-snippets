@@ -21,6 +21,7 @@ load_dotenv()
 config = get_config()
 
 HF_API_KEY = config.api_keys.huggingface
+DISABLE_HF = os.environ.get("SHUJAA_DISABLE_HF", "0") == "1"
 
 # --- Module-level Globals for Model Caching ---
 _hf_client = None
@@ -38,14 +39,23 @@ def init_hf_client():
     global _hf_client
     if _hf_client is None:
         try:
-            if HF_API_KEY:
-                hf_login(token=HF_API_KEY)
-                _hf_client = InferenceClient()
-                logger.info("✅ Hugging Face client initialized and logged in.")
+            if DISABLE_HF:
+                logger.info("HF Inference disabled via SHUJAA_DISABLE_HF=1. Skipping client init.")
+                _hf_client = None
+            elif HF_API_KEY:
+                try:
+                    hf_login(token=HF_API_KEY)
+                    _hf_client = InferenceClient()
+                    logger.info("✅ Hugging Face client initialized and logged in.")
+                except Exception as e:
+                    # Degrade gracefully on invalid token or any login error
+                    logger.warning(f"HF login failed: {e}. Proceeding without HF client.")
+                    _hf_client = None
             else:
                 logger.warning("Hugging Face API key not found. HF client not initialized.")
         except Exception as e:
-            log_and_raise(e, "Failed to initialize Hugging Face client")
+            # Final safety: do not crash init; allow fallbacks to proceed
+            logger.warning(f"HF client initialization error: {e}. Proceeding without HF client.")
     return _hf_client
 
 async def _load_local_llm_model():
