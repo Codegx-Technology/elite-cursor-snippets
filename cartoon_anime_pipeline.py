@@ -383,8 +383,9 @@ class AfricanCartoonPipeline:
             return {"status": "success", "frames": animated_frames, "audio": audio_path}
 
         async def run_parallel_processing(all_scenes):
-            processor = ParallelProcessor()
-            return await processor.run_parallel(all_scenes, scene_worker)
+            # Use passed parallel_processor, or create if not provided (for standalone testing)
+            _parallel_processor = parallel_processor or ParallelProcessor()
+            return await _parallel_processor.run_parallel(all_scenes, scene_worker)
 
         results = await run_parallel_processing(scenes) # Await the parallel processing
         
@@ -460,7 +461,9 @@ def create_african_cartoon_video(
     voice: str = "sheng_male",
     mobile_preset: Optional[str] = None,
     enhanced_router: Any = None,
-    dialect: Optional[str] = None
+    dialect: Optional[str] = None,
+    parallel_processor: Any = None,
+    scene_processor: Any = None
 ) -> Dict:
     """
     Main function to create African cartoon video
@@ -484,7 +487,7 @@ def create_african_cartoon_video(
     scenes = await pipeline.break_script_into_scenes(script)
     
     # Create cartoon video
-    video_path = await pipeline.create_cartoon_video(scenes, style, voice)
+    video_path = await pipeline.create_cartoon_video(scenes, style, voice, parallel_processor=parallel_processor, scene_processor=scene_processor)
     
     result = {
         "success": video_path is not None,

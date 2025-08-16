@@ -121,6 +121,8 @@ class PipelineOrchestrator:
         result = None
         pipeline_kwargs = user_preferences or {}
         pipeline_kwargs['enhanced_router'] = enhanced_router
+        pipeline_kwargs['parallel_processor'] = self.parallel_processor
+        pipeline_kwargs['scene_processor'] = self.scene_processor
 
         try:
             if chosen == "news_video_generator":

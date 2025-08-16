@@ -916,7 +916,7 @@ class OfflineVideoMaker:
 
         return formats
 
-    def generate_video(self, prompt: str, aspect_ratio: str = "all", enhanced_router: Any = None, dialect: Optional[str] = None) -> Path:
+    def generate_video(self, prompt: str, aspect_ratio: str = "all", enhanced_router: Any = None, dialect: Optional[str] = None, parallel_processor: Any = None, scene_processor: Any = None) -> Path:
         """
         // [TASK]: Main pipeline - prompt to video
         // [GOAL]: Complete end-to-end video generation with parallel processing
@@ -932,7 +932,11 @@ class OfflineVideoMaker:
 
             # Step 2: Process each scene (optionally in parallel)
             scene_videos = []
-            if getattr(self, "parallel", None) and self.enable_parallel:
+            # Use passed parallel_processor, or create if not provided (for standalone testing)
+            _parallel_processor = parallel_processor or ParallelProcessor()
+            _scene_processor = scene_processor or SceneProcessor() # Use passed scene_processor
+
+            if self.enable_parallel: # Simplified condition
                 logger.info("\n[PARALLEL] ⚡ Parallel scene processing enabled")
 
                 # Define the async worker for a single scene
@@ -940,8 +944,8 @@ class OfflineVideoMaker:
                     loop = asyncio.get_running_loop()
                     try:
                         # Run sync methods in an executor for concurrency
-                        audio_file = await loop.run_in_executor(None, self.generate_voice, scene_data, enhanced_router, dialect)
-                        image_file = await loop.run_in_executor(None, self.generate_image, scene_data, enhanced_router, dialect)
+                        audio_file = await loop.run_in_executor(None, _scene_processor.process_voice, scene_data["text"], scene_data["id"]) # Use _scene_processor
+                        image_file = await loop.run_in_executor(None, _scene_processor.process_image, scene_data["image_prompt"], scene_data["id"]) # Use _scene_processor
                         video_file = await loop.run_in_executor(None, self.create_scene_video, scene_data, audio_file, image_file)
                         enhanced_video = await loop.run_in_executor(None, self.add_professional_effects, video_file, scene_data)
                         return {"status": "completed", "video_path": enhanced_video}
@@ -950,7 +954,7 @@ class OfflineVideoMaker:
 
                 # Define the main async task to be run
                 async def run_parallel_processing(all_scenes):
-                    return await self.parallel.run_parallel(all_scenes, scene_worker)
+                    return await _parallel_processor.run_parallel(all_scenes, scene_worker) # Use _parallel_processor
 
                 # Execute the async task from this synchronous method
                 results = asyncio.run(run_parallel_processing(scenes))

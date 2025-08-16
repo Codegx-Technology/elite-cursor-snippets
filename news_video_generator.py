@@ -357,7 +357,7 @@ async def youtube_upload(video_file, title, description, tags):
     except Exception as e:
         log_and_raise(e, f"Failed to upload video to YouTube: {video_file}")
 
-async def main(news: str = None, script_file: str = None, prompt: str = None, upload_youtube: bool = False, user_preferences: Dict = None, enhanced_router: Any = None):
+async def main(news: str = None, script_file: str = None, prompt: str = None, upload_youtube: bool = False, user_preferences: Dict = None, enhanced_router: Any = None, parallel_processor: Any = None, scene_processor: Any = None):
     init_hf_client()
     logger.info(f"GPU Integration Status: {gpu_integration.get_integration_status()}")
 
@@ -417,8 +417,8 @@ async def main(news: str = None, script_file: str = None, prompt: str = None, up
                 log_and_raise(e, f"Error generating image for scene {index}")
 
         scene_items = [{"index": i, "text": scene} for i, scene in enumerate(scenes)]
-        parallel_processor = ParallelProcessor()
-        image_results = await parallel_processor.run_parallel(scene_items, image_worker)
+        _parallel_processor = parallel_processor or ParallelProcessor()
+        image_results = await _parallel_processor.run_parallel(scene_items, image_worker)
         image_files = [res["path"] for res in image_results if res and res["status"] == "success"]
         
         if not image_files:
