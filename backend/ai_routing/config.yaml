@@ -1,27 +1,51 @@
-health_check_interval: 10 # seconds
+health_check_interval: 5
 fallback_retries: 2
 
 providers:
-  openai:
+  mock_openai:
     type: openai
-    api_key: sk-mock-openai-key # Mock key
-    fail_rate: 0.1 # 10% chance of simulated failure
-    unhealth_rate: 0.05 # 5% chance of simulated unhealthiness
-  anthropic:
+    api_key: sk-mockopenai
+    fail_rate: 0.0
+    unhealth_rate: 0.0
+  mock_anthropic:
     type: anthropic
-    api_key: sk-mock-anthropic-key # Mock key
-    fail_rate: 0.15 # 15% chance of simulated failure
-    unhealth_rate: 0.1 # 10% chance of simulated unhealthiness
-  huggingface:
-    type: huggingface # This provider is not implemented yet, but shows extensibility
+    api_key: sk-mockanthropic
+    fail_rate: 0.0
+    unhealth_rate: 0.0
+  mock_unhealthy:
+    type: mock
+    api_key: mock_key_unhealthy
+    fail_rate: 0.0
+    unhealth_rate: 1.0 # Always unhealthy
+
+  # New Providers
+  colab_gen:
+    type: colab
+    api_endpoint: http://colab.mock.api/v1
+    api_key: colab_mock_key
+  kaggle_gen:
+    type: kaggle
+    api_endpoint: http://kaggle.mock.api/v1
+    api_key: kaggle_mock_key
+  huggingface_gen:
+    type: huggingface
+    model_id: google/flan-t5-small # Example model
     api_key: hf_mock_key
-    fail_rate: 0.05
-    unhealth_rate: 0.02
+  runpod_gen:
+    type: runpod
+    endpoint_id: runpod_mock_endpoint
+    api_key: runpod_mock_key
+  gemini_gen:
+    type: gemini
+    model_name: gemini-pro # Example model
+    api_key: gemini_mock_key
 
 routing_rules:
-  text_completion:
-    priority: ["openai", "anthropic", "huggingface"]
-  image_generation:
-    priority: ["huggingface", "openai"]
-  summarization:
-    priority: ["anthropic", "openai", "huggingface"]
+  test_task:
+    priority: ["mock_openai", "mock_anthropic"]
+  fallback_task:
+    priority: ["mock_unhealthy", "mock_openai"]
+  no_provider_task:
+    priority: ["non_existent_provider"]
+  cinematic_content_generation: # New rule for cinematic_africa.py
+    priority: ["gemini_gen", "huggingface_gen", "colab_gen", "kaggle_gen", "runpod_gen"]
