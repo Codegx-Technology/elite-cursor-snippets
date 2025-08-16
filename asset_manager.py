@@ -3,9 +3,55 @@ import asyncio
 import aiohttp
 import hashlib
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
 import logging
 from config_loader import get_config
+
+# Use standard logging to avoid circular import with logging_setup
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+config = get_config()
+
+class LazyAsset:
+    """
+    Represents an asset that is loaded lazily (on demand).
+    When awaited, it triggers the actual download and returns the asset's local path.
+    """
+    def __init__(self, asset_manager: 'AssetManager', asset_id: str, url: str, expected_checksum: Optional[str] = None, version: str = "latest", signed_url: Optional[str] = None):
+        self._asset_manager = asset_manager
+        self._asset_id = asset_id
+        self._url = url
+        self._expected_checksum = expected_checksum
+        self._version = version
+        self._signed_url = signed_url
+        self._local_path: Optional[Path] = None
+        self._load_task: Optional[asyncio.Task] = None
+
+    async def load(self) -> Path:
+        """Triggers the actual download and returns the local path."""
+        if self._local_path:
+            logger.info(f"Lazy asset {self._asset_id} already loaded from {self._local_path}.")
+            return self._local_path
+        
+        if self._load_task is None:
+            logger.info(f"Initiating lazy load for asset {self._asset_id} from {self._url}.")
+            self._load_task = asyncio.create_task(
+                self._asset_manager._perform_get_asset(
+                    self._asset_id, self._url, self._expected_checksum, self._version, self._signed_url, is_lazy_load=True
+                )
+            )
+        
+        self._local_path = await self._load_task
+        return self._local_path
+
+    def __await__(self):
+        return self.load().__await__()
+
+    def __str__(self):
+        return f"LazyAsset(id={self._asset_id}, url={self._url}, loaded={self._local_path is not None})"
+
+    def __repr__(self):
+        return self.__str__()
 
 # Use standard logging to avoid circular import with logging_setup
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -81,24 +127,11 @@ class AssetManager:
                 hasher.update(chunk)
         return hasher.hexdigest()
 
-    async def get_asset(self, asset_id: str, url: str, expected_checksum: str = None, version: str = "latest", signed_url: Optional[str] = None, lazy_load: bool = False) -> Path:
+    async def _perform_get_asset(self, asset_id: str, url: str, expected_checksum: str = None, version: str = "latest", signed_url: Optional[str] = None, is_lazy_load: bool = False) -> Path:
         """
-        // [TASK]: Get an asset, prioritizing cache and handling downloads
-        // [GOAL]: Provide cached or newly downloaded assets with integrity checks
-        // [ELITE_CURSOR_SNIPPET]: aihandle
+        Internal method to perform the actual asset retrieval (from cache or download).
+        Used by get_asset and LazyAsset.
         """
-        # --- Sophisticated Lazy-Loading Logic ---
-        # This logic decides if an asset (especially a model) should be loaded immediately
-        # or only when truly needed by the processing pipeline.
-        # It might involve checking available memory, current load, and predicting future needs.
-        if lazy_load:
-            logger.info(f"Asset {asset_id} marked for lazy loading. Deferring download.")
-            # In a real scenario, you might return a placeholder path or a future/promise
-            # that resolves to the actual path when the asset is needed.
-            # For now, we'll just return a conceptual path and skip actual download.
-            # The actual download would be triggered by a separate 'load_lazy_asset' call.
-            return self.cache_dir / f"{asset_id}_{version}_{os.path.basename(url)}_LAZY"
-
         asset_filename = f"{asset_id}_{version}_{os.path.basename(url)}"
         local_path = self.cache_dir / asset_filename
 
@@ -119,7 +152,7 @@ class AssetManager:
         # Download if not in cache or checksum mismatch
         logger.info(f"Asset {asset_id} not in cache or checksum mismatch. Downloading...")
         start_time = asyncio.get_event_loop().time()
-        download_success = await self._download_asset(url, local_path)
+        download_success = await self._download_asset(url, local_path, signed_url) # Pass signed_url
         end_time = asyncio.get_event_loop().time()
         load_time = end_time - start_time
         logger.info(f"Asset {asset_id} downloaded in {load_time:.2f} seconds.")
@@ -130,15 +163,23 @@ class AssetManager:
                 if calculated_checksum != expected_checksum:
                     logger.error(f"❌ Checksum mismatch after download for {asset_id}. Deleting corrupted file.")
                     os.remove(local_path)
-                    # Assuming log_and_raise is defined elsewhere or needs to be added
-                    # log_and_raise(ValueError(f"Checksum mismatch for {asset_id} after download."), "Asset integrity compromised")
                     raise ValueError(f"Checksum mismatch for {asset_id} after download.") # Fallback if log_and_raise not defined
             logger.info(f"✅ Asset {asset_id} ready at: {local_path}")
             return local_path
         else:
-            # Assuming log_and_raise is defined elsewhere or needs to be added
-            # log_and_raise(IOError(f"Failed to download asset {asset_id} from {url}"), "Asset download failed")
-            raise IOError(f"Failed to download asset {asset_id} from {url}") # Fallback if log_and_raise not defined
+            raise IOError(f"Failed to download asset {asset_id} from {url}")
+
+    async def get_asset(self, asset_id: str, url: str, expected_checksum: str = None, version: str = "latest", signed_url: Optional[str] = None, lazy_load: bool = False) -> Path | LazyAsset:
+        """
+        // [TASK]: Get an asset, prioritizing cache and handling downloads
+        // [GOAL]: Provide cached or newly downloaded assets with integrity checks
+        // [ELITE_CURSOR_SNIPPET]: aihandle
+        """
+        if lazy_load:
+            logger.info(f"Asset {asset_id} marked for lazy loading. Returning LazyAsset object.")
+            return LazyAsset(self, asset_id, url, expected_checksum, version, signed_url)
+        
+        return await self._perform_get_asset(asset_id, url, expected_checksum, version, signed_url)
 
 # Example usage (conceptual)
 async def main():
