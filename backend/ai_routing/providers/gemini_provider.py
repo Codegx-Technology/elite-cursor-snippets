@@ -1,9 +1,4 @@
-import asyncio
-import logging
-from typing import Any, Dict
-from backend.ai_routing.providers.base_provider import BaseProvider
-# Assuming Google Generative AI SDK is available
-# import google.generativeai as genai
+import google.generativeai as genai
 
 logger = logging.getLogger(__name__)
 
@@ -19,31 +14,36 @@ class GeminiProvider(BaseProvider):
             logger.warning(f"GeminiProvider {self.name}: 'api_key' not configured.")
         
         # Initialize Gemini client
-        # if self.api_key:
-        #     genai.configure(api_key=self.api_key)
-        #     self.model = genai.GenerativeModel(self.model_name)
+        if self.api_key:
+            genai.configure(api_key=self.api_key)
+            self.model = genai.GenerativeModel(self.model_name)
+        else:
+            self.model = None
 
     async def process_request(self, task_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         logger.info(f"GeminiProvider {self.name}: Processing {task_type} request for model {self.model_name}.")
-        # Placeholder for actual Gemini API call
         try:
-            await asyncio.sleep(0.7) # Simulate latency
-            if not self.model_name or not self.api_key:
-                raise ValueError("Gemini model_name or API key not configured.")
+            if not self.model:
+                raise ValueError("Gemini model not initialized. API key or model name might be missing.")
             
-            # Example: Call Gemini model
-            # if task_type == "text_generation":
-            #     response = await self.model.generate_content_async(payload.get("prompt"))
-            #     text_result = response.text
-            # else:
-            #     raise ValueError(f"Unsupported task type for Gemini: {task_type}")
+            if task_type == "text_generation":
+                prompt = payload.get("prompt")
+                if not prompt:
+                    raise ValueError("Prompt is required for text generation.")
+                
+                # Use generate_content_async for async calls
+                response = await self.model.generate_content_async(prompt)
+                text_result = response.text
+                
+                response_data = {
+                    "status": "success",
+                    "provider": self.name,
+                    "task_type": task_type,
+                    "result": text_result
+                }
+            else:
+                raise ValueError(f"Unsupported task type for Gemini: {task_type}")
 
-            response_data = {
-                "status": "success",
-                "provider": self.name,
-                "task_type": task_type,
-                "result": f"Processed by Gemini {self.model_name} for {task_type}: {payload.get('prompt', 'N/A')}"
-            }
             logger.info(f"GeminiProvider {self.name}: Request processed successfully.")
             return response_data
         except Exception as e:
@@ -53,11 +53,13 @@ class GeminiProvider(BaseProvider):
     async def check_health(self) -> bool:
         logger.info(f"GeminiProvider {self.name}: Checking health for model {self.model_name}.")
         try:
-            await asyncio.sleep(0.25) # Simulate latency
-            if not self.model_name:
-                return False # Cannot check health without model name
-            # In a real scenario, try to list models or make a small API call
-            # genai.list_models()
+            if not self.model:
+                logger.warning(f"GeminiProvider {self.name}: Model not initialized. Cannot check health.")
+                return False
+            
+            # Attempt to list models as a lightweight health check
+            # This requires a configured API key
+            await genai.list_models()
             logger.info(f"GeminiProvider {self.name}: Health check successful.")
             return True
         except Exception as e:
