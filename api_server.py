@@ -150,6 +150,10 @@ async def get_current_locale(request: Request) -> str:
     # // [ELITE_CURSOR_SNIPPET]: aihandle
     return get_locale_from_request(request)
 
+# Define a key_func for authenticated users
+async def user_id_key_func(request: Request, current_user: dict = Depends(get_current_user)):
+    return str(current_user.get("user_id", request.client.host)) # Fallback to IP if user_id not found
+
 # --- Middleware ---
 
 
@@ -372,7 +376,7 @@ async def get_reconciliation_report(month: str, current_user: User = Depends(get
     return report
 
 @app.post("/generate_video")
-@RateLimiter(times=1, seconds=5)
+@RateLimiter(times=1, seconds=5, key_func=user_id_key_func)
 async def generate_video_endpoint(request_data: GenerateVideoRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant):
     audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_video.", extra={'user_id': current_user.get('user_id')})
     try:
@@ -460,7 +464,7 @@ async def generate_landing_page_endpoint(request_data: GenerateLandingPageReques
         raise HTTPException(status_code=500, detail=f"Landing page generation failed: {result.get('message', 'Unknown error')}")
 
 @app.post("/scan_alert")
-@RateLimiter(times=10, seconds=60)
+@RateLimiter(times=10, seconds=60, key_func=user_id_key_func)
 async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant):
     audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /scan_alert.", extra={'user_id': current_user.get('user_id')})
     try:
@@ -479,7 +483,7 @@ async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict
         raise HTTPException(status_code=500, detail=f"Scan alert failed: {result.get('message', 'Unknown error')}")
 
 @app.post("/crm_push_contact")
-@RateLimiter(times=5, seconds=60)
+@RateLimiter(times=5, seconds=60, key_func=user_id_key_func)
 async def crm_push_contact_endpoint(request_data: CRMPushContactRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant):
     audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /crm_push_contact.", extra={'user_id': current_user.get('user_id')})
     try:
