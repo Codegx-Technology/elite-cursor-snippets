@@ -1,31 +1,39 @@
+import os
+import json
 import logging
-from backend.ai_routing.router import Router
-from backend.ai_routing.providers.base_provider import BaseProvider
-from typing import List, Any
+from cloud_setup import configure_providers
+from typing import List, Any, Tuple # Import Tuple
+from backend.ai_routing.router import Router # Import Router for type hinting
 
 logger = logging.getLogger(__name__)
 
 class ProviderRegistry:
-    """
-    Manages the registration and access to AI service providers.
-    Acts as a bridge to the EnhancedModelRouter for dynamic routing.
-    """
     def __init__(self):
-        # Initialize the Router. This assumes router.py handles loading config and registering providers.
-        # For this context, we'll assume a default config path or that the router is already initialized globally.
-        # In a real application, the Router instance might be passed in or managed as a singleton.
-        self.router = Router(config_path="backend/ai_routing/config.yaml") # Using test_config for now
+        self.router, self.providers = configure_providers() # Get router and providers
+        self.log_file = os.getenv("PROVIDER_LOG_FILE", "provider_fallback.log")
+    
+    def list_providers(self) -> List[str]:
+        return [type(p).__name__ for p in self.providers]
+    
+    def log_failure(self, provider_name: str, error: Exception):
+        with open(self.log_file, "a") as f:
+            f.write(f"[{provider_name}] Failure: {str(error)}\n")
+    
+    async def execute(self, prompt: str, max_retries: int = 3) -> Any:
+        # Leverage the router's execute_with_fallback for DRY principle
+        logger.info(f"ProviderRegistry.execute: Routing request for prompt: '{prompt[:50]}...'")
+        try:
+            # The task_type here is implicitly "general_generation" or similar
+            # The payload will contain the prompt.
+            # The router's execute_with_fallback will handle all retries and fallbacks.
+            result = await self.router.execute_with_fallback(
+                task_type="general_generation", # Default task type for this interface
+                payload={"prompt": prompt}
+            )
+            return result
+        except Exception as e:
+            self.log_failure("ProviderRegistry.execute", e)
+            raise RuntimeError(f"ProviderRegistry.execute failed: {e}")
 
-    @property
-    def providers(self) -> List[BaseProvider]:
-        """Returns a list of all registered providers."""
-        return list(self.router.providers.values())
-
-    def log_failure(self, provider_name: str, exception: Exception):
-        """Logs a failure for a specific provider."""
-        logger.error(f"ProviderRegistry: Provider '{provider_name}' failed with exception: {exception}")
-        # In a real system, this might update provider health status or analytics.
-
-    async def route_request(self, task_type: str, payload: dict) -> dict:
-        """Routes a request through the router's fallback mechanism."""
-        return await self.router.execute_with_fallback(task_type, payload)
+# Singleton instance for notebook access
+registry = ProviderRegistry()
