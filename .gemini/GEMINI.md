@@ -13,6 +13,10 @@ This project uses a set of "elite-cursor-snippets" to streamline development and
 
 I will use these snippets in my workflow to be a more effective developer. I will pay special attention to the "Kenya-first" snippets to ensure that the project meets the specific needs of Kenyan users. I will also use the `Universal Prompt Dispatcher` (`autopickprefix`) to select the most appropriate snippet for each task.
 
+## UI Context
+
+**The primary enterprise-grade UI for Shujaa Studio is the React frontend located in the `frontend/` directory.** Gradio is a temporary or legacy UI that will be deprecated once the React frontend achieves full feature parity and stability. In future assessments or discussions regarding the UI/UX, my focus will be on the React frontend unless explicitly directed otherwise.
+
 ## My Contributions to Shujaa Studio
 
 Over our recent interactions, I have significantly contributed to enhancing the Shujaa Studio platform, focusing on intelligent AI orchestration, multi-provider integration, and cinematic content generation with a Kenya-first approach.
