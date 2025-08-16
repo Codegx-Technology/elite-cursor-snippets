@@ -5,29 +5,7 @@ from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
 from auth.user_models import User, Tenant
-from auth.jwt_utils import create_jwt
-from logging_setup import get_logger, get_audit_logger # Import get_audit_logger
-from config_loader import get_config
-
-logger = get_logger(__name__)
-audit_logger = get_audit_logger() # Get audit logger
-config = get_config()
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def get_password_hash(password):
-    """
-    // [TASK]: Hash a plain-text password
-    // [GOAL]: Securely store user passwords
-    """
-    return pwd_context.hash(password)
-
-def verify_password(plain_password, hashed_password):
-    """
-    // [TASK]: Verify a plain-text password against a hashed password
-    // [GOAL]: Authenticate user login attempts
-    """
-    return pwd_context.verify(plain_password, hashed_password)
+from auth.jwt_utils import create_jwt, hash_password, verify_password # Import hash_password and verify_password
 
 def get_user_by_username(db: Session, username: str):
     """
@@ -56,7 +34,7 @@ def create_user(db: Session, username: str, email: str, password: str, tenant_na
         audit_logger.warning(f"Registration failed: Email {email} already exists.", extra={'user_id': None})
         return None
 
-    hashed_password = get_password_hash(password)
+    hashed_password = hash_password(password)
     
     # Ensure tenant exists or create it
     tenant = db.query(Tenant).filter(Tenant.name == tenant_name).first()
