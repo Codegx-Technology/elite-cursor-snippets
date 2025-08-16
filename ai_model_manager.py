@@ -67,15 +67,33 @@ def init_hf_client():
 async def _load_local_llm_model():
     """
     // [TASK]: Load local LLM model on demand
-    // [GOAL]: Provide a local fallback for text generation
+    // [GOAL]: Provide a robust local fallback for text generation
     """
     global _local_llm_pipeline
     model_name = config.models.text_generation.local_fallback_path
-    if _local_llm_pipeline is None and model_name:
+    
+    if not model_name:
+        logger.warning("Local LLM model path not configured. Skipping local LLM loading.")
+        _local_llm_pipeline = None
+        return False # Indicate failure to load
+
+    if _local_llm_pipeline is None:
+        logger.info(f"Attempting to load local LLM pipeline for model: {model_name}")
         try:
-            logger.info(f"Attempting to load local LLM pipeline for model: {model_name}")
+            # Check if model path exists locally before attempting to load
+            if not os.path.exists(model_name):
+                logger.error(f"❌ Local LLM model path does not exist: {model_name}")
+                _local_llm_pipeline = None
+                return False
+
             def do_load():
+                # Use asset_manager to ensure model is downloaded/cached if needed
+                # This is conceptual, as pipeline() directly loads from path/HF Hub
+                # For true robustness, asset_manager.get_asset would be used here
+                # if models were managed as downloadable assets.
+                # For now, we assume model_name is a path or HF ID directly loadable by pipeline.
                 return pipeline("text-generation", model=model_name, device_map="auto")
+            
             loop = asyncio.get_running_loop()
             _local_llm_pipeline = await loop.run_in_executor(None, do_load)
             logger.info(f"✅ Local LLM pipeline loaded successfully for model: {model_name}")
@@ -87,15 +105,27 @@ async def _load_local_llm_model():
 async def _load_local_image_model():
     """
     // [TASK]: Load local image generation model on demand
-    // [GOAL]: Provide a local fallback for image generation
+    // [GOAL]: Provide a robust local fallback for image generation
     """
     global _local_image_pipeline
     model_name = config.models.image_generation.local_fallback_path
-    if _local_image_pipeline is None and model_name:
+    
+    if not model_name:
+        logger.warning("Local image generation model path not configured. Skipping local image model loading.")
+        _local_image_pipeline = None
+        return False
+
+    if _local_image_pipeline is None:
+        logger.info(f"Attempting to load local image generation pipeline for model: {model_name}")
         try:
-            logger.info(f"Attempting to load local image generation pipeline for model: {model_name}")
+            if not os.path.exists(model_name):
+                logger.error(f"❌ Local image generation model path does not exist: {model_name}")
+                _local_image_pipeline = None
+                return False
+
             def do_load():
                 return pipeline("text-to-image", model=model_name, device_map="auto")
+            
             loop = asyncio.get_running_loop()
             _local_image_pipeline = await loop.run_in_executor(None, do_load)
             logger.info(f"✅ Local image generation pipeline loaded successfully for model: {model_name}")
@@ -107,15 +137,27 @@ async def _load_local_image_model():
 async def _load_local_tts_model():
     """
     // [TASK]: Load local TTS model on demand
-    // [GOAL]: Provide a local fallback for text-to-speech
+    // [GOAL]: Provide a robust local fallback for text-to-speech
     """
     global _local_tts_pipeline
     model_name = config.models.voice_synthesis.local_fallback_path
-    if _local_tts_pipeline is None and model_name:
+    
+    if not model_name:
+        logger.warning("Local TTS model path not configured. Skipping local TTS loading.")
+        _local_tts_pipeline = None
+        return False
+
+    if _local_tts_pipeline is None:
+        logger.info(f"Attempting to load local TTS pipeline for model: {model_name}")
         try:
-            logger.info(f"Attempting to load local TTS pipeline for model: {model_name}")
+            if not os.path.exists(model_name):
+                logger.error(f"❌ Local TTS model path does not exist: {model_name}")
+                _local_tts_pipeline = None
+                return False
+
             def do_load():
                 return pipeline("text-to-speech", model=model_name, device_map="auto")
+            
             loop = asyncio.get_running_loop()
             _local_tts_pipeline = await loop.run_in_executor(None, do_load)
             logger.info(f"✅ Local TTS pipeline loaded successfully for model: {model_name}")
@@ -127,15 +169,27 @@ async def _load_local_tts_model():
 async def _load_local_stt_model():
     """
     // [TASK]: Load local STT model (e.g., Whisper) on demand
-    // [GOAL]: Provide a local fallback for speech-to-text
+    // [GOAL]: Provide a robust local fallback for speech-to-text
     """
     global _local_stt_pipeline
     model_name = config.models.speech_to_text.local_fallback_path
-    if _local_stt_pipeline is None and model_name:
+    
+    if not model_name:
+        logger.warning("Local STT model path not configured. Skipping local STT loading.")
+        _local_stt_pipeline = None
+        return False
+
+    if _local_stt_pipeline is None:
+        logger.info(f"Attempting to load local STT pipeline for model: {model_name}")
         try:
-            logger.info(f"Attempting to load local STT pipeline for model: {model_name}")
+            if not os.path.exists(model_name):
+                logger.error(f"❌ Local STT model path does not exist: {model_name}")
+                _local_stt_pipeline = None
+                return False
+
             def do_load():
                 return pipeline("automatic-speech-recognition", model=model_name, device_map="auto")
+            
             loop = asyncio.get_running_loop()
             _local_stt_pipeline = await loop.run_in_executor(None, do_load)
             logger.info(f"✅ Local STT pipeline loaded successfully for model: {model_name}")
