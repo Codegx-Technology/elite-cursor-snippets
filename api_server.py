@@ -29,6 +29,7 @@ import redis.asyncio as redis
 
 # J.1: Monitoring Integration
 from starlette_prometheus import PrometheusMiddleware, metrics
+from prometheus_client import Counter, Histogram # ADD THIS LINE
 from feature_flags import feature_flag_manager # Elite Cursor Snippet: feature_flag_import
 from chaos_utils import chaos_injector # Elite Cursor Snippet: chaos_injector_import
 from auth.tenancy import current_tenant
@@ -46,6 +47,22 @@ app = FastAPI(
     title=config.app.name,
     version=config.app.version,
     description="API for Shujaa Studio - Enterprise AI Video Generation"
+)
+
+# --- Prometheus Custom Metrics ---
+VIDEO_GENERATION_REQUESTS = Counter(
+    'video_generation_requests_total',
+    'Total number of video generation requests',
+    ['status'] # Label for success/failure
+)
+VIDEO_GENERATION_DURATION = Histogram(
+    'video_generation_duration_seconds',
+    'Duration of video generation requests in seconds',
+    ['status'] # Label for success/failure
+)
+VIDEO_GENERATION_FAILURES = Counter(
+    'video_generation_failures_total',
+    'Total number of failed video generation requests'
 )
 
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
@@ -384,36 +401,50 @@ async def get_reconciliation_report(month: str, current_user: User = Depends(get
 @app.post("/generate_video")
 @RateLimiter(times=1, seconds=5, key_func=user_id_key_func)
 async def generate_video_endpoint(request_data: GenerateVideoRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
-    audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_video.", user_id=current_user.get('user_id'), tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/generate_video", "request_data": request_data.dict()})
-    try:
-        enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="video_generation")
-    except BillingException as e:
-        raise HTTPException(status_code=403, detail=str(e))
+    start_time = time.time() # ADD THIS LINE
+    status_label = "failure" # Default status for metrics # ADD THIS LINE
+    try: # Wrap existing code in try-finally for metrics # ADD THIS LINE
+        audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_video.", user_id=current_user.get('user_id'), tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/generate_video", "request_data": request_data.dict()})
+        try:
+            enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="video_generation")
+        except BillingException as e:
+            status_label = "billing_failure" # ADD THIS LINE
+            raise HTTPException(status_code=403, detail=str(e))
 
-    if not request_data.prompt and not request_data.news_url and not request_data.script_file:
-        raise HTTPException(status_code=400, detail="Either 'prompt', 'news_url', or 'script_file' must be provided.")
+        if not request_data.prompt and not request_data.news_url and not request_data.script_file:
+            status_label = "validation_failure" # ADD THIS LINE
+            raise HTTPException(status_code=400, detail="Either 'prompt', 'news_url', or 'script_file' must be provided.")
 
-    input_type = "general_prompt"
-    input_data = request_data.prompt
-    if request_data.news_url:
-        input_type = "news_url"
-        input_data = request_data.news_url
-    elif request_data.script_file:
-        input_type = "script_file"
-        input_data = request_data.script_file
+        input_type = "general_prompt"
+        input_data = request_data.prompt
+        if request_data.news_url:
+            input_type = "news_url"
+            input_data = request_data.news_url
+        elif request_data.script_file:
+            input_type = "script_file"
+            input_data = request_data.script_file
 
-    user_preferences = {"upload_youtube": request_data.upload_youtube}
-    result = await orchestrator.run_pipeline(
-        input_type=input_type,
-        input_data=input_data,
-        user_preferences=user_preferences,
-        api_call=True
-    )
+        user_preferences = {"upload_youtube": request_data.upload_youtube}
+        result = await orchestrator.run_pipeline(
+            input_type=input_type,
+            input_data=input_data,
+            user_preferences=user_preferences,
+            api_call=True
+        )
 
-    if result.get("status") == "error":
-        raise HTTPException(status_code=500, detail=result.get("message"))
+        if result.get("status") == "error":
+            status_label = "pipeline_error" # ADD THIS LINE
+            raise HTTPException(status_code=500, detail=result.get("message"))
 
-    return result
+        status_label = "success" # ADD THIS LINE
+        return result
+    finally: # ADD THIS BLOCK
+        end_time = time.time()
+        duration = end_time - start_time
+        VIDEO_GENERATION_REQUESTS.labels(status=status_label).inc()
+        VIDEO_GENERATION_DURATION.labels(status=status_label).observe(duration)
+        if status_label != "success":
+            VIDEO_GENERATION_FAILURES.inc()
 
 @app.post("/batch_generate_video")
 async def batch_generate_video_endpoint(batch_request: BatchGenerateVideoRequest, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db), request: Request = None):
