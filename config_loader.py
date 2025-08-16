@@ -5,6 +5,10 @@ import boto3 # Elite Cursor Snippet: boto3_import
 from botocore.exceptions import ClientError # Elite Cursor Snippet: botocore_exception_import
 import logging
 
+# Import Vault and Kubernetes clients
+import hvac
+from kubernetes import client, config as k8s_config
+
 # Use standard logging here to avoid circular import with logging_setup
 logger = logging.getLogger(__name__)
 
@@ -62,13 +66,53 @@ class ConfigLoader:
             region_name = kwargs.get("region_name", os.environ.get("AWS_REGION", "us-east-1"))
             return self._get_secret_from_aws_secrets_manager(secret_path, region_name)
         elif secret_type == "hashicorp_vault":
-            logger.warning("HashiCorp Vault integration is conceptual. Implement actual Vault client here.")
-            # Example: return vault_client.read(secret_path)['data']['value']
-            raise NotImplementedError(f"HashiCorp Vault integration not implemented for {secret_path}")
+            logger.info(f"Attempting to retrieve secret '{secret_path}' from HashiCorp Vault.")
+            try:
+                # Conceptual Vault client initialization and secret retrieval
+                # In a real scenario, you'd get VAULT_ADDR and VAULT_TOKEN from env vars
+                # or a secure configuration.
+                vault_addr = os.getenv("VAULT_ADDR", "http://localhost:8200")
+                vault_token = os.getenv("VAULT_TOKEN", "mock_vault_token") # For conceptual testing
+
+                vault_client = hvac.Client(url=vault_addr, token=vault_token)
+                if not vault_client.is_authenticated():
+                    raise ValueError("Vault client not authenticated.")
+
+                # Assuming a KV v2 secret engine
+                read_response = vault_client.secrets.kv.v2.read_secret_version(
+                    path=secret_path.lstrip('/'), # Vault paths don't start with /
+                    mount_point=kwargs.get("mount_point", "secret") # Default mount point
+                )
+                secret_value = read_response['data']['data']['value'] # Assuming 'value' key
+                logger.info(f"Successfully loaded secret for {secret_path} from HashiCorp Vault.")
+                return secret_value
+            except Exception as e:
+                logger.error(f"Failed to retrieve secret '{secret_path}' from HashiCorp Vault: {e}")
+                raise
         elif secret_type == "kubernetes_secret":
-            logger.warning("Kubernetes Secret integration is conceptual. Implement actual K8s client here.")
-            # Example: return k8s_client.read_secret(secret_path)
-            raise NotImplementedError(f"Kubernetes Secret integration not implemented for {secret_path}")
+            logger.info(f"Attempting to retrieve secret '{secret_path}' from Kubernetes Secret.")
+            try:
+                # Conceptual Kubernetes client initialization and secret retrieval
+                # In a real scenario, you'd load K8s config from cluster or kubeconfig
+                k8s_config.load_kube_config() # Assumes kubeconfig is available
+                v1 = client.CoreV1Api()
+                
+                namespace = kwargs.get("namespace", "default")
+                secret_name = secret_path # Assuming secret_path is the secret name
+                key_in_secret = kwargs.get("key", "value") # Key within the K8s secret data
+
+                api_response = v1.read_namespaced_secret(name=secret_name, namespace=namespace)
+                
+                # Kubernetes secrets are base64 encoded
+                if api_response.data and key_in_secret in api_response.data:
+                    secret_value = base64.b64decode(api_response.data[key_in_secret]).decode('utf-8')
+                    logger.info(f"Successfully loaded secret for {secret_path} from Kubernetes Secret.")
+                    return secret_value
+                else:
+                    raise ValueError(f"Key '{key_in_secret}' not found in Kubernetes secret '{secret_name}' or secret data is empty.")
+            except Exception as e:
+                logger.error(f"Failed to retrieve secret '{secret_path}' from Kubernetes Secret: {e}")
+                raise
         else:
             raise ValueError(f"Unsupported secret type: {secret_type}")
 
