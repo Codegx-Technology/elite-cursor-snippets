@@ -441,7 +441,7 @@ async def batch_generate_video_endpoint(batch_request: BatchGenerateVideoRequest
             logger.exception(f"Error processing item in batch: {request_data.prompt}")
             return {"status": "error", "message": f"An unexpected error occurred: {e}", "request_prompt": request_data.prompt}
 
-    parallel_processor = ParallelProcessor()
+    parallel_processor = ParallelProcessor(max_workers=config.parallel_processing.max_workers)
     batch_results = await parallel_processor.run_parallel(items=batch_request.requests, worker_function=video_worker)
 
     successful_jobs = [res for res in batch_results if res.get("status") == "success"]

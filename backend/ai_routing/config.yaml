@@ -49,3 +49,6 @@ routing_rules:
     priority: ["non_existent_provider"]
   cinematic_content_generation: # New rule for cinematic_africa.py
     priority: ["gemini_gen", "huggingface_gen", "colab_gen", "kaggle_gen", "runpod_gen"]
+
+parallel_processing: # ADD THIS SECTION
+  max_workers: 4 # Default to 4, can be overridden
