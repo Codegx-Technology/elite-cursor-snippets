@@ -96,10 +96,16 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       description: 'Voice & music creation'
     },
     {
-      href: '/analytics',
-      icon: FaChartLine,
-      label: 'Usage Analytics',
-      description: 'View usage analytics'
+      href: '/admin/roles',
+      icon: FaKey,
+      label: 'Role Management',
+      description: 'Manage user roles'
+    },
+    {
+      href: '/admin/api-integration',
+      icon: FaPlug,
+      label: 'API & Integrations',
+      description: 'Manage API keys and integrations'
     },
     {
       href: '/team',
