@@ -5,7 +5,7 @@ import Card from '@/components/Card';
 import FormSelect from '@/components/FormSelect';
 import { FaVideo, FaPlay, FaStop, FaDownload, FaEye, FaFlag, FaMountain, FaMicrophone, FaExclamationTriangle } from 'react-icons/fa';
 import { useVideoGenerator } from '@/hooks/useVideoGenerator';
-import PromptSuggester from '@/components/Prompting/PromptSuggester';
+import PromptSuggester from '@/components/Video/PromptSuggester';
 import SimpleMode from '@/components/Video/SimpleMode';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
