@@ -54,6 +54,12 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       description: 'Super Admin Health'
     },
     {
+      href: '/admin/users',
+      icon: FaUsers,
+      label: 'User Management',
+      description: 'Manage users'
+    },
+    {
       href: '/video-generate',
       icon: FaVideo,
       label: 'Generate Video',

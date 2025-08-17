@@ -1,65 +1,35 @@
-// frontend/components/Admin/UserManagement.tsx (Conceptual)
+'use client';
 
-import React, { useState, useEffect } 'react';
-import axios from 'axios';
-import { useRouter } from 'next/router';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUserManagement, UserData } from '@/hooks/useUserManagement';
+import { FaSpinner, FaTrash, FaEdit, FaPlus } from 'react-icons/fa';
+import Card from '@/components/Card';
+import DeleteUserModal from './DeleteUserModal';
 
-interface UserData {
-  id: number;
-  username: string;
-  email: string;
-  role: string;
-  tenant_name: string; // Assuming tenant name is available
-  is_active: boolean;
-  // Add other user fields as needed
-}
+// [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
+// [CONTEXT]: Reusable user management component
+// [GOAL]: Provide a clean and reusable component for managing users
 
-const UserManagement: React.FC = () => {
-  const [users, setUsers] = useState<UserData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default function UserManagement() {
+  const { users, isLoading, error, deleteUser } = useUserManagement();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const router = useRouter();
-
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('jwt_token');
-    if (!token) {
-      router.push('/login');
-      return {};
-    }
-    return { Authorization: `Bearer ${token}` };
-  };
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const headers = getAuthHeaders();
-        if (!headers.Authorization) return;
-
-        // Conceptual API endpoint for fetching all users (admin only)
-        const response = await axios.get('http://localhost:8000/admin/users', { headers });
-        setUsers(response.data);
-
-      } catch (err: any) {
-        if (err.response && err.response.data && err.response.data.detail) {
-          setError(err.response.data.detail);
-        } else {
-          setError('Failed to load users. Please ensure you have admin privileges.');
-        }
-        console.error('User fetch error:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUsers();
-  }, []);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    // Implement client-side filtering or trigger API call with search term
+  };
+
+  const openDeleteModal = (user: UserData) => {
+    setSelectedUser(user);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteUser = async (id: number) => {
+    await deleteUser(id);
+    setShowDeleteModal(false);
   };
 
   const filteredUsers = users.filter(user =>
@@ -69,16 +39,18 @@ const UserManagement: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="elite-container my-10 text-center">
-        <div className="loading-spinner mx-auto mb-4"></div>
-        <p className="text-soft-text">Loading users...</p>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <FaSpinner className="w-8 h-8 text-green-600 animate-spin mx-auto mb-4" />
+          <span className="text-gray-600 font-medium">Loading users...</span>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="elite-container my-10 text-center text-red-500">
+      <div className="text-red-500 text-center">
         <p>Error: {error}</p>
       </div>
     );
@@ -86,9 +58,11 @@ const UserManagement: React.FC = () => {
 
   return (
     <div className="elite-container my-10">
+      <DeleteUserModal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} onDelete={handleDeleteUser} user={selectedUser} />
+
       <h1 className="section-title text-center mb-8">User Management</h1>
 
-      <div className="elite-card p-6 mb-6">
+      <Card className="p-6 mb-6">
         <div className="flex justify-between items-center mb-4">
           <input
             type="text"
@@ -97,8 +71,9 @@ const UserManagement: React.FC = () => {
             value={searchTerm}
             onChange={handleSearch}
           />
-          <button onClick={() => router.push('/admin/users/create')} className="btn-primary px-4 py-2 rounded-lg">
-            Create New User
+          <button onClick={() => router.push('/admin/users/create')} className="btn-primary px-4 py-2 rounded-lg flex items-center space-x-2">
+            <FaPlus />
+            <span>Create New User</span>
           </button>
         </div>
 
@@ -132,8 +107,12 @@ const UserManagement: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <button onClick={() => router.push(`/admin/users/${user.id}/edit`)} className="text-blue-600 hover:text-blue-900 text-sm mr-2">Edit</button>
-                      <button onClick={() => alert(`Delete user ${user.username}`)} className="text-red-600 hover:text-red-900 text-sm">Delete</button>
+                      <button onClick={() => router.push(`/admin/users/${user.id}/edit`)} className="text-blue-600 hover:text-blue-900 text-sm mr-2">
+                        <FaEdit />
+                      </button>
+                      <button onClick={() => openDeleteModal(user)} className="text-red-600 hover:text-red-900 text-sm">
+                        <FaTrash />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -141,9 +120,7 @@ const UserManagement: React.FC = () => {
             </table>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
-};
-
-export default UserManagement;
+}
