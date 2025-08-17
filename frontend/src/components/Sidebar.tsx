@@ -104,6 +104,24 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       icon: FaCog,
       label: 'Settings',
       description: 'Preferences & config'
+    },
+    {
+      href: '/settings/local-models',
+      icon: FaDownload,
+      label: 'Local Models',
+      description: 'Manage local models'
+    },
+    {
+      href: '/settings/storage-management',
+      icon: FaBox,
+      label: 'Storage Management',
+      description: 'Manage storage'
+    },
+    {
+      href: '/profile',
+      icon: FaUsers,
+      label: 'Profile',
+      description: 'Manage your profile'
     }
   ];
 

@@ -1,99 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useRouter } from 'next/navigation';
 
-interface StorageInfo {
-  total_space_gb: number;
-  used_space_gb: number;
-  free_space_gb: number;
-  cache_size_gb: number;
-  project_data_size_gb: number;
-  log_data_size_gb: number;
-}
+import { useStorageManagement } from '@/hooks/useStorageManagement';
+import { FaSpinner } from 'react-icons/fa';
 
-const StorageManagementPage: React.FC = () => { // Renamed to StorageManagementPage
-  const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+// [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
+// [CONTEXT]: Reusable storage management component
+// [GOAL]: Provide a clean and reusable component for managing storage
 
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('jwt_token');
-    if (!token) {
-      router.push('/login');
-      return {};
-    }
-    return { Authorization: `Bearer ${token}` };
-  };
-
-  useEffect(() => {
-    const fetchStorageInfo = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const headers = getAuthHeaders();
-        if (!headers.Authorization) return;
-
-        // Conceptual API endpoint for fetching storage information
-        const response = await axios.get('http://localhost:8000/storage/info', { headers });
-        setStorageInfo(response.data);
-
-      } catch (err: any) {
-        if (err.response && err.response.data && err.response.data.detail) {
-          setError(err.response.data.detail);
-        } else {
-          setError('Failed to load storage information. Please try again.');
-        }
-        console.error('Storage info fetch error:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchStorageInfo();
-  }, []);
-
-  const handleClearCache = async () => {
-    if (!confirm('Are you sure you want to clear the cache? This cannot be undone.')) return;
-
-    setIsLoading(true);
-    setError(null);
-    try {
-      const headers = getAuthHeaders();
-      if (!headers.Authorization) return;
-
-      // Conceptual API endpoint to clear cache
-      await axios.post('http://localhost:8000/storage/clear-cache', {}, { headers });
-      alert('Cache cleared successfully!');
-      // Refetch storage info to update display
-      await fetchStorageInfo();
-    } catch (err: any) {
-      setError('Failed to clear cache.');
-      console.error('Clear cache error:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+export default function StorageManagementPage() {
+  const { storageInfo, isLoading, error, clearCache } = useStorageManagement();
 
   if (isLoading) {
     return (
-      <div className="elite-container my-10 text-center">
-        <div className="loading-spinner mx-auto mb-4"></div>
-        <p className="text-soft-text">Loading storage information...</p>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <FaSpinner className="w-8 h-8 text-green-600 animate-spin mx-auto mb-4" />
+          <span className="text-gray-600 font-medium">Loading storage information...</span>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="elite-container my-10 text-center text-red-500">
+      <div className="text-red-500 text-center">
         <p>Error: {error}</p>
       </div>
     );
   }
 
   if (!storageInfo) {
-    return <div className="elite-container my-10 text-center text-soft-text">No storage information available.</div>;
+    return <div className="text-center text-soft-text">No storage information available.</div>;
   }
 
   const usedPercentage = (storageInfo.used_space_gb / storageInfo.total_space_gb) * 100;
@@ -104,7 +40,7 @@ const StorageManagementPage: React.FC = () => { // Renamed to StorageManagementP
 
       <div className="elite-card p-8 max-w-2xl mx-auto my-10 rounded-xl shadow-lg">
         <h3 className="section-subtitle mb-4">Storage Overview</h3>
-        
+
         <div className="mb-4">
           <p className="text-soft-text text-sm mb-2">Total Space: <span className="font-semibold text-charcoal">{storageInfo.total_space_gb.toFixed(2)} GB</span></p>
           <p className="text-soft-text text-sm mb-2">Used Space: <span className="font-semibold text-charcoal">{storageInfo.used_space_gb.toFixed(2)} GB</span></p>
@@ -112,9 +48,9 @@ const StorageManagementPage: React.FC = () => { // Renamed to StorageManagementP
         </div>
 
         <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
-          <div 
-            className="bg-primary-gradient h-4 rounded-full" 
-            style={{ width: `${usedPercentage}%` }} 
+          <div
+            className="bg-primary-gradient h-4 rounded-full"
+            style={{ width: `${usedPercentage}%` }}
           ></div>
         </div>
         <p className="text-soft-text text-sm text-right mb-6">{usedPercentage.toFixed(1)}% Used</p>
@@ -127,9 +63,9 @@ const StorageManagementPage: React.FC = () => { // Renamed to StorageManagementP
         </ul>
 
         <div className="flex justify-center">
-          <button 
-            onClick={handleClearCache} 
-            className="btn-primary px-6 py-3 rounded-lg text-white font-semibold"
+          <button
+            onClick={clearCache}
+            className="btn-danger px-6 py-3 rounded-lg text-white font-semibold"
           >
             Clear Cache
           </button>
@@ -137,6 +73,4 @@ const StorageManagementPage: React.FC = () => { // Renamed to StorageManagementP
       </div>
     </div>
   );
-};
-
-export default StorageManagementPage; // Export as default for page component
+}

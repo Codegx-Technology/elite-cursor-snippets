@@ -1,8 +1,8 @@
-// frontend/components/Auth/LoginForm.tsx (Conceptual)
 
-import React, { useState } from 'react';
-import axios from 'axios'; // Assuming axios for API calls
-import { useRouter } from 'next/router'; // Assuming Next.js router
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { apiClient } from '@/lib/api';
+import { FaSpinner } from 'react-icons/fa';
 
 const LoginForm: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -17,25 +17,16 @@ const LoginForm: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8000/token', 
-        new URLSearchParams({ username, password }), // Form URL-encoded data
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        }
-      );
+      const response = await apiClient.login(username, password);
 
-      const { access_token } = response.data;
-      localStorage.setItem('jwt_token', access_token); // Store token securely
-      router.push('/dashboard'); // Redirect to dashboard
-
-    } catch (err: any) {
-      if (err.response && err.response.data && err.response.data.detail) {
-        setError(err.response.data.detail);
-      } else {
-        setError('An unexpected error occurred. Please try again.');
+      if (response.error) {
+        setError(response.error);
+      } else if (response.data) {
+        localStorage.setItem('jwt_token', response.data.access_token);
+        router.push('/dashboard');
       }
+    } catch (err: any) {
+      setError('An unexpected error occurred. Please try again.');
       console.error('Login error:', err);
     } finally {
       setIsLoading(false);
@@ -75,7 +66,7 @@ const LoginForm: React.FC = () => {
           disabled={isLoading}
         >
           {isLoading ? (
-            <div className="loading-spinner mr-2"></div> // Conceptual spinner
+            <FaSpinner className="animate-spin mr-2" />
           ) : (
             'Login'
           )}

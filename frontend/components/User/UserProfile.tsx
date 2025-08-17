@@ -1,122 +1,59 @@
-// frontend/components/User/UserProfile.tsx (Conceptual)
 
-import React, { useState, useEffect } 'react';
-import axios from 'axios';
-import { useRouter } from 'next/router';
+import { useState, useEffect } from 'react';
+import { useUserProfile, UserProfileData } from '@/hooks/useUserProfile';
+import { FaSpinner } from 'react-icons/fa';
 
-interface UserProfileData {
-  username: string;
-  email: string;
-  full_name?: string;
-  bio?: string;
-  // Add other profile fields as needed
-}
+// [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
+// [CONTEXT]: Reusable user profile component
+// [GOAL]: Provide a clean and reusable component for displaying and updating user profiles
 
-const UserProfile: React.FC = () => {
-  const [profile, setProfile] = useState<UserProfileData | null>(null);
+export default function UserProfile() {
+  const { profile, isLoading, isSaving, error, successMessage, updateProfile } = useUserProfile();
   const [fullName, setFullName] = useState('');
   const [bio, setBio] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const router = useRouter();
-
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('jwt_token');
-    if (!token) {
-      router.push('/login');
-      return {};
-    }
-    return { Authorization: `Bearer ${token}` };
-  };
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const headers = getAuthHeaders();
-        if (!headers.Authorization) return;
-
-        const response = await axios.get('http://localhost:8000/users/me', { headers });
-        setProfile(response.data);
-        setFullName(response.data.full_name || '');
-        setBio(response.data.bio || '');
-
-      } catch (err: any) {
-        if (err.response && err.response.data && err.response.data.detail) {
-          setError(err.response.data.detail);
-        } else {
-          setError('Failed to load profile. Please try again.');
-        }
-        console.error('Profile fetch error:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, []);
+    if (profile) {
+      setFullName(profile.full_name || '');
+      setBio(profile.bio || '');
+    }
+  }, [profile]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
-    setError(null);
-    setSuccessMessage(null);
-
-    try {
-      const headers = getAuthHeaders();
-      if (!headers.Authorization) return;
-
-      const updateData: { full_name?: string; bio?: string } = {};
-      if (fullName !== (profile?.full_name || '')) {
-        updateData.full_name = fullName;
-      }
-      if (bio !== (profile?.bio || '')) {
-        updateData.bio = bio;
-      }
-
-      if (Object.keys(updateData).length === 0) {
-        setSuccessMessage('No changes to save.');
-        return;
-      }
-
-      const response = await axios.put('http://localhost:8000/users/me', updateData, { headers });
-      setProfile(response.data); // Update local state with new profile
-      setSuccessMessage('Profile updated successfully!');
-
-    } catch (err: any) {
-      if (err.response && err.response.data && err.response.data.detail) {
-        setError(err.response.data.detail);
-      } else {
-        setError('An unexpected error occurred while saving. Please try again.');
-      }
-      console.error('Profile save error:', err);
-    } finally {
-      setIsSaving(false);
+    const data: Partial<UserProfileData> = {};
+    if (fullName !== (profile?.full_name || '')) {
+      data.full_name = fullName;
+    }
+    if (bio !== (profile?.bio || '')) {
+      data.bio = bio;
+    }
+    if (Object.keys(data).length > 0) {
+      await updateProfile(data);
     }
   };
 
   if (isLoading) {
     return (
-      <div className="elite-container my-10 text-center">
-        <div className="loading-spinner mx-auto mb-4"></div>
-        <p className="text-soft-text">Loading profile...</p>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <FaSpinner className="w-8 h-8 text-green-600 animate-spin mx-auto mb-4" />
+          <span className="text-gray-600 font-medium">Loading profile...</span>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="elite-container my-10 text-center text-red-500">
+      <div className="text-red-500 text-center">
         <p>Error: {error}</p>
       </div>
     );
   }
 
   if (!profile) {
-    return <div className="elite-container my-10 text-center text-soft-text">No profile data available.</div>;
+    return <div className="text-center text-soft-text">No profile data available.</div>;
   }
 
   return (
@@ -125,7 +62,7 @@ const UserProfile: React.FC = () => {
       <form onSubmit={handleSave}>
         {successMessage && <p className="text-green-500 text-sm mb-4">{successMessage}</p>}
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-        
+
         <div className="mb-4">
           <label htmlFor="username" className="block text-soft-text text-sm font-medium mb-2">Username</label>
           <input
@@ -133,7 +70,7 @@ const UserProfile: React.FC = () => {
             id="username"
             className="form-input w-full p-3 rounded-lg bg-gray-100 cursor-not-allowed"
             value={profile.username}
-            disabled // Username is not editable
+            disabled
           />
         </div>
         <div className="mb-4">
@@ -143,7 +80,7 @@ const UserProfile: React.FC = () => {
             id="email"
             className="form-input w-full p-3 rounded-lg bg-gray-100 cursor-not-allowed"
             value={profile.email}
-            disabled // Email is not editable
+            disabled
           />
         </div>
         <div className="mb-4">
@@ -171,7 +108,7 @@ const UserProfile: React.FC = () => {
           disabled={isSaving}
         >
           {isSaving ? (
-            <div className="loading-spinner mr-2"></div>
+            <FaSpinner className="animate-spin mr-2" />
           ) : (
             'Save Changes'
           )}
@@ -179,6 +116,4 @@ const UserProfile: React.FC = () => {
       </form>
     </div>
   );
-};
-
-export default UserProfile;
+}
