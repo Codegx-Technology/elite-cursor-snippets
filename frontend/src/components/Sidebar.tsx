@@ -16,7 +16,9 @@ import {
   FaGlobe,
   FaCreditCard,
   FaNewspaper,
-  FaShieldAlt
+  FaShieldAlt,
+  FaDownload,
+  FaBox
 } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean
