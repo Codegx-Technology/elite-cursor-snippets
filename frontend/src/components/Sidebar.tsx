@@ -60,6 +60,12 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       description: 'Manage users'
     },
     {
+      href: '/admin/roles',
+      icon: FaKey,
+      label: 'Role Management',
+      description: 'Manage user roles'
+    },
+    {
       href: '/video-generate',
       icon: FaVideo,
       label: 'Generate Video',
@@ -90,10 +96,16 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       description: 'Voice & music creation'
     },
     {
+      href: '/admin/roles',
+      icon: FaKey,
+      label: 'Role Management',
+      description: 'Manage user roles'
+    },
+    {
       href: '/analytics',
       icon: FaChartLine,
-      label: 'Analytics',
-      description: 'Performance insights'
+      label: 'Usage Analytics',
+      description: 'View usage analytics'
     },
     {
       href: '/team',
