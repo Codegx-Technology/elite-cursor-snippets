@@ -96,12 +96,6 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       description: 'Voice & music creation'
     },
     {
-      href: '/admin/roles',
-      icon: FaKey,
-      label: 'Role Management',
-      description: 'Manage user roles'
-    },
-    {
       href: '/analytics',
       icon: FaChartLine,
       label: 'Usage Analytics',
