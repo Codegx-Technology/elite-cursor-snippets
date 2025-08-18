@@ -24,12 +24,18 @@ from config_loader import get_config
 from utils.parallel_processing import ParallelProcessor # Import ParallelProcessor
 from error_utils import log_and_raise, retry_on_exception
 
+<<<<<<< HEAD
+import logging
+from dotenv import load_dotenv
+
 # Use standard logging to avoid circular import with logging_setup
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
 load_dotenv()
 
 config = get_config()
+HF_TOKEN = config.api_keys.huggingface
 
 gpu_integration = ShujaaGPUIntegration()
 gpu_manager = HybridGPUManager()

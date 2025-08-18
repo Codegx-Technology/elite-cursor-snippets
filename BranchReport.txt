@@ -1,0 +1,21 @@
+﻿=== Main repo: local branches (tracking) ===
+* feature/orchestrator-small-steps c8f6b93 [origin/feature/orchestrator-small-steps] chore(dev): add models status reporter and update workspace metadata
+  main                             b9e885d [origin/main] Merge pull request #3 from Codegx-Technology/feature/orchestrator-small-steps
+
+=== Main repo: origin branches (last commit) ===
+origin/feature/orchestrator-small-steps | 2025-08-12 | Peter | chore(dev): add models status reporter and update workspace metadata
+origin/UI | 2025-08-12 | Peter | feat: Add initial backend and frontend structures and strategy proposal
+origin/feat/shujaa-ui | 2025-08-12 | Peter | DOCS: Document frontend testing setup issues
+origin/main | 2025-08-10 | Peter Oduor Oluoch | Merge pull request #3 from Codegx-Technology/feature/orchestrator-small-steps
+origin | 2025-08-10 | Peter Oduor Oluoch | Merge pull request #3 from Codegx-Technology/feature/orchestrator-small-steps
+
+=== ShujaaStudio: local branches (tracking) ===
+* UI                               a2d8cda [origin/UI] CHORE: Remove self-referential ShujaaStudio submodule
+  feature/orchestrator-small-steps 7083abc [origin/feature/orchestrator-small-steps: behind 1] feat: Enhance model check script with memory summary and size calculations
+  main                             160e7d9 [origin/main: behind 19] feat: Integrate HF login, runtime detection, and refined YouTube auth
+
+=== ShujaaStudio: origin branches (last commit) ===
+origin/feature/orchestrator-small-steps | 2025-08-12 | Peter | chore(dev): add models status reporter and update workspace metadata
+origin/UI | 2025-08-12 | Peter | CHORE: Remove self-referential ShujaaStudio submodule
+origin/main | 2025-08-10 | Peter Oduor Oluoch | Merge pull request #3 from Codegx-Technology/feature/orchestrator-small-steps
+origin | 2025-08-10 | Peter Oduor Oluoch | Merge pull request #3 from Codegx-Technology/feature/orchestrator-small-steps

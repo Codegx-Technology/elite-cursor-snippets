@@ -158,8 +158,10 @@ export interface Project {
   name: string;
   description?: string;
   type: 'video' | 'image' | 'audio';
+  status: string;
   created_at: string;
   updated_at: string;
+  items_count: number;
 }
 
 export interface GalleryItem {
@@ -178,6 +180,17 @@ export interface UserData {
   role: string;
   tenant_name: string;
   is_active: boolean;
+}
+
+export interface Asset {
+  id: string;
+  name: string;
+  type: 'image' | 'audio' | 'model';
+  url: string;
+  thumbnail_url?: string;
+  size: number;
+  uploaded_at: string;
+  usage_count: number;
 }
 
 class ApiClient {
@@ -456,6 +469,31 @@ class ApiClient {
 
   async deleteUser(id: number): Promise<ApiResponse<{ success: boolean }>> {
     return this.request(`/api/users/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Assets
+  async getAssets(page: number, limit: number, type?: string): Promise<ApiResponse<{ assets: Asset[], pages: number, total: number }>> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    if (type) {
+      params.append('type', type);
+    }
+    return this.request(`/api/assets?${params.toString()}`);
+  }
+
+  async uploadAsset(formData: FormData): Promise<ApiResponse<Asset>> {
+    return this.request('/api/assets', {
+      method: 'POST',
+      body: formData,
+    });
+  }
+
+  async deleteAsset(id: string): Promise<ApiResponse<{ success: boolean }>> {
+    return this.request(`/api/assets/${id}`, {
       method: 'DELETE',
     });
   }

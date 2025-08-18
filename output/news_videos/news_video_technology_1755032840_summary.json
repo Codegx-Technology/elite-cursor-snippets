@@ -1,0 +1,85 @@
+{
+  "video_id": "news_video_technology_1755032840",
+  "title": "Kenya News: Kenya Launches New Tech Innovation Hub in Nairobi",
+  "duration": 30,
+  "category": "Technology",
+  "location": "Nairobi",
+  "scenes_count": 4,
+  "generation_method": "HF_API_PLACEHOLDER",
+  "kenya_first_elements": {
+    "cultural_authenticity": true,
+    "swahili_integration": true,
+    "local_landmarks": true,
+    "community_focus": true
+  },
+  "technical_specs": {
+    "resolution": [
+      1920,
+      1080
+    ],
+    "fps": 24,
+    "format": "mp4",
+    "scenes": 4
+  },
+  "assets": [
+    {
+      "scene_id": "scene_1",
+      "image_prompt": "Dynamic news intro with Kenya flag and Nairobi landmark, modern Nairobi skyline with Uhuru Park, young Kenyan tech entrepreneurs in modern office, high quality, professional photography, vibrant colors, authentic African setting",
+      "audio_script": "Habari za haraka from Kenya! Kenya Launches New Tech Innovation Hub in Nairobi.",
+      "visual_file": "scene_1_1755032840.png",
+      "audio_file": "scene_1_1755032840.wav",
+      "duration": 7.5,
+      "generated_at": "2025-08-13T00:07:20.289174"
+    },
+    {
+      "scene_id": "scene_2",
+      "image_prompt": "Close-up shots related to technology in Kenya, modern Nairobi skyline with Uhuru Park, young Kenyan tech entrepreneurs in modern office, high quality, professional photography, vibrant colors, authentic African setting",
+      "audio_script": "Kenya has officially launched a state-of-the-art technology innovation hub in Nairobi, aimed at supporting local startups and fostering technological advancement across East Africa",
+      "visual_file": "scene_2_1755032840.png",
+      "audio_file": "scene_2_1755032840.wav",
+      "duration": 7.5,
+      "generated_at": "2025-08-13T00:07:20.289495"
+    },
+    {
+      "scene_id": "scene_3",
+      "image_prompt": "Action shots showing the impact in Nairobi, modern Nairobi skyline with Uhuru Park, young Kenyan tech entrepreneurs in modern office, high quality, professional photography, vibrant colors, authentic African setting",
+      "audio_script": "The hub will provide resources, mentorship, and funding opportunities for young entrepreneurs.",
+      "visual_file": "scene_3_1755032840.png",
+      "audio_file": "scene_3_1755032840.wav",
+      "duration": 7.5,
+      "generated_at": "2025-08-13T00:07:20.289855"
+    },
+    {
+      "scene_id": "scene_4",
+      "image_prompt": "Inspiring montage of Kenya's achievements and future potential, modern Nairobi skyline with Uhuru Park, young Kenyan tech entrepreneurs in modern office, high quality, professional photography, vibrant colors, authentic African setting",
+      "audio_script": "Kenya continues to lead in technology. Endelea kutufuata for more updates! Hongera Kenya!",
+      "visual_file": "scene_4_1755032840.png",
+      "audio_file": "scene_4_1755032840.wav",
+      "duration": 7.5,
+      "generated_at": "2025-08-13T00:07:20.290088"
+    }
+  ],
+  "metadata": {
+    "source_article": {
+      "headline": "Kenya Launches New Tech Innovation Hub in Nairobi",
+      "summary": "Kenya has officially launched a state-of-the-art technology innovation hub in Nairobi, aimed at supporting local startups and fostering technological advancement across East Africa. The hub will provide resources, mentorship, and funding opportunities for young entrepreneurs.",
+      "category": "Technology",
+      "location": "Nairobi",
+      "timestamp": "2025-08-13T00:07:19.286223",
+      "source": "Kenya Broadcasting Corporation",
+      "keywords": [
+        "technology",
+        "innovation",
+        "startups",
+        "Nairobi",
+        "East Africa"
+      ]
+    },
+    "generated_at": "2025-08-13T00:07:20.289101",
+    "kenya_first": true,
+    "language": "English with Swahili elements",
+    "target_audience": "General Kenyan audience"
+  },
+  "generated_at": "2025-08-13T00:07:20.290221",
+  "processing_time": 1.0042524337768555
+}
