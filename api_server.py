@@ -137,6 +137,13 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     bio: Optional[str] = None
 
+
+class AnalyticsData(BaseModel):
+    overview: dict
+    usage_trends: List[dict]
+    popular_content: List[dict]
+    performance_metrics: dict
+
 # --- Dependency Functions ---
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db), request: Request = None):
@@ -397,6 +404,39 @@ async def get_reconciliation_report(month: str, current_user: User = Depends(get
     if not report:
         raise HTTPException(status_code=404, detail="Reconciliation report not found for specified month.")
     return report
+
+
+@app.get("/api/analytics")
+async def get_analytics_data(timeRange: str = "30d"):
+    # TODO: Replace with real data from a database or analytics service
+    return {
+        "overview": {
+            "total_videos": 1250,
+            "total_images": 8345,
+            "total_audio": 3210,
+            "total_views": 1200000,
+            "total_downloads": 780
+        },
+        "usage_trends": [
+            {"date": "2025-08-01", "videos": 20, "images": 150, "audio": 50},
+            {"date": "2025-08-02", "videos": 25, "images": 160, "audio": 55},
+            {"date": "2025-08-03", "videos": 30, "images": 170, "audio": 60},
+            {"date": "2025-08-04", "videos": 28, "images": 180, "audio": 65},
+            {"date": "2025-08-05", "videos": 35, "images": 190, "audio": 70},
+            {"date": "2025-08-06", "videos": 40, "images": 200, "audio": 75},
+            {"date": "2025-08-07", "videos": 45, "images": 210, "audio": 80},
+        ],
+        "popular_content": [
+            {"id": "1", "title": "Kenya Wildlife", "type": "video", "views": 1500, "downloads": 300},
+            {"id": "2", "title": "Nairobi Skyline", "type": "image", "views": 2500, "downloads": 500},
+            {"id": "3", "title": "Maasai Mara Beat", "type": "audio", "views": 3500, "downloads": 700},
+        ],
+        "performance_metrics": {
+            "avg_generation_time": 45,
+            "success_rate": 0.95,
+            "user_satisfaction": 4.8
+        }
+    }
 
 @app.post("/generate_video")
 @RateLimiter(times=1, seconds=5, key_func=user_id_key_func)

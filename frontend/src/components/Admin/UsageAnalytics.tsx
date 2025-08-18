@@ -3,6 +3,16 @@
 import { useUsageAnalytics } from '@/hooks/useUsageAnalytics';
 import { FaSpinner } from 'react-icons/fa';
 import Card from '@/components/Card';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Reusable usage analytics component
@@ -41,21 +51,32 @@ export default function UsageAnalytics() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="p-6">
           <h3 className="section-subtitle mb-2">Total Videos Generated</h3>
-          <p className="text-2xl font-bold">{analytics.total_videos_generated}</p>
+          <p className="text-2xl font-bold">{analytics.overview.total_videos}</p>
         </Card>
         <Card className="p-6">
           <h3 className="section-subtitle mb-2">Total Images Generated</h3>
-          <p className="text-2xl font-bold">{analytics.total_images_generated}</p>
+          <p className="text-2xl font-bold">{analytics.overview.total_images}</p>
         </Card>
         <Card className="p-6">
           <h3 className="section-subtitle mb-2">Total Audio Generated</h3>
-          <p className="text-2xl font-bold">{analytics.total_audio_generated}</p>
+          <p className="text-2xl font-bold">{analytics.overview.total_audio}</p>
         </Card>
       </div>
 
       <Card className="p-6 mt-6">
         <h3 className="section-subtitle mb-4">Daily Usage</h3>
-        {/* Charts will go here */}
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={analytics.usage_trends}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="videos" fill="#8884d8" />
+            <Bar dataKey="images" fill="#82ca9d" />
+            <Bar dataKey="audio" fill="#ffc658" />
+          </BarChart>
+        </ResponsiveContainer>
       </Card>
     </div>
   );
