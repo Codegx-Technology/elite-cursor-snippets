@@ -15,6 +15,7 @@ interface FormSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> 
   helperText?: string;
   variant?: 'default' | 'cultural' | 'elite';
   placeholder?: string;
+  labelClassName?: string;
 }
 
 export default function FormSelect({
@@ -25,6 +26,7 @@ export default function FormSelect({
   helperText,
   variant = 'default',
   placeholder = 'Select an option...',
+  labelClassName,
   ...props
 }: FormSelectProps) {
   const [isFocused, setIsFocused] = useState(false);
@@ -35,11 +37,8 @@ export default function FormSelect({
     elite: 'form-select border-purple-300 focus:border-purple-500 focus:ring-purple-200'
   };
 
-  const labelClasses = `block text-sm font-medium mb-2 transition-colors duration-200 ${
-    error ? 'text-red-600' :
-    isFocused ? 'text-green-600' :
-    'text-gray-700'
-  }`;
+  const defaultLabelColor = error ? 'text-red-600' : isFocused ? 'text-green-600' : 'text-gray-700';
+  const labelClasses = `${labelClassName ? labelClassName : defaultLabelColor} block text-sm font-medium mb-2 transition-colors duration-200`;
 
   const selectClasses = `${variantClasses[variant]} w-full appearance-none ${
     error ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''

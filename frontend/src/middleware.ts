@@ -6,7 +6,8 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   if (process.env.NODE_ENV !== 'production') {
     const url = request.nextUrl.clone();
-    if (url.hostname === '127.0.0.1') {
+    const loopbackHosts = new Set(['127.0.0.1', '::1', '0.0.0.0']);
+    if (loopbackHosts.has(url.hostname)) {
       url.hostname = 'localhost';
       return NextResponse.redirect(url, 307);
     }
