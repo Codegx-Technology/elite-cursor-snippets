@@ -2,6 +2,7 @@ from config_loader import get_config
 from logging_setup import get_logger
 import asyncio
 import functools
+from enhanced_model_router import enhanced_router
 
 # Import pipeline entrypoints (do not call them yet)
 import news_video_generator
@@ -119,6 +120,9 @@ class PipelineOrchestrator:
         
         result = None
         pipeline_kwargs = user_preferences or {}
+        pipeline_kwargs['enhanced_router'] = enhanced_router
+        pipeline_kwargs['parallel_processor'] = self.parallel_processor
+        pipeline_kwargs['scene_processor'] = self.scene_processor
 
         try:
             if chosen == "news_video_generator":
@@ -153,8 +157,7 @@ class PipelineOrchestrator:
 async def main():
     orchestrator = PipelineOrchestrator()
 
-    print("
---- Testing Pipeline Orchestrator (Execution) ---")
+    print("--- Testing Pipeline Orchestrator (Execution) ---")
 
     # News URL
     decision = await orchestrator.run_pipeline(input_type="news_url", input_data="https://example.com/news", user_preferences={"mode": "api", "api_call": True})

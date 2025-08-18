@@ -1,9 +1,11 @@
 import time
 import logging
+import asyncio
 from functools import wraps
-from logging_setup import get_logger
 
-logger = get_logger(__name__)
+# Use standard logging to avoid circular import with logging_setup
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 def retry_on_exception(max_retries=3, initial_delay=1, backoff=2):
     """

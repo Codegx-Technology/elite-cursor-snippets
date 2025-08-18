@@ -17,10 +17,12 @@ import time
 import psutil
 from pathlib import Path
 
-from logging_setup import get_logger
+import logging
 from ai_model_manager import generate_text, generate_image, text_to_speech, speech_to_text
 
-logger = get_logger(__name__)
+# Use standard logging to avoid circular import with logging_setup
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 class ParallelProcessor:
     """
@@ -141,19 +143,43 @@ class SceneProcessor:
     This can be used to build a worker function for the ParallelProcessor.
     """
     
-    def __init__(self, temp_dir: str = "temp/parallel"):
+    def __init__(self, temp_dir: str = "temp/parallel", enhanced_router: Any = None, dialect: Optional[str] = None): # ADD enhanced_router, dialect
         self.temp_dir = Path(temp_dir)
         self.temp_dir.mkdir(parents=True, exist_ok=True)
+        self.enhanced_router = enhanced_router # Store router instance
+        self.dialect = dialect # Store dialect
         logger.info(f"SceneProcessor initialized. Temp directory: {self.temp_dir}")
     
     async def process_voice(self, scene_text: str, scene_id: Any) -> str:
         voice_file_path = self.temp_dir / f"scene_{scene_id}_voice.wav"
         try:
-            audio_bytes = await text_to_speech(scene_text)
-            with open(voice_file_path, "wb") as f:
-                f.write(audio_bytes)
-            logger.info(f"Generated voice for scene {scene_id}: {voice_file_path}")
-            return str(voice_file_path)
+            if not self.enhanced_router:
+                raise ValueError("Enhanced router not provided to SceneProcessor.")
+            
+            request = GenerationRequest(
+                prompt=scene_text,
+                type="audio",
+                dialect=self.dialect
+            )
+            
+            result = await self.enhanced_router.route_generation(request)
+            
+            if result.success and result.result: # Assuming result.result contains the audio bytes or path
+                # If result.result is bytes, save it. If it's a path, copy it.
+                if isinstance(result.result, bytes):
+                    audio_bytes = result.result
+                    with open(voice_file_path, "wb") as f:
+                        f.write(audio_bytes)
+                elif os.path.exists(result.result): # Assuming it's a path to a temp file
+                    import shutil
+                    shutil.copy(result.result, voice_file_path)
+                else:
+                    raise ValueError(f"Unexpected result format from router for audio: {result.result}")
+
+                logger.info(f"Generated voice for scene {scene_id}: {voice_file_path}")
+                return str(voice_file_path)
+            else:
+                raise ValueError(f"Failed to generate voice for scene {scene_id} via router: {result.error_message}")
         except Exception as e:
             logger.error(f"Failed to generate voice for scene {scene_id}: {e}")
             raise
@@ -161,11 +187,32 @@ class SceneProcessor:
     async def process_image(self, image_prompt: str, scene_id: Any) -> str:
         image_file_path = self.temp_dir / f"scene_{scene_id}_image.png"
         try:
-            image_bytes = await generate_image(image_prompt)
-            with open(image_file_path, "wb") as f:
-                f.write(image_bytes)
-            logger.info(f"Generated image for scene {scene_id}: {image_file_path}")
-            return str(image_file_path)
+            if not self.enhanced_router:
+                raise ValueError("Enhanced router not provided to SceneProcessor.")
+            
+            request = GenerationRequest(
+                prompt=image_prompt,
+                type="image",
+                dialect=self.dialect
+            )
+            
+            result = await self.enhanced_router.route_generation(request)
+            
+            if result.success and result.result: # Assuming result.result contains the image bytes or path
+                if isinstance(result.result, bytes):
+                    image_bytes = result.result
+                    with open(image_file_path, "wb") as f:
+                        f.write(image_bytes)
+                elif os.path.exists(result.result): # Assuming it's a path to a temp file
+                    import shutil
+                    shutil.copy(result.result, image_file_path)
+                else:
+                    raise ValueError(f"Unexpected result format from router for image: {result.result}")
+
+                logger.info(f"Generated image for scene {scene_id}: {image_file_path}")
+                return str(image_file_path)
+            else:
+                raise ValueError(f"Failed to generate image for scene {scene_id} via router: {result.error_message}")
         except Exception as e:
             logger.error(f"Failed to generate image for scene {scene_id}: {e}")
             raise

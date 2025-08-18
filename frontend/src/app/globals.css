@@ -1,0 +1,217 @@
+@import "tailwindcss";
+
+/* [SNIPPET]: surgicalfix + kenyafirst + thinkwithai + refactorclean */
+/* [CONTEXT]: Tailwind CSS v4 compatible global styles with Kenya-first design system */
+/* [GOAL]: Fix Tailwind utilities loading with correct v4 syntax */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* Kenya-First Color Palette */
+  --kenya-green: #00A651;
+  --kenya-red: #FF6B35;
+  --kenya-black: #000000;
+  --cultural-gold: #FFD700;
+  
+  /* Professional Colors */
+  --text-primary: #1a202c;
+  --text-secondary: #4a5568;
+  --background-primary: #ffffff;
+  --background-secondary: #f8f9fa;
+}
+
+/* Base Styles */
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Poppins', 'Inter', sans-serif;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Component Styles */
+@layer components {
+  .btn-primary {
+    @reference;
+    @apply inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+
+  .btn-elite {
+    @reference;
+    @apply inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-white rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .btn-elite:hover {
+    background: linear-gradient(135deg, #5A67D8 0%, #6B46C1 100%);
+    transform: translateY(-1px);
+  }
+
+  .form-input {
+    @reference;
+    @apply w-full px-4 py-3 text-base border border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500;
+  }
+
+  .form-select {
+    @reference;
+    @apply w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500;
+  }
+
+  .elite-card {
+    @reference;
+    @apply bg-white rounded-2xl border border-gray-200 transition-all duration-300 shadow-sm hover:shadow-md;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    padding: 1.5rem;
+  }
+
+  .elite-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--kenya-green);
+  }
+
+  .section-title {
+    @reference;
+    @apply text-2xl font-bold mb-4 text-gray-800;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .hover-lift {
+    @reference;
+    @apply transition-all duration-200 hover:-translate-y-1 hover:shadow-lg;
+  }
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { 
+    transform: translateY(0px); 
+  }
+  50% { 
+    transform: translateY(-10px); 
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Mobile-First Responsive Enhancements */
+/* [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent */
+/* [CONTEXT]: Mobile-first responsive design optimizations */
+/* [GOAL]: Ensure perfect mobile experience across all screen sizes */
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .hover-lift:hover {
+    transform: none;
+  }
+
+  button, .btn-primary, .btn-elite {
+    min-height: 44px; /* iOS recommended touch target */
+    min-width: 44px;
+  }
+}
+
+/* Mobile typography scaling */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    line-height: 1.3;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    line-height: 1.4;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Improved mobile spacing */
+@media (max-width: 768px) {
+  .elite-card {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+
+  /* Better mobile grid layouts */
+  .mobile-stack > * {
+    width: 100% !important;
+    margin-bottom: 1rem;
+  }
+
+  /* Mobile-friendly form inputs */
+  .form-input, .form-select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0.875rem 1rem;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .elite-card {
+    padding: 1.25rem;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .elite-card {
+    border-width: 0.5px;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .hover-lift,
+  .transition-all {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Dark mode support preparation */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-primary: #f7fafc;
+    --text-secondary: #e2e8f0;
+    --background-primary: #1a202c;
+    --background-secondary: #2d3748;
+  }
+
+  /* Ensure background contrasts with light text in dark mode */
+  body {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}

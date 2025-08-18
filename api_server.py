@@ -7,7 +7,7 @@ import uvicorn
 import uuid
 from fastapi.responses import JSONResponse # Elite Cursor Snippet: json_response_import
 
-from logging_setup import get_logger, get_audit_logger
+from logging_setup import get_logger
 from config_loader import get_config
 from auth.jwt_utils import verify_jwt
 from pipeline_orchestrator import PipelineOrchestrator
@@ -29,13 +29,16 @@ import redis.asyncio as redis
 
 # J.1: Monitoring Integration
 from starlette_prometheus import PrometheusMiddleware, metrics
+from prometheus_client import Counter, Histogram # ADD THIS LINE
 from feature_flags import feature_flag_manager # Elite Cursor Snippet: feature_flag_import
 from chaos_utils import chaos_injector # Elite Cursor Snippet: chaos_injector_import
 from auth.tenancy import current_tenant
 from auth.rbac import has_role, Role
 
+from security.audit_log_manager import audit_log_manager, AuditEventType # ADD THIS LINE
+
 logger = get_logger(__name__)
-audit_logger = get_audit_logger()
+audit_logger = get_audit_logger() # This will be replaced or removed later
 config = get_config()
 
 Base.metadata.create_all(bind=engine)
@@ -44,6 +47,22 @@ app = FastAPI(
     title=config.app.name,
     version=config.app.version,
     description="API for Shujaa Studio - Enterprise AI Video Generation"
+)
+
+# --- Prometheus Custom Metrics ---
+VIDEO_GENERATION_REQUESTS = Counter(
+    'video_generation_requests_total',
+    'Total number of video generation requests',
+    ['status'] # Label for success/failure
+)
+VIDEO_GENERATION_DURATION = Histogram(
+    'video_generation_duration_seconds',
+    'Duration of video generation requests in seconds',
+    ['status'] # Label for success/failure
+)
+VIDEO_GENERATION_FAILURES = Counter(
+    'video_generation_failures_total',
+    'Total number of failed video generation requests'
 )
 
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
@@ -120,16 +139,16 @@ class UserUpdate(BaseModel):
 
 # --- Dependency Functions ---
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
+async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db), request: Request = None):
     try:
         payload = verify_jwt(token)
         user_id = payload.get("user_id")
         if user_id is None:
-            audit_logger.warning("Authentication failed: User ID missing in token.", extra={'user_id': None})
+            audit_log_manager.log_event(db, AuditEventType.USER_LOGIN_FAILURE, "Authentication failed: User ID missing in token.", user_id=None, ip_address=request.client.host if request else None)
             raise HTTPException(status_code=401, detail="Invalid authentication credentials: User ID missing")
         return payload
     except Exception as e:
-        audit_logger.warning(f"Authentication failed for token: {token[:10]}... Error: {e}", extra={'user_id': None})
+        audit_log_manager.log_event(db, AuditEventType.USER_LOGIN_FAILURE, f"Authentication failed for token: {token[:10]}... Error: {e}", user_id=None, ip_address=request.client.host if request else None)
         raise HTTPException(status_code=401, detail=f"Invalid authentication credentials: {e}")
 
 async def get_current_active_user(current_user_payload: dict = Depends(get_current_user), db: Session = Depends(get_db)) -> User:
@@ -150,6 +169,10 @@ async def get_current_locale(request: Request) -> str:
     # // [ELITE_CURSOR_SNIPPET]: aihandle
     return get_locale_from_request(request)
 
+# Define a key_func for authenticated users
+async def user_id_key_func(request: Request, current_user: dict = Depends(get_current_user)):
+    return str(current_user.get("user_id", request.client.host)) # Fallback to IP if user_id not found
+
 # --- Middleware ---
 
 
@@ -166,7 +189,10 @@ async def pii_redaction_middleware(request: Request, call_next):
     sensitive_paths = ["/register", "/token", "/users/me"] # Endpoints that might contain PII
 
     if request.url.path in sensitive_paths:
-        audit_logger.info(f"Access to sensitive endpoint: {request.url.path}. PII redaction applied to logs.", extra={'user_id': request.state.get('user_id', None)})
+        # PII redaction middleware doesn't have direct access to db session easily
+        # For now, we'll log using the regular logger or a simplified audit log call
+        # A more robust solution would involve a dependency injection for db or a background task.
+        logger.info(f"Access to sensitive endpoint: {request.url.path}. PII redaction applied to logs.", extra={'user_id': request.state.get('user_id', None), 'ip_address': request.client.host})
         # In a real scenario, you would read the request body, redact PII,
         # and then pass the redacted body to the next middleware/endpoint.
         # This requires careful handling of async request body reading.
@@ -193,22 +219,22 @@ async def health_check(locale: str = Depends(get_current_locale)):
 
 @app.post("/register", response_model=UserCreate)
 @RateLimiter(times=2, seconds=60)
-async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db), locale: str = Depends(get_current_locale), current_user: User = Depends(get_current_active_user)):
+async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db), locale: str = Depends(get_current_locale), current_user: User = Depends(get_current_active_user), request: Request = None):
     if user.role == Role.ADMIN and (not current_user or current_user.role != Role.ADMIN):
         raise HTTPException(status_code=403, detail="Only admins can create other admins")
     db_user = create_user(db, user.username, user.email, user.password, user.tenant_name, user.role)
     if not db_user:
-        audit_logger.error(f"User registration failed: Username {user.username} or email {user.email} already registered.", extra={'user_id': None})
+        audit_log_manager.log_event(db, AuditEventType.USER_REGISTER, f"User registration failed: Username {user.username} or email {user.email} already registered.", user_id=None, ip_address=request.client.host) # Pass request
         raise HTTPException(status_code=400, detail=gettext("username_or_email_registered", locale=locale))
-    audit_logger.info(f"User registered: {user.username} (Tenant: {user.tenant_name})", extra={'user_id': db_user.id})
+    audit_log_manager.log_event(db, AuditEventType.USER_REGISTER, f"User registered: {user.username} (Tenant: {user.tenant_name})", user_id=db_user.id, tenant_id=db_user.tenant_id, ip_address=request.client.host) # Pass request
     return db_user
 
 @app.post("/token", response_model=Token)
 @RateLimiter(times=5, seconds=30)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db), request: Request = None):
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
-        audit_logger.warning(f"Login failed: Invalid credentials for username {form_data.username}.", extra={'user_id': None})
+        audit_log_manager.log_event(db, AuditEventType.USER_LOGIN_FAILURE, f"Login failed: Invalid credentials for username {form_data.username}.", user_id=None, ip_address=request.client.host) # Pass request
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -219,18 +245,18 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         data={"user_id": user.id, "username": user.username, "tenant_id": user.tenant_id},
         expires_delta=access_token_expires
     )
-    audit_logger.info(f"User logged in: {user.username} (Tenant: {user.tenant.name})", extra={'user_id': user.id})
+    audit_log_manager.log_event(db, AuditEventType.USER_LOGIN_SUCCESS, f"User logged in: {user.username} (Tenant: {user.tenant.name})", user_id=user.id, tenant_id=user.tenant_id, ip_address=request.client.host) # Pass request
     return {"access_token": access_token, "token_type": "bearer"}
 
 from billing_models import get_default_plans, get_user_subscription # Elite Cursor Snippet: billing_api_imports
 
 @app.get("/users/me", response_model=UserProfile)
-async def read_users_me(current_user: User = Depends(get_current_active_user)):
-    audit_logger.info(f"User profile viewed for user: {current_user.username}", extra={'user_id': current_user.id})
+async def read_users_me(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db), request: Request = None):
+    audit_log_manager.log_event(db, AuditEventType.USER_PROFILE_VIEW, f"User profile viewed for user: {current_user.username}", user_id=current_user.id, tenant_id=current_user.tenant_id, ip_address=request.client.host)
     return current_user
 
 @app.put("/users/me", response_model=UserProfile)
-async def update_users_me(user_update: UserUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+async def update_users_me(user_update: UserUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user), request: Request = None):
     update_data = user_update.dict(exclude_unset=True)
     if not update_data:
         raise HTTPException(status_code=400, detail="No update data provided.")
@@ -238,7 +264,7 @@ async def update_users_me(user_update: UserUpdate, db: Session = Depends(get_db)
     updated_user = update_user_profile(db, current_user.id, update_data)
     if not updated_user:
         raise HTTPException(status_code=404, detail="User not found")
-    audit_logger.info(f"User profile updated for user: {current_user.username}", extra={'user_id': current_user.id})
+    audit_log_manager.log_event(db, AuditEventType.USER_PROFILE_UPDATE, f"User profile updated for user: {current_user.username}", user_id=current_user.id, tenant_id=current_user.tenant_id, ip_address=request.client.host, event_details=user_update.dict(exclude_unset=True))
     return updated_user
 
 @app.get("/users/me/plan")
@@ -292,7 +318,8 @@ async def get_user_usage(current_user: dict = Depends(get_current_user)):
 async def update_tenant_branding(
     branding_data: TenantBrandingUpdate,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    request: Request = None
 ):
     # // [TASK]: Implement API endpoint for updating tenant branding
     # // [GOAL]: Allow tenants to customize their branding (theme, logo, custom domain)
@@ -311,7 +338,7 @@ async def update_tenant_branding(
     db.commit()
     db.refresh(tenant)
 
-    audit_logger.info(f"Tenant branding updated for tenant ID: {tenant_id}", extra={'user_id': current_user.id, 'tenant_id': tenant_id})
+    audit_log_manager.log_event(db, AuditEventType.TENANT_BRANDING_UPDATE, f"Tenant branding updated for tenant ID: {tenant_id}", user_id=current_user.id, tenant_id=tenant_id, ip_address=request.client.host, event_details=branding_data.dict(exclude_unset=True))
     return {"message": "Tenant branding updated successfully", "tenant_id": tenant_id}
 
 @app.get("/reports/sla/{tenant_id}/{month}")
@@ -372,42 +399,56 @@ async def get_reconciliation_report(month: str, current_user: User = Depends(get
     return report
 
 @app.post("/generate_video")
-@RateLimiter(times=1, seconds=5)
-async def generate_video_endpoint(request_data: GenerateVideoRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant):
-    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_video.", extra={'user_id': current_user.get('user_id')})
-    try:
-        enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="video_generation")
-    except BillingException as e:
-        raise HTTPException(status_code=403, detail=str(e))
+@RateLimiter(times=1, seconds=5, key_func=user_id_key_func)
+async def generate_video_endpoint(request_data: GenerateVideoRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
+    start_time = time.time() # ADD THIS LINE
+    status_label = "failure" # Default status for metrics # ADD THIS LINE
+    try: # Wrap existing code in try-finally for metrics # ADD THIS LINE
+        audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_video.", user_id=current_user.get('user_id'), tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/generate_video", "request_data": request_data.dict()})
+        try:
+            enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="video_generation")
+        except BillingException as e:
+            status_label = "billing_failure" # ADD THIS LINE
+            raise HTTPException(status_code=403, detail=str(e))
 
-    if not request_data.prompt and not request_data.news_url and not request_data.script_file:
-        raise HTTPException(status_code=400, detail="Either 'prompt', 'news_url', or 'script_file' must be provided.")
+        if not request_data.prompt and not request_data.news_url and not request_data.script_file:
+            status_label = "validation_failure" # ADD THIS LINE
+            raise HTTPException(status_code=400, detail="Either 'prompt', 'news_url', or 'script_file' must be provided.")
 
-    input_type = "general_prompt"
-    input_data = request_data.prompt
-    if request_data.news_url:
-        input_type = "news_url"
-        input_data = request_data.news_url
-    elif request_data.script_file:
-        input_type = "script_file"
-        input_data = request_data.script_file
+        input_type = "general_prompt"
+        input_data = request_data.prompt
+        if request_data.news_url:
+            input_type = "news_url"
+            input_data = request_data.news_url
+        elif request_data.script_file:
+            input_type = "script_file"
+            input_data = request_data.script_file
 
-    user_preferences = {"upload_youtube": request_data.upload_youtube}
-    result = await orchestrator.run_pipeline(
-        input_type=input_type,
-        input_data=input_data,
-        user_preferences=user_preferences,
-        api_call=True
-    )
+        user_preferences = {"upload_youtube": request_data.upload_youtube}
+        result = await orchestrator.run_pipeline(
+            input_type=input_type,
+            input_data=input_data,
+            user_preferences=user_preferences,
+            api_call=True
+        )
 
-    if result.get("status") == "error":
-        raise HTTPException(status_code=500, detail=result.get("message"))
+        if result.get("status") == "error":
+            status_label = "pipeline_error" # ADD THIS LINE
+            raise HTTPException(status_code=500, detail=result.get("message"))
 
-    return result
+        status_label = "success" # ADD THIS LINE
+        return result
+    finally: # ADD THIS BLOCK
+        end_time = time.time()
+        duration = end_time - start_time
+        VIDEO_GENERATION_REQUESTS.labels(status=status_label).inc()
+        VIDEO_GENERATION_DURATION.labels(status=status_label).observe(duration)
+        if status_label != "success":
+            VIDEO_GENERATION_FAILURES.inc()
 
 @app.post("/batch_generate_video")
-async def batch_generate_video_endpoint(batch_request: BatchGenerateVideoRequest, current_user: dict = Depends(get_current_user)):
-    audit_logger.info(f"Batch video generation request received from user {current_user.get('user_id')}. Count: {len(batch_request.requests)}", extra={'user_id': current_user.get('user_id')})
+async def batch_generate_video_endpoint(batch_request: BatchGenerateVideoRequest, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db), request: Request = None):
+    audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Batch video generation request received from user {current_user.get('user_id')}. Count: {len(batch_request.requests)}", user_id=current_user.get('user_id'), tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/batch_generate_video", "batch_size": len(batch_request.requests)})
     MAX_BATCH_SIZE = config.video.get('max_batch_size', 10)
     if len(batch_request.requests) > MAX_BATCH_SIZE:
         raise HTTPException(status_code=400, detail=f"Batch size cannot exceed {MAX_BATCH_SIZE}.")
@@ -431,7 +472,7 @@ async def batch_generate_video_endpoint(batch_request: BatchGenerateVideoRequest
             logger.exception(f"Error processing item in batch: {request_data.prompt}")
             return {"status": "error", "message": f"An unexpected error occurred: {e}", "request_prompt": request_data.prompt}
 
-    parallel_processor = ParallelProcessor()
+    parallel_processor = ParallelProcessor(max_workers=config.parallel_processing.max_workers)
     batch_results = await parallel_processor.run_parallel(items=batch_request.requests, worker_function=video_worker)
 
     successful_jobs = [res for res in batch_results if res.get("status") == "success"]
@@ -447,8 +488,8 @@ async def batch_generate_video_endpoint(batch_request: BatchGenerateVideoRequest
     }
 
 @app.post("/generate_landing_page")
-async def generate_landing_page_endpoint(request_data: GenerateLandingPageRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant):
-    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_landing_page.", extra={'user_id': current_user.get('user_id')})
+async def generate_landing_page_endpoint(request_data: GenerateLandingPageRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
+    audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_landing_page.", user_id=current_user.get('user_id'), tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/generate_landing_page", "qr_code_id": request_data.qr_code_id})
     try:
         enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="landing_page_generation")
     except BillingException as e:
@@ -460,9 +501,9 @@ async def generate_landing_page_endpoint(request_data: GenerateLandingPageReques
         raise HTTPException(status_code=500, detail=f"Landing page generation failed: {result.get('message', 'Unknown error')}")
 
 @app.post("/scan_alert")
-@RateLimiter(times=10, seconds=60)
-async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant):
-    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /scan_alert.", extra={'user_id': current_user.get('user_id')})
+@RateLimiter(times=10, seconds=60, key_func=user_id_key_func)
+async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
+    audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /scan_alert.", user_id=current_user.get('user_id'), tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/scan_alert", "qr_code_id": request_data.qr_code_id})
     try:
         enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="scan_alert")
     except BillingException as e:
@@ -479,9 +520,9 @@ async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict
         raise HTTPException(status_code=500, detail=f"Scan alert failed: {result.get('message', 'Unknown error')}")
 
 @app.post("/crm_push_contact")
-@RateLimiter(times=5, seconds=60)
-async def crm_push_contact_endpoint(request_data: CRMPushContactRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant):
-    audit_logger.info(f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /crm_push_contact.", extra={'user_id': current_user.get('user_id')})
+@RateLimiter(times=5, seconds=60, key_func=user_id_key_func)
+async def crm_push_contact_endpoint(request_data: CRMPushContactRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
+    audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /crm_push_contact.", user_id=current_user.get('user_id'), tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/crm_push_contact", "crm_name": request_data.crm_name})
     try:
         enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="crm_push_contact")
     except BillingException as e:
@@ -508,7 +549,7 @@ import hashlib
 WEBHOOK_SECRET = "your_webhook_secret_key" # TODO: Load from secure config (e.g., config.security.webhook_secret)
 
 @app.post("/webhook/payment_status")
-async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request):
+async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request, db: Session = Depends(get_db)):
     # // [TASK]: Implement secure signature verification for payment callbacks
     # // [GOAL]: Ensure webhook authenticity and prevent tampering
     # // [ELITE_CURSOR_SNIPPET]: securitycheck
@@ -520,7 +561,7 @@ async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request
     signature_header = request.headers.get("X-Webhook-Signature") # Example header name
     
     if not signature_header:
-        audit_logger.error("Webhook received without signature header.", extra={'user_id': payload.user_id})
+        audit_log_manager.log_event(db, AuditEventType.WEBHOOK_RECEIVED, "Webhook received without signature header.", user_id=payload.user_id, ip_address=request.client.host, event_details={"webhook_id": payload.transaction_id, "status": "missing_signature"})
         raise HTTPException(status_code=403, detail="Signature header missing")
 
     # Calculate expected signature
@@ -532,10 +573,10 @@ async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request
 
     # Compare signatures
     if not hmac.compare_digest(expected_signature, signature_header):
-        audit_logger.error(f"Webhook signature mismatch for user {payload.user_id}. Potential tampering.", extra={'user_id': payload.user_id})
+        audit_log_manager.log_event(db, AuditEventType.WEBHOOK_SIGNATURE_MISMATCH, f"Webhook signature mismatch for user {payload.user_id}. Potential tampering.", user_id=payload.user_id, ip_address=request.client.host, event_details={"webhook_id": payload.transaction_id})
         raise HTTPException(status_code=403, detail="Invalid signature")
 
-    audit_logger.info(f"Webhook received for user {payload.user_id}, transaction {payload.transaction_id}, status {payload.status}.", extra={'user_id': payload.user_id})
+    audit_log_manager.log_event(db, AuditEventType.WEBHOOK_RECEIVED, f"Webhook received for user {payload.user_id}, transaction {payload.transaction_id}, status {payload.status}.", user_id=payload.user_id, ip_address=request.client.host, event_details={"webhook_id": payload.transaction_id, "status": payload.status})
 
     # // [TASK]: Update user subscription status based on webhook notification
     # // [GOAL]: Automate subscription management in real-time
@@ -567,7 +608,9 @@ async def inject_chaos(
     intensity: Optional[float] = None,
     size_mb: Optional[int] = None,
     probability: Optional[float] = None,
-    current_user: User = Depends(get_current_active_user) # Requires authenticated user
+    current_user: User = Depends(get_current_active_user), # Requires authenticated user
+    db: Session = Depends(get_db),
+    request: Request = None
 ):
     # // [TASK]: Add endpoint to trigger chaos scenarios
     # // [GOAL]: Enable controlled failure injection for resilience testing
@@ -575,19 +618,19 @@ async def inject_chaos(
     if current_user.username != "admin": # Simple admin check for demonstration
         raise HTTPException(status_code=403, detail="Admin access required to inject chaos.")
 
-    audit_logger.warning(f"Chaos injection requested by admin {current_user.username}: {scenario_type}", extra={'user_id': current_user.id})
+    audit_log_manager.log_event(db, AuditEventType.CHAOS_INJECTED, f"Chaos injection requested by admin {current_user.username}: {scenario_type}", user_id=current_user.id, tenant_id=current_user.tenant_id, ip_address=request.client.host, event_details={"scenario_type": scenario_type, "duration_ms": duration_ms, "intensity": intensity})
 
-    kwargs = {k: v for k, v in locals().items() if v is not None and k not in ["scenario_type", "current_user"]}
+    kwargs = {k: v for k, v in locals().items() if v is not None and k not in ["scenario_type", "current_user", "db", "request"]}
     
     try:
         chaos_injector.inject_scenario(scenario_type, **kwargs)
         return {"status": "success", "message": f"Chaos scenario '{scenario_type}' injected."}
     except Exception as e:
-        audit_logger.error(f"Failed to inject chaos scenario '{scenario_type}': {e}", exc_info=True, extra={'user_id': current_user.id})
+        audit_log_manager.log_event(db, AuditEventType.CHAOS_INJECTED, f"Failed to inject chaos scenario '{scenario_type}': {e}", user_id=current_user.id, tenant_id=current_user.tenant_id, ip_address=request.client.host, event_details={"scenario_type": scenario_type, "error": str(e)})
         raise HTTPException(status_code=500, detail=f"Failed to inject chaos: {e}")
 
 @app.get("/feature_status/{feature_name}")
-async def get_feature_status(feature_name: str, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant):
+async def get_feature_status(feature_name: str, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
     # // [TASK]: Expose API for frontend to check feature flag status
     # // [GOAL]: Allow dynamic UI based on feature flags
     # // [ELITE_CURSOR_SNIPPET]: aihandle
@@ -596,16 +639,16 @@ async def get_feature_status(feature_name: str, current_user: dict = Depends(get
 
     is_enabled = feature_flag_manager.is_enabled(feature_name, user_id=user_id, tenant_id=tenant_id)
     
-    audit_logger.info(f"Feature flag check for '{feature_name}': {is_enabled} for user {user_id} (tenant {tenant_id}).", extra={'user_id': current_user.get('user_id')})
+    audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Feature flag check for '{feature_name}': {is_enabled} for user {user_id} (tenant {tenant_id}).", user_id=current_user.get('user_id'), tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/feature_status", "feature_name": feature_name, "is_enabled": is_enabled})
     return {"feature_name": feature_name, "is_enabled": is_enabled}
 
 @app.get("/users/me/data/export")
-async def export_user_data(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+async def export_user_data(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db), request: Request = None):
     # // [TASK]: Implement data export endpoint for right-to-be-forgotten
     # // [GOAL]: Allow users to export their data for GDPR compliance
     # // [ELITE_CURSOR_SNIPPET]: securitycheck
     user_id = current_user.id
-    audit_logger.info(f"User data export requested for user ID: {user_id}", extra={'user_id': user_id})
+    audit_log_manager.log_event(db, AuditEventType.USER_DATA_EXPORT, f"User data export requested for user ID: {user_id}", user_id=user_id, tenant_id=current_user.tenant_id, ip_address=request.client.host)
 
     # Fetch user data (example: User, AuditLog, Consent)
     user_data = {
@@ -622,12 +665,12 @@ async def export_user_data(current_user: User = Depends(get_current_active_user)
     return JSONResponse(content=user_data, media_type="application/json")
 
 @app.delete("/users/me/data/delete")
-async def delete_user_data(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+async def delete_user_data(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db), request: Request = None):
     # // [TASK]: Implement data deletion endpoint for right-to-be-forgotten
     # // [GOAL]: Allow users to request deletion of their data for GDPR compliance
     # // [ELITE_CURSOR_SNIPPET]: securitycheck
     user_id = current_user.id
-    audit_logger.info(f"User data deletion requested for user ID: {user_id}", extra={'user_id': user_id})
+    audit_log_manager.log_event(db, AuditEventType.USER_DATA_DELETE, f"User data deletion requested for user ID: {user_id}", user_id=user_id, tenant_id=current_user.tenant_id, ip_address=request.client.host)
 
     # In a real application, this would involve:
     # 1. Soft deleting the user (e.g., setting is_active=False, marking for deletion)

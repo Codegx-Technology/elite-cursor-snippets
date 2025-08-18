@@ -13,9 +13,17 @@ import sys
 import time
 from pathlib import Path
 from datetime import datetime
+import argparse
 
-def create_simple_kenya_video():
-    """Create Kenya video with available tools"""
+def create_simple_kenya_video(duration=60, width=1080, height=1920, fps=30):
+    """Create Kenya video with available tools
+
+    Args:
+        duration (int): Video duration in seconds. Default 60.
+        width (int): Frame width. Default 1080 (portrait).
+        height (int): Frame height. Default 1920 (portrait).
+        fps (int): Frames per second. Default 30.
+    """
     
     print("🇰🇪 SIMPLE KENYA VIDEO GENERATOR")
     print("=" * 60)
@@ -45,9 +53,9 @@ def create_simple_kenya_video():
         print("🎨 Creating video with OpenCV...")
         
         # Video settings
-        width, height = 1920, 1080
-        fps = 30
-        duration = 30  # 30 seconds
+        width, height = int(width), int(height)
+        fps = int(fps)
+        duration = int(duration)
         
         video_path = output_dir / f"kenya_simple_{timestamp}.mp4"
         
@@ -206,15 +214,29 @@ Kenya ni blessed na wildlife, people, na resources. Kenya yetu, tunakupenda!
 
 def main():
     """Main function"""
+    parser = argparse.ArgumentParser(description="Generate a simple Kenya patriotic video")
+    parser.add_argument("--duration", type=int, default=60, help="Duration in seconds (default: 60)")
+    parser.add_argument("--width", type=int, default=1080, help="Frame width (default: 1080 portrait)")
+    parser.add_argument("--height", type=int, default=1920, help="Frame height (default: 1920 portrait)")
+    parser.add_argument("--fps", type=int, default=30, help="Frames per second (default: 30)")
+    parser.add_argument("--landscape", action="store_true", help="Use landscape 1920x1080 instead of portrait")
+    args = parser.parse_args()
     
     print("🎬 STARTING SIMPLE KENYA VIDEO CREATION")
     print("🇰🇪 Celebrating our beautiful homeland!")
     print("=" * 60)
+
+    if args.landscape:
+        args.width, args.height = 1920, 1080
+        print("Mode: Landscape 1920x1080")
+    else:
+        print("Mode: Portrait 1080x1920")
+    print(f"Settings: duration={args.duration}s, fps={args.fps}, res={args.width}x{args.height}")
     
     start_time = time.time()
     
     # Create the video
-    result = create_simple_kenya_video()
+    result = create_simple_kenya_video(duration=args.duration, width=args.width, height=args.height, fps=args.fps)
     
     end_time = time.time()
     generation_time = end_time - start_time

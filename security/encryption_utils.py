@@ -4,11 +4,13 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 import base64
 import os
+import logging
 
-from logging_setup import get_logger
 from config_loader import get_config
 
-logger = get_logger(__name__)
+# Use standard logging to avoid circular import with logging_setup
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 config = get_config()
 
 # --- Key Derivation (Conceptual) ---
@@ -27,8 +29,9 @@ def _derive_key(password: str, salt: bytes) -> bytes:
     return base64.urlsafe_b64encode(kdf.derive(password.encode()))
 
 # Use a key from config or environment variable
-ENCRYPTION_PASSWORD = os.getenv("ENCRYPTION_PASSWORD") or config.security.encryption_password
-ENCRYPTION_SALT = os.getenv("ENCRYPTION_SALT") or config.security.encryption_salt.encode()
+ENCRYPTION_PASSWORD = os.getenv("ENCRYPTION_PASSWORD") or getattr(getattr(config, 'security', {}), 'encryption_password', None)
+_salt_val = os.getenv("ENCRYPTION_SALT") or getattr(getattr(config, 'security', {}), 'encryption_salt', None)
+ENCRYPTION_SALT = _salt_val.encode() if isinstance(_salt_val, str) else _salt_val
 
 if not ENCRYPTION_PASSWORD or not ENCRYPTION_SALT:
     logger.error("Encryption password or salt not configured. Encryption utilities will not function.")
@@ -71,6 +74,36 @@ def decrypt_data(encrypted_data: str) -> str:
     except Exception as e:
         logger.error(f"Failed to decrypt data: {e}")
         return encrypted_data # Return original data on failure
+
+def encrypt_bytes(data: bytes) -> bytes:
+    """
+    // [TASK]: Encrypt bytes using AES-256 (via Fernet)
+    // [GOAL]: Secure sensitive binary data
+    """
+    if not _fernet:
+        logger.warning("Encryption not initialized. Returning unencrypted bytes.")
+        return data
+    try:
+        encrypted_bytes = _fernet.encrypt(data)
+        return encrypted_bytes
+    except Exception as e:
+        logger.error(f"Failed to encrypt bytes: {e}")
+        return data # Return original bytes on failure
+
+def decrypt_bytes(encrypted_data: bytes) -> bytes:
+    """
+    // [TASK]: Decrypt AES-256 encrypted bytes (via Fernet)
+    // [GOAL]: Retrieve original sensitive binary data
+    """
+    if not _fernet:
+        logger.warning("Encryption not initialized. Returning original bytes.")
+        return encrypted_data
+    try:
+        decrypted_bytes = _fernet.decrypt(encrypted_data)
+        return decrypted_bytes
+    except Exception as e:
+        logger.error(f"Failed to decrypt bytes: {e}")
+        return encrypted_data # Return original bytes on failure
 
 # Example usage (conceptual)
 async def main():

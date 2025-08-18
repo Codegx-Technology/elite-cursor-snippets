@@ -5,29 +5,15 @@ from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
 from auth.user_models import User, Tenant
-from auth.jwt_utils import create_jwt
-from logging_setup import get_logger, get_audit_logger # Import get_audit_logger
-from config_loader import get_config
+from auth.jwt_utils import create_jwt, hash_password, verify_password # Import hash_password and verify_password
+from logging_setup import get_logger # ADD THIS
+from config_loader import get_config # ADD THIS
+from security.audit_log_manager import audit_log_manager, AuditEventType # ADD THIS
 
-logger = get_logger(__name__)
-audit_logger = get_audit_logger() # Get audit logger
-config = get_config()
+logger = get_logger(__name__) # ADD THIS
+config = get_config() # ADD THIS
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def get_password_hash(password):
-    """
-    // [TASK]: Hash a plain-text password
-    // [GOAL]: Securely store user passwords
-    """
-    return pwd_context.hash(password)
-
-def verify_password(plain_password, hashed_password):
-    """
-    // [TASK]: Verify a plain-text password against a hashed password
-    // [GOAL]: Authenticate user login attempts
-    """
-    return pwd_context.verify(plain_password, hashed_password)
 
 def get_user_by_username(db: Session, username: str):
     """
@@ -50,13 +36,13 @@ def create_user(db: Session, username: str, email: str, password: str, tenant_na
     """
     # Check if username or email already exists
     if get_user_by_username(db, username):
-        audit_logger.warning(f"Registration failed: Username {username} already exists.", extra={'user_id': None})
+        audit_log_manager.log_event(db, AuditEventType.USER_REGISTER, f"Registration failed: Username {username} already exists.", user_id=None) # Use audit_log_manager
         return None
     if get_user_by_email(db, email):
-        audit_logger.warning(f"Registration failed: Email {email} already exists.", extra={'user_id': None})
+        audit_log_manager.log_event(db, AuditEventType.USER_REGISTER, f"Registration failed: Email {email} already exists.", user_id=None) # Use audit_log_manager
         return None
 
-    hashed_password = get_password_hash(password)
+    hashed_password = hash_password(password)
     
     # Ensure tenant exists or create it
     tenant = db.query(Tenant).filter(Tenant.name == tenant_name).first()
@@ -65,13 +51,13 @@ def create_user(db: Session, username: str, email: str, password: str, tenant_na
         db.add(tenant)
         db.commit()
         db.refresh(tenant)
-        audit_logger.info(f"New tenant created: {tenant_name}", extra={'user_id': None})
+        audit_log_manager.log_event(db, AuditEventType.TENANT_CREATE, f"New tenant created: {tenant_name}", user_id=None, tenant_id=tenant.id) # Use audit_log_manager
 
     db_user = User(username=username, email=email, hashed_password=hashed_password, tenant_id=tenant.id, role=role)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    audit_logger.info(f"User {username} registered successfully for tenant {tenant_name}.")
+    audit_log_manager.log_event(db, AuditEventType.USER_REGISTER, f"User {username} registered successfully for tenant {tenant_name}.", user_id=db_user.id, tenant_id=tenant.id) # Use audit_log_manager
     return db_user
 
 def authenticate_user(db: Session, username: str, password: str):
@@ -81,9 +67,9 @@ def authenticate_user(db: Session, username: str, password: str):
     """
     user = get_user_by_username(db, username)
     if not user or not verify_password(password, user.hashed_password):
-        audit_logger.warning(f"Authentication failed: Invalid credentials for username {username}.", extra={'user_id': None})
+        audit_log_manager.log_event(db, AuditEventType.USER_LOGIN_FAILURE, f"Authentication failed: Invalid credentials for username {username}.", user_id=user.id if user else None) # Use audit_log_manager
         return False
-    audit_logger.info(f"User {username} authenticated successfully.", extra={'user_id': user.id if user else None})
+    audit_log_manager.log_event(db, AuditEventType.USER_LOGIN_SUCCESS, f"User {username} authenticated successfully.", user_id=user.id, tenant_id=user.tenant_id) # Use audit_log_manager
     return user
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -100,7 +86,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     
     # Use jwt_utils.py to create the token
     token = create_jwt(to_encode)
-    audit_logger.info(f"Access token created for user: {data.get('username')}", extra={'user_id': data.get('user_id')})
+    audit_log_manager.log_event(db, AuditEventType.USER_LOGIN_SUCCESS, f"Access token created for user: {data.get('username')}", user_id=data.get('user_id'), tenant_id=data.get('tenant_id')) # Use audit_log_manager
     return token
 
 def update_user_profile(db: Session, user_id: int, user_update_data: dict):
@@ -110,7 +96,7 @@ def update_user_profile(db: Session, user_id: int, user_update_data: dict):
     """
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        audit_logger.warning(f"Profile update failed: User with ID {user_id} not found.", extra={'user_id': user_id})
+        audit_log_manager.log_event(db, AuditEventType.USER_PROFILE_UPDATE, f"Profile update failed: User with ID {user_id} not found.", user_id=user_id) # Use audit_log_manager
         return None
 
     for key, value in user_update_data.items():
@@ -118,5 +104,5 @@ def update_user_profile(db: Session, user_id: int, user_update_data: dict):
     
     db.commit()
     db.refresh(user)
-    audit_logger.info(f"User profile updated for user ID: {user_id}", extra={'user_id': user_id})
+    audit_log_manager.log_event(db, AuditEventType.USER_PROFILE_UPDATE, f"User profile updated for user ID: {user_id}", user_id=user_id, tenant_id=user.tenant_id, event_details=user_update_data) # Use audit_log_manager
     return user

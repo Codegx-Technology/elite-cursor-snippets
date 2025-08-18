@@ -105,16 +105,26 @@ class ModelCache:
             from diffusers import StableDiffusionXLPipeline
             
             if "sdxl" not in self.cache:
+                dtype = torch.float16 if torch.cuda.is_available() else torch.float32
                 pipeline = StableDiffusionXLPipeline.from_pretrained(
                     "stabilityai/stable-diffusion-xl-base-1.0",
-                    torch_dtype=torch.float16,
+                    torch_dtype=dtype,
                     use_safetensors=True
                 )
                 
                 if torch.cuda.is_available():
                     pipeline = pipeline.to("cuda")
-                    pipeline.enable_memory_efficient_attention()
-                    pipeline.enable_xformers_memory_efficient_attention()
+                    # Enable memory efficient attention where available
+                    try:
+                        if hasattr(pipeline, "enable_memory_efficient_attention"):
+                            pipeline.enable_memory_efficient_attention()
+                    except Exception as _:
+                        pass
+                    try:
+                        if hasattr(pipeline, "enable_xformers_memory_efficient_attention"):
+                            pipeline.enable_xformers_memory_efficient_attention()
+                    except Exception as _:
+                        pass
                 
                 self.cache["sdxl"] = pipeline
                 self.usage_stats["sdxl"] = {"loads": 0, "generations": 0}

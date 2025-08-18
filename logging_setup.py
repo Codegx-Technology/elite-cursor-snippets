@@ -4,8 +4,16 @@ import os
 from datetime import datetime
 
 from config_loader import get_config
-from database import SessionLocal # Elite Cursor Snippet: db_session_import
-from auth.user_models import AuditLog # Elite Cursor Snippet: audit_log_model_import
+
+# Optional imports to avoid circular dependencies during tools/standalone scripts
+try:
+    from database import SessionLocal  # Elite Cursor Snippet: db_session_import
+    from auth.user_models import AuditLog  # Elite Cursor Snippet: audit_log_model_import
+    _DB_AVAILABLE = True
+except Exception:
+    SessionLocal = None
+    AuditLog = None
+    _DB_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 config = get_config()
@@ -23,6 +31,9 @@ class DatabaseAuditHandler(logging.Handler):
     def emit(self, record):
         global _last_audit_log_hash
         try:
+            if not _DB_AVAILABLE or SessionLocal is None or AuditLog is None:
+                # Gracefully skip if DB layer is unavailable
+                return
             db = SessionLocal()
             try:
                 # Get the last audit log entry to calculate the previous hash
@@ -81,18 +92,20 @@ def setup_logging():
     root_logger.addHandler(stream_handler)
 
     # --- Audit Log Handler ---
-    if config.logging.enable_audit_log:
+    if getattr(config, 'logging', None) and getattr(config.logging, 'enable_audit_log', False):
         audit_logger = logging.getLogger('audit')
         audit_logger.setLevel(config.logging.audit_log_level)
         audit_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         
-        # Use DatabaseAuditHandler instead of RotatingFileHandler for audit logs
-        db_audit_handler = DatabaseAuditHandler()
-        db_audit_handler.setFormatter(audit_formatter)
-        audit_logger.addHandler(db_audit_handler)
-        
-        audit_logger.propagate = False # Prevent audit logs from going to root_logger
-        logger.info(f"Audit logging enabled to database.")
+        # Use DatabaseAuditHandler only if DB layer is available
+        if _DB_AVAILABLE:
+            db_audit_handler = DatabaseAuditHandler()
+            db_audit_handler.setFormatter(audit_formatter)
+            audit_logger.addHandler(db_audit_handler)
+            audit_logger.propagate = False # Prevent audit logs from going to root_logger
+            logger.info(f"Audit logging enabled to database.")
+        else:
+            logger.info("Audit logging disabled (database unavailable during setup).")
 
     # Prevent duplicate logs from imported modules
     root_logger.propagate = False
@@ -100,8 +113,10 @@ def setup_logging():
 def get_logger(name):
     return logging.getLogger(name)
 
-# Setup logging when the module is imported
-setup_logging()
+# Do not auto-setup on import to avoid circular import side-effects
+# Enable auto-setup only when explicitly requested via env flag
+if os.environ.get("SHUJAA_AUTO_LOG_SETUP", "0") == "1":
+    setup_logging()
 
 def get_audit_logger():
     """

@@ -1,6 +1,6 @@
 import requests
 
-HF_TOKEN = "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"  # or input() to prompt
+HF_TOKEN = os.getenv("HF_TOKEN")
 MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
 
 headers = {"Authorization": f"Bearer {HF_TOKEN}"}

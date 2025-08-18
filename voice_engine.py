@@ -17,6 +17,9 @@ def tts_bark(input_file: str, output_file: str):
         with open(input_file, 'r', encoding='utf-8') as f:
             text = f.read().strip()
         
+        # Remove emojis by encoding to ascii and ignoring errors
+        text = text.encode('ascii', 'ignore').decode('ascii')
+        
         if not text:
             print("[TTS] Empty text, generating silence")
             # Generate 3 seconds of silence
@@ -63,6 +66,9 @@ def tts_edge(input_file: str, output_file: str, voice: str = "en-US-AriaNeural")
         # Read input text
         with open(input_file, 'r', encoding='utf-8') as f:
             text = f.read().strip()
+        
+        # Remove emojis by encoding to ascii and ignoring errors
+        text = text.encode('ascii', 'ignore').decode('ascii')
         
         if not text:
             print("[TTS] Empty text, generating silence")

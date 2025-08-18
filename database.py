@@ -1,10 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from logging_setup import get_logger
+import logging
 from config_loader import get_config
 
-logger = get_logger(__name__)
+# Use standard logging to avoid circular import with logging_setup
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 config = get_config()
 
 # Use SQLite for simplicity in development

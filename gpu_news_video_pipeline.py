@@ -25,6 +25,7 @@ from pathlib import Path
 from PIL import Image
 import io
 import base64
+from typing import List
 
 # Ensure FFMPEG is available
 FFMPEG = os.environ.get("FFMPEG_PATH", "ffmpeg")
@@ -70,7 +71,7 @@ except ImportError:
     FASTER_WHISPER_AVAILABLE = False
 
 # Hugging Face credentials
-HF_TOKEN = os.environ.get("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")
+HF_TOKEN = os.getenv("HF_TOKEN")
 NEWSAPI_KEY = os.environ.get("NEWSAPI_KEY")
 
 # HF Model IDs
@@ -342,7 +343,15 @@ def youtube_upload(file_path:Path, title:str, description:str, tags:List[str]):
         log("YouTube upload failed", e)
 
 # ---------- Main pipeline ----------
-def pipeline_news_to_video(query="Kenya", out_file=None, scenes=3, upload=False):
+def pipeline_news_to_video(query="Kenya", out_file=None, scenes=3, upload=False, target_duration_minutes=1.0):
+    if not HF_TOKEN:
+        raise RuntimeError("HF_TOKEN environment variable is not set. Cannot proceed without Hugging Face API access.")
+
+    # Calculate number of scenes based on target duration (assuming ~15 seconds per scene)
+    estimated_scene_duration_seconds = 15
+    required_scenes = max(1, int((target_duration_minutes * 60) / estimated_scene_duration_seconds))
+    scenes = max(scenes, required_scenes) # Use the larger of user-provided scenes or calculated scenes
+
     items = fetch_news_headlines(query, cnt=scenes)
     if not items:
         raise RuntimeError("No news items found.")
@@ -360,23 +369,7 @@ def pipeline_news_to_video(query="Kenya", out_file=None, scenes=3, upload=False)
                 ok = hf_image_generate(scene_prompt, img_path)
             except Exception as e:
                 log("hf image err", e)
-        if not ok and USE_CUDA:
-            ok = local_image_generate(scene_prompt, img_path)
-        if not ok:
-            # fallback to unsplash
-            log("Falling back to Unsplash for image.")
-            unsplash_url = f"https://source.unsplash.com/random/1024x1024/?{scene_prompt.replace(' ', ',')}"
-            try:
-                r = requests.get(unsplash_url, allow_redirects=True, timeout=10)
-                if r.status_code == 200:
-                    with open(img_path, "wb") as f:
-                        f.write(r.content)
-                    ok = True
-                    log("Unsplash image saved", img_path)
-                else:
-                    log("Unsplash failed:", r.status_code)
-            except Exception as e:
-                log("Unsplash error:", e)
+        
         if not ok:
             raise RuntimeError(f"Failed to generate/fetch image for: {scene_prompt}")
 
@@ -387,8 +380,7 @@ def pipeline_news_to_video(query="Kenya", out_file=None, scenes=3, upload=False)
                 ok = hf_tts_generate(art.get("description") or art.get("title"), audio_path)
             except Exception as e:
                 log("hf tts err", e)
-        if not ok and GTTS_AVAILABLE:
-            ok = gtts_tts(art.get("description") or art.get("title"), audio_path)
+        
         if not ok:
             raise RuntimeError(f"Failed to generate audio for: {art.get('title')}")
 
@@ -429,8 +421,9 @@ if __name__ == "__main__":
     parser.add_argument("--out", type=str, default=None)
     parser.add_argument("--scenes", type=int, default=3)
     parser.add_argument("--upload", action="store_true", default=False)
+    parser.add_argument("--duration_minutes", type=float, default=1.0, help="Target video duration in minutes")
     args = parser.parse_args()
     if args.mode=="news":
-        pipeline_news_to_video(args.query, out_file=Path(args.out) if args.out else None, scenes=args.scenes, upload=args.upload)
+        pipeline_news_to_video(args.query, out_file=Path(args.out) if args.out else None, scenes=args.scenes, upload=args.upload, target_duration_minutes=args.duration_minutes)
     else:
         print("Other modes not implemented in this script")
