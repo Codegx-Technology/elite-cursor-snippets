@@ -160,6 +160,15 @@ class Integration(BaseModel):
     is_enabled: bool
     config: dict
 
+
+class UserData(BaseModel):
+    id: int
+    username: str
+    email: str
+    role: str
+    tenant_name: str
+    is_active: bool
+
 # --- Dependency Functions ---
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db), request: Request = None):
@@ -496,6 +505,40 @@ async def get_integrations():
 async def update_integration(integration_id: str, config: dict):
     # TODO: Replace with real database update
     return {"id": integration_id, "name": "Google Drive", "type": "storage", "is_enabled": config.get("is_enabled"), "config": {"folder": "/ShujaaStudio"}}
+
+
+@app.get("/api/users", response_model=List[UserData])
+async def get_users():
+    # TODO: Replace with real data from a database
+    return [
+        {"id": 1, "username": "testuser", "email": "testuser@example.com", "role": "user", "tenant_name": "default", "is_active": True},
+        {"id": 2, "username": "adminuser", "email": "adminuser@example.com", "role": "admin", "tenant_name": "default", "is_active": True},
+    ]
+
+
+@app.get("/api/users/{user_id}", response_model=UserData)
+async def get_user(user_id: int):
+    # TODO: Replace with real data from a database
+    return {"id": user_id, "username": "testuser", "email": "testuser@example.com", "role": "user", "tenant_name": "default", "is_active": True}
+
+
+@app.post("/api/users", response_model=UserData)
+async def create_user(user: UserData):
+    # TODO: Replace with real database insertion
+    return user
+
+
+@app.put("/api/users/{user_id}", response_model=UserData)
+async def update_user(user_id: int, user: UserData):
+    # TODO: Replace with real database update
+    return user
+
+
+@app.delete("/api/users/{user_id}")
+async def delete_user(user_id: int):
+    # TODO: Replace with real database deletion
+    return {"success": True}
+
 
 @app.post("/generate_video")
 @RateLimiter(times=1, seconds=5, key_func=user_id_key_func)

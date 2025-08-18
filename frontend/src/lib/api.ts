@@ -171,6 +171,15 @@ export interface GalleryItem {
   created_at: string;
 }
 
+export interface UserData {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+  tenant_name: string;
+  is_active: boolean;
+}
+
 class ApiClient {
   private baseUrl: string;
   private authToken: string | null = null;
@@ -418,6 +427,35 @@ class ApiClient {
 
   async deleteProject(projectId: string): Promise<ApiResponse<{ success: boolean }>> {
     return this.request(`/api/projects/${projectId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // User Management
+  async getUsers(): Promise<ApiResponse<UserData[]>> {
+    return this.request('/api/users');
+  }
+
+  async getUser(id: number): Promise<ApiResponse<UserData>> {
+    return this.request(`/api/users/${id}`);
+  }
+
+  async createUser(data: Omit<UserData, 'id'>): Promise<ApiResponse<UserData>> {
+    return this.request('/api/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateUser(id: number, data: Partial<UserData>): Promise<ApiResponse<UserData>> {
+    return this.request(`/api/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteUser(id: number): Promise<ApiResponse<{ success: boolean }>> {
+    return this.request(`/api/users/${id}`, {
       method: 'DELETE',
     });
   }
