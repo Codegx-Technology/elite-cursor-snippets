@@ -1,7 +1,7 @@
 'use client';
 
 import { useApiIntegration } from '@/hooks/useApiIntegration';
-import { FaSpinner, FaPlus, FaTrash, FaKey, FaPlug } from 'react-icons/fa';
+import { FaSpinner, FaPlus, FaTrash } from 'react-icons/fa';
 import Card from '@/components/Card';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean

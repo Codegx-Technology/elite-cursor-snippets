@@ -20,7 +20,7 @@ export interface Integration {
   name: string;
   type: string;
   is_enabled: boolean;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
 }
 
 export function useApiIntegration() {
@@ -74,7 +74,7 @@ export function useApiIntegration() {
     );
   };
 
-  const updateIntegration = async (id: string, config: Record<string, any>) => {
+  const updateIntegration = async (id: string, config: Partial<Integration>) => {
     const response = await apiClient.updateIntegration(id, config);
     handleApiResponse(
       response,

@@ -144,6 +144,22 @@ class AnalyticsData(BaseModel):
     popular_content: List[dict]
     performance_metrics: dict
 
+
+class ApiKey(BaseModel):
+    id: str
+    key: str
+    created_at: str
+    last_used_at: Optional[str] = None
+    is_active: bool
+
+
+class Integration(BaseModel):
+    id: str
+    name: str
+    type: str
+    is_enabled: bool
+    config: dict
+
 # --- Dependency Functions ---
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db), request: Request = None):
@@ -437,6 +453,49 @@ async def get_analytics_data(timeRange: str = "30d"):
             "user_satisfaction": 4.8
         }
     }
+
+
+@app.get("/api/keys", response_model=List[ApiKey])
+async def get_api_keys():
+    # TODO: Replace with real data from a database
+    return [
+        {"id": "1", "key": "shujaa_sk_123...", "created_at": "2025-08-01", "last_used_at": "2025-08-17", "is_active": True},
+        {"id": "2", "key": "shujaa_sk_456...", "created_at": "2025-07-15", "last_used_at": None, "is_active": False},
+    ]
+
+
+@app.post("/api/keys", response_model=ApiKey)
+async def generate_api_key():
+    # TODO: Replace with real key generation and database storage
+    new_key = {
+        "id": str(uuid.uuid4()),
+        "key": f"shujaa_sk_{uuid.uuid4().hex[:12]}...",
+        "created_at": datetime.utcnow().isoformat(),
+        "last_used_at": None,
+        "is_active": True,
+    }
+    return new_key
+
+
+@app.delete("/api/keys/{key_id}")
+async def revoke_api_key(key_id: str):
+    # TODO: Replace with real database update
+    return {"success": True}
+
+
+@app.get("/api/integrations", response_model=List[Integration])
+async def get_integrations():
+    # TODO: Replace with real data from a database
+    return [
+        {"id": "1", "name": "Google Drive", "type": "storage", "is_enabled": True, "config": {"folder": "/ShujaaStudio"}},
+        {"id": "2", "name": "Slack", "type": "notification", "is_enabled": False, "config": {"channel": "#general"}},
+    ]
+
+
+@app.put("/api/integrations/{integration_id}", response_model=Integration)
+async def update_integration(integration_id: str, config: dict):
+    # TODO: Replace with real database update
+    return {"id": integration_id, "name": "Google Drive", "type": "storage", "is_enabled": config.get("is_enabled"), "config": {"folder": "/ShujaaStudio"}}
 
 @app.post("/generate_video")
 @RateLimiter(times=1, seconds=5, key_func=user_id_key_func)

@@ -62,7 +62,7 @@ export interface ContentGenerationJob {
   completed_at?: string;
   result_url?: string;
   error_message?: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   // Optional friendly fallback fields when service returns a soft-fail UX path
   friendly_message?: string;
   retry_options?: string[];
@@ -135,6 +135,40 @@ export interface RecentActivity {
   title: string;
   timestamp: string;
   status: 'completed' | 'processing' | 'failed';
+}
+
+export interface ApiKey {
+  id: string;
+  key: string;
+  created_at: string;
+  last_used_at?: string;
+  is_active: boolean;
+}
+
+export interface Integration {
+  id: string;
+  name: string;
+  type: string;
+  is_enabled: boolean;
+  config: Record<string, unknown>;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  type: 'video' | 'image' | 'audio';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GalleryItem {
+  id: string;
+  title: string;
+  type: 'video' | 'image' | 'audio';
+  url: string;
+  thumbnail_url?: string;
+  created_at: string;
 }
 
 class ApiClient {
@@ -321,9 +355,38 @@ class ApiClient {
     return this.request('/api/analytics/overview');
   }
 
+  // API Keys
+  async getApiKeys(): Promise<ApiResponse<ApiKey[]>> {
+    return this.request('/api/keys');
+  }
+
+  async generateApiKey(): Promise<ApiResponse<ApiKey>> {
+    return this.request('/api/keys', {
+      method: 'POST',
+    });
+  }
+
+  async revokeApiKey(id: string): Promise<ApiResponse<{ success: boolean }>> {
+    return this.request(`/api/keys/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Integrations
+  async getIntegrations(): Promise<ApiResponse<Integration[]>> {
+    return this.request('/api/integrations');
+  }
+
+  async updateIntegration(id: string, config: Partial<Integration>): Promise<ApiResponse<Integration>> {
+    return this.request(`/api/integrations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(config),
+    });
+  }
+
   // Projects with pagination
   async getProjects(page: number = 1, limit: number = 6): Promise<ApiResponse<{
-    projects: any[];
+    projects: Project[];
     total: number;
     page: number;
     pages: number;
@@ -331,7 +394,7 @@ class ApiClient {
     return this.request(`/api/projects?page=${page}&limit=${limit}`);
   }
 
-  async getProject(projectId: string): Promise<ApiResponse<any>> {
+  async getProject(projectId: string): Promise<ApiResponse<Project>> {
     return this.request(`/api/projects/${projectId}`);
   }
 
@@ -339,14 +402,14 @@ class ApiClient {
     name: string;
     description?: string;
     type: 'video' | 'image' | 'audio';
-  }): Promise<ApiResponse<any>> {
+  }): Promise<ApiResponse<Project>> {
     return this.request('/api/projects', {
       method: 'POST',
       body: JSON.stringify(project),
     });
   }
 
-  async updateProject(projectId: string, updates: any): Promise<ApiResponse<any>> {
+  async updateProject(projectId: string, updates: Partial<Project>): Promise<ApiResponse<Project>> {
     return this.request(`/api/projects/${projectId}`, {
       method: 'PUT',
       body: JSON.stringify(updates),
@@ -366,7 +429,7 @@ class ApiClient {
     type?: 'video' | 'image' | 'audio',
     search?: string
   ): Promise<ApiResponse<{
-    items: any[];
+        items: GalleryItem[];
     total: number;
     page: number;
     pages: number;
