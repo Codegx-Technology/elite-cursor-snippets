@@ -137,6 +137,60 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     bio: Optional[str] = None
 
+
+class AnalyticsData(BaseModel):
+    overview: dict
+    usage_trends: List[dict]
+    popular_content: List[dict]
+    performance_metrics: dict
+
+
+class ApiKey(BaseModel):
+    id: str
+    key: str
+    created_at: str
+    last_used_at: Optional[str] = None
+    is_active: bool
+
+
+class Integration(BaseModel):
+    id: str
+    name: str
+    type: str
+    is_enabled: bool
+    config: dict
+
+
+class UserData(BaseModel):
+    id: int
+    username: str
+    email: str
+    role: str
+    tenant_name: str
+    is_active: bool
+
+
+class Project(BaseModel):
+    id: str
+    name: str
+    description: Optional[str] = None
+    type: str
+    status: str
+    created_at: str
+    updated_at: str
+    items_count: int
+
+
+class Asset(BaseModel):
+    id: str
+    name: str
+    type: str
+    url: str
+    thumbnail_url: Optional[str] = None
+    size: int
+    uploaded_at: str
+    usage_count: int
+
 # --- Dependency Functions ---
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db), request: Request = None):
@@ -397,6 +451,174 @@ async def get_reconciliation_report(month: str, current_user: User = Depends(get
     if not report:
         raise HTTPException(status_code=404, detail="Reconciliation report not found for specified month.")
     return report
+
+
+@app.get("/api/analytics")
+async def get_analytics_data(timeRange: str = "30d"):
+    # TODO: Replace with real data from a database or analytics service
+    return {
+        "overview": {
+            "total_videos": 1250,
+            "total_images": 8345,
+            "total_audio": 3210,
+            "total_views": 1200000,
+            "total_downloads": 780
+        },
+        "usage_trends": [
+            {"date": "2025-08-01", "videos": 20, "images": 150, "audio": 50},
+            {"date": "2025-08-02", "videos": 25, "images": 160, "audio": 55},
+            {"date": "2025-08-03", "videos": 30, "images": 170, "audio": 60},
+            {"date": "2025-08-04", "videos": 28, "images": 180, "audio": 65},
+            {"date": "2025-08-05", "videos": 35, "images": 190, "audio": 70},
+            {"date": "2025-08-06", "videos": 40, "images": 200, "audio": 75},
+            {"date": "2025-08-07", "videos": 45, "images": 210, "audio": 80},
+        ],
+        "popular_content": [
+            {"id": "1", "title": "Kenya Wildlife", "type": "video", "views": 1500, "downloads": 300},
+            {"id": "2", "title": "Nairobi Skyline", "type": "image", "views": 2500, "downloads": 500},
+            {"id": "3", "title": "Maasai Mara Beat", "type": "audio", "views": 3500, "downloads": 700},
+        ],
+        "performance_metrics": {
+            "avg_generation_time": 45,
+            "success_rate": 0.95,
+            "user_satisfaction": 4.8
+        }
+    }
+
+
+@app.get("/api/keys", response_model=List[ApiKey])
+async def get_api_keys():
+    # TODO: Replace with real data from a database
+    return [
+        {"id": "1", "key": "shujaa_sk_123...", "created_at": "2025-08-01", "last_used_at": "2025-08-17", "is_active": True},
+        {"id": "2", "key": "shujaa_sk_456...", "created_at": "2025-07-15", "last_used_at": None, "is_active": False},
+    ]
+
+
+@app.post("/api/keys", response_model=ApiKey)
+async def generate_api_key():
+    # TODO: Replace with real key generation and database storage
+    new_key = {
+        "id": str(uuid.uuid4()),
+        "key": f"shujaa_sk_{uuid.uuid4().hex[:12]}...",
+        "created_at": datetime.utcnow().isoformat(),
+        "last_used_at": None,
+        "is_active": True,
+    }
+    return new_key
+
+
+@app.delete("/api/keys/{key_id}")
+async def revoke_api_key(key_id: str):
+    # TODO: Replace with real database update
+    return {"success": True}
+
+
+@app.get("/api/integrations", response_model=List[Integration])
+async def get_integrations():
+    # TODO: Replace with real data from a database
+    return [
+        {"id": "1", "name": "Google Drive", "type": "storage", "is_enabled": True, "config": {"folder": "/ShujaaStudio"}},
+        {"id": "2", "name": "Slack", "type": "notification", "is_enabled": False, "config": {"channel": "#general"}},
+    ]
+
+
+@app.put("/api/integrations/{integration_id}", response_model=Integration)
+async def update_integration(integration_id: str, config: dict):
+    # TODO: Replace with real database update
+    return {"id": integration_id, "name": "Google Drive", "type": "storage", "is_enabled": config.get("is_enabled"), "config": {"folder": "/ShujaaStudio"}}
+
+
+@app.get("/api/users", response_model=List[UserData])
+async def get_users():
+    # TODO: Replace with real data from a database
+    return [
+        {"id": 1, "username": "testuser", "email": "testuser@example.com", "role": "user", "tenant_name": "default", "is_active": True},
+        {"id": 2, "username": "adminuser", "email": "adminuser@example.com", "role": "admin", "tenant_name": "default", "is_active": True},
+    ]
+
+
+@app.get("/api/users/{user_id}", response_model=UserData)
+async def get_user(user_id: int):
+    # TODO: Replace with real data from a database
+    return {"id": user_id, "username": "testuser", "email": "testuser@example.com", "role": "user", "tenant_name": "default", "is_active": True}
+
+
+@app.post("/api/users", response_model=UserData)
+async def create_user(user: UserData):
+    # TODO: Replace with real database insertion
+    return user
+
+
+@app.put("/api/users/{user_id}", response_model=UserData)
+async def update_user(user_id: int, user: UserData):
+    # TODO: Replace with real database update
+    return user
+
+
+@app.delete("/api/users/{user_id}")
+async def delete_user(user_id: int):
+    # TODO: Replace with real database deletion
+    return {"success": True}
+
+
+@app.get("/api/projects", response_model=List[Project])
+async def get_projects(page: int = 1, limit: int = 6):
+    # TODO: Replace with real data from a database
+    return {
+        "projects": [
+            {"id": "1", "name": "Project 1", "description": "Description 1", "type": "video", "status": "completed", "created_at": "2025-08-01", "updated_at": "2025-08-17", "items_count": 10},
+            {"id": "2", "name": "Project 2", "description": "Description 2", "type": "image", "status": "in_progress", "created_at": "2025-08-02", "updated_at": "2025-08-18", "items_count": 5},
+        ],
+        "total": 2,
+        "page": 1,
+        "pages": 1,
+    }
+
+
+@app.post("/api/projects", response_model=Project)
+async def create_project(project: Project):
+    # TODO: Replace with real database insertion
+    return project
+
+
+@app.put("/api/projects/{project_id}", response_model=Project)
+async def update_project(project_id: str, project: Project):
+    # TODO: Replace with real database update
+    return project
+
+
+@app.delete("/api/projects/{project_id}")
+async def delete_project(project_id: str):
+    # TODO: Replace with real database deletion
+    return {"success": True}
+
+
+@app.get("/api/assets", response_model=List[Asset])
+async def get_assets(page: int = 1, limit: int = 10, type: Optional[str] = None):
+    # TODO: Replace with real data from a database
+    return {
+        "assets": [
+            {"id": "1", "name": "Asset 1", "type": "image", "url": "https://example.com/image1.jpg", "size": 1024, "uploaded_at": "2025-08-01", "usage_count": 5},
+            {"id": "2", "name": "Asset 2", "type": "audio", "url": "https://example.com/audio1.mp3", "size": 2048, "uploaded_at": "2025-08-02", "usage_count": 10},
+        ],
+        "pages": 1,
+        "total": 2,
+    }
+
+
+@app.post("/api/assets")
+async def upload_asset(file: UploadFile):
+    # TODO: Replace with real file upload and database insertion
+    return {"id": "3", "name": file.filename, "type": "image", "url": "https://example.com/image2.jpg", "size": 1024, "uploaded_at": "2025-08-18", "usage_count": 0}
+
+
+@app.delete("/api/assets/{asset_id}")
+async def delete_asset(asset_id: str):
+    # TODO: Replace with real database deletion
+    return {"success": True}
+
+
 
 @app.post("/generate_video")
 @RateLimiter(times=1, seconds=5, key_func=user_id_key_func)

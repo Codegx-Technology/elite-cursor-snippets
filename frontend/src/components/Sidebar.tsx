@@ -16,7 +16,9 @@ import {
   FaGlobe,
   FaCreditCard,
   FaNewspaper,
-  FaShieldAlt
+  FaShieldAlt,
+  FaDownload,
+  FaBox
 } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean
@@ -52,6 +54,18 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       description: 'Super Admin Health'
     },
     {
+      href: '/admin/users',
+      icon: FaUsers,
+      label: 'User Management',
+      description: 'Manage users'
+    },
+    {
+      href: '/admin/roles',
+      icon: FaKey,
+      label: 'Role Management',
+      description: 'Manage user roles'
+    },
+    {
       href: '/video-generate',
       icon: FaVideo,
       label: 'Generate Video',
@@ -82,10 +96,16 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       description: 'Voice & music creation'
     },
     {
-      href: '/analytics',
-      icon: FaChartLine,
-      label: 'Analytics',
-      description: 'Performance insights'
+      href: '/admin/roles',
+      icon: FaKey,
+      label: 'Role Management',
+      description: 'Manage user roles'
+    },
+    {
+      href: '/admin/api-integration',
+      icon: FaPlug,
+      label: 'API & Integrations',
+      description: 'Manage API keys and integrations'
     },
     {
       href: '/team',
@@ -104,6 +124,24 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       icon: FaCog,
       label: 'Settings',
       description: 'Preferences & config'
+    },
+    {
+      href: '/settings/local-models',
+      icon: FaDownload,
+      label: 'Local Models',
+      description: 'Manage local models'
+    },
+    {
+      href: '/settings/storage-management',
+      icon: FaBox,
+      label: 'Storage Management',
+      description: 'Manage storage'
+    },
+    {
+      href: '/profile',
+      icon: FaUsers,
+      label: 'Profile',
+      description: 'Manage your profile'
     }
   ];
 

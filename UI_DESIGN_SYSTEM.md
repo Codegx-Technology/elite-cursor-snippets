@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-opend)# SalonGenZ UI Design System
-=======
 # SalonGenZ UI Design System
->>>>>>> 6866a0ca7ed0af784d176d8ecdcf32bd4a982581
 *Based on Time Sync⚡ AI Scheduler - Elite GenZ Design*
 
 ## 🎨 Design Philosophy
