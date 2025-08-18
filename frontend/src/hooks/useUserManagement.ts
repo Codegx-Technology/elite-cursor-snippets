@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { apiClient, handleApiResponse } from '@/lib/api';
+import { apiClient, handleApiResponse, CreateUserData } from '@/lib/api';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Custom hook for managing user management state and logic
@@ -46,7 +46,7 @@ export function useUserManagement() {
     setIsLoading(false);
   };
 
-  const createUser = async (data: Omit<UserData, 'id'>) => {
+  const createUser = async (data: CreateUserData) => {
     const response = await apiClient.createUser(data);
     handleApiResponse(
       response,

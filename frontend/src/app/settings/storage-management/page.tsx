@@ -1,3 +1,4 @@
+'use client';
 
 import { useStorageManagement } from '@/hooks/useStorageManagement';
 import { FaSpinner } from 'react-icons/fa';

@@ -272,6 +272,7 @@ export function useVideoGenerator() {
     progress,
     generatedVideo,
     error,
+    setError,
     friendlyFallback,
     handleInputChange,
     handleGenerateVideo,

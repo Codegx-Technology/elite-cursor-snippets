@@ -19,6 +19,7 @@ export default function VideoGeneratePage() {
     progress,
     generatedVideo,
     error,
+    setError,
     friendlyFallback,
     handleInputChange,
     handleGenerateVideo,

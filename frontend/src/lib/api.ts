@@ -182,6 +182,10 @@ export interface UserData {
   is_active: boolean;
 }
 
+export interface CreateUserData extends Omit<UserData, 'id'> {
+  password: string;
+}
+
 export interface Asset {
   id: string;
   name: string;
@@ -191,6 +195,32 @@ export interface Asset {
   size: number;
   uploaded_at: string;
   usage_count: number;
+}
+
+export interface LocalModel {
+  id: string;
+  name: string;
+  type: 'llm' | 'image_gen' | 'tts' | 'stt';
+  version: string;
+  size_gb: number;
+  status: 'installed' | 'downloading' | 'available';
+  download_progress?: number;
+}
+
+export interface StorageInfo {
+  total_space_gb: number;
+  used_space_gb: number;
+  free_space_gb: number;
+  cache_size_gb: number;
+  project_data_size_gb: number;
+  log_data_size_gb: number;
+}
+
+export interface UserProfileData {
+  username: string;
+  email: string;
+  full_name?: string;
+  bio?: string;
 }
 
 class ApiClient {
@@ -203,6 +233,13 @@ class ApiClient {
 
   setAuthToken(token: string) {
     this.authToken = token;
+  }
+
+  async login(username: string, password: string): Promise<ApiResponse<{ access_token: string }>> {
+    return this.request('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    });
   }
 
   private async request<T>(
@@ -453,7 +490,7 @@ class ApiClient {
     return this.request(`/api/users/${id}`);
   }
 
-  async createUser(data: Omit<UserData, 'id'>): Promise<ApiResponse<UserData>> {
+  async createUser(data: CreateUserData): Promise<ApiResponse<UserData>> {
     return this.request('/api/users', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -520,6 +557,50 @@ class ApiClient {
 
     return this.request(`/api/gallery?${params.toString()}`);
   }
+
+  // Local Models
+  async getLocalModels(): Promise<ApiResponse<LocalModel[]>> {
+    return this.request('/api/models/local');
+  }
+
+  async downloadLocalModel(modelId: string): Promise<ApiResponse<{ success: boolean }>> {
+    return this.request(`/api/models/local/${modelId}/download`, {
+      method: 'POST',
+    });
+  }
+
+  async deleteLocalModel(modelId: string): Promise<ApiResponse<{ success: boolean }>> {
+    return this.request(`/api/models/local/${modelId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getPromptSuggestions(prompt: string): Promise<ApiResponse<{ suggestions: string[] }>> {
+    return this.request(`/api/prompts/suggestions?q=${encodeURIComponent(prompt)}`);
+  }
+
+  // Storage Management
+  async getStorageInfo(): Promise<ApiResponse<StorageInfo>> {
+    return this.request('/api/storage/info');
+  }
+
+  async clearCache(): Promise<ApiResponse<{ success: boolean }>> {
+    return this.request('/api/storage/clear-cache', {
+      method: 'POST',
+    });
+  }
+
+  // User Profile
+  async getProfile(): Promise<ApiResponse<UserProfileData>> {
+    return this.request('/api/user/profile');
+  }
+
+  async updateProfile(data: Partial<UserProfileData>): Promise<ApiResponse<UserProfileData>> {
+    return this.request('/api/user/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export const apiClient = new ApiClient();
@@ -541,4 +622,6 @@ export function handleApiResponse<T>(
   }
 }
 
-export default apiClient;
+
+
+

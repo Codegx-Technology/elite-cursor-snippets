@@ -29,10 +29,10 @@ models:
     local_fallback_path: "" # Path to local LLM model (e.g., LLaMA.cpp compatible)
   image_generation:
     hf_api_id: "stabilityai/stable-diffusion-xl-base-1.0" # Example HF model
-    local_fallback_path: "" # Path to local Stable Diffusion model
+    local_fallback_path: "models/stable-diffusion-2-1" # Path to local Stable Diffusion model
   voice_synthesis:
     hf_api_id: "suno/bark"
-    local_fallback_path: "" # Path to local Bark/CoquiTTS model
+    local_fallback_path: "models/mms-tts-eng" # Path to local Bark/CoquiTTS model
   speech_to_text:
     hf_api_id: "openai/whisper-large-v2"
     local_fallback_path: "" # Path to local Whisper model

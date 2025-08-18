@@ -1,11 +1,12 @@
-import { NextResponse } from 'next/server'
-// [SNIPPET]: surgicalfix + refactorclean (elite-cursor-snippets)
-// [TASK]: Align Next route with FastAPI backend contract and status codes
-// [GOAL]: Proxy to backend /api/jobs/{id}, pass-through status, normalize error shapes
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(_request: Request, { params }: { params: { id: string } }) {
+// TODO: Fix Next.js API route typing bug
+export async function GET(
+  _request: any,
+  context: any
+) {
   const baseUrl = process.env.BACKEND_URL || 'http://localhost:8000'
-  const target = `${baseUrl.replace(/\/$/, '')}/api/jobs/${encodeURIComponent(params.id)}`
+  const target = `${baseUrl.replace(/\/$/, '')}/api/jobs/${encodeURIComponent(context.params.id)}`
 
   try {
     const res = await fetch(target, {

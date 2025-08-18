@@ -11,6 +11,7 @@ import feedparser
 import pickle
 import sys
 import logging
+from typing import Optional, Any, Dict
 
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -23,14 +24,13 @@ from ai_model_manager import generate_text, generate_image as ai_generate_image,
 from config_loader import get_config
 from utils.parallel_processing import ParallelProcessor # Import ParallelProcessor
 from error_utils import log_and_raise, retry_on_exception
+from enhanced_model_router import EnhancedModelRouter, GenerationRequest
+from logging_setup import get_logger
 
-<<<<<<< HEAD
-import logging
 from dotenv import load_dotenv
 
-# Use standard logging to avoid circular import with logging_setup
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+# Centralized logging
+logger = get_logger(__name__)
 
 load_dotenv()
 
@@ -370,6 +370,9 @@ async def main(news: str = None, script_file: str = None, prompt: str = None, up
     
     # Extract dialect from user_preferences
     dialect = user_preferences.get("dialect") if user_preferences else None
+    # Initialize enhanced router if not provided
+    if enhanced_router is None:
+        enhanced_router = EnhancedModelRouter()
     if news:
         logger.info(f"Fetching news for query: {news}")
         try:
@@ -440,7 +443,7 @@ async def main(news: str = None, script_file: str = None, prompt: str = None, up
             logger.info("STT disabled via SHUJAA_DISABLE_STT. Skipping captions generation.")
         else:
             try:
-                captions = await generate_captions_from_audio(voiceover_file)
+                captions = await generate_captions_from_audio(voiceover_file, enhanced_router, dialect)
             except Exception as e:
                 log_and_raise(e, "Error generating captions")
 
@@ -471,6 +474,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     try:
+        logger.info("Starting news_video_generator main run...")
         asyncio.run(main(news=args.news, script_file=args.script, prompt=args.prompt, upload_youtube=args.upload_youtube))
     except Exception as e:
         logger.exception(f"Fatal error in main: {e}")
