@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { FaArrowRight, FaArrowLeft } from 'react-icons/fa';
 import { useVideoGenerator } from '@/hooks/useVideoGenerator';
-import PromptSuggester from '@/components/Prompting/PromptSuggester';
+import PromptSuggester from '@/components/Video/PromptSuggester';
 
 export default function SimpleMode() {
   const { formData, handleInputChange, handleGenerateVideo, progress } = useVideoGenerator();
