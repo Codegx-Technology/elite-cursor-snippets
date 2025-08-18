@@ -6,6 +6,8 @@
 const config = {
   plugins: {
     "@tailwindcss/postcss": {},
+    // Ensure vendor prefixes are applied during development and build
+    autoprefixer: {},
   },
 };
 
