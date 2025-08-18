@@ -1,3 +1,4 @@
+'use client';
 
 import { useLocalModels } from '@/hooks/useLocalModels';
 import { FaSpinner, FaDownload, FaTrash } from 'react-icons/fa';
