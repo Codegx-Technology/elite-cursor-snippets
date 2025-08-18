@@ -79,6 +79,12 @@ export function useUserManagement() {
     );
   };
 
+  // Ensure we load users when the hook mounts so UI doesn't get stuck in loading
+  useEffect(() => {
+    loadUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return {
     users,
     user,
