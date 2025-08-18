@@ -39,12 +39,12 @@ if ($Global) {
     
     Copy-Item $SourceFile $TargetFile -Force
     Copy-Item $ContextFile $TargetContextFile -Force
-    Write-Host "✅ Deployed to project:" -ForegroundColor Green
+    Write-Host 'Deployed to project:' -ForegroundColor Green
     Write-Host "   - $TargetFile" -ForegroundColor Cyan
     Write-Host "   - $TargetContextFile" -ForegroundColor Cyan
 }
 
-Write-Host "🎯 Elite AI Prompt Arsenal ready to use!" -ForegroundColor Cyan
-Write-Host "📝 Available prefixes:" -ForegroundColor Yellow
-Write-Host "   Elite Prompts: thinkwithai, surgicalfix, refactorintent, writetest, doccode, unstuck, augmentsearch, kenyafirst, mindreset" -ForegroundColor Yellow
-Write-Host "   Context Chains: taskchain, memorychain, debugchain, refactorchain, searchchain, recoverychain" -ForegroundColor Yellow 
+Write-Host 'Elite AI Prompt Arsenal ready to use!' -ForegroundColor Cyan
+Write-Host 'Available prefixes:' -ForegroundColor Yellow
+Write-Host '   Elite Prompts: thinkwithai, surgicalfix, refactorintent, writetest, doccode, unstuck, augmentsearch, kenyafirst, mindreset' -ForegroundColor Yellow
+Write-Host '   Context Chains: taskchain, memorychain, debugchain, refactorchain, searchchain, recoverychain' -ForegroundColor Yellow

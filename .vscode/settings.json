@@ -1,0 +1,15 @@
+{
+  "editor.inlineSuggest.enabled": true,
+  "editor.snippetSuggestions": "inline",
+  "editor.suggest.showSnippets": true,
+  "editor.tabCompletion": "on",
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+  "editor.suggestSelection": "first",
+  "python.analysis.typeCheckingMode": "basic",
+  "python.languageServer": "Pylance",
+  "editor.formatOnSave": false
+}
