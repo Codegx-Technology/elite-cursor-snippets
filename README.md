@@ -91,6 +91,31 @@ Want to add more elite prompts or improve the arsenal?
 
 ---
 
+## 🌍 Global Snippets Location & Cross-Project Usage
+
+The arsenal is typically installed globally so it works in every project for this Windows user account.
+
+* __Global location (Windows)__
+  * `C:\Users\LENOVO\AppData\Roaming\Code\User\snippets\elite-global-snippets.code-snippets`
+  * `C:\Users\LENOVO\AppData\Roaming\Code\User\snippets\elite-context-templates.code-snippets`
+
+* __What we changed (workspace cleanup)__
+  * Removed duplicate configs from the root workspace `.vscode/` to avoid VS Code double-loading.
+  * Kept this repo as the source of truth. Use the deploy scripts here to sync.
+
+* **Use in other projects**
+  * Global install: run `./deploy-elite-arsenal.ps1 -Global` (Windows) or `./sync-arsenal.sh -g` (macOS/Linux). Snippets will be available in all workspaces.
+  * Project-scoped: run `./deploy-elite-arsenal.ps1 -ProjectPath "C:\path\to\project"` (or `./sync-arsenal.sh -p /path/to/project`) to copy into a project’s `.vscode/`.
+  * In the editor: type a category prefix like `ai`, `refactor`, `daily`, `guard`, `context`, or `quick`, then press Tab. If Tab doesn’t expand, enable:
+    - `editor.tabCompletion: on`
+    - `editor.snippetSuggestions: top`
+    - `editor.suggest.showSnippets: true`
+  * Auto-deploy: a local `post-commit` hook runs the global deploy on each commit (developer machine only).
+
+---
+
 ## 📄 License
 
 MIT License - Use freely in your projects!
+
+_Sync note: auto-deploy hook verification edit on 2025-08-18 15:30 EAT._
