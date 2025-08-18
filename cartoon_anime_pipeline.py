@@ -36,7 +36,7 @@ class AfricanCartoonPipeline:
     - Batch processing from CSV
     """
     
-    def __init__(self):
+    def __init__(self, enhanced_router: Any = None, dialect: Optional[str] = None):
         self.output_folder = Path("cartoon_studio")
         self.output_folder.mkdir(exist_ok=True)
         
@@ -44,6 +44,9 @@ class AfricanCartoonPipeline:
         self.fps = 24  # Standard animation FPS
         self.width = 1280
         self.height = 720
+        
+        self.enhanced_router = enhanced_router
+        self.dialect = dialect
         
         # Cartoon style presets
         self.cartoon_styles = {
@@ -104,12 +107,56 @@ class AfricanCartoonPipeline:
             log_and_raise(e, f"Cartoon model loading failed")
     
     @retry_on_exception()
-    def break_script_into_scenes(self, script: str) -> List[Dict]:
-        """Break script into cartoon scenes with dialogue"""
+    async def break_script_into_scenes(self, script: str) -> List[Dict]: # Make it async
+        """Break script into cartoon scenes with dialogue using enhanced_router"""
         
-        logger.info("📝 Breaking script into cartoon scenes...")
+        logger.info("📝 Breaking script into cartoon scenes using enhanced_router...")
         
-        # Simple scene breakdown (in production, use GPT)
+        if self.enhanced_router:
+            request = GenerationRequest(
+                prompt=f"Break down the following script into 3-5 distinct cartoon scenes, each with a dialogue and a visual description. Script: {script}",
+                type="text",
+                dialect=self.dialect
+            )
+            
+            result = await self.enhanced_router.route_generation(request)
+            
+            if result.success and result.metadata and "generated_text" in result.metadata:
+                generated_text = result.metadata["generated_text"]
+                logger.info(f"Raw generated scenes text: {generated_text}")
+                
+                scenes = []
+                # Simple parsing, assuming "Scene X: Dialogue. Visual: Description."
+                scene_blocks = generated_text.split("Scene ")
+                for block in scene_blocks:
+                    if not block.strip():
+                        continue
+                    try:
+                        parts = block.split(":", 1)
+                        scene_id = int(parts[0].strip())
+                        content_parts = parts[1].split("Visual:", 1)
+                        dialogue = content_parts[0].strip()
+                        visual_description = content_parts[1].strip() if len(content_parts) > 1 else dialogue
+                        
+                        scenes.append({
+                            "id": scene_id,
+                            "dialogue": dialogue,
+                            "visual_description": visual_description,
+                            "duration": max(3.0, min(8.0, len(dialogue.split()) * 0.5)), # Duration based on dialogue length
+                            "character_emotion": "neutral" # Default emotion
+                        })
+                    except Exception as e:
+                        logger.warning(f"Failed to parse scene block: {block}. Error: {e}")
+                
+                if scenes:
+                    logger.info(f"✅ Created {len(scenes)} cartoon scenes via enhanced_router")
+                    return scenes
+                else:
+                    logger.warning("Enhanced router returned no parsable scenes. Falling back to simple splitting.")
+            else:
+                logger.warning(f"Enhanced router failed for scene breakdown: {result.error_message}. Falling back to simple splitting.")
+        
+        # Fallback to simple scene breakdown (original logic)
         sentences = script.split('. ')
         scenes = []
         
@@ -124,19 +171,19 @@ class AfricanCartoonPipeline:
                 }
                 scenes.append(scene)
         
-        logger.info(f"✅ Created {len(scenes)} cartoon scenes")
+        logger.info(f"✅ Created {len(scenes)} cartoon scenes via simple splitting")
         return scenes
     
     @retry_on_exception()
-    def generate_cartoon_scene(self, scene: Dict, style: str) -> Optional[np.ndarray]:
+    async def generate_cartoon_scene(self, scene: Dict, style: str) -> Optional[np.ndarray]: # Make it async
         """
-        // [TASK]: Generate single cartoon scene image using ai_model_manager
+        // [TASK]: Generate single cartoon scene image using enhanced_router
         // [GOAL]: Centralize image generation and leverage fallback mechanisms
         // [ELITE_CURSOR_SNIPPET]: aihandle
         """
         logger.info(f"🎨 Generating cartoon scene {scene['id']}: {scene['visual_description'][:40]}...")
         
-        try:
+        if self.enhanced_router:
             # Build cartoon prompt
             style_config = self.cartoon_styles[style]
             
@@ -152,22 +199,27 @@ class AfricanCartoonPipeline:
             
             logger.info(f"📝 Prompt: {prompt[:60]}...")
             
-            # Generate cartoon image using ai_model_manager
-            image_bytes = asyncio.run(generate_image(
+            request = GenerationRequest(
                 prompt=prompt,
-                model_id=config.models.image_generation.hf_api_id,
-                use_local_fallback=True,
-                negative_prompt=negative_prompt,
-                num_inference_steps=2,
-                guidance_scale=0.0,
-                height=self.height,
-                width=self.width
-            ))
+                type="image",
+                dialect=self.dialect,
+                preferences={"negative_prompt": negative_prompt, "height": self.height, "width": self.width} # Pass preferences
+            )
             
-            if image_bytes:
-                # Convert bytes to PIL Image, then to OpenCV format
+            result = await self.enhanced_router.route_generation(request)
+            
+            if result.success and result.content_url:
                 from PIL import Image
-                image = Image.open(io.BytesIO(image_bytes))
+                if result.content_url.startswith("data:image"):
+                    import base64
+                    header, encoded = result.content_url.split(",", 1)
+                    image_bytes = base64.b64decode(encoded)
+                    image = Image.open(io.BytesIO(image_bytes))
+                elif Path(result.content_url).exists():
+                    image = Image.open(result.content_url)
+                else:
+                    logger.warning(f"Router returned content_url but not in expected format for direct load: {result.content_url}. Using placeholder image.")
+                    return self._create_placeholder_image_cv2(scene) # Fallback to placeholder
                 
                 # Save scene image
                 scene_path = self.output_folder / f"scene_{scene['id']:02d}_cartoon.png"
@@ -180,10 +232,28 @@ class AfricanCartoonPipeline:
                 cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
                 return cv_image
             else:
-                log_and_raise(Exception("ai_model_manager.generate_image returned no bytes"), "Image generation failed")
-            
-        except Exception as e:
-            log_and_raise(e, f"Scene {scene['id']} generation failed")
+                logger.warning(f"Enhanced router failed for image generation: {result.error_message}. Using placeholder image.")
+        
+        # Fallback to placeholder image if router not available or failed
+        return self._create_placeholder_image_cv2(scene)
+
+    def _create_placeholder_image_cv2(self, scene: Dict) -> np.ndarray:
+        """Creates a simple placeholder image using OpenCV."""
+        width, height = self.width, self.height
+        img = np.zeros((height, width, 3), dtype=np.uint8) # Black image
+        img.fill(random.randint(50, 200)) # Random color
+        
+        # Add text
+        text = f"Scene {scene['id']}"
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 1.5
+        font_thickness = 2
+        text_size = cv2.getTextSize(text, font, font_scale, font_thickness)[0]
+        text_x = (width - text_size[0]) // 2
+        text_y = (height + text_size[1]) // 2
+        cv2.putText(img, text, (text_x, text_y), font, font_scale, (255, 255, 255), font_thickness, cv2.LINE_AA)
+        
+        return img
     
     def create_scene_animation(self, scene_image: np.ndarray, duration: float) -> List[np.ndarray]:
         """
@@ -225,34 +295,74 @@ class AfricanCartoonPipeline:
         logger.info(f"✅ Created {len(frames)} animated frames")
         return frames
     
-    def generate_african_tts(self, text: str, voice: str = "sheng_male") -> Optional[str]:
+    async def generate_african_tts(self, text: str, voice: str = "sheng_male") -> Optional[str]: # Make it async
         """
-        // [TASK]: Generate TTS audio in African languages using ai_model_manager
+        // [TASK]: Generate TTS audio in African languages using enhanced_router
         // [GOAL]: Centralize TTS generation and leverage fallback mechanisms
         // [ELITE_CURSOR_SNIPPET]: aihandle
         """
         logger.info(f"🎤 Generating {voice} TTS for: {text[:30]}...")
         
-        try:
-            audio_bytes = asyncio.run(text_to_speech(
-                text=text,
-                model_id=config.models.voice_synthesis.hf_api_id,
-                use_local_fallback=True
-            ))
+        if self.enhanced_router:
+            request = GenerationRequest(
+                prompt=text,
+                type="audio",
+                dialect=self.dialect,
+                preferences={"voice": voice} # Pass voice preference
+            )
             
-            if audio_bytes:
-                audio_path = self.output_folder / f"tts_{voice}_{int(time.time())}.wav"
-                with open(audio_path, "wb") as f:
-                    f.write(audio_bytes)
-                logger.info(f"✅ TTS audio: {audio_path}")
-                return str(audio_path)
+            result = await self.enhanced_router.route_generation(request)
+            
+            if result.success and result.content_url:
+                if result.content_url.startswith("data:audio"):
+                    import base64
+                    header, encoded = result.content_url.split(",", 1)
+                    audio_bytes = base64.b64decode(encoded)
+                    audio_path = self.output_folder / f"tts_{voice}_{int(time.time())}.wav"
+                    with open(audio_path, "wb") as f:
+                        f.write(audio_bytes)
+                    logger.info(f"✅ TTS audio generated via router: {audio_path}")
+                    return str(audio_path)
+                elif Path(result.content_url).exists():
+                    import shutil
+                    audio_path = self.output_folder / f"tts_{voice}_{int(time.time())}.wav"
+                    shutil.copy(result.content_url, audio_path)
+                    logger.info(f"✅ TTS audio copied from router temp path: {audio_path}")
+                    return str(audio_path)
+                else:
+                    logger.warning(f"Router returned content_url but not in expected format for direct save: {result.content_url}. Falling back to silent audio.")
             else:
-                log_and_raise(Exception("text_to_speech returned no bytes"), "TTS generation failed")
-            
+                logger.warning(f"Enhanced router failed for TTS generation: {result.error_message}. Falling back to silent audio.")
+        
+        # Fallback to silent audio if router not available or failed
+        logger.warning("Generating silent audio as fallback for TTS.")
+        audio_path = self.output_folder / f"tts_silent_{int(time.time())}.wav"
+        try:
+            # Create a silent audio file as placeholder
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    "anullsrc=duration=5",
+                    "-ar",
+                    "22050",
+                    "-ac",
+                    "1",
+                    str(audio_path),
+                ],
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            logger.info(f"✅ Silent audio generated: {audio_path}")
+            return str(audio_path)
         except Exception as e:
-            log_and_raise(e, f"TTS generation failed")
+            logger.error(f"Failed to create silent audio fallback: {e}")
+            return None
     
-    def create_cartoon_video(self, scenes: List[Dict], style: str, voice: str) -> Optional[str]:
+    async def create_cartoon_video(self, scenes: List[Dict], style: str, voice: str) -> Optional[str]: # Make it async
         """Create complete cartoon video with parallel scene processing"""
         
         logger.info(f"🎬 Creating cartoon video: {style} style, {voice} voice")
@@ -263,30 +373,21 @@ class AfricanCartoonPipeline:
         import asyncio
 
         async def scene_worker(scene_data):
-            loop = asyncio.get_running_loop()
+            # Direct async calls to generate_cartoon_scene and generate_african_tts
+            scene_image = await self.generate_cartoon_scene(scene_data, style)
+            if scene_image is None:
+                return None, None
             
-            def process_scene_assets():
-                scene_image = self.generate_cartoon_scene(scene_data, style)
-                if scene_image is None:
-                    return None, None
-                
-                audio_path = self.generate_african_tts(scene_data['dialogue'], voice)
-                animated_frames = self.create_scene_animation(scene_image, scene_data['duration'])
-                return animated_frames, audio_path
-
-            try:
-                animated_frames, audio_path = await loop.run_in_executor(None, process_scene_assets)
-                if animated_frames is None:
-                    log_and_raise(Exception("Image generation failed"), "Scene worker failed")
-                return {"status": "success", "frames": animated_frames, "audio": audio_path}
-            except Exception as e:
-                log_and_raise(e, "Scene worker failed")
+            audio_path = await self.generate_african_tts(scene_data['dialogue'], voice)
+            animated_frames = self.create_scene_animation(scene_image, scene_data['duration'])
+            return {"status": "success", "frames": animated_frames, "audio": audio_path}
 
         async def run_parallel_processing(all_scenes):
-            processor = ParallelProcessor()
-            return await processor.run_parallel(all_scenes, scene_worker)
+            # Use passed parallel_processor, or create if not provided (for standalone testing)
+            _parallel_processor = parallel_processor or ParallelProcessor()
+            return await _parallel_processor.run_parallel(all_scenes, scene_worker)
 
-        results = asyncio.run(run_parallel_processing(scenes))
+        results = await run_parallel_processing(scenes) # Await the parallel processing
         
         all_frames = []
         all_audio_paths = []
@@ -358,7 +459,11 @@ def create_african_cartoon_video(
     script: str,
     style: str = "african_cartoon",
     voice: str = "sheng_male",
-    mobile_preset: Optional[str] = None
+    mobile_preset: Optional[str] = None,
+    enhanced_router: Any = None,
+    dialect: Optional[str] = None,
+    parallel_processor: Any = None,
+    scene_processor: Any = None
 ) -> Dict:
     """
     Main function to create African cartoon video
@@ -376,13 +481,13 @@ def create_african_cartoon_video(
     logger.info("🎨 AFRICAN CARTOON VIDEO GENERATOR")
     logger.info("=" * 50)
     
-    pipeline = AfricanCartoonPipeline()
+    pipeline = AfricanCartoonPipeline(enhanced_router=enhanced_router, dialect=dialect)
     
     # Break script into scenes
-    scenes = pipeline.break_script_into_scenes(script)
+    scenes = await pipeline.break_script_into_scenes(script)
     
     # Create cartoon video
-    video_path = pipeline.create_cartoon_video(scenes, style, voice)
+    video_path = await pipeline.create_cartoon_video(scenes, style, voice, parallel_processor=parallel_processor, scene_processor=scene_processor)
     
     result = {
         "success": video_path is not None,

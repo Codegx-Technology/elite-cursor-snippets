@@ -1,0 +1,54 @@
+health_check_interval: 5
+fallback_retries: 2
+
+providers:
+  mock_openai:
+    type: openai
+    api_key: sk-mockopenai
+    fail_rate: 0.0
+    unhealth_rate: 0.0
+  mock_anthropic:
+    type: anthropic
+    api_key: sk-mockanthropic
+    fail_rate: 0.0
+    unhealth_rate: 0.0
+  mock_unhealthy:
+    type: mock
+    api_key: mock_key_unhealthy
+    fail_rate: 0.0
+    unhealth_rate: 1.0 # Always unhealthy
+
+  # New Providers
+  colab_gen:
+    type: colab
+    api_endpoint: http://colab.mock.api/v1
+    api_key: colab_mock_key
+  kaggle_gen:
+    type: kaggle
+    api_endpoint: http://kaggle.mock.api/v1
+    api_key: kaggle_mock_key
+  huggingface_gen:
+    type: huggingface
+    model_id: google/flan-t5-small # Example model
+    api_key: hf_mock_key
+  runpod_gen:
+    type: runpod
+    endpoint_id: runpod_mock_endpoint
+    api_key: runpod_mock_key
+  gemini_gen:
+    type: gemini
+    model_name: gemini-pro # Example model
+    api_key: gemini_mock_key
+
+routing_rules:
+  test_task:
+    priority: ["mock_openai", "mock_anthropic"]
+  fallback_task:
+    priority: ["mock_unhealthy", "mock_openai"]
+  no_provider_task:
+    priority: ["non_existent_provider"]
+  cinematic_content_generation: # New rule for cinematic_africa.py
+    priority: ["gemini_gen", "huggingface_gen", "colab_gen", "kaggle_gen", "runpod_gen"]
+
+parallel_processing: # ADD THIS SECTION
+  max_workers: 4 # Default to 4, can be overridden

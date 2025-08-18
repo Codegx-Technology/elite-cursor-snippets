@@ -12,7 +12,7 @@ from googleapiclient.discovery import build
 
 # ======== CONFIG ========
 load_dotenv(find_dotenv())
-HF_TOKEN = os.getenv("HF_API_KEY") or ""        # Hugging Face Access Token
+HF_TOKEN = os.getenv("HF_TOKEN") or ""        # Hugging Face Access Token
 HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
 
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")  # Google API Key
@@ -22,7 +22,7 @@ YOUTUBE_TEST_USERNAME = "Google"
 def test_huggingface():
     print(" Testing Hugging Face API access...")
     if not HF_TOKEN:
-        print("! HF_API_KEY is missing. Set it in your .env at project root.")
+        print("! HF_TOKEN is missing. Set it in your .env at project root.")
         return
     headers = {"Authorization": f"Bearer {HF_TOKEN}"}
     data = {"inputs": "Test access from environment"}

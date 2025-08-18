@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Card from '@/components/Card';
-import { FaVideo, FaImages, FaMusic, FaUsers, FaChartLine, FaClock, FaFlag, FaMountain, FaGlobe, FaHeart, FaPlay, FaArrowRight, FaExclamationTriangle } from 'react-icons/fa';
-import { apiClient, handleApiResponse, DashboardStats, RecentActivity } from '@/lib/api';
+import { FaVideo, FaImages, FaMusic, FaUsers, FaClock, FaFlag, FaMountain, FaGlobe, FaHeart, FaExclamationTriangle } from 'react-icons/fa';
+import { useDashboard } from '@/hooks/useDashboard';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean + augmentsearch
 // [CONTEXT]: Enterprise-grade dashboard with Kenya-first design and real backend integration
@@ -12,105 +11,7 @@ import { apiClient, handleApiResponse, DashboardStats, RecentActivity } from '@/
 // [TASK]: Implement dashboard with backend API integration and mobile responsiveness
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
-
-  // [SNIPPET]: kenyafirst + thinkwithai + augmentsearch
-  // [TASK]: Load real dashboard data from backend with proper error handling
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const loadDashboardData = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    // Check backend status first
-    const statusResponse = await apiClient.getStatus();
-    if (statusResponse.error) {
-      setBackendStatus('offline');
-      setError('Backend service is not available');
-    } else {
-      setBackendStatus('online');
-    }
-
-    // Load dashboard stats
-    const statsResponse = await apiClient.getDashboardStats();
-    handleApiResponse(
-      statsResponse,
-      (data) => setStats(data),
-      (error) => {
-        setError(error);
-        // Fallback to sample data with clear indication
-        setStats({
-          videosGenerated: 0,
-          imagesCreated: 0,
-          audioTracks: 0,
-          activeUsers: 0,
-          systemStatus: 'online',
-          lastGeneration: 'No data available'
-        });
-      }
-    );
-
-    // Load recent activity
-    const activityResponse = await apiClient.getRecentActivity();
-    handleApiResponse(
-      activityResponse,
-      (data) => {
-        if (data.length === 0) {
-          // Show sample Kenya-first content when no real data
-          setRecentActivity([
-            {
-              id: '1',
-              type: 'video',
-              title: 'Kenya Tourism: Mount Kenya Adventure',
-              timestamp: '2 minutes ago',
-              status: 'completed'
-            },
-            {
-              id: '2',
-              type: 'video',
-              title: 'Nairobi Tech Hub Innovation Story',
-              timestamp: '15 minutes ago',
-              status: 'completed'
-            },
-            {
-              id: '3',
-              type: 'image',
-              title: 'Maasai Mara Wildlife Scene',
-              timestamp: '1 hour ago',
-              status: 'processing'
-            },
-            {
-              id: '4',
-              type: 'audio',
-              title: 'Swahili Narration: Coastal Beauty',
-              timestamp: '2 hours ago',
-              status: 'completed'
-            }
-          ]);
-        } else {
-          setRecentActivity(data);
-        }
-      },
-      (error) => setError(error)
-    );
-
-    setIsLoading(false);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'online': return 'text-green-600';
-      case 'offline': return 'text-red-600';
-      case 'maintenance': return 'text-yellow-600';
-      default: return 'text-gray-600';
-    }
-  };
+  const { stats, recentActivity, isLoading, error, backendStatus, loadDashboardData } = useDashboard();
 
   const getActivityStatusColor = (status: string) => {
     switch (status) {
@@ -123,10 +24,10 @@ export default function DashboardPage() {
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'video': return <FaVideo className="text-blue-600" />;
-      case 'image': return <FaImages className="text-green-600" />;
-      case 'audio': return <FaMusic className="text-purple-600" />;
-      default: return <FaVideo className="text-gray-600" />;
+      case 'video': return <FaVideo className="text-blue-600" aria-label="Video Icon" />;
+      case 'image': return <FaImages className="text-green-600" aria-label="Image Icon" />;
+      case 'audio': return <FaMusic className="text-purple-600" aria-label="Audio Icon" />;
+      default: return <FaVideo className="text-gray-600" aria-label="Video Icon" />;
     }
   };
 
@@ -148,20 +49,20 @@ export default function DashboardPage() {
       <div className="bg-gradient-to-r from-green-600 via-red-600 to-black p-6 rounded-xl text-white shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <FaFlag className="text-3xl" />
+            <FaFlag className="text-3xl" aria-label="Kenyan Flag" />
             <div>
               <h1 className="text-2xl font-bold">Karibu Shujaa Studio! 🇰🇪</h1>
               <p className="text-green-100">Empowering African storytellers with AI-powered video generation</p>
               {backendStatus === 'offline' && (
                 <div className="flex items-center space-x-2 mt-2 bg-red-500 bg-opacity-20 px-3 py-1 rounded">
-                  <FaExclamationTriangle className="text-yellow-300 text-sm" />
+                  <FaExclamationTriangle className="text-yellow-300 text-sm" aria-label="Warning Icon" />
                   <span className="text-yellow-100 text-sm">Backend service offline - showing sample data</span>
                 </div>
               )}
             </div>
           </div>
           <div className="hidden md:block">
-            <FaMountain className="text-4xl text-yellow-300" />
+            <FaMountain className="text-4xl text-yellow-300" aria-label="Mount Kenya" />
           </div>
         </div>
       </div>
@@ -170,7 +71,7 @@ export default function DashboardPage() {
       {error && !stats ? (
         <Card className="p-8 text-center">
           <div className="text-red-600 mb-4">
-            <FaExclamationTriangle className="text-4xl mx-auto mb-2" />
+            <FaExclamationTriangle className="text-4xl mx-auto mb-2" aria-label="Error Icon" />
             <p className="font-medium">Unable to load dashboard data</p>
             <p className="text-sm text-gray-600 mt-2">{error}</p>
           </div>
@@ -194,7 +95,7 @@ export default function DashboardPage() {
                   )}
                 </p>
               </div>
-              <FaVideo className="text-3xl text-blue-600" />
+              <FaVideo className="text-3xl text-blue-600" aria-label="Video Icon" />
             </div>
           </Card>
 
@@ -209,7 +110,7 @@ export default function DashboardPage() {
                   )}
                 </p>
               </div>
-              <FaImages className="text-3xl text-green-600" />
+              <FaImages className="text-3xl text-green-600" aria-label="Image Icon" />
             </div>
           </Card>
 
@@ -224,7 +125,7 @@ export default function DashboardPage() {
                   )}
                 </p>
               </div>
-              <FaMusic className="text-3xl text-purple-600" />
+              <FaMusic className="text-3xl text-purple-600" aria-label="Audio Icon" />
             </div>
           </Card>
 
@@ -239,7 +140,7 @@ export default function DashboardPage() {
                   )}
                 </p>
               </div>
-              <FaUsers className="text-3xl text-orange-600" />
+              <FaUsers className="text-3xl text-orange-600" aria-label="Users Icon" />
             </div>
           </Card>
         </div>
@@ -251,7 +152,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link href="/video-generate">
             <button className="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg transition-colors duration-200 flex items-center space-x-3">
-              <FaVideo className="text-xl" />
+              <FaVideo className="text-xl" aria-label="Video Icon" />
               <div className="text-left">
                 <h3 className="font-semibold">Generate Video</h3>
                 <p className="text-sm opacity-90">Create Kenya-first content</p>
@@ -261,7 +162,7 @@ export default function DashboardPage() {
 
           <Link href="/gallery">
             <button className="w-full bg-green-600 hover:bg-green-700 text-white p-4 rounded-lg transition-colors duration-200 flex items-center space-x-3">
-              <FaImages className="text-xl" />
+              <FaImages className="text-xl" aria-label="Image Icon" />
               <div className="text-left">
                 <h3 className="font-semibold">Browse Gallery</h3>
                 <p className="text-sm opacity-90">View generated content</p>
@@ -271,7 +172,7 @@ export default function DashboardPage() {
 
           <Link href="/audio-studio">
             <button className="w-full bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-lg transition-colors duration-200 flex items-center space-x-3">
-              <FaMusic className="text-xl" />
+              <FaMusic className="text-xl" aria-label="Audio Icon" />
               <div className="text-left">
                 <h3 className="font-semibold">Audio Studio</h3>
                 <p className="text-sm opacity-90">Voice & music creation</p>
@@ -286,7 +187,7 @@ export default function DashboardPage() {
         <h2 className="text-xl font-bold text-gray-800 mb-4">Recent Activity</h2>
         {recentActivity.length === 0 ? (
           <div className="text-center py-8">
-            <FaClock className="text-4xl text-gray-400 mx-auto mb-4" />
+            <FaClock className="text-4xl text-gray-400 mx-auto mb-4" aria-label="Clock Icon" />
             <p className="text-gray-600 font-medium mb-2">No recent activity</p>
             <p className="text-sm text-gray-500">
               Start creating content to see your activity here.
@@ -317,9 +218,9 @@ export default function DashboardPage() {
       {/* Cultural Footer */}
       <div className="bg-gradient-to-r from-yellow-400 via-red-500 to-green-600 p-6 rounded-lg text-white text-center">
         <div className="flex items-center justify-center space-x-2 mb-2">
-          <FaGlobe className="text-xl" />
+          <FaGlobe className="text-xl" aria-label="Globe Icon" />
           <span className="font-bold">Proudly Kenyan</span>
-          <FaHeart className="text-xl" />
+          <FaHeart className="text-xl" aria-label="Heart Icon" />
         </div>
         <p className="text-sm">
           🌍 Serving African creators • 🎬 {stats?.videosGenerated || 0} videos celebrating heritage • 🇰🇪 Harambee spirit

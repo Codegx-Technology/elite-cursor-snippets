@@ -8,40 +8,48 @@ from config_loader import get_config
 logger = get_logger(__name__)
 config = get_config()
 
-# --- JWT Key Management (Placeholder/Conceptual) ---
+# --- JWT Key Management ---
 # In a real application, these keys would be securely loaded from
 # environment variables, a secrets manager, or a key management service.
 
-# For demonstration, we'll generate a pair if not found, but DO NOT use in production.
 _private_key = None
 _public_key = None
 
-def _generate_rsa_keys():
-    """
-    // [TASK]: Generate RSA private and public keys
-    // [GOAL]: Provide cryptographic keys for JWT signing
-    """
+def _load_jwt_keys():
     global _private_key, _public_key
     if _private_key is None or _public_key is None:
-        logger.warning("Generating RSA keys for JWT. DO NOT USE IN PRODUCTION.")
-        _private_key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=2048
-        )
-        _public_key = _private_key.public_key()
+        jwt_private_key_pem = config.security.jwt_private_key_pem
+        jwt_public_key_pem = config.security.jwt_public_key_pem
 
-        # You would typically save these to secure locations
-        # private_pem = _private_key.private_bytes(
-        #     encoding=serialization.Encoding.PEM,
-        #     format=serialization.PrivateFormat.PKCS8,
-        #     encryption_algorithm=serialization.NoEncryption()
-        # )
-        # public_pem = _public_key.public_bytes(
-        #     encoding=serialization.Encoding.PEM,
-        #     format=serialization.PublicFormat.SubjectPublicKeyInfo
-        # )
+        if jwt_private_key_pem and jwt_public_key_pem:
+            logger.info("Loading JWT keys from configuration.")
+            _private_key = serialization.load_pem_private_key(
+                jwt_private_key_pem.encode(),
+                password=None, # Assuming no password for the key file
+                backend=default_backend()
+            )
+            _public_key = serialization.load_pem_public_key(
+                jwt_public_key_pem.encode(),
+                backend=default_backend()
+            )
+        else:
+            logger.warning("JWT keys not found in configuration. Generating RSA keys for demonstration. DO NOT USE IN PRODUCTION.")
+            _generate_rsa_keys_for_demo() # Call a new demo function
 
-_generate_rsa_keys() # Generate keys on module import for demonstration
+def _generate_rsa_keys_for_demo(): # New function for demo key generation
+    """
+    // [TASK]: Generate RSA private and public keys for demonstration ONLY
+    // [GOAL]: Provide cryptographic keys for JWT signing when not configured
+    """
+    global _private_key, _public_key
+    _private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048
+    )
+    _public_key = _private_key.public_key()
+
+# Call the key loading function
+_load_jwt_keys()
 
 # --- JWT Utility Functions ---
 
@@ -70,6 +78,18 @@ def verify_jwt(token: str) -> dict:
         log_and_raise(jwt.ExpiredSignatureError("Token has expired"), "JWT verification failed")
     except jwt.InvalidTokenError as e:
         log_and_raise(e, "Invalid JWT token")
+
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    """Hashes a plain-text password."""
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verifies a plain-text password against a hashed password."""
+    return pwd_context.verify(plain_password, hashed_password)
 
 # Example usage (conceptual)
 async def main():

@@ -1,81 +1,57 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Card from '@/components/Card';
 import Pagination from '@/components/Pagination';
 import { FaPlus, FaVideo, FaImages, FaMusic, FaEllipsisV, FaEdit, FaTrash, FaEye, FaFlag, FaMountain, FaFolder, FaClock, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
-import { apiClient, handleApiResponse } from '@/lib/api';
-import { device } from '@/lib/utils';
+import { useProjects, Project } from '@/hooks/useProjects';
+import CreateProjectModal from '@/components/Project/CreateProjectModal';
+import EditProjectModal from '@/components/Project/EditProjectModal';
+import DeleteProjectModal from '@/components/Project/DeleteProjectModal';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean + augmentsearch
 // [CONTEXT]: Enterprise-grade projects page with Kenya-first design and real backend integration
 // [GOAL]: Create comprehensive project management interface with pagination and real data
 // [TASK]: Implement projects with proper CRUD operations, pagination, and mobile responsiveness
 
-interface Project {
-  id: string;
-  name: string;
-  description?: string;
-  type: 'video' | 'image' | 'audio';
-  status: string;
-  created_at: string;
-  updated_at: string;
-  items_count: number;
-}
-
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
+  const { projects, isLoading, error, currentPage, totalPages, totalItems, itemsPerPage, loadProjects, createProject, updateProject, deleteProject, handlePageChange } = useProjects();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-  // Mobile detection
-  const [isMobile, setIsMobile] = useState(false);
-  const itemsPerPage = isMobile ? 3 : 6; // 3 on mobile, 6 on desktop
-
-  useEffect(() => {
-    setIsMobile(device.isMobile());
-  }, []);
-
-  useEffect(() => {
-    loadProjects();
-  }, [currentPage, itemsPerPage]);
-
-  const loadProjects = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    const response = await apiClient.getProjects(currentPage, itemsPerPage);
-    handleApiResponse(
-      response,
-      (data) => {
-        setProjects(data.projects);
-        setTotalPages(data.pages);
-        setTotalItems(data.total);
-      },
-      (error) => setError(error)
-    );
-
-    setIsLoading(false);
+  const handleCreateProject = async (project: { name: string; description: string; type: 'video' | 'image' | 'audio'; }) => {
+    await createProject({ ...project, status: 'active' });
+    setShowCreateModal(false);
   };
 
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
+  const handleUpdateProject = async (id: string, project: Partial<Project>) => {
+    await updateProject(id, project);
+    setShowEditModal(false);
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    await deleteProject(id);
+    setShowDeleteModal(false);
+  };
+
+  const openEditModal = (project: Project) => {
+    setSelectedProject(project);
+    setShowEditModal(true);
+  };
+
+  const openDeleteModal = (project: Project) => {
+    setSelectedProject(project);
+    setShowDeleteModal(true);
   };
 
   const getProjectIcon = (type: string) => {
     switch (type) {
-      case 'video': return <FaVideo className="text-blue-600" />;
-      case 'image': return <FaImages className="text-green-600" />;
-      case 'audio': return <FaMusic className="text-purple-600" />;
-      default: return <FaFolder className="text-gray-600" />;
+      case 'video': return <FaVideo className="text-blue-600" aria-label="Video Project" />;
+      case 'image': return <FaImages className="text-green-600" aria-label="Image Project" />;
+      case 'audio': return <FaMusic className="text-purple-600" aria-label="Audio Project" />;
+      default: return <FaFolder className="text-gray-600" aria-label="Folder Icon" />;
     }
   };
 
@@ -92,7 +68,7 @@ export default function ProjectsPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <FaSpinner className="w-8 h-8 text-green-600 animate-spin mx-auto mb-4" />
+          <FaSpinner className="w-8 h-8 text-green-600 animate-spin mx-auto mb-4" aria-label="Loading" />
           <span className="text-gray-600 font-medium">Loading projects...</span>
         </div>
       </div>
@@ -101,18 +77,23 @@ export default function ProjectsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Modals */}
+      <CreateProjectModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} onCreate={handleCreateProject} />
+      <EditProjectModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} onUpdate={handleUpdateProject} project={selectedProject} />
+      <DeleteProjectModal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} onDelete={handleDeleteProject} project={selectedProject} />
+
       {/* Kenya-First Header */}
       <div className="bg-gradient-to-r from-green-600 via-red-600 to-black p-6 rounded-xl text-white shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <FaFolder className="text-3xl" />
+            <FaFolder className="text-3xl" aria-label="Folder Icon" />
             <div>
               <h1 className="text-2xl font-bold">Projects 🇰🇪</h1>
               <p className="text-green-100">Manage your Kenya-first creative projects</p>
             </div>
           </div>
           <div className="hidden md:block">
-            <FaMountain className="text-4xl text-yellow-300" />
+            <FaMountain className="text-4xl text-yellow-300" aria-label="Mount Kenya" />
           </div>
         </div>
       </div>
@@ -128,7 +109,7 @@ export default function ProjectsPage() {
             onClick={() => setShowCreateModal(true)}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
           >
-            <FaPlus />
+            <FaPlus aria-label="Add Icon" />
             <span>New Project</span>
           </button>
         </div>
@@ -138,7 +119,7 @@ export default function ProjectsPage() {
       {error ? (
         <Card className="p-8 text-center">
           <div className="text-red-600 mb-4">
-            <FaExclamationTriangle className="text-4xl mx-auto mb-2" />
+            <FaExclamationTriangle className="text-4xl mx-auto mb-2" aria-label="Error Icon" />
             <p className="font-medium">Unable to load projects</p>
             <p className="text-sm text-gray-600 mt-2">{error}</p>
           </div>
@@ -152,7 +133,7 @@ export default function ProjectsPage() {
       ) : projects.length === 0 ? (
         <Card className="p-8 text-center">
           <div className="text-gray-500 mb-4">
-            <FaFolder className="text-4xl mx-auto mb-2" />
+            <FaFolder className="text-4xl mx-auto mb-2" aria-label="Folder Icon" />
             <p className="font-medium">No projects yet</p>
             <p className="text-sm mt-2">Create your first Kenya-first content project!</p>
           </div>
@@ -165,11 +146,7 @@ export default function ProjectsPage() {
         </Card>
       ) : (
         <>
-          <div className={`grid gap-6 ${
-            isMobile
-              ? 'grid-cols-1'
-              : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-          }`}>
+          <div className={`grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3`}>
             {projects.map((project) => (
               <Card key={project.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
                 <div className="p-6">
@@ -184,8 +161,11 @@ export default function ProjectsPage() {
                       </div>
                     </div>
                     <div className="relative">
-                      <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200">
-                        <FaEllipsisV />
+                      <button onClick={() => openDeleteModal(project)} className="p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                        <FaTrash aria-label="Delete Project" />
+                      </button>
+                      <button onClick={() => openEditModal(project)} className="p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                        <FaEdit aria-label="Edit Project" />
                       </button>
                     </div>
                   </div>
@@ -205,18 +185,18 @@ export default function ProjectsPage() {
 
                   <div className="flex items-center justify-between text-sm text-gray-500">
                     <div className="flex items-center space-x-1">
-                      <FaClock className="text-xs" />
+                      <FaClock className="text-xs" aria-label="Clock Icon" />
                       <span>Updated {new Date(project.updated_at).toLocaleDateString()}</span>
                     </div>
                   </div>
 
                   <div className="flex space-x-2 mt-4">
                     <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center justify-center space-x-1">
-                      <FaEye className="text-xs" />
+                      <FaEye className="text-xs" aria-label="View Project" />
                       <span>View</span>
                     </button>
-                    <button className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center justify-center space-x-1">
-                      <FaEdit className="text-xs" />
+                    <button onClick={() => openEditModal(project)} className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center justify-center space-x-1">
+                      <FaEdit className="text-xs" aria-label="Edit Project" />
                       <span>Edit</span>
                     </button>
                   </div>
@@ -243,9 +223,9 @@ export default function ProjectsPage() {
       {/* Cultural Footer */}
       <div className="bg-gradient-to-r from-yellow-400 via-red-500 to-green-600 p-4 rounded-lg text-white text-center">
         <div className="flex items-center justify-center space-x-2">
-          <FaFlag className="text-lg" />
+          <FaFlag className="text-lg" aria-label="Kenyan Flag" />
           <span className="font-medium">Building Kenya-first content projects • Harambee spirit</span>
-          <FaFolder className="text-lg" />
+          <FaFolder className="text-lg" aria-label="Folder Icon" />
         </div>
       </div>
     </div>

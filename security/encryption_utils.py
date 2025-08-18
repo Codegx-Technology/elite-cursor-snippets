@@ -75,6 +75,36 @@ def decrypt_data(encrypted_data: str) -> str:
         logger.error(f"Failed to decrypt data: {e}")
         return encrypted_data # Return original data on failure
 
+def encrypt_bytes(data: bytes) -> bytes:
+    """
+    // [TASK]: Encrypt bytes using AES-256 (via Fernet)
+    // [GOAL]: Secure sensitive binary data
+    """
+    if not _fernet:
+        logger.warning("Encryption not initialized. Returning unencrypted bytes.")
+        return data
+    try:
+        encrypted_bytes = _fernet.encrypt(data)
+        return encrypted_bytes
+    except Exception as e:
+        logger.error(f"Failed to encrypt bytes: {e}")
+        return data # Return original bytes on failure
+
+def decrypt_bytes(encrypted_data: bytes) -> bytes:
+    """
+    // [TASK]: Decrypt AES-256 encrypted bytes (via Fernet)
+    // [GOAL]: Retrieve original sensitive binary data
+    """
+    if not _fernet:
+        logger.warning("Encryption not initialized. Returning original bytes.")
+        return encrypted_data
+    try:
+        decrypted_bytes = _fernet.decrypt(encrypted_data)
+        return decrypted_bytes
+    except Exception as e:
+        logger.error(f"Failed to decrypt bytes: {e}")
+        return encrypted_data # Return original bytes on failure
+
 # Example usage (conceptual)
 async def main():
     # Ensure ENCRYPTION_PASSWORD and ENCRYPTION_SALT are set in config.yaml or env

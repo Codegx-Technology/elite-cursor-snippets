@@ -9,9 +9,9 @@ on:
     branches: [ main ]
 
 jobs:
-  deploy:
+  deploy_to_staging: # NEW JOB
     runs-on: ubuntu-latest
-
+    environment: staging # Define staging environment
     steps:
     - uses: actions/checkout@v3
 
@@ -20,21 +20,69 @@ jobs:
       with:
         version: v3.8.1
 
-    - name: Configure AWS credentials
+    - name: Configure AWS credentials (Staging)
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_STAGING }} # Use staging secrets
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_STAGING }}
         aws-region: us-east-1
 
-    - name: Login to Amazon ECR
-      id: login-ecr
+    - name: Login to Amazon ECR (Staging)
+      id: login-ecr-staging
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build, tag, and push image to Amazon ECR
-      id: build-image
+    - name: Deploy to Staging EKS
+      run: |
+        aws eks --region us-east-1 update-kubeconfig --name shujaa-studio-staging-cluster
+        helm upgrade --install shujaa-studio-staging ./helm/shujaa \
+          --set image.repository=${{ steps.login-ecr-staging.outputs.registry }}/shujaa-studio-api \
+          --set image.tag=${{ github.sha }}
+    
+    - name: Send Staging Deployment Notification # NEW STEP
+      uses: rjstone/discord-webhook-action@v1.0.0 # Example for Discord
+      if: always() # Run even if previous steps fail
+      with:
+        webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+        webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+        content: "🚀 Shujaa Studio deployed to Staging! Status: ${{ job.status }}"
+
+  deploy_to_production: # MODIFIED JOB
+    runs-on: ubuntu-latest
+    needs: deploy_to_staging # Depends on staging deployment
+    environment: production # Define production environment
+    if: github.ref == 'refs/heads/main' && success() # Only deploy to prod from main and if staging succeeded
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Manual Approval for Production # NEW STEP
+      uses: trstringer/manual-approval@v1
+      with:
+        secret: ${{ github.TOKEN }}
+        approvers: 'your-github-username' # Replace with actual approvers
+        minimum-approvals: 1
+        timeout-minutes: 60 # Timeout for approval
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: v3.8.1
+
+    - name: Configure AWS credentials (Production)
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+        aws-region: us-east-1
+
+    - name: Login to Amazon ECR (Production)
+      id: login-ecr-prod
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR (Production)
+      id: build-image-prod
       env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REGISTRY: ${{ steps.login-ecr-prod.outputs.registry }}
         ECR_REPOSITORY: shujaa-studio-api
         IMAGE_TAG: ${{ github.sha }}
       run: |
@@ -42,9 +90,25 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-    - name: Deploy to EKS
+    - name: Deploy to Production EKS
       run: |
-        aws eks --region us-east-1 update-kubeconfig --name shujaa-studio-cluster
-        helm upgrade --install shujaa-studio ./helm/shujaa \
+        aws eks --region us-east-1 update-kubeconfig --name shujaa-studio-prod-cluster
+        helm upgrade --install shujaa-studio-prod ./helm/shujaa \
           --set image.repository=$ECR_REGISTRY/$ECR_REPOSITORY \
           --set image.tag=$IMAGE_TAG
+    
+    - name: Send Production Deployment Notification # NEW STEP
+      uses: rjstone/discord-webhook-action@v1.0.0 # Example for Discord
+      if: always()
+      with:
+        webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+        webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+        content: "✅ Shujaa Studio deployed to Production! Status: ${{ job.status }}"
+
+    - name: Rollback on Failure # NEW STEP
+      if: failure() # Only run if previous steps failed
+      run: |
+        echo "Deployment failed. Initiating rollback..."
+        # Conceptual rollback command (e.g., helm rollback shujaa-studio-prod)
+        helm rollback shujaa-studio-prod
+        echo "Rollback initiated. Please investigate the failure."

@@ -12,7 +12,7 @@ import googleapiclient.errors
 
 load_dotenv(find_dotenv())
 
-HF_API_KEY = os.getenv("HF_API_KEY")
+HF_TOKEN = os.getenv("HF_TOKEN")
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 VIDEO_OUTPUT_DIR = os.getenv("VIDEO_OUTPUT_DIR", "./output_videos")
 os.makedirs(VIDEO_OUTPUT_DIR, exist_ok=True)
@@ -26,7 +26,7 @@ def get_top_news():
 
 # 2️⃣ Summarize into a video script using a Hugging Face LLM
 def summarize_with_llm(text_to_summarize):
-    client = InferenceClient(token=HF_API_KEY)
+    client = InferenceClient(token=HF_TOKEN)
     try:
         prompt = f"Summarize the following news article into a concise video script, suitable for a 30-second news segment:
 

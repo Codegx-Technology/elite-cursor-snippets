@@ -6,7 +6,7 @@ API-only 1-minute Kenya Patriotic Video Generator
 - Assembles vertical 1080x1920 video with subtitles; tries to mux audio if moviepy is available
 
 Prereqs:
-- HF_API_KEY (or HF_TOKEN) must be set with Inference/Serverless permission
+- HF_TOKEN must be set with Inference/Serverless permission
 - Optional: moviepy installed for audio muxing (pip install moviepy)
 """
 import os
@@ -14,7 +14,9 @@ import sys
 import time
 import json
 import math
+import random
 import traceback
+import subprocess
 from pathlib import Path
 from datetime import datetime
 from typing import List, Tuple
@@ -25,16 +27,13 @@ try:
 except Exception:
     HfFolder = None
 
-# ---------------------------
+# --------------------------- 
 # Config
-# ---------------------------
+# --------------------------- 
 IMAGES_MODEL = os.getenv("HF_TEXT_TO_IMAGE_MODEL", "stabilityai/stable-diffusion-2-1")
 TTS_MODEL = os.getenv("TTS_MODEL", "facebook/mms-tts-eng")
 HF_TOKEN = os.getenv("HF_API_KEY") or os.getenv("HF_TOKEN") or ""
 
-# 60s, 6 scenes x ~10s
-TOTAL_DURATION = 60
-SCENE_COUNT = 6
 FPS = 30
 WIDTH, HEIGHT = 1080, 1920  # portrait
 
@@ -45,9 +44,9 @@ AUDIO_DIR = ROOT / "assets" / "generated" / "audio"
 
 HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"} if HF_TOKEN else {}
 
-# ---------------------------
+# --------------------------- 
 # Scene script (abridged from kenya_video_preview.md)
-# ---------------------------
+# --------------------------- 
 SCENES: List[Tuple[str, str]] = [
     (
         "Natural Paradise",
@@ -75,11 +74,9 @@ SCENES: List[Tuple[str, str]] = [
     ),
 ]
 
-assert len(SCENES) == SCENE_COUNT, "Scene count mismatch"
-
-# ---------------------------
+# --------------------------- 
 # Helpers
-# ---------------------------
+# --------------------------- 
 
 def ensure_env():
     global HF_TOKEN, HEADERS
@@ -95,12 +92,10 @@ def ensure_env():
     else:
         print("WARNING: No HF token detected (env or cache). Will attempt API calls and fall back to placeholders if they fail.")
 
-
 def mk_dirs(ts: str):
     OUTPUT_DIR.mkdir(exist_ok=True)
     (IMG_DIR / ts).mkdir(parents=True, exist_ok=True)
     (AUDIO_DIR / ts).mkdir(parents=True, exist_ok=True)
-
 
 def hf_txt2img(prompt: str) -> bytes:
     url = f"https://api-inference.huggingface.co/models/{IMAGES_MODEL}"
@@ -110,94 +105,89 @@ def hf_txt2img(prompt: str) -> bytes:
         raise RuntimeError(f"txt2img {r.status_code}: {r.text[:200]}")
     return r.content  # expected image bytes (png/jpeg)
 
-
-def hf_tts(text: str) -> bytes:
-    url = f"https://api-inference.huggingface.co/models/{TTS_MODEL}"
-    payload = {"inputs": text}
-    r = requests.post(url, headers=HEADERS, json=payload, timeout=120)
-    if r.status_code != 200:
-        raise RuntimeError(f"tts {r.status_code}: {r.text[:200]}")
-    return r.content  # expected audio bytes
-
-
 def save_bytes(path: Path, data: bytes):
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "wb") as f:
         f.write(data)
 
-
-def assemble_video(ts: str, scene_images: List[Path], narration_wav: Path) -> Path:
-    """Assemble vertical video; add simple subtitles; try to mux audio with moviepy.
-    Falls back to video-only if moviepy missing.
-    """
+def assemble_video(ts: str, scene_data: list, transition_frames: int) -> Path:
+    """Assemble vertical video with Ken Burns effect and cross-fades; add simple subtitles."""
     try:
         import cv2
         import numpy as np
-    except Exception:
-        print("ERROR: OpenCV (cv2) is required to compose frames. pip install opencv-python-headless")
+        import random
+    except ImportError:
+        print("ERROR: OpenCV (cv2) is required. pip install opencv-python-headless")
         return None
 
-    frames_per_scene = (TOTAL_DURATION // SCENE_COUNT) * FPS
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out_path = OUTPUT_DIR / f"kenya_patriotic_60s_{ts}.mp4"
+    out_path = OUTPUT_DIR / f"kenya_patriotic_synced_{ts}_silent.mp4"
     vw = cv2.VideoWriter(str(out_path), fourcc, FPS, (WIDTH, HEIGHT))
 
     font = cv2.FONT_HERSHEY_SIMPLEX
+    
+    buffered_frames = []
 
-    for idx, img_path in enumerate(scene_images):
-        # Load and letterbox to portrait
-        img = cv2.imread(str(img_path))
+    for idx, scene in enumerate(scene_data):
+        img = cv2.imread(str(scene['image_path']))
         if img is None:
-            # create placeholder frame
             img = 255 * np.ones((HEIGHT, WIDTH, 3), dtype=np.uint8)
-            cv2.putText(img, "Image missing", (80, HEIGHT//2), font, 1, (0,0,255), 2)
-        else:
-            h, w = img.shape[:2]
-            scale = min(WIDTH / w, HEIGHT / h)
-            nw, nh = int(w * scale), int(h * scale)
-            resized = cv2.resize(img, (nw, nh))
-            canvas = 0 * np.ones((HEIGHT, WIDTH, 3), dtype=np.uint8)
-            x = (WIDTH - nw) // 2
-            y = (HEIGHT - nh) // 2
-            canvas[y:y+nh, x:x+nw] = resized
-            img = canvas
+            cv2.putText(img, "Image missing", (80, HEIGHT // 2), font, 1, (0, 0, 255), 2)
 
-        # Scene title & subtitle
-        title = SCENES[idx][0]
-        subtitle = SCENES[idx][1]
+        frames_per_scene = int(scene['duration'] * FPS)
+        
+        # --- Ken Burns Effect ---
+        h, w, _ = img.shape
+        zoom_factor = 1.2
+        
+        start_x = random.randint(0, int(w * (zoom_factor - 1) / 2))
+        start_y = random.randint(0, int(h * (zoom_factor - 1) / 2))
+        end_x = random.randint(int(w * (zoom_factor - 1) / 2), int(w * (zoom_factor - 1)))
+        end_y = random.randint(int(h * (zoom_factor - 1) / 2), int(h * (zoom_factor - 1)))
 
+        scene_frames = []
         for f in range(frames_per_scene):
-            frame = img.copy()
-            # Title
-            cv2.putText(frame, title, (50, 100), font, 1.2, (255,255,255), 3)
-            # Subtitle (wrapped simple)
-            lines = wrap_text(subtitle, max_chars=32)
+            progress = f / frames_per_scene
+            
+            cur_x = int(start_x + (end_x - start_x) * progress)
+            cur_y = int(start_y + (end_y - start_y) * progress)
+            
+            crop_w, crop_h = int(w / zoom_factor), int(h / zoom_factor)
+            cropped = img[cur_y:cur_y + crop_h, cur_x:cur_x + crop_w]
+            
+            frame = cv2.resize(cropped, (WIDTH, HEIGHT))
+
+            # --- Add subtitles ---
+            title = scene['title']
+            subtitle = scene['text']
+            cv2.putText(frame, title, (50, 100), font, 1.2, (255, 255, 255), 3)
+            lines = wrap_text(subtitle, max_chars=40)
             base_y = HEIGHT - 220
             for li, line in enumerate(lines[:4]):
-                cv2.putText(frame, line, (60, base_y + li*40), font, 0.9, (255,255,255), 2)
-            vw.write(frame)
+                cv2.putText(frame, line, (60, base_y + li * 40), font, 0.9, (255, 255, 255), 2)
+            
+            scene_frames.append(frame)
+
+        # --- Cross-fade Transition ---
+        if buffered_frames:
+            for t in range(transition_frames):
+                if t < len(buffered_frames) and t < len(scene_frames):
+                    alpha = t / transition_frames
+                    blended_frame = cv2.addWeighted(buffered_frames[-transition_frames + t], 1 - alpha, scene_frames[t], alpha, 0)
+                    buffered_frames[-transition_frames + t] = blended_frame
+            
+            for frame in buffered_frames[:-transition_frames]:
+                vw.write(frame)
+            
+            buffered_frames = scene_frames
+        else:
+            buffered_frames = scene_frames
+
+    for frame in buffered_frames:
+        vw.write(frame)
 
     vw.release()
-
-    # Try to mux audio with moviepy
-    try:
-        from moviepy.editor import VideoFileClip, AudioFileClip
-        video = VideoFileClip(str(out_path))
-        audio = AudioFileClip(str(narration_wav))
-        # Trim/pad audio to video length
-        final = video.set_audio(audio.set_duration(video.duration))
-        muxed_path = OUTPUT_DIR / f"kenya_patriotic_60s_{ts}_audio.mp4"
-        final.write_videofile(str(muxed_path), codec="libx264", audio_codec="aac", verbose=False, logger=None)
-        try:
-            os.remove(out_path)
-        except Exception:
-            pass
-        return muxed_path
-    except Exception as e:
-        print(f"WARNING: moviepy mux failed or not installed: {e}")
-        print("Video saved without audio. Install moviepy to mux audio: pip install moviepy")
-        return out_path
-
+    return out_path
 
 def wrap_text(text: str, max_chars: int = 32) -> List[str]:
     words = text.split()
@@ -214,89 +204,132 @@ def wrap_text(text: str, max_chars: int = 32) -> List[str]:
         lines.append(" ".join(cur))
     return lines
 
-
-# ---------------------------
+# --------------------------- 
 # Main
-# ---------------------------
-
+# --------------------------- 
 def main():
-    print("KENYA PATRIOTIC 60s - API PIPELINE")
-    print("No local model downloads; using HF Inference API only")
+    print("KENYA PATRIOTIC SYNCED - API PIPELINE")
     ensure_env()
 
-    # Allow overriding timestamp via CLI arg --ts or env SHUJAA_TS
-    ts = None
-    try:
-        import argparse
-        parser = argparse.ArgumentParser()
-        parser.add_argument('--ts', type=str, default=os.getenv('SHUJAA_TS'))
-        args, _ = parser.parse_known_args()
-        ts = args.ts
-    except Exception:
-        ts = os.getenv('SHUJAA_TS')
-    if not ts:
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     mk_dirs(ts)
 
-    # Generate one image per scene
+    # --- 1. Generate Images ---
+    NUM_IMAGES_PER_SCENE = 3 # Generate multiple images for variety
     scene_images: List[Path] = []
     for i, (title, line) in enumerate(SCENES, start=1):
-        prompt = (
-            f"High-quality vertical photo, Kenya {title.lower()}, cinematic lighting, 1080x1920, detailed, realistic, uplifting. "
-            f"Elements: {line}"
-        )
-        print(f"[scene {i}] requesting image from {IMAGES_MODEL}...")
-        try:
-            img_bytes = hf_txt2img(prompt)
-            img_path = IMG_DIR / ts / f"scene_{i:02d}.png"
-            save_bytes(img_path, img_bytes)
-            scene_images.append(img_path)
-        except Exception as e:
-            print(f"scene {i} image error: {e}")
-            # create placeholder image
-            from PIL import Image, ImageDraw
-            ph = Image.new("RGB", (WIDTH, HEIGHT), (0,0,0))
-            d = ImageDraw.Draw(ph)
-            d.text((40, 40), f"Scene {i}: {title}", fill=(255,255,255))
-            ph_path = IMG_DIR / ts / f"scene_{i:02d}_placeholder.png"
-            ph.save(ph_path)
-            scene_images.append(ph_path)
+        base_prompt = f"photorealistic, high-resolution, diverse vertical photo, Kenya {title.lower()}, cinematic lighting, 1080x1920, detailed, realistic, uplifting. Elements: {line}"
+        
+        generated_images_for_scene = []
+        print(f"[Image {i}] requesting {NUM_IMAGES_PER_SCENE} images from {IMAGES_MODEL}...")
+        for img_idx in range(NUM_IMAGES_PER_SCENE):
+            prompt = f"{base_prompt} --v {img_idx}" # Add a variation seed to prompt
+            try:
+                img_bytes = hf_txt2img(prompt)
+                img_path = IMG_DIR / ts / f"scene_{i:02d}_var{img_idx}.png"
+                save_bytes(img_path, img_bytes)
+                generated_images_for_scene.append(img_path)
+            except Exception as e:
+                print(f"  Image {i} variation {img_idx} error: {e}")
+        
+        if generated_images_for_scene:
+            # Randomly select one image for the scene
+            selected_img_path = random.choice(generated_images_for_scene)
+            scene_images.append(selected_img_path)
+            print(f"  Selected image for scene {i}: {selected_img_path.name}")
+        else:
+            print(f"  No images generated for scene {i}. Adding placeholder.")
+            scene_images.append(None) # Add placeholder if no images were generated
 
-    # TTS narration (concatenate lines)
-    narration_text = " ".join([s[1] for s in SCENES])
-    print(f"Requesting TTS from {TTS_MODEL}...")
+    # --- 2. Generate Audio Scene-by-Scene and Get Durations ---
+    scene_data = []
+    audio_clips_for_concat = []
+    for i, (title, text) in enumerate(SCENES, start=1):
+        print(f"[Audio {i}] Generating for scene: {title}")
+        
+        # Write scene text to a temporary file
+        temp_text_path = ROOT / f"temp_scene_{i}.txt"
+        with open(temp_text_path, "w", encoding="utf-8") as f:
+            f.write(text)
+            
+        audio_path = AUDIO_DIR / ts / f"scene_{i:02d}.wav"
+        
+        # Generate audio using voice_engine.py
+        voice_engine_cmd = [
+            sys.executable, "voice_engine.py",
+            "--input", str(temp_text_path),
+            "--output", str(audio_path),
+            "--engine", "edge"
+        ]
+        try:
+            subprocess.run(voice_engine_cmd, check=True, capture_output=True, text=True)
+        except subprocess.CalledProcessError as e:
+            print(f"  Voice engine failed for scene {i}: {e.stderr}")
+            # Fallback: create 1s of silence
+            silence_cmd = f'ffmpeg -f lavfi -i anullsrc=r=22050:cl=mono -t 1 -q:a 9 -acodec libmp3lame "{audio_path}"'
+            subprocess.run(silence_cmd, shell=True, check=True)
+
+        os.remove(temp_text_path)
+
+        # Get audio duration using ffprobe
+        duration = 0
+        try:
+            ffprobe_cmd = f'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{audio_path}"'
+            duration_str = subprocess.check_output(ffprobe_cmd, shell=True, text=True).strip()
+            duration = float(duration_str)
+            print(f"  Duration: {duration:.2f}s")
+        except (subprocess.CalledProcessError, ValueError) as e:
+            print(f"  Could not get duration for {audio_path}: {e}. Defaulting to 3s.")
+            duration = 3.0
+            
+        scene_data.append({
+            "title": title,
+            "text": text,
+            "image_path": scene_images[i-1],
+            "audio_path": audio_path,
+            "duration": duration
+        })
+        audio_clips_for_concat.append(audio_path)
+
+    # --- 3. Assemble Silent Video with Transitions ---
+    print("\nAssembling silent video with synced scenes and transitions...")
+    transition_duration_seconds = 0.5
+    transition_frames = int(transition_duration_seconds * FPS)
+    silent_video_path = assemble_video(ts, scene_data, transition_frames)
+    print(f"Silent video created: {silent_video_path}")
+
+    # --- 4. Concatenate Audio Clips ---
+    print("\nConcatenating audio clips...")
+    concat_list_path = ROOT / "concat_list.txt"
+    with open(concat_list_path, "w") as f:
+        for clip in audio_clips_for_concat:
+            f.write(f"file '{clip.resolve()}'\n")
+            
+    final_audio_path = OUTPUT_DIR / f"kenya_patriotic_synced_{ts}_full_audio.wav"
+    concat_cmd = f'ffmpeg -f concat -safe 0 -i "{concat_list_path}" -c copy "{final_audio_path}"'
     try:
-        audio_bytes = hf_tts(narration_text)
-        wav_path = AUDIO_DIR / ts / "narration.wav"
-        save_bytes(wav_path, audio_bytes)
-    except Exception as e:
-        print(f"TTS error: {e}")
-        # create 1s silent wav as fallback
-        wav_path = AUDIO_DIR / ts / "narration.wav"
-        try:
-            import wave, struct
-            fr = 16000
-            with wave.open(str(wav_path), 'w') as wf:
-                wf.setnchannels(1); wf.setsampwidth(2); wf.setframerate(fr)
-                for _ in range(fr):
-                    wf.writeframes(struct.pack('<h', 0))
-        except Exception:
-            pass
+        subprocess.run(concat_cmd, shell=True, check=True)
+        print(f"Final audio created: {final_audio_path}")
+    except subprocess.CalledProcessError as e:
+        print(f"Audio concatenation failed: {e}")
+        sys.exit(1)
+    finally:
+        os.remove(concat_list_path)
 
-    # Compose video
-    out = assemble_video(ts, scene_images, wav_path)
-    if out and Path(out).exists():
-        print("SUCCESS: Video created:", out)
-        print("Images in:", IMG_DIR / ts)
-        print("Audio in:", AUDIO_DIR / ts)
-    else:
-        print("FAILED: Video assembly failed")
-
+    # --- 5. Mux Final Video and Audio ---
+    print("\nMuxing final video and audio...")
+    final_video_path = OUTPUT_DIR / f"kenya_patriotic_synced_{ts}_FINAL.mp4"
+    mux_cmd = f'ffmpeg -i "{silent_video_path}" -i "{final_audio_path}" -c:v copy -c:a aac -shortest "{final_video_path}"'
+    try:
+        subprocess.run(mux_cmd, shell=True, check=True)
+        print(f"\nSUCCESS! Final video created: {final_video_path}")
+    except subprocess.CalledProcessError as e:
+        print(f"Final muxing failed: {e}")
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print("Fatal error:", e)
+        print(f"Fatal error: {e}")
         traceback.print_exc()
         sys.exit(1)

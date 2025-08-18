@@ -71,6 +71,7 @@ class GPUResource:
     temperature: float
     available: bool
     cost_per_hour: float = 0.0
+    performance_score: float = 0.0
 
 
 @dataclass
@@ -118,12 +119,17 @@ class HybridGPUManager:
             name = torch.cuda.get_device_name(device)
             total_memory, free_memory = check_gpu_memory()
             utilization = ((total_memory - free_memory) / total_memory * 100) if total_memory > 0 else 0
+            # Assign a conceptual performance score based on memory and utilization
+            # In a real system, this would be based on benchmarks or historical data
+            performance_score = (free_memory / total_memory) * (100 - utilization) # Higher is better
+            
             gpu = GPUResource(
                 name=name, memory_total=total_memory, memory_free=free_memory,
                 utilization=utilization, temperature=0, available=free_memory > 0.5,
-                cost_per_hour=config.get('local_gpu_cost_per_hour', 0.0) # Allow setting a cost for local for comparison
+                cost_per_hour=config.get('local_gpu_cost_per_hour', 0.0),
+                performance_score=performance_score # ADD THIS
             )
-            logger.info(f"   GPU: {name} ({total_memory:.1f}GB total, {free_memory:.1f}GB free)")
+            logger.info(f"   GPU: {name} ({total_memory:.1f}GB total, {free_memory:.1f}GB free, Score: {performance_score:.2f})")
             return gpu
         except Exception as e:
             logger.warning(f"GPU detection failed: {e}")
@@ -134,15 +140,21 @@ class HybridGPUManager:
         if config_file.exists():
             try:
                 with open(config_file) as f:
-                    return json.load(f)
+                    cloud_config = json.load(f)
+                    # Add conceptual performance score to loaded cloud providers
+                    for provider in cloud_config:
+                        for gpu_type, specs in provider.get("gpus", {}).items():
+                            # Simple score based on memory, higher memory = higher score
+                            specs["performance_score"] = specs["memory"] * 10 # Example
+                    return cloud_config
             except Exception as e:
                 logger.warning(f"Failed to load cloud config: {e}")
         default_providers = [
             {
                 "name": "runpod", "available": False,
                 "gpus": {
-                    "RTX4090": {"memory": 24, "cost_per_hour": 0.79},
-                    "A100": {"memory": 80, "cost_per_hour": 2.19}
+                    "RTX4090": {"memory": 24, "cost_per_hour": 0.79, "performance_score": 240},
+                    "A100": {"memory": 80, "cost_per_hour": 2.19, "performance_score": 800}
                 }
             }
         ]
@@ -167,7 +179,8 @@ class HybridGPUManager:
         if self.local_gpu.available and self.local_gpu.memory_free >= task_profile.estimated_memory:
             eligible_resources.append({
                 "name": self.local_gpu.name, "mode": ProcessingMode.LOCAL_GPU,
-                "cost": self.local_gpu.cost_per_hour, "provider": "local"
+                "cost": self.local_gpu.cost_per_hour, "provider": "local",
+                "performance_score": self.local_gpu.performance_score
             })
 
         for provider in self.cloud_providers:
@@ -177,7 +190,8 @@ class HybridGPUManager:
                 if specs["memory"] >= task_profile.estimated_memory:
                     eligible_resources.append({
                         "name": gpu_type, "mode": ProcessingMode.CLOUD_GPU,
-                        "cost": specs["cost_per_hour"], "provider": provider["name"]
+                        "cost": specs["cost_per_hour"], "provider": provider["name"],
+                        "performance_score": specs["performance_score"]
                     })
         return eligible_resources
 
@@ -190,14 +204,14 @@ class HybridGPUManager:
         if not eligible_resources:
             if task_profile.can_use_cpu:
                 logger.info("No suitable GPU found, falling back to Local CPU.")
-                return {"name": "cpu", "mode": ProcessingMode.LOCAL_CPU, "cost": 0, "provider": "local"}
+                return {"name": "cpu", "mode": ProcessingMode.LOCAL_CPU, "cost": 0, "provider": "local", "performance_score": 0} # Add performance_score
             else:
                 raise RuntimeError(f"No resource found that meets memory requirement of {task_profile.estimated_memory}GB")
 
         if self.cost_optimization_strategy == "low_cost":
             # Prioritize CPU if possible and cost is paramount
             if task_profile.can_use_cpu:
-                return {"name": "cpu", "mode": ProcessingMode.LOCAL_CPU, "cost": 0, "provider": "local"}
+                return {"name": "cpu", "mode": ProcessingMode.LOCAL_CPU, "cost": 0, "provider": "local", "performance_score": 0} # Add performance_score
             best_resource = sorted(eligible_resources, key=lambda x: x["cost"])[0]
         elif self.cost_optimization_strategy == "balanced":
             # Balance between cost and performance (e.g., prefer local GPU if available)
@@ -207,13 +221,12 @@ class HybridGPUManager:
             else:
                 best_resource = sorted(eligible_resources, key=lambda x: x["cost"])[0]
         elif self.cost_optimization_strategy == "high_performance":
-            # Prioritize fastest available, potentially higher cost
-            # This would require adding a 'performance_score' to GPUResource or similar
-            best_resource = sorted(eligible_resources, key=lambda x: x["cost"])[0] # For now, still cost-based
+            # Prioritize highest performance score
+            best_resource = sorted(eligible_resources, key=lambda x: x["performance_score"], reverse=True)[0] # Sort by performance_score
         else:
             best_resource = sorted(eligible_resources, key=lambda x: x["cost"])[0]
 
-        logger.info(f"🎯 Selected best resource: {best_resource['name']} from {best_resource['provider']} at ${best_resource['cost']:.2f}/hr (Strategy: {self.cost_optimization_strategy})")
+        logger.info(f"🎯 Selected best resource: {best_resource['name']} from {best_resource['provider']} at ${best_resource['cost']:.2f}/hr (Strategy: {self.cost_optimization_strategy}, Performance Score: {best_resource.get('performance_score', 'N/A')})")
         return best_resource
 
     async def process_task(self, task_profile: TaskProfile, task_function: Callable, *args, **kwargs):
