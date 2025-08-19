@@ -35,7 +35,54 @@ from chaos_utils import chaos_injector # Elite Cursor Snippet: chaos_injector_im
 from auth.tenancy import current_tenant
 from auth.rbac import has_role, Role
 
+from fastapi import FastAPI, HTTPException, Depends, Request, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import BaseModel, Field
+from typing import Optional, List, Dict, Any # Added Dict, Any for model management
+from datetime import timedelta, datetime
+import uvicorn
+import uuid
+from fastapi.responses import JSONResponse # Elite Cursor Snippet: json_response_import
+
+from logging_setup import get_logger
+from config_loader import get_config
+from auth.jwt_utils import verify_jwt
+from pipeline_orchestrator import PipelineOrchestrator
+from billing_middleware import enforce_limits, BillingException
+from landing_page_service import LandingPageService
+from scan_alert_system import ScanAlertSystem
+from crm_integration import CRMIntegrationService
+from utils.parallel_processing import ParallelProcessor
+from i18n_utils import gettext, get_locale_from_request # Elite Cursor Snippet: i18n_imports
+
+from database import engine, get_db
+from auth.user_models import Base, User, Tenant, AuditLog, Consent
+from auth.auth_service import create_user, authenticate_user, create_access_token, update_user_profile
+from sqlalchemy.orm import Session
+
+from fastapi_limiter import FastAPILimiter
+from fastapi_limiter.depends import RateLimiter
+import redis.asyncio as redis
+
+# J.1: Monitoring Integration
+from starlette_prometheus import PrometheusMiddleware, metrics
+from prometheus_client import Counter, Histogram # ADD THIS LINE
+from feature_flags import feature_flag_manager # Elite Cursor Snippet: feature_flag_import
+from chaos_utils import chaos_injector # Elite Cursor Snippet: chaos_injector_import
+from auth.tenancy import current_tenant
+from auth.rbac import has_role, Role
+
 from security.audit_log_manager import audit_log_manager, AuditEventType # ADD THIS LINE
+
+# Imports for Model Management Admin Widget
+from backend.ai_models.model_store import ModelStore
+from backend.ai_health.healthcheck import score_inference, record_metric, aggregate
+from backend.ai_health.rollback import should_rollback, perform_rollback
+from backend.notifications.admin_notify import send_admin_notification
+
+# Initialize ModelStore
+model_store = ModelStore()
+
 
 logger = get_logger(__name__)
 audit_logger = get_audit_logger() # This will be replaced or removed later
@@ -191,6 +238,37 @@ class Asset(BaseModel):
     uploaded_at: str
     usage_count: int
 
+# Pydantic Models for Model Management Admin Widget
+class ModelVersionInfo(BaseModel):
+    version_tag: str
+    path: str
+    checksum: str
+    activated_at: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+class ModelHealthMetrics(BaseModel):
+    error_rate: float
+    p50_latency_ms: float
+    avg_score: float
+    count: int
+
+class ModelStatusResponse(BaseModel):
+    provider: str
+    model_name: str
+    active_version: Optional[ModelVersionInfo] = None
+    recent_versions: List[ModelVersionInfo]
+    health_metrics: Optional[ModelHealthMetrics] = None
+    
+class PromoteRequest(BaseModel):
+    provider: str
+    model_name: str
+    version_tag: str # The green version to promote
+
+class RollbackRequest(BaseModel):
+    provider: str
+    model_name: str
+    target_tag: str # The version to rollback to
+
 # --- Dependency Functions ---
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db), request: Request = None):
@@ -213,6 +291,11 @@ async def get_current_active_user(current_user_payload: dict = Depends(get_curre
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return user
+
+async def get_current_admin_user(current_user: User = Depends(get_current_active_user)) -> User:
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required.")
+    return current_user
 
 async def get_current_tenant():
     pass
@@ -850,6 +933,90 @@ async def inject_chaos(
     except Exception as e:
         audit_log_manager.log_event(db, AuditEventType.CHAOS_INJECTED, f"Failed to inject chaos scenario '{scenario_type}': {e}", user_id=current_user.id, tenant_id=current_user.tenant_id, ip_address=request.client.host, event_details={"scenario_type": scenario_type, "error": str(e)})
         raise HTTPException(status_code=500, detail=f"Failed to inject chaos: {e}")
+
+# --- Admin Model Management Endpoints ---
+
+@app.get("/admin/models/status", response_model=List[ModelStatusResponse])
+async def get_model_status(current_user: User = Depends(get_current_admin_user)):
+    """
+    Retrieves the status of all configured models, including active versions,
+    recent versions, and health metrics. Requires admin access.
+    """
+    all_model_statuses = []
+    
+    # Iterate through configured models in config.yaml
+    # Assuming config.models has structure like:
+    # models:
+    #   text_generation: { hf_api_id: ..., local_fallback_path: ... }
+    #   image_generation: { hf_api_id: ..., local_fallback_path: ... }
+    #   ...
+    for model_type, model_config in config.models.items():
+        # For simplicity, we'll consider 'local' as the provider for local models
+        # and the hf_api_id as the model_name for remote models. This needs to be refined.
+        
+        provider = "local" # Placeholder, needs to be dynamic
+        model_name = model_type # Placeholder, needs to be dynamic
+
+        # Try to get the actual model_name from config if available
+        if hasattr(model_config, 'hf_api_id') and model_config.hf_api_id:
+            model_name = model_config.hf_api_id.split('/')[-1] # Use last part of HF ID
+            provider = "huggingface"
+        elif hasattr(model_config, 'local_fallback_path') and model_config.local_fallback_path:
+            model_name = Path(model_config.local_fallback_path).name
+            provider = "local"
+        else:
+            # Fallback if no specific ID/path is found
+            model_name = model_type
+            provider = "unknown"
+
+        active_version_info = model_store.current(provider, model_name)
+        recent_versions_info = model_store.list_versions(provider, model_name)
+        
+        # Aggregate health metrics (assuming 'local' provider and model_name for simplicity)
+        health_metrics_data = aggregate(provider, model_name, active_version_info.get("version_tag") if active_version_info else "N/A")
+        
+        all_model_statuses.append(ModelStatusResponse(
+            provider=provider,
+            model_name=model_name,
+            active_version=ModelVersionInfo(**active_version_info) if active_version_info else None,
+            recent_versions=[ModelVersionInfo(**v) for v in recent_versions_info],
+            health_metrics=ModelHealthMetrics(**health_metrics_data)
+        ))
+    
+    return all_model_statuses
+
+@app.post("/admin/models/promote")
+async def promote_model(request: PromoteRequest, current_user: User = Depends(get_current_admin_user)):
+    """
+    Promotes a specified model version to active. Requires admin access.
+    """
+    try:
+        model_store.activate(request.provider, request.model_name, request.version_tag, metadata={"promoted_by": current_user.username, "action": "admin_promote"})
+        subject = f"✅ Model Promoted: {request.provider}/{request.model_name} to {request.version_tag}"
+        body = f"Admin {current_user.username} promoted {request.provider}/{request.model_name} to version {request.version_tag}."
+        send_admin_notification(subject, body)
+        return {"status": "success", "message": f"Model {request.model_name} promoted to version {request.version_tag}."}
+    except Exception as e:
+        logger.error(f"Failed to promote model {request.model_name} to {request.version_tag}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to promote model: {e}")
+
+@app.post("/admin/models/rollback")
+async def rollback_model(request: RollbackRequest, current_user: User = Depends(get_current_admin_user)):
+    """
+    Rolls back a specified model to a target version. Requires admin access.
+    """
+    try:
+        rolled_back_to_tag = perform_rollback(request.provider, request.model_name, dry_run=False)
+        if rolled_back_to_tag:
+            subject = f"🚨 Model Rolled Back: {request.provider}/{request.model_name} to {rolled_back_to_tag}"
+            body = f"Admin {current_user.username} rolled back {request.provider}/{request.model_name} to version {rolled_back_to_tag}."
+            send_admin_notification(subject, body)
+            return {"status": "success", "message": f"Model {request.model_name} rolled back to version {rolled_back_to_tag}."}
+        else:
+            raise HTTPException(status_code=500, detail="Rollback failed: No suitable version found or an error occurred.")
+    except Exception as e:
+        logger.error(f"Failed to rollback model {request.model_name} to {request.target_tag}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to rollback model: {e}")
 
 @app.get("/feature_status/{feature_name}")
 async def get_feature_status(feature_name: str, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):

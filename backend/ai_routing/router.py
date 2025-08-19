@@ -221,9 +221,12 @@ class Router:
                     if active_tag == "green" and agg_metrics.get("avg_score", 0.0) >= float(min_health_score) and agg_metrics.get("count", 0) >= 100:
                         logger.info(f"Canary (green) version for {model_name} is healthy. Promoting to active.")
                         # Promote green to active
-                        # This would involve calling model_store.activate(..., version_tag=green_tag, metadata={"strategy":"blue"})
-                        # For now, just log
-                        pass
+                        green_version_tag = model_metadata.get("green_version_tag") # Assuming green_version_tag is stored in metadata
+                        if green_version_tag:
+                            model_store.activate(provider_name, model_name, green_version_tag, metadata={"strategy":"bluegreen", "promoted_from_canary": True})
+                            logger.info(f"Promoted {model_name} to active version: {green_version_tag}")
+                        else:
+                            logger.warning(f"Could not promote green version for {model_name}: green_version_tag not found in metadata.")
                     elif active_tag == "green" and agg_metrics.get("count", 0) >= 100:
                         # Evaluate rollback trigger using thresholds
                         if should_rollback(agg_metrics, thresholds):

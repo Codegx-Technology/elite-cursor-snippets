@@ -6,10 +6,12 @@ import soundfile as sf
 from huggingface_hub import InferenceClient, login as hf_login
 from transformers import pipeline
 from config_loader import get_config
-from error_utils import retry_on_exception, log_and_raise
+from error_utils import retry_on_exception
 import logging
 from asset_manager import AssetManager
 from dotenv import load_dotenv
+
+from backend.ai_models.loader import resolve_model_path, ModelNotReady # New import
 
 # Use standard logging to avoid circular import with logging_setup
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -76,35 +78,28 @@ async def _load_local_llm_model():
     if config.models.disable_model_loading:
         logger.warning("Model loading is disabled by configuration. Skipping local LLM model loading.")
         return False
-    model_name = config.models.text_generation.local_fallback_path
     
-    if not model_name:
-        logger.warning("Local LLM model path not configured. Skipping local LLM loading.")
+    model_path = None
+    try:
+        # Use resolve_model_path to get the actual model path
+        # Assuming 'text_generation' is the model_name for LLM
+        model_path = resolve_model_path("local", "text_generation") 
+    except ModelNotReady as e:
+        logger.warning(f"Local LLM model not ready: {e}. Skipping local LLM loading.")
         _local_llm_pipeline = None
         return False # Indicate failure to load
 
     if _local_llm_pipeline is None:
-        logger.info(f"Attempting to load local LLM pipeline for model: {model_name}")
+        logger.info(f"Attempting to load local LLM pipeline from: {model_path}")
         try:
-            # Check if model path exists locally before attempting to load
-            if not os.path.exists(model_name):
-                logger.error(f"❌ Local LLM model path does not exist: {model_name}")
-                _local_llm_pipeline = None
-                return False
-
             def do_load():
-                # Use asset_manager to ensure model is downloaded/cached if needed
-                # This is conceptual, as pipeline() directly loads from path/HF Hub
-                # For true robustness, asset_manager.get_asset would be used here
-                # if models were managed as downloadable assets.
-                # For now, we assume model_name is a path or HF ID directly loadable by pipeline.
-                return pipeline("text-generation", model=model_name, device_map="auto")
+                return pipeline("text-generation", model=str(model_path), device_map="auto")
             
             loop = asyncio.get_running_loop()
             _local_llm_pipeline = await loop.run_in_executor(None, do_load)
-            logger.info(f"✅ Local LLM pipeline loaded successfully for model: {model_name}")
+            logger.info(f"✅ Local LLM pipeline loaded successfully from: {model_path}")
         except Exception as e:
-            logger.exception(f"❌ Failed to load local LLM model '{model_name}': {e}")
+            logger.exception(f"❌ Failed to load local LLM model from '{model_path}': {e}")
             _local_llm_pipeline = None
     return _local_llm_pipeline is not None
 
@@ -117,29 +112,28 @@ async def _load_local_image_model():
     if config.models.disable_model_loading:
         logger.warning("Model loading is disabled by configuration. Skipping local image generation model loading.")
         return False
-    model_name = config.models.image_generation.local_fallback_path
     
-    if not model_name:
-        logger.warning("Local image generation model path not configured. Skipping local image model loading.")
+    model_path = None
+    try:
+        # Use resolve_model_path to get the actual model path
+        # Assuming 'image_generation' is the model_name for image models
+        model_path = resolve_model_path("local", "image_generation") 
+    except ModelNotReady as e:
+        logger.warning(f"Local image generation model not ready: {e}. Skipping local image model loading.")
         _local_image_pipeline = None
         return False
 
     if _local_image_pipeline is None:
-        logger.info(f"Attempting to load local image generation pipeline for model: {model_name}")
+        logger.info(f"Attempting to load local image generation pipeline from: {model_path}")
         try:
-            if not os.path.exists(model_name):
-                logger.error(f"❌ Local image generation model path does not exist: {model_name}")
-                _local_image_pipeline = None
-                return False
-
             def do_load():
-                return pipeline("text-to-image", model=model_name, device_map="auto")
+                return pipeline("text-to-image", model=str(model_path), device_map="auto")
             
             loop = asyncio.get_running_loop()
             _local_image_pipeline = await loop.run_in_executor(None, do_load)
-            logger.info(f"✅ Local image generation pipeline loaded successfully for model: {model_name}")
+            logger.info(f"✅ Local image generation pipeline loaded successfully from: {model_path}")
         except Exception as e:
-            logger.exception(f"❌ Failed to load local image generation model '{model_name}': {e}")
+            logger.exception(f"❌ Failed to load local image generation model from '{model_path}': {e}")
             _local_image_pipeline = None
     return _local_image_pipeline is not None
 
@@ -152,29 +146,28 @@ async def _load_local_tts_model():
     if config.models.disable_model_loading:
         logger.warning("Model loading is disabled by configuration. Skipping local TTS model loading.")
         return False
-    model_name = config.models.voice_synthesis.local_fallback_path
     
-    if not model_name:
-        logger.warning("Local TTS model path not configured. Skipping local TTS loading.")
+    model_path = None
+    try:
+        # Use resolve_model_path to get the actual model path
+        # Assuming 'voice_synthesis' is the model_name for TTS models
+        model_path = resolve_model_path("local", "voice_synthesis") 
+    except ModelNotReady as e:
+        logger.warning(f"Local TTS model not ready: {e}. Skipping local TTS loading.")
         _local_tts_pipeline = None
         return False
 
     if _local_tts_pipeline is None:
-        logger.info(f"Attempting to load local TTS pipeline for model: {model_name}")
+        logger.info(f"Attempting to load local TTS pipeline from: {model_path}")
         try:
-            if not os.path.exists(model_name):
-                logger.error(f"❌ Local TTS model path does not exist: {model_name}")
-                _local_tts_pipeline = None
-                return False
-
             def do_load():
-                return pipeline("text-to-speech", model=model_name, device_map="auto")
+                return pipeline("text-to-speech", model=str(model_path), device_map="auto")
             
             loop = asyncio.get_running_loop()
             _local_tts_pipeline = await loop.run_in_executor(None, do_load)
-            logger.info(f"✅ Local TTS pipeline loaded successfully for model: {model_name}")
+            logger.info(f"✅ Local TTS pipeline loaded successfully from: {model_path}")
         except Exception as e:
-            logger.exception(f"❌ Failed to load local TTS model '{model_name}': {e}")
+            logger.exception(f"❌ Failed to load local TTS model from '{model_path}': {e}")
             _local_tts_pipeline = None
     return _local_tts_pipeline is not None
 
@@ -187,29 +180,28 @@ async def _load_local_stt_model():
     if config.models.disable_model_loading:
         logger.warning("Model loading is disabled by configuration. Skipping local STT model loading.")
         return False
-    model_name = config.models.speech_to_text.local_fallback_path
     
-    if not model_name:
-        logger.warning("Local STT model path not configured. Skipping local STT loading.")
+    model_path = None
+    try:
+        # Use resolve_model_path to get the actual model path
+        # Assuming 'speech_to_text' is the model_name for STT models
+        model_path = resolve_model_path("local", "speech_to_text") 
+    except ModelNotReady as e:
+        logger.warning(f"Local STT model not ready: {e}. Skipping local STT loading.")
         _local_stt_pipeline = None
         return False
 
     if _local_stt_pipeline is None:
-        logger.info(f"Attempting to load local STT pipeline for model: {model_name}")
+        logger.info(f"Attempting to load local STT pipeline from: {model_path}")
         try:
-            if not os.path.exists(model_name):
-                logger.error(f"❌ Local STT model path does not exist: {model_name}")
-                _local_stt_pipeline = None
-                return False
-
             def do_load():
-                return pipeline("automatic-speech-recognition", model=model_name, device_map="auto")
+                return pipeline("automatic-speech-recognition", model=str(model_path), device_map="auto")
             
             loop = asyncio.get_running_loop()
             _local_stt_pipeline = await loop.run_in_executor(None, do_load)
-            logger.info(f"✅ Local STT pipeline loaded successfully for model: {model_name}")
+            logger.info(f"✅ Local STT pipeline loaded successfully from: {model_path}")
         except Exception as e:
-            logger.exception(f"❌ Failed to load local STT model '{model_name}': {e}")
+            logger.exception(f"❌ Failed to load local STT model from '{model_path}': {e}")
             _local_stt_pipeline = None
     return _local_stt_pipeline is not None
 
