@@ -26,7 +26,7 @@ def _init_db():
             latency_ms REAL,
             score REAL
         )
-    """)
+    """
     conn.commit()
     conn.close()
 
