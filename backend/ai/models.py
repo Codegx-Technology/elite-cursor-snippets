@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Float
 from datetime import datetime
 from auth.user_models import Base # Assuming Base is defined here or in database.py
 
@@ -24,3 +24,23 @@ class VoiceVersion(Base):
 
     def __repr__(self):
         return f"<VoiceVersion(name='{self.name}', version='{self.version}')>"
+
+class UsageCost(Base):
+    __tablename__ = "usage_costs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    job_id = Column(String(36), index=True, nullable=False) # UUID
+    user_id = Column(String(36), index=True, nullable=False) # UUID
+    tier_code = Column(String(50), nullable=False)
+    task_type = Column(String(100), nullable=False)
+    model_name = Column(String(255), nullable=True)
+    model_version = Column(String(255), nullable=True)
+    provider = Column(String(100), nullable=False)
+    metric = Column(String(50), nullable=False) # e.g., chars, tokens, gpu_mins
+    amount = Column(Float, nullable=False)
+    estimated_cost_usd = Column(Float, nullable=False)
+    actual_cost_usd = Column(Float, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<UsageCost(job_id='{self.job_id}', user_id='{self.user_id}', cost='{self.estimated_cost_usd}')>"

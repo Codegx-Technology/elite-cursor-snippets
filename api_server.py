@@ -753,7 +753,8 @@ async def generate_video_endpoint(request_data: GenerateVideoRequest, current_us
             input_type=input_type,
             input_data=input_data,
             user_preferences=user_preferences,
-            api_call=True
+            api_call=True,
+            request=request # Pass the request object
         )
 
         if result.get("status") == "error":

@@ -97,7 +97,7 @@ class PipelineOrchestrator:
         logger.info(f"Decision: Chosen pipeline: {chosen_pipeline}, Reason: {reason}")
         return {"chosen": chosen_pipeline, "reason": reason}
 
-    async def run_pipeline(self, input_type, input_data, user_preferences=None, api_call=False):
+    async def run_pipeline(self, input_type, input_data, user_preferences=None, api_call=False, request: Any = None): # Added request: Any
         """
         // [TASK]: Run the chosen pipeline with appropriate arguments and execution model (sync/async)
         // [GOAL]: Execute the selected pipeline and return its result
@@ -123,6 +123,7 @@ class PipelineOrchestrator:
         pipeline_kwargs['enhanced_router'] = enhanced_router
         pipeline_kwargs['parallel_processor'] = self.parallel_processor
         pipeline_kwargs['scene_processor'] = self.scene_processor
+        pipeline_kwargs['request'] = request # Pass the request object
 
         try:
             if chosen == "news_video_generator":

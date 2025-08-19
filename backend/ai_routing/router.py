@@ -127,11 +127,59 @@ class Router:
 
         return eligible_providers[0]
 
-    async def execute_with_fallback(self, task_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Executes a task, attempting fallbacks if the preferred provider fails.
-        Integrates blue/green and canary routing.
-        """
+    async def execute_with_fallback(self, task_type: str, payload: Dict[str, Any], request: Any) -> Dict[str, Any]: # Added request: Any
+        user_plan = request.state.get("user_plan")
+        if not user_plan:
+            logger.warning("User plan not found in request state. Defaulting to FREE tier policy.")
+            # Fallback to FREE tier policy if user_plan is not set (e.g., for unauthenticated requests)
+            from billing_models import get_default_plans
+            all_plans = get_default_plans()
+            user_plan = next((p for p in all_plans if p.tier_code == "FREE"), None)
+            if not user_plan:
+                logger.critical("FREE tier plan not found in default plans. System misconfiguration.")
+                raise RuntimeError("System misconfiguration: FREE plan not found.")
+
+        # --- Emergency Freeze Check ---
+        # Assuming a global emergency freeze flag in config.yaml
+        if self.config.get("emergency_freeze", False):
+            logger.warning(f"Emergency freeze is active. Blocking task {task_type}.")
+            raise HTTPException(status_code=503, detail="Service temporarily unavailable due to emergency maintenance.")
+
+        # --- Version Pinning Logic ---
+        effective_model_name = payload.get("model_name")
+        effective_model_version = None
+        effective_provider_name = payload.get("provider_name")
+
+        model_policy = user_plan.model_policy
+
+        if model_policy.defaultRouting == "pinned":
+            pinned_model = model_policy.pinned.get(task_type)
+            if pinned_model:
+                effective_model_name = pinned_model.model
+                effective_model_version = pinned_model.version
+                logger.info(f"Tier policy: Forcing pinned model {effective_model_name}@{effective_model_version} for task {task_type}.")
+            else:
+                logger.warning(f"Tier policy: 'pinned' routing but no pinned model found for task {task_type}. Falling back to 'latest'.")
+                # Fallback to latest if pinned but no specific model is defined
+                # This would typically involve querying ModelStore for the latest version
+        elif model_policy.defaultRouting == "allow_minor":
+            # Logic to allow minor version updates but pin major
+            # This would involve comparing requested version with available versions
+            # and selecting the latest minor version within the same major version.
+            logger.debug(f"Tier policy: Allowing minor version updates for task {task_type}.")
+
+        # Override payload with effective model/version if determined by policy
+        if effective_model_name:
+            payload["model_name"] = effective_model_name
+        if effective_model_version:
+            payload["version_tag"] = effective_model_version # Assuming version_tag is used for specific version
+
+        # --- Provider Routing based on Tier Policy ---
+        # This would involve modifying self.route_task or creating a new routing function
+        # that respects user_plan.model_policy.providers (ordered fallback list).
+        # For now, route_task will still pick the best healthy provider from its own config.
+        # The idea is that the provider list in tier policy would override/filter the router's default.
+
         # Extract model info from payload if available (assuming a convention)
         # This part needs to be adapted based on how model_name and provider are passed in payload
         model_name = payload.get("model_name") # Example
@@ -140,7 +188,7 @@ class Router:
         # Get model metadata from ModelStore if available
         model_metadata = None
         if model_name and provider_name:
-            current_model_info = model_store.current(provider_name, model_name)
+            current_model_info = self.model_store.current(provider_name, model_name)
             if current_model_info:
                 model_metadata = current_model_info.get("metadata", {})
 
@@ -223,7 +271,7 @@ class Router:
                         # Promote green to active
                         green_version_tag = model_metadata.get("green_version_tag") # Assuming green_version_tag is stored in metadata
                         if green_version_tag:
-                            model_store.activate(provider_name, model_name, green_version_tag, metadata={"strategy":"bluegreen", "promoted_from_canary": True})
+                            self.model_store.activate(provider_name, model_name, green_version_tag, metadata={"strategy":"bluegreen", "promoted_from_canary": True})
                             logger.info(f"Promoted {model_name} to active version: {green_version_tag}")
                         else:
                             logger.warning(f"Could not promote green version for {model_name}: green_version_tag not found in metadata.")

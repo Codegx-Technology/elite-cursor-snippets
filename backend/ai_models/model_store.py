@@ -19,8 +19,23 @@ class ModelStore:
     """
     Manages versioned model storage with atomic activation and rollback points.
     """
+    _emergency_freeze_active: bool = False # Class-level flag for emergency freeze
+
     def __init__(self):
         MODELS_BASE_DIR.mkdir(parents=True, exist_ok=True)
+
+    @classmethod
+    def set_emergency_freeze(cls, active: bool):
+        cls._emergency_freeze_active = active
+        logger.warning(f"Global emergency freeze set to: {active}")
+
+    @classmethod
+    def is_emergency_frozen(cls) -> bool:
+        return cls._emergency_freeze_active
+
+    def _check_freeze(self):
+        if self._emergency_freeze_active:
+            raise RuntimeError("Operation blocked: Global emergency freeze is active.")
 
     def _get_model_path(self, provider: str, model_name: str) -> Path:
         """Returns the base path for a specific model."""
@@ -69,6 +84,7 @@ class ModelStore:
         """
         Copies or hard-links downloaded artifacts into versions/<tag>; never touches active.
         """
+        self._check_freeze() # Check freeze before preparing staging
         versions_path = self._get_versions_path(provider, model_name)
         versions_path.mkdir(parents=True, exist_ok=True)
         staging_path = versions_path / version_tag
@@ -96,6 +112,7 @@ class ModelStore:
         Atomically activates a new model version by updating the 'active' pointer.
         Appends activation to history.json.
         """
+        self._check_freeze() # Check freeze before activating
         model_base_path = self._get_model_path(provider, model_name)
         versions_path = self._get_versions_path(provider, model_name)
         target_version_path = versions_path / version_tag
@@ -172,7 +189,8 @@ class ModelStore:
             return None
 
     def list_versions(self, provider: str, model_name: str) -> List[Dict[str, Any]]:
-        """Lists all available versions for a model."""
+        """
+        Lists all available versions for a model."""
         versions_path = self._get_versions_path(provider, model_name)
         if not versions_path.exists():
             return []
@@ -196,6 +214,7 @@ class ModelStore:
         Atomically switches back to a target version.
         Validates presence + checksum before swap.
         """
+        self._check_freeze() # Check freeze before rolling back
         model_base_path = self._get_model_path(provider, model_name)
         versions_path = self._get_versions_path(provider, model_name)
         target_version_path = versions_path / target_tag

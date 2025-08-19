@@ -47,24 +47,41 @@ class PolicyResolverMiddleware(BaseHTTPMiddleware):
         # --- Enforce Quotas and Rate Limits (Pre-check) ---
         # Apply these checks only to resource-consuming endpoints
         if request.url.path == "/generate_video": # Example: apply to video generation
-            # Rate Limit Check
-            if not await quota_service.check_rate_limit(
-                user_id=user_id if user_id else "anonymous",
-                rpm_limit=user_plan.quotas.rateLimit.rpm,
-                rps_limit=user_plan.quotas.rateLimit.rps,
-                burst_limit=user_plan.quotas.rateLimit.burst
-            ):
-                raise HTTPException(status_code=429, detail="Too Many Requests. Please try again later or upgrade your plan.")
-            
-            # Quota Check (for jobs metric, assuming 1 job per video generation request)
-            # This is a provisional check. Finalization happens after job completion.
-            if not await quota_service.check_and_increment_quota(
-                user_id=user_id if user_id else "anonymous",
-                metric="jobs",
-                amount=1,
-                monthly_limit=user_plan.quotas.monthly.jobs
-            ):
-                raise HTTPException(status_code=429, detail="Monthly job quota exceeded. Please upgrade your plan.")
+            # Get a database session for cost checks
+            db = None
+            try:
+                db = SessionLocal()
+                # Cost Cap Check
+                if user_plan.cost_caps.monthlyUsd > 0:
+                    current_monthly_cost = await get_user_monthly_cost(user_id if user_id else "anonymous", db)
+                    if current_monthly_cost >= user_plan.cost_caps.monthlyUsd:
+                        if user_plan.cost_caps.hardStop:
+                            logger.warning(f"Hard stop: User {user_id} exceeded monthly cost cap of {user_plan.cost_caps.monthlyUsd} USD. Current: {current_monthly_cost}")
+                            raise HTTPException(status_code=403, detail="Monthly cost cap exceeded. Please upgrade your plan.")
+                        else:
+                            logger.warning(f"Soft throttle: User {user_id} exceeded monthly cost cap of {user_plan.cost_caps.monthlyUsd} USD. Current: {current_monthly_cost}")
+                            # Implement soft throttling logic here (e.g., downgrade priority, reduce quality)
+
+                # Rate Limit Check
+                if not await quota_service.check_rate_limit(
+                    user_id=user_id if user_id else "anonymous",
+                    rpm_limit=user_plan.quotas.rateLimit.rpm,
+                    rps_limit=user_plan.quotas.rateLimit.rps,
+                    burst_limit=user_plan.quotas.rateLimit.burst
+                ):
+                    raise HTTPException(status_code=429, detail="Too Many Requests. Please try again later or upgrade your plan.")
+                
+                # Quota Check (for jobs metric, assuming 1 job per video generation request)
+                # This is a provisional check. Finalization happens after job completion.
+                if not await quota_service.check_and_increment_quota(
+                    user_id=user_id if user_id else "anonymous",
+                    metric="jobs",
+                    amount=1,
+                    monthly_limit=user_plan.quotas.monthly.jobs
+                ):
+                    raise HTTPException(status_code=429, detail="Monthly job quota exceeded. Please upgrade your plan.")
+            finally:
+                if db: db.close()
             
             # TODO: Record provisional usage here for the specific job
             # This would require the job_id to be known at this stage, or passed later.

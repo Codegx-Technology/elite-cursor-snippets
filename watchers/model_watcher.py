@@ -5,6 +5,7 @@ from database import SessionLocal # Assuming SessionLocal is your session factor
 from backend.notifications.admin_notifier import notify_admin
 from backend.ai.models import ModelVersion, VoiceVersion
 from logging_setup import get_logger # Import logger
+from security.audit_log_manager import audit_log_manager, AuditEventType # Import audit log manager
 
 from config_loader import get_config
 
@@ -51,6 +52,12 @@ def check_model_updates(db: Session):
                     db.commit()
                     db.refresh(new_model_version)
                     new_releases.append(f"{model_name} {version_tag}")
+                    audit_log_manager.log_event(
+                        db=db,
+                        event_type=AuditEventType.MODEL_VERSION_DETECTED,
+                        message=f"New LLM model version detected: {model_name} {version_tag}",
+                        event_details={"model_name": model_name, "version": version_tag, "provider": provider}
+                    )
             except requests.exceptions.RequestException as e:
                 logger.error(f"HuggingFace API request failed for {model_name} ({api_id}): {e}")
             except Exception as e:
@@ -92,6 +99,12 @@ def check_tts_updates(db: Session):
                 db.commit()
                 db.refresh(new_voice_version)
                 new_releases.append(f"XTTS {version_tag}")
+                audit_log_manager.log_event(
+                    db=db,
+                    event_type=AuditEventType.VOICE_VERSION_DETECTED,
+                    message=f"New TTS voice version detected: XTTS {version_tag}",
+                    event_details={"voice_name": "XTTS", "version": version_tag, "provider": "huggingface"}
+                )
     except requests.exceptions.RequestException as e:
         logger.error(f"HuggingFace API request failed for XTTS: {e}")
     except Exception as e:

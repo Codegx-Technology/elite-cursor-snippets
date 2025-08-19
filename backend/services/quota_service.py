@@ -3,6 +3,9 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 from logging_setup import get_logger
 from config_loader import get_config
+from sqlalchemy.orm import Session
+import sqlalchemy
+from backend.ai.models import UsageCost # Import UsageCost model
 
 logger = get_logger(__name__)
 config = get_config()
@@ -91,3 +94,17 @@ class QuotaService:
         logger.warning(f"Rolled back usage for job {job_id}: {metric} {amount}")
 
 quota_service = QuotaService()
+
+async def get_user_monthly_cost(user_id: str, db: Session) -> float:
+    """
+    Calculates the estimated total cost for the current month for a given user.
+    """
+    now = datetime.utcnow()
+    start_of_month = datetime(now.year, now.month, 1)
+
+    total_cost = db.query(sqlalchemy.func.sum(UsageCost.estimated_cost_usd)).
+        filter(UsageCost.user_id == user_id).
+        filter(UsageCost.timestamp >= start_of_month).scalar() # Corrected: Added missing closing parenthesis
+    
+    return total_cost if total_cost is not None else 0.0
+
