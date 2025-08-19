@@ -1080,17 +1080,30 @@ async def rollback_voice_endpoint(request: RollbackRequest, current_user: User =
     """
     Rolls back a specified TTS voice to a target version. Requires admin access.
     """
+    # Input Validation: Check if voice_name exists in config
+    if not hasattr(config.models, 'tts_models') or request.model_name not in config.models.tts_models:
+        logger.warning(f"Admin {current_user.username} attempted rollback for non-existent voice: {request.model_name}")
+        raise HTTPException(status_code=404, detail=f"Voice '{request.model_name}' not found in configuration.")
+
     try:
+        # Validate target_tag exists for the voice
+        all_versions_data = load_versions().get(request.model_name, {})
+        if request.target_tag not in all_versions_data or request.target_tag == "active":
+            logger.warning(f"Admin {current_user.username} attempted rollback for voice {request.model_name} to invalid or non-existent version: {request.target_tag}")
+            raise HTTPException(status_code=400, detail=f"Target version '{request.target_tag}' not found or invalid for voice '{request.model_name}'.")
+
         rolled_back_to_version = rollback_voice(request.model_name, request.target_tag)
-        subject = f"🚨 Voice Rolled Back: {request.model_name} to {rolled_back_to_version}"
+        subject = f"✅ Voice Rolled Back: {request.model_name} to {rolled_back_to_version}"
         body = f"Admin {current_user.username} rolled back voice {request.model_name} to version {rolled_back_to_version}."
         send_admin_notification(subject, body)
+        logger.info(f"Voice {request.model_name} successfully rolled back to {rolled_back_to_version} by admin {current_user.username}.")
         return {"status": "success", "message": f"Voice {request.model_name} rolled back to version {rolled_back_to_version}."}
     except ValueError as e:
+        logger.error(f"Rollback failed for voice {request.model_name} to {request.target_tag} due to ValueError: {e}")
         raise HTTPException(status_code=400, detail=f"Rollback failed: {e}")
     except Exception as e:
-        logger.error(f"Failed to rollback voice {request.model_name} to {request.target_tag}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to rollback voice: {e}")
+        logger.critical(f"Critical error during voice rollback for {request.model_name} to {request.target_tag}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to rollback voice: An unexpected error occurred.")
 
 @app.get("/feature_status/{feature_name}")
 async def get_feature_status(feature_name: str, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
