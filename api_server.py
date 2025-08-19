@@ -82,6 +82,10 @@ from backend.notifications.admin_notify import send_admin_notification
 from backend.startup import run_safety_rollback_on_boot # New import for safety rollback
 from backend.core.voices.versioning import register_voice, rollback_voice, get_active_voice, get_latest_voice, load_versions # Voice versioning imports
 
+from auth.user_models import User # New import
+from auth.auth_service import create_user # New import
+from sqlalchemy.orm import Session # New import
+
 from billing.plan_guard import PlanGuard, PlanGuardException # New import
 
 # Initialize ModelStore
@@ -401,6 +405,10 @@ async def startup():
     
     # Run safety rollback check on boot
     run_safety_rollback_on_boot()
+
+    # Seed super admin users
+    with next(get_db()) as db_session:
+        seed_super_admins(db_session)
 
 # --- API Endpoints ---
 
@@ -1260,6 +1268,32 @@ async def delete_user_data(current_user: User = Depends(get_current_active_user)
     db.commit()
 
     return {"message": "User data deletion process initiated. Your account will be deactivated."}
+
+    return {"message": "User data deletion process initiated. Your account will be deactivated."}
+
+
+# Function to seed super admin users
+def seed_super_admins(db: Session):
+    super_admins_data = [
+        {"username": "peter", "email": "peter@shujaa.studio", "password": "aluru742!!", "role": "admin"},
+        {"username": "apollo", "email": "apollo@shujaa.studio", "password": "aluru742!!", "role": "admin"},
+    ]
+
+    for admin_data in super_admins_data:
+        existing_user = db.query(User).filter_by(username=admin_data["username"]).first()
+        if not existing_user:
+            logger.info(f"Seeding super admin user: {admin_data["username"]}")
+            create_user(
+                db,
+                username=admin_data["username"],
+                email=admin_data["email"],
+                password=admin_data["password"],
+                tenant_name="default", # Super admins belong to the default tenant
+                role=admin_data["role"]
+            )
+        else:
+            logger.info(f"Super admin user {admin_data["username"]} already exists.")
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
