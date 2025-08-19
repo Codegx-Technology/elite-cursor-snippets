@@ -44,3 +44,9 @@ Over our recent interactions, I have significantly contributed to enhancing the 
     *   Fixed a critical unit test (`test_execute_with_fallback_all_attempts_fail`) to ensure the reliability of the system's fallback logic.
 
 These contributions have significantly moved Shujaa Studio towards becoming a more intelligent, reliable, and culturally authentic platform for AI-powered cinematic content creation.
+
+## Build Execution
+
+*   **Rule:** Always check if the project root has a `package.json` file before treating subfolders as workspaces.
+*   **Rule:** For standalone React/Next.js applications, always run `npm install` and build commands (e.g., `npm run build`, `next build`) strictly inside that subfolder.
+*   **Note on Build Execution:** If standard `npm install` or `npm run build` commands encounter "not a registered workspace directory" errors, explicitly navigate into the project subdirectory (e.g., `cd frontend`) before executing `npm` or `npx` commands. For example: `cd frontend && npm install --legacy-peer-deps && npm run build`. This forces the commands to execute within the context of the subdirectory, bypassing root workspace assumptions.

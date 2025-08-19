@@ -98,12 +98,6 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       description: 'Voice & music creation'
     },
     {
-      href: '/admin/roles',
-      icon: FaKey,
-      label: 'Role Management',
-      description: 'Manage user roles'
-    },
-    {
       href: '/admin/api-integration',
       icon: FaPlug,
       label: 'API & Integrations',
@@ -192,13 +186,13 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
 
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-        {navigationItems.map((item) => {
+        {navigationItems.map((item, idx) => {
           const Icon = item.icon;
           const active = isActive(item.href);
 
           return (
             <Link
-              key={item.href}
+              key={`${item.href}-${idx}`}
               href={item.href}
               className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 group ${
                 active

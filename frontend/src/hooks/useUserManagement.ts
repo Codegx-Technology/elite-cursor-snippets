@@ -56,7 +56,6 @@ export function useUserManagement() {
     }
   };
 
-<<<<<<< HEAD
   const createUser = async (data: CreateUserData) => {
     try {
       const response = await apiClient.createUser(data);
@@ -70,22 +69,6 @@ export function useUserManagement() {
     } catch (e: any) {
       setError(e?.message || 'Failed to create user');
     }
-  };
-=======
-  const createUser = async (data: Omit<UserData, 'id'>) => {
-    try {
-      const response = await apiClient.createUser(data);
-      handleApiResponse(
-        response,
-        () => {
-          loadUsers();
-        },
-        (error) => setError(error)
-      );
-    } catch (e: any) {
-      setError(e?.message || 'Failed to create user');
-    }
->>>>>>> 9a6a59c61051fb013aec8064ee759dc0b89431b2
   };
 
   const updateUser = async (id: number, data: Partial<UserData>) => {
