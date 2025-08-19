@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Card from '@/components/Card';
 import { FaCheck, FaCrown, FaFlag, FaMountain, FaRocket, FaUsers, FaInfinity, FaShieldAlt, FaHeadset } from 'react-icons/fa';
 // Import with error handling
@@ -43,6 +43,7 @@ try {
 export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const { initializePayment, isLoading, error } = usePaystack();
 
   // Local types for plan and payment method to satisfy TS when using require()
@@ -56,10 +57,122 @@ export default function PricingPage() {
     image_credits?: number;
     audio_credits?: number;
     popular?: boolean;
+    allowedModels?: string[];
+    defaultPinnedModel?: string;
+    maxRequestsPerMonth?: number;
+    priorityLevel?: number;
+    ttsVoices?: string[];
+    rollbackWindowDays?: number;
   };
   type PaymentMethod = { id: string; name: string; description: string; icon: any };
 
-  const plans = paymentUtils.getSubscriptionPlans() as Plan[];
+  // Load plans from API with graceful fallback to static tiers
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch('/api/tiers', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`status ${res.status}`);
+        const data = await res.json();
+        // Expecting API shape: [{ id, name, priceKesMonthly, perks:[], quotas:{ videos, images, audio } }]
+        const mapped: Plan[] = (data?.tiers || data || []).map((t: any) => ({
+          id: t.id,
+          name: t.name,
+          price: Number(t.priceKesMonthly ?? t.price ?? 0),
+          currency: 'KES',
+          features: Array.isArray(t.perks) ? t.perks : [],
+          video_credits: t?.quotas?.videos ?? undefined,
+          image_credits: t?.quotas?.images ?? undefined,
+          audio_credits: t?.quotas?.audio ?? undefined,
+          popular: t?.popular ?? false,
+        }));
+        if (!cancelled && mapped.length) {
+          setPlans(mapped);
+          return;
+        }
+      } catch (e) {
+        console.warn('Failed to load /api/tiers, falling back to static tiers', e);
+      }
+
+      // Fallback to backend-aligned static tiers
+      const fallback: Plan[] = [
+        {
+          id: 'starter',
+          name: 'Starter',
+          price: 500,
+          currency: 'KES',
+          features: [
+            '5k requests / month',
+            'Pinned: gpt-4o-mini',
+            'Voice: XTTS v2',
+            'Email support',
+            '3-day rollback window',
+          ],
+          video_credits: 10,
+          image_credits: 100,
+          audio_credits: 60,
+          popular: false,
+          allowedModels: ['gpt-4o-mini'],
+          defaultPinnedModel: 'gpt-4o-mini',
+          maxRequestsPerMonth: 5000,
+          priorityLevel: 1,
+          ttsVoices: ['xtts-v2'],
+          rollbackWindowDays: 3,
+        },
+        {
+          id: 'pro',
+          name: 'Pro',
+          price: 2500,
+          currency: 'KES',
+          features: [
+            '50k requests / month',
+            'Pinned: gpt-4o, gpt-5',
+            'Voice: XTTS v2, Elevenlabs Pro',
+            'Priority support',
+            '7-day rollback window',
+          ],
+          video_credits: 40,
+          image_credits: 500,
+          audio_credits: 360,
+          popular: true,
+          allowedModels: ['gpt-4o', 'gpt-5'],
+          defaultPinnedModel: 'gpt-5',
+          maxRequestsPerMonth: 50000,
+          priorityLevel: 2,
+          ttsVoices: ['xtts-v2', 'elevenlabs-pro'],
+          rollbackWindowDays: 7,
+        },
+        {
+          id: 'enterprise',
+          name: 'Enterprise',
+          price: 15000,
+          currency: 'KES',
+          features: [
+            '500k requests / month',
+            'Custom models',
+            'Voice: All premium voices',
+            'Dedicated support',
+            '30-day rollback window',
+          ],
+          video_credits: -1,
+          image_credits: -1,
+          audio_credits: -1,
+          popular: false,
+          allowedModels: ['gpt-5', 'gpt-5.5', 'custom-finetunes'],
+          defaultPinnedModel: 'gpt-5.5',
+          maxRequestsPerMonth: 500000,
+          priorityLevel: 5,
+          ttsVoices: ['xtts-v2', 'elevenlabs-pro', 'elevenlabs-multi'],
+          rollbackWindowDays: 30,
+        },
+      ];
+      if (!cancelled) setPlans(fallback);
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSubscribe = async (planId: string) => {
     setSelectedPlan(planId);
@@ -68,6 +181,17 @@ export default function PricingPage() {
     if (!plan) return;
 
     try {
+      // Notify backend billing with selected tier before payment
+      try {
+        await fetch('/api/tiers/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tierId: planId, billing_cycle: billingCycle }),
+        });
+      } catch (e) {
+        console.warn('Backend subscribe call failed, continuing with payment', e);
+      }
+
       await initializePayment({
         amount: billingCycle === 'yearly' ? plan.price * 10 : plan.price, // 2 months free on yearly
         email: 'user@example.com', // This should come from user context
@@ -180,6 +304,54 @@ export default function PricingPage() {
                     <span className="text-gray-700 text-sm">{feature}</span>
                   </div>
                 ))}
+                {plan.allowedModels && plan.allowedModels.length > 0 && (
+                  <div className="flex items-start space-x-3">
+                    <FaCheck className="text-green-600 mt-1 flex-shrink-0" />
+                    <span className="text-gray-700 text-sm">
+                      Allowed Models: {plan.allowedModels.join(', ')}
+                    </span>
+                  </div>
+                )}
+                {plan.defaultPinnedModel && (
+                  <div className="flex items-start space-x-3">
+                    <FaCheck className="text-green-600 mt-1 flex-shrink-0" />
+                    <span className="text-gray-700 text-sm">
+                      Default Pinned Model: {plan.defaultPinnedModel}
+                    </span>
+                  </div>
+                )}
+                {plan.maxRequestsPerMonth && (
+                  <div className="flex items-start space-x-3">
+                    <FaCheck className="text-green-600 mt-1 flex-shrink-0" />
+                    <span className="text-gray-700 text-sm">
+                      Max Requests/Month: {plan.maxRequestsPerMonth.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+                {plan.priorityLevel && (
+                  <div className="flex items-start space-x-3">
+                    <FaCheck className="text-green-600 mt-1 flex-shrink-0" />
+                    <span className="text-gray-700 text-sm">
+                      Priority Level: {plan.priorityLevel}
+                    </span>
+                  </div>
+                )}
+                {plan.ttsVoices && plan.ttsVoices.length > 0 && (
+                  <div className="flex items-start space-x-3">
+                    <FaCheck className="text-green-600 mt-1 flex-shrink-0" />
+                    <span className="text-gray-700 text-sm">
+                      TTS Voices: {plan.ttsVoices.join(', ')}
+                    </span>
+                  </div>
+                )}
+                {plan.rollbackWindowDays && (
+                  <div className="flex items-start space-x-3">
+                    <FaCheck className="text-green-600 mt-1 flex-shrink-0" />
+                    <span className="text-gray-700 text-sm">
+                      Rollback Window: {plan.rollbackWindowDays} days
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Credits Info */}

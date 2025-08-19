@@ -446,6 +446,14 @@ async def get_user_plan(current_user: dict = Depends(get_current_user)):
         "is_active": user_sub.is_active
     }
 
+@app.get("/api/plans")
+async def get_all_plans():
+    # // [TASK]: Expose API for frontend to display all available plans
+    # // [GOAL]: Provide all plan details to the UI for pricing page
+    all_plans = get_default_plans()
+    # Convert dataclass objects to dictionaries for JSON serialization
+    return [plan.__dict__ for plan in all_plans]
+
 @app.get("/users/me/usage")
 async def get_user_usage(current_user: dict = Depends(get_current_user)):
     # // [TASK]: Expose API for frontend to display user's usage limits
