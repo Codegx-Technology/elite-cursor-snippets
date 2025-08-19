@@ -24,6 +24,7 @@ from enum import Enum
 import threading
 import signal
 import sys
+from pathlib import Path
 
 # [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent + augmentsearch
 # [CONTEXT]: AI-powered health scanner with intelligent monitoring and auto-healing
@@ -167,6 +168,54 @@ class AIHealthScanner:
         
         self.logger = logging.getLogger(__name__)
         
+    def _run_dependency_check_job(self):
+        """Runs the Django management command for dependency checking."""
+        try:
+            python_executable = sys.executable
+            project_root = Path(__file__).parent.parent
+            manage_py_path = project_root / 'manage.py'
+
+            if not manage_py_path.exists():
+                self.logger.error(f"manage.py not found at {manage_py_path}. Cannot run dependency check.")
+                send_admin_notification(
+                    subject="Dependency Check Scheduling Error",
+                    body=f"manage.py not found at {manage_py_path}. Dependency check could not be run.",
+                    logger=self.logger
+                )
+                return
+
+            cmd = [
+                str(python_executable),
+                str(manage_py_path),
+                'check_dependencies'
+            ]
+            
+            # Run the command silently, capture output for logging if needed
+            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+
+            if result.returncode != 0:
+                error_message = f"Dependency check command failed with exit code {result.returncode}.\nStdout: {result.stdout}\nStderr: {result.stderr}"
+                self.logger.error(error_message)
+                send_admin_notification(
+                    subject="Dependency Check Failed",
+                    body=error_message,
+                    logger=self.logger
+                )
+            else:
+                self.logger.info("Dependency check command ran successfully.")
+                if result.stdout:
+                    self.logger.info(f"Dependency check stdout: {result.stdout}")
+                if result.stderr:
+                    self.logger.warning(f"Dependency check stderr: {result.stderr}")
+
+        except Exception as e:
+            self.logger.error(f"Error running dependency check job: {e}")
+            send_admin_notification(
+                subject="Dependency Check Job Error",
+                body=f"An unexpected error occurred while trying to run the dependency check job: {e}",
+                logger=self.logger
+            )
+
     def start_scanner(self):
         """Start the AI health scanner"""
         if self.is_running:
@@ -195,6 +244,10 @@ class AIHealthScanner:
         scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
         scheduler_thread.start()
         
+        # Schedule dependency check daily at 00:00
+        schedule.every().day.at("00:00").do(self._run_dependency_check_job)
+        self.logger.info("Dependency check scheduled daily at 00:00.")
+
         self.logger.info(f"Scanner scheduled every {self.config.scan_interval}s in {self.config.scan_mode.value} mode")
         
     def stop_scanner(self):
