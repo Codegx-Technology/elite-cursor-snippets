@@ -5,14 +5,17 @@ from billing_models import get_default_plans, Plan, ModelPolicy, Quotas, Monthly
 
 class PlanGuardException(Exception):
     """Custom exception for PlanGuard related errors."""
-    pass
+    def __init__(self, message: str, is_in_grace_mode: bool = False, grace_expires_at: Optional[datetime] = None):
+        super().__init__(message)
+        self.is_in_grace_mode = is_in_grace_mode
+        self.grace_expires_at = grace_expires_at
 
 class PlanGuard:
     def __init__(self, backend_api_url: str = "http://localhost:8000"):
         self.backend_api_url = backend_api_url
         self._cached_plans: Optional[List[Plan]] = None
 
-    async def _fetch_plans_from_api(self) -> Optional[List[Plan]]:
+    async def _fetch_plans_from_api(self) -> Optional[List[Plan]>:
         try:
             response = requests.get(f"{self.backend_api_url}/api/plans")
             response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
@@ -49,7 +52,7 @@ class PlanGuard:
 
     async def get_user_plan(self, user_id: str) -> Plan:
         # In a real system, this would fetch the user's specific plan from a database
-        # For now, we'll simulate by assigning based on user_id or default to 'Free'
+        # For now, we'll simulate by assigning based on user_id or default to 'Starter'
         # and use the plans fetched from API or default hardcoded ones.
         
         if not self._cached_plans:
@@ -57,21 +60,40 @@ class PlanGuard:
             if not self._cached_plans:
                 self._cached_plans = get_default_plans() # Fallback to hardcoded defaults
 
-        # Simulate user plan assignment
-        if user_id == "test_pro_user":
-            plan_name = "Pro"
-        elif user_id == "test_enterprise_user":
-            plan_name = "Enterprise"
-        else:
-            plan_name = "Starter" # Default for all other users
-
-        for plan in self._cached_plans:
-            if plan.name == plan_name:
-                return plan
+        # Simulate user plan assignment and grace period
+        user_sub = get_user_subscription(user_id) # This function needs to be updated to return grace_expires_at
         
-        # Should not happen if default plans are correctly defined
-        print(f"Warning: Plan '{plan_name}' not found. Returning Starter plan.")
-        return next(p for p in self._cached_plans if p.name == "Starter")
+        # Find the plan based on user_sub.plan_name
+        current_plan = next((p for p in self._cached_plans if p.name == user_sub.plan_name), None)
+        if not current_plan:
+            print(f"Warning: Plan '{user_sub.plan_name}' not found. Returning Starter plan.")
+            current_plan = next(p for p in self._cached_plans if p.name == "Starter")
+
+        # Simulate grace period logic
+        if not user_sub.is_active and current_plan.grace_period_hours > 0:
+            # If user's subscription is inactive, but they have a grace period
+            # and grace_expires_at is not set or has passed, set it.
+            if not user_sub.grace_expires_at or user_sub.grace_expires_at < datetime.now():
+                user_sub.grace_expires_at = datetime.now() + timedelta(hours=current_plan.grace_period_hours)
+                print(f"User {user_id} entered grace mode. Expires at: {user_sub.grace_expires_at}")
+            
+            if datetime.now() < user_sub.grace_expires_at:
+                # User is in grace mode
+                raise PlanGuardException(
+                    f"Plan expired. You are in grace mode. Expires: {user_sub.grace_expires_at}",
+                    is_in_grace_mode=True,
+                    grace_expires_at=user_sub.grace_expires_at
+                )
+            else:
+                # Grace period expired, full hard-lock
+                user_sub.grace_expires_at = None # Reset grace period
+                user_sub.is_active = False # Ensure it's marked inactive
+                raise PlanGuardException("Plan expired. Grace period exhausted. Please upgrade.")
+        elif not user_sub.is_active and current_plan.grace_period_hours == 0:
+            # Immediate hard-lock for plans with no grace period
+            raise PlanGuardException("Plan expired. Please upgrade.")
+
+        return current_plan
 
     async def check_model_access(self, user_id: str, requested_model: str) -> None:
         user_plan = await self.get_user_plan(user_id)

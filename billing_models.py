@@ -60,6 +60,7 @@ class Plan:
     visibility: Visibility = field(default_factory=Visibility)
     max_requests_per_month: int = 0 # New field
     rollback_window_days: Optional[int] = None # New field
+    grace_period_hours: int = 0 # New field
 
 
 @dataclass
@@ -69,6 +70,7 @@ class UserSubscription:
     start_date: datetime
     end_date: datetime
     is_active: bool = True
+    grace_expires_at: Optional[datetime] = None # New field
 
 # // [TASK]: Implement SLA tracking and billing reconciliation models
 # // [GOAL]: Provide enterprise SLAs, automated billing reconciliation, and analytics
@@ -133,6 +135,11 @@ def get_default_plans() -> List[Plan]:
             max_requests_per_month=5000,
             rollback_window_days=3
         ),
+                    visibility=Visibility(showBetaModels=False, allowUnverified=False),
+            max_requests_per_month=5000,
+            rollback_window_days=3,
+            grace_period_hours=0 # Free users get no grace
+        ),
         Plan(
             name="Pro",
             price=2500,
@@ -150,8 +157,33 @@ def get_default_plans() -> List[Plan]:
             cost_caps=CostCaps(monthlyUsd=50.0, hardStop=False),
             visibility=Visibility(showBetaModels=False, allowUnverified=False),
             max_requests_per_month=50000,
-            rollback_window_days=7
+            rollback_window_days=7,
+            grace_period_hours=24 # Pro users get 24 hours grace
         ),
+        Plan(
+            name="Enterprise",
+            price=15000,
+            currency="KES",
+            max_requests_per_day=16666, # 500000 requests / 30 days (approx)
+            features_enabled=["text_gen", "image_gen", "tts", "stt", "youtube_upload", "analytics", "crm_integration", "priority_support", "dedicated_instance"],
+            tier_code="ENTERPRISE",
+            model_policy=ModelPolicy(
+                defaultRouting="pinned",
+                pinned={"tts":PinnedModel(model="xtts-v2",version="a1b2c3d4")},
+                providers={"tts":["local","elevenlabs","xtts"]},
+                allowed_models=["gpt-5", "gpt-5.5", "custom-finetunes"],
+                default_pinned_model="gpt-5.5",
+                tts_voices=["xtts-v2", "elevenlabs-pro", "elevenlabs-multi"]
+            ),
+            quotas=Quotas(monthly=MonthlyQuotas(tokens=5000000, audioSecs=30000, videoMins=500, jobs=5000), concurrency=100, rateLimit=RateLimit(rpm=5000, rps=500, burst=1000)),
+            priority_level=5,
+            cost_caps=CostCaps(monthlyUsd=5000.0, hardStop=True),
+            visibility=Visibility(showBetaModels=True, allowUnverified=True),
+            max_requests_per_month=500000,
+            rollback_window_days=30,
+            grace_period_hours=72 # Enterprise users get 72 hours grace
+        ),
+    ]
         Plan(
             name="Enterprise",
             price=15000,
@@ -182,25 +214,46 @@ def get_user_subscription(user_id: str) -> UserSubscription:
     // [GOAL]: Simulate fetching subscription from a database
     """
     # This is a placeholder. In a real system, this would query a database.
+    # For demonstration, we'll simulate different states for specific user_ids
     if user_id == "test_free_user":
         return UserSubscription(
             user_id=user_id,
-            plan_name="Free",
+            plan_name="Starter",
             start_date=datetime(2023, 1, 1),
-            end_date=datetime(2024, 1, 1)
+            end_date=datetime(2024, 1, 1),
+            is_active=True
         )
     elif user_id == "test_pro_user":
         return UserSubscription(
             user_id=user_id,
             plan_name="Pro",
             start_date=datetime(2023, 1, 1),
-            end_date=datetime(2024, 1, 1)
+            end_date=datetime(2024, 1, 1),
+            is_active=True
         )
-    else:
-        # Default to Free for unknown users
+    elif user_id == "test_enterprise_user":
         return UserSubscription(
             user_id=user_id,
-            plan_name="Free",
+            plan_name="Enterprise",
             start_date=datetime(2023, 1, 1),
-            end_date=datetime(2024, 1, 1)
+            end_date=datetime(2024, 1, 1),
+            is_active=True
+        )
+    elif user_id == "test_expired_pro_user":
+        # Simulate an expired Pro user who should enter grace mode
+        return UserSubscription(
+            user_id=user_id,
+            plan_name="Pro",
+            start_date=datetime(2023, 1, 1),
+            end_date=datetime(2024, 1, 1) - timedelta(days=1), # Expired yesterday
+            is_active=False # Explicitly set to inactive
+        )
+    else:
+        # Default to Starter for unknown users
+        return UserSubscription(
+            user_id=user_id,
+            plan_name="Starter",
+            start_date=datetime(2023, 1, 1),
+            end_date=datetime(2024, 1, 1),
+            is_active=True
         )

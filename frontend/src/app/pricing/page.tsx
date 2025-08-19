@@ -2,38 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Card from '@/components/Card';
-import { FaCheck, FaCrown, FaFlag, FaMountain, FaRocket, FaUsers, FaInfinity, FaShieldAlt, FaHeadset } from 'react-icons/fa';
+import { FaCheck, FaCrown, FaFlag, FaMountain, FaRocket } from 'react-icons/fa6';
+import GraceCountdownOverlay from '@/components/GraceCountdownOverlay'; // New import
+
 // Import with error handling
 let paymentUtils: any;
 let usePaystack: any;
-
-try {
-  const paystackModule = require('@/lib/paystack');
-  paymentUtils = paystackModule.paymentUtils;
-  usePaystack = paystackModule.usePaystack;
-} catch (error) {
-  console.error('Paystack module import error:', error);
-  // Fallback implementations
-  paymentUtils = {
-    getSubscriptionPlans: () => [
-      {
-        id: 'starter',
-        name: 'Starter',
-        price: 2500,
-        currency: 'KES',
-        features: ['10 Videos', '50 Images', '20 Audio tracks'],
-        popular: false
-      }
-    ],
-    formatAmount: (amount: number, currency: string) => `${currency} ${amount.toLocaleString()}`,
-    getKenyaPaymentMethods: () => []
-  };
-  usePaystack = () => ({
-    initializePayment: async () => {},
-    isLoading: false,
-    error: null
-  });
-}
 
 // Local types for plan and payment method to satisfy TS when using require()
 type Plan = {
@@ -52,6 +26,7 @@ type Plan = {
   priorityLevel?: number;
   ttsVoices?: string[];
   rollbackWindowDays?: number;
+  grace_period_hours?: number; // New field
 };
 type PaymentMethod = { id: string; name: string; description: string; icon: any };
 
@@ -64,6 +39,8 @@ export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [isGraceMode, setIsGraceMode] = useState<boolean>(false); // New state
+  const [graceExpiresAt, setGraceExpiresAt] = useState<string | null>(null); // New state
   const { initializePayment, isLoading, error } = usePaystack();
 
   // Load plans from API with graceful fallback to static tiers
@@ -85,7 +62,18 @@ export default function PricingPage() {
           image_credits: t?.quotas?.images ?? undefined,
           audio_credits: t?.quotas?.audio ?? undefined,
           popular: t?.popular ?? false,
+          grace_period_hours: t?.grace_period_hours ?? undefined, // New field
         }));
+
+        // Check for grace mode status from API response
+        if (data.status === 'grace_mode') {
+          setIsGraceMode(true);
+          setGraceExpiresAt(data.grace_expires_at);
+        } else {
+          setIsGraceMode(false);
+          setGraceExpiresAt(null);
+        }
+
         if (!cancelled && mapped.length) {
           setPlans(mapped);
           return;
@@ -472,6 +460,16 @@ export default function PricingPage() {
         <Card className="p-4 bg-red-50 border border-red-200">
           <p className="text-red-800 text-center">{error}</p>
         </Card>
+      )}
+
+      {isGraceMode && graceExpiresAt && (
+        <GraceCountdownOverlay
+          graceExpiresAt={graceExpiresAt}
+          onUpgradeClick={() => {
+            // Handle upgrade click, e.g., scroll to pricing plans or open a modal
+            console.log("Upgrade button clicked from grace overlay");
+          }}
+        />
       )}
     </div>
   );

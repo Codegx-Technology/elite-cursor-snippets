@@ -297,6 +297,25 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
             audit_log_manager.log_event(db, AuditEventType.USER_LOGIN_FAILURE, "Authentication failed: User ID missing in token.", user_id=None, ip_address=request.client.host if request else None)
             raise HTTPException(status_code=401, detail="Invalid authentication credentials: User ID missing")
         request.state.user_id = user_id # Set user_id in request.state
+
+        # Determine grace mode status
+        user_sub = get_user_subscription(user_id) # Get user subscription
+        current_plan = next((p for p in get_default_plans() if p.name == user_sub.plan_name), None)
+
+        request.state.is_in_grace_mode = False
+        request.state.grace_expires_at = None
+
+        if not user_sub.is_active and current_plan and current_plan.grace_period_hours > 0:
+            # Simulate grace period logic from PlanGuard
+            if not user_sub.grace_expires_at or user_sub.grace_expires_at < datetime.now():
+                # This should ideally be persisted in the DB for the user_sub
+                user_sub.grace_expires_at = datetime.now() + timedelta(hours=current_plan.grace_period_hours)
+                # In a real system, you'd update the user_sub in the DB here
+
+            if datetime.now() < user_sub.grace_expires_at:
+                request.state.is_in_grace_mode = True
+                request.state.grace_expires_at = user_sub.grace_expires_at
+
         return payload
     except Exception as e:
         audit_log_manager.log_event(db, AuditEventType.USER_LOGIN_FAILURE, f"Authentication failed for token: {token[:10]}... Error: {e}", user_id=None, ip_address=request.client.host if request else None)
@@ -355,6 +374,21 @@ async def pii_redaction_middleware(request: Request, call_next):
         # For now, we're just logging the access.
 
     response = await call_next(request)
+
+    # Grace Mode Middleware
+    if hasattr(request.state, 'is_in_grace_mode') and request.state.is_in_grace_mode:
+        if isinstance(response, JSONResponse):
+            response_body = json.loads(response.body.decode())
+            response_body["status"] = "grace_mode"
+            response_body["grace_expires_at"] = request.state.grace_expires_at.isoformat()
+            
+            time_left = request.state.grace_expires_at - datetime.now()
+            hours, remainder = divmod(int(time_left.total_seconds()), 3600)
+            minutes, seconds = divmod(remainder, 60)
+            response_body["remaining"] = f"{hours}h {minutes}m"
+
+            response = JSONResponse(content=response_body, status_code=response.status_code)
+
     return response
 
 # --- Event Handlers ---
