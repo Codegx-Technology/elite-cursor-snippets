@@ -119,8 +119,10 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 FastAPIInstrumentor.instrument_app(app)
 
 from auth.tenancy import TenantMiddleware
+from backend.middleware.policy_resolver import PolicyResolverMiddleware # Import PolicyResolverMiddleware
 
 app.add_middleware(TenantMiddleware)
+app.add_middleware(PolicyResolverMiddleware) # Add PolicyResolverMiddleware
 app.add_route("/metrics", metrics)
 
 orchestrator = PipelineOrchestrator()
@@ -291,6 +293,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         if user_id is None:
             audit_log_manager.log_event(db, AuditEventType.USER_LOGIN_FAILURE, "Authentication failed: User ID missing in token.", user_id=None, ip_address=request.client.host if request else None)
             raise HTTPException(status_code=401, detail="Invalid authentication credentials: User ID missing")
+        request.state.user_id = user_id # Set user_id in request.state
         return payload
     except Exception as e:
         audit_log_manager.log_event(db, AuditEventType.USER_LOGIN_FAILURE, f"Authentication failed for token: {token[:10]}... Error: {e}", user_id=None, ip_address=request.client.host if request else None)

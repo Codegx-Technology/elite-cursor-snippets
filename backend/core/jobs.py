@@ -1,37 +1,21 @@
 from typing import Dict, Any
 import uuid
-import asyncio
 import logging
 from backend.depwatcher.patcher import apply_patch_plan
 from backend.depwatcher.approvals import _patch_plans # Access the in-memory storage
+from celery_app import app, PRIORITY_QUEUE_MAP # Import Celery app and priority map
 
 logger = logging.getLogger(__name__)
 
 # In-memory job storage (replace with database in production)
 jobs_storage: Dict[str, Dict[str, Any]] = {}
 
-async def enqueue_job(job_type: str, payload: Dict[str, Any]) -> str:
-    job_id = str(uuid.uuid4())
-    job = {
-        "id": job_id,
-        "type": job_type,
-        "status": "pending",
-        "progress": 0,
-        "payload": payload,
-        "result": None,
-        "error": None
-    }
-    jobs_storage[job_id] = job
-    logger.info(f"Job enqueued: {job_type} with ID {job_id}")
-    # In a real system, this would dispatch to a background worker (e.g., Celery)
-    asyncio.create_task(_process_job(job_id, job_type, payload)) # For demo, run in current event loop
-    return job_id
-
-async def _process_job(job_id: str, job_type: str, payload: Dict[str, Any]):
+@app.task(bind=True) # Make this a Celery task
+def process_job_task(self, job_id: str, job_type: str, payload: Dict[str, Any], telemetry_tags: Dict[str, Any]):
     job = jobs_storage[job_id]
     try:
         job["status"] = "running"
-        logger.info(f"Processing job {job_id} ({job_type})")
+        logger.info(f"Processing job {job_id} ({job_type}) with tags: {telemetry_tags}")
         job["progress"] = 0 # Reset progress for actual work
 
         if job_type == "APPLY_PATCH_PLAN":
@@ -44,11 +28,16 @@ async def _process_job(job_id: str, job_type: str, payload: Dict[str, Any]):
             if not patch_plan:
                 raise ValueError(f"Patch plan with ID {plan_id} not found.")
 
-            await apply_patch_plan(patch_plan) # Call the actual patch application
+            # apply_patch_plan is async, but Celery tasks are sync. Need to run it in an event loop.
+            # For simplicity, we'll use asyncio.run here, but in a real Celery worker,
+            # you'd typically use a library like `celery-gevent` or `eventlet` for async tasks.
+            import asyncio
+            asyncio.run(apply_patch_plan(patch_plan))
             job["result"] = {"message": "Patch applied successfully"}
         else:
             # Simulate work for other job types
-            await asyncio.sleep(2) 
+            import time
+            time.sleep(2) 
             job["progress"] = 100
             job["result"] = {"message": f"Processed {job_type} (simulated)"}
 
@@ -60,6 +49,44 @@ async def _process_job(job_id: str, job_type: str, payload: Dict[str, Any]):
         job["status"] = "failed"
         job["error"] = str(e)
         logger.error(f"Job {job_id} ({job_type}) failed: {e}")
+        # Celery retry logic
+        raise self.retry(exc=e, countdown=5, max_retries=self.request.retries + 1) # Example retry
+
+async def enqueue_job(job_type: str, payload: Dict[str, Any], user_tier_code: str = "FREE") -> str:
+    job_id = str(uuid.uuid4())
+    job = {
+        "id": job_id,
+        "type": job_type,
+        "status": "pending",
+        "progress": 0,
+        "payload": payload,
+        "result": None,
+        "error": None
+    }
+    jobs_storage[job_id] = job
+    logger.info(f"Job enqueued: {job_type} with ID {job_id}")
+
+    # Determine queue and retries based on tier
+    tier_config = PRIORITY_QUEUE_MAP.get(user_tier_code, PRIORITY_QUEUE_MAP["FREE"])
+    queue_name = tier_config["queue"]
+    max_retries = tier_config["retries"]
+
+    # Prepare telemetry tags
+    telemetry_tags = {
+        "userId": payload.get("user_id", "anonymous"), # Assuming user_id is in payload
+        "tier": user_tier_code,
+        "taskType": job_type,
+        # Add model@version, provider if available in payload
+    }
+
+    # Dispatch Celery task
+    process_job_task.apply_async(
+        args=[job_id, job_type, payload, telemetry_tags],
+        queue=queue_name,
+        max_retries=max_retries,
+        # Add DLQ routing if configured in celery_app.py
+    )
+    return job_id
 
 async def get_job_status(job_id: str) -> Dict[str, Any]:
     return jobs_storage.get(job_id, {"status": "not_found"})
