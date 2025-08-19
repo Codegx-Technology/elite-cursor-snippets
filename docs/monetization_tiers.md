@@ -58,6 +58,7 @@ This monetization tier system provides:
 *   **Cost Meter**: `backend/costs/provider_costs.py` loads cost tables from `provider_costs.yml`. `backend/core/jobs_hooks.py` records `UsageCost` entries in the database post-job execution.
 *   **Version Pinning + Emergency Freeze**: Logic in `backend/ai_routing/router.py` (`execute_with_fallback`) forces pinned model versions based on tier policy. `backend/ai_models/model_store.py` includes a global emergency freeze flag.
 *   **Notifications & Thresholds**: `backend/watchers/billing_watcher.py` checks for quota and cost cap thresholds, sending notifications via `notify_admin()`.
+*   **Model Watcher**: `watchers/model_watcher.py` continuously monitors for new LLM model and TTS voice versions from external providers (e.g., Hugging Face). It records new versions in the database (`ModelVersion`, `VoiceVersion`) and notifies administrators, enabling informed decisions on model updates without automatic upgrades for pinned tiers.
 *   **Client Isolation & Shared Models**: Conceptual design involves dedicated model serving processes (e.g., via `backend/ai_routing/providers/local_provider.py`) and IPC.
 *   **E2E Tests**: Located in `tests/backend/tiers/test_monetization.py` covering various scenarios.
 
