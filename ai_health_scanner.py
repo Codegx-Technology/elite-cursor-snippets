@@ -30,6 +30,35 @@ import sys
 # [GOAL]: Proactive system health management with Kenya-first user experience
 # [TASK]: Create comprehensive health scanner with scheduling and muting capabilities
 
+def send_admin_notification(subject: str, body: str, logger: logging.Logger):
+    """Send a private notification to super admin via SMTP (Gmail). Fail-soft on errors."""
+    try:
+        host = os.getenv("SMTP_HOST", "")
+        port = int(os.getenv("SMTP_PORT", "0") or 0)
+        username = os.getenv("SMTP_USERNAME", "")
+        password = os.getenv("SMTP_PASSWORD", "")
+        sender = os.getenv("SMTP_FROM", username)
+        recipient = os.getenv("SMTP_TO", username)
+
+        if not (host and port and username and password and sender and recipient):
+            # Missing configuration; log and return
+            logger.debug("SMTP not configured; skipping admin notification")
+            return
+
+        msg = MIMEText(body, _charset="utf-8")
+        msg["Subject"] = subject
+        msg["From"] = sender
+        msg["To"] = recipient
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP(host, port, timeout=15) as server:
+            server.starttls(context=context)
+            server.login(username, password)
+            server.send_message(msg)
+    except Exception as e:
+        # Do not crash scans due to email errors
+        logger.debug(f"Admin notification failed: {e}")
+
 class HealthStatus(Enum):
     HEALTHY = "healthy"
     WARNING = "warning"
@@ -137,35 +166,6 @@ class AIHealthScanner:
         )
         
         self.logger = logging.getLogger(__name__)
-
-    def _notify_admin(self, subject: str, body: str) -> None:
-        """Send a private notification to super admin via SMTP (Gmail). Fail-soft on errors."""
-        try:
-            host = os.getenv("SMTP_HOST", "")
-            port = int(os.getenv("SMTP_PORT", "0") or 0)
-            username = os.getenv("SMTP_USERNAME", "")
-            password = os.getenv("SMTP_PASSWORD", "")
-            sender = os.getenv("SMTP_FROM", username)
-            recipient = os.getenv("SMTP_TO", username)
-
-            if not (host and port and username and password and sender and recipient):
-                # Missing configuration; log and return
-                self.logger.debug("SMTP not configured; skipping admin notification")
-                return
-
-            msg = MIMEText(body, _charset="utf-8")
-            msg["Subject"] = subject
-            msg["From"] = sender
-            msg["To"] = recipient
-
-            context = ssl.create_default_context()
-            with smtplib.SMTP(host, port, timeout=15) as server:
-                server.starttls(context=context)
-                server.login(username, password)
-                server.send_message(msg)
-        except Exception as e:
-            # Do not crash scans due to email errors
-            self.logger.debug(f"Admin notification failed: {e}")
         
     def start_scanner(self):
         """Start the AI health scanner"""
@@ -405,9 +405,10 @@ class AIHealthScanner:
                     f"Network: {metrics.network_latency:.0f}ms  Errors: {metrics.error_count}  Conns: {metrics.active_connections}",
                     "Issues:",
                 ] + [f" - {i}" for i in issues]
-                self._notify_admin(
+                send_admin_notification(
                     subject="[Shujaa] Health Alert",
-                    body="\n".join(summary_lines)
+                    body="\n".join(summary_lines),
+                    logger=self.logger
                 )
         
         # Attempt auto-healing if enabled
