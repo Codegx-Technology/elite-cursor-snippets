@@ -82,8 +82,11 @@ from backend.notifications.admin_notify import send_admin_notification
 from backend.startup import run_safety_rollback_on_boot # New import for safety rollback
 from backend.core.voices.versioning import register_voice, rollback_voice, get_active_voice, get_latest_voice, load_versions # Voice versioning imports
 
+from billing.plan_guard import PlanGuard, PlanGuardException # New import
+
 # Initialize ModelStore
 model_store = ModelStore()
+plan_guard = PlanGuard() # Initialize PlanGuard
 
 
 logger = get_logger(__name__)
@@ -1018,12 +1021,15 @@ async def promote_model(request: PromoteRequest, current_user: User = Depends(ge
     """
     Promotes a specified model version to active. Requires admin access.
     """
+    user_id = str(current_user.id) # Get user_id
     try:
-        model_store.activate(request.provider, request.model_name, request.version_tag, metadata={"promoted_by": current_user.username, "action": "admin_promote"})
+        await model_store.activate(user_id, request.provider, request.model_name, request.version_tag, metadata={"promoted_by": current_user.username, "action": "admin_promote"})
         subject = f"✅ Model Promoted: {request.provider}/{request.model_name} to {request.version_tag}"
         body = f"Admin {current_user.username} promoted {request.provider}/{request.model_name} to version {request.version_tag}."
         send_admin_notification(subject, body)
         return {"status": "success", "message": f"Model {request.model_name} promoted to version {request.version_tag}."}
+    except PlanGuardException as e:
+        raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to promote model {request.model_name} to {request.version_tag}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to promote model: {e}")
@@ -1033,8 +1039,10 @@ async def rollback_model(request: RollbackRequest, current_user: User = Depends(
     """
     Rolls back a specified model to a target version. Requires admin access.
     """
+    user_id = str(current_user.id) # Get user_id
     try:
-        rolled_back_to_tag = perform_rollback(request.provider, request.model_name, dry_run=False)
+        # perform_rollback internally calls model_store.rollback, which will use the PlanGuard
+        rolled_back_to_tag = perform_rollback(request.provider, request.model_name, dry_run=False, user_id=user_id) # Pass user_id
         if rolled_back_to_tag:
             subject = f"🚨 Model Rolled Back: {request.provider}/{request.model_name} to {rolled_back_to_tag}"
             body = f"Admin {current_user.username} rolled back {request.provider}/{request.model_name} to version {rolled_back_to_tag}."
@@ -1042,6 +1050,8 @@ async def rollback_model(request: RollbackRequest, current_user: User = Depends(
             return {"status": "success", "message": f"Model {request.model_name} rolled back to version {rolled_back_to_tag}."}
         else:
             raise HTTPException(status_code=500, detail="Rollback failed: No suitable version found or an error occurred.")
+    except PlanGuardException as e:
+        raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to rollback model {request.model_name} to {request.target_tag}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to rollback model: {e}")
@@ -1059,7 +1069,7 @@ async def get_voice_status(current_user: User = Depends(get_current_admin_user))
         for voice_type, voice_config in config.models.tts_models.items():
             voice_name = voice_config.model_name # Assuming model_name is the voice identifier
             
-            active_version_tag = get_active_voice(voice_name)
+            active_version_tag = await get_active_voice(str(current_user.id), plan_guard, voice_name) # Pass user_id and plan_guard
             all_versions_data = load_versions().get(voice_name, {})
             
             active_version_info = None
@@ -1104,7 +1114,7 @@ async def rollback_voice_endpoint(request: RollbackRequest, current_user: User =
             logger.warning(f"Admin {current_user.username} attempted rollback for voice {request.model_name} to invalid or non-existent version: {request.target_tag}")
             raise HTTPException(status_code=400, detail=f"Target version '{request.target_tag}' not found or invalid for voice '{request.model_name}'.")
 
-        rolled_back_to_version = rollback_voice(request.model_name, request.target_tag)
+        rolled_back_to_version = await rollback_voice(str(current_user.id), plan_guard, request.model_name, request.target_tag) # Pass user_id and plan_guard
         subject = f"✅ Voice Rolled Back: {request.model_name} to {rolled_back_to_version}"
         body = f"Admin {current_user.username} rolled back voice {request.model_name} to version {rolled_back_to_version}."
         send_admin_notification(subject, body)

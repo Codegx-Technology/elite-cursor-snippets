@@ -9,6 +9,8 @@ import logging
 import sys
 from huggingface_hub.utils import HfHub
 
+from billing.plan_guard import PlanGuard, PlanGuardException # New import
+
 logger = logging.getLogger(__name__)
 
 # Determine project root (assuming model_store.py is in backend/ai_models/)
@@ -23,6 +25,7 @@ class ModelStore:
 
     def __init__(self):
         MODELS_BASE_DIR.mkdir(parents=True, exist_ok=True)
+        self.plan_guard = PlanGuard() # Instantiate PlanGuard
 
     @classmethod
     def set_emergency_freeze(cls, active: bool):
@@ -80,11 +83,17 @@ class ModelStore:
                             hasher.update(chunk)
         return hasher.hexdigest()
 
-    def prepare_staging(self, provider: str, model_name: str, version_tag: str, src_path: Path) -> Path:
+    async def prepare_staging(self, user_id: str, provider: str, model_name: str, version_tag: str, src_path: Path) -> Path:
         """
         Copies or hard-links downloaded artifacts into versions/<tag>; never touches active.
         """
         self._check_freeze() # Check freeze before preparing staging
+        # PlanGuard check for model access
+        try:
+            await self.plan_guard.check_model_access(user_id, model_name)
+        except PlanGuardException as e:
+            logger.error(f"PlanGuardException in prepare_staging for user {user_id}, model {model_name}: {e}")
+            raise e
         versions_path = self._get_versions_path(provider, model_name)
         versions_path.mkdir(parents=True, exist_ok=True)
         staging_path = versions_path / version_tag
@@ -107,12 +116,18 @@ class ModelStore:
         logger.info(f"Staging prepared at: {staging_path}")
         return staging_path
 
-    def activate(self, provider: str, model_name: str, version_tag: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+    async def activate(self, user_id: str, provider: str, model_name: str, version_tag: str, metadata: Optional[Dict[str, Any]] = None) -> None:
         """
         Atomically activates a new model version by updating the 'active' pointer.
         Appends activation to history.json.
         """
         self._check_freeze() # Check freeze before activating
+        # PlanGuard check for model access
+        try:
+            await self.plan_guard.check_model_access(user_id, model_name)
+        except PlanGuardException as e:
+            logger.error(f"PlanGuardException in activate for user {user_id}, model {model_name}: {e}")
+            raise e
         model_base_path = self._get_model_path(provider, model_name)
         versions_path = self._get_versions_path(provider, model_name)
         target_version_path = versions_path / version_tag

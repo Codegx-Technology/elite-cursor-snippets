@@ -4,6 +4,8 @@ from pathlib import Path
 from datetime import datetime
 from logging_setup import get_logger
 
+from billing.plan_guard import PlanGuard, PlanGuardException # New import
+
 logger = get_logger(__name__)
 
 VOICE_STORE_DIR = Path("model_store/voices")
@@ -34,10 +36,16 @@ def save_versions(data):
     except IOError as e:
         logger.error(f"IOError writing to {VERSIONS_FILE}: {e}")
 
-def register_voice(voice_name, version, metadata=None):
+async def register_voice(user_id: str, plan_guard: PlanGuard, voice_name, version, metadata=None):
     if not voice_name or not version:
         logger.warning(f"Attempted to register voice with empty name or version. Name: '{voice_name}', Version: '{version}'")
         raise ValueError("Voice name and version cannot be empty.")
+
+    try:
+        await plan_guard.check_tts_voice_access(user_id, voice_name)
+    except PlanGuardException as e:
+        logger.error(f"PlanGuardException in register_voice for user {user_id}, voice {voice_name}: {e}")
+        raise e
 
     versions = load_versions()
     versions.setdefault(voice_name, {})
@@ -66,10 +74,16 @@ def get_latest_voice(voice_name):
         logger.warning(f"Could not sort versions by 'registered_at' for voice '{voice_name}': {e}. Falling back to string sort.")
         return sorted(available_versions.keys())[-1]
 
-def rollback_voice(voice_name, target_version):
+async def rollback_voice(user_id: str, plan_guard: PlanGuard, voice_name, target_version):
     if not voice_name or not target_version:
         logger.warning(f"Attempted to rollback voice with empty name or target version. Name: '{voice_name}', Target Version: '{target_version}'")
         raise ValueError("Voice name and target version cannot be empty.")
+
+    try:
+        await plan_guard.check_tts_voice_access(user_id, target_version)
+    except PlanGuardException as e:
+        logger.error(f"PlanGuardException in rollback_voice for user {user_id}, voice {voice_name}: {e}")
+        raise e
 
     versions = load_versions()
     if voice_name not in versions:
@@ -85,16 +99,26 @@ def rollback_voice(voice_name, target_version):
     logger.info(f"Voice '{voice_name}' successfully rolled back to version '{target_version}'.")
     return target_version
 
-def get_active_voice(voice_name):
+async def get_active_voice(user_id: str, plan_guard: PlanGuard, voice_name):
     versions = load_versions().get(voice_name, {})
     active_version = versions.get("active")
     if active_version:
         logger.debug(f"Active version for voice '{voice_name}' is '{active_version}'.")
+        try:
+            await plan_guard.check_tts_voice_access(user_id, active_version)
+        except PlanGuardException as e:
+            logger.error(f"PlanGuardException in get_active_voice for user {user_id}, voice {voice_name}: {e}")
+            raise e
         return active_version
     
     latest_version = get_latest_voice(voice_name)
     if latest_version:
         logger.info(f"No explicit active version for voice '{voice_name}'. Defaulting to latest: '{latest_version}'.")
+        try:
+            await plan_guard.check_tts_voice_access(user_id, latest_version)
+        except PlanGuardException as e:
+            logger.error(f"PlanGuardException in get_active_voice for user {user_id}, voice {voice_name}: {e}")
+            raise e
         return latest_version
     
     logger.debug(f"No active or latest version found for voice '{voice_name}'.")

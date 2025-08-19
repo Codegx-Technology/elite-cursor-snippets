@@ -49,7 +49,7 @@ def should_rollback(agg_metrics: Dict[str, Any], thresholds: Dict[str, Any]) -> 
 
     return False
 
-def perform_rollback(provider: str, model_name: str, dry_run: bool = False) -> Optional[str]:
+def perform_rollback(provider: str, model_name: str, dry_run: bool = False, user_id: Optional[str] = None) -> Optional[str]:
     """
     Performs a rollback to the last known good version of a model.
     Returns the tag of the version rolled back to, or None if no rollback occurred.
@@ -80,7 +80,7 @@ def perform_rollback(provider: str, model_name: str, dry_run: bool = False) -> O
         return last_known_good_tag
     
     try:
-        model_store.rollback(provider, model_name, last_known_good_tag)
+        model_store.rollback(user_id, provider, model_name, last_known_good_tag) # Pass user_id
         logger.info(f"Successfully rolled back {provider}/{model_name} to {last_known_good_tag}")
         return last_known_good_tag
     except Exception as e:
