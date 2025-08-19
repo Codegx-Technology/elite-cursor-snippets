@@ -35,6 +35,26 @@ try {
   });
 }
 
+// Local types for plan and payment method to satisfy TS when using require()
+type Plan = {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+  features: string[];
+  video_credits?: number;
+  image_credits?: number;
+  audio_credits?: number;
+  popular?: boolean;
+  allowedModels?: string[];
+  defaultPinnedModel?: string;
+  maxRequestsPerMonth?: number;
+  priorityLevel?: number;
+  ttsVoices?: string[];
+  rollbackWindowDays?: number;
+};
+type PaymentMethod = { id: string; name: string; description: string; icon: any };
+
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent + augmentsearch
 // [CONTEXT]: Pricing page with Paystack integration and Kenya-first design
 // [GOAL]: Create comprehensive pricing interface with real payment processing
@@ -45,26 +65,6 @@ export default function PricingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
   const { initializePayment, isLoading, error } = usePaystack();
-
-  // Local types for plan and payment method to satisfy TS when using require()
-  type Plan = {
-    id: string;
-    name: string;
-    price: number;
-    currency: string;
-    features: string[];
-    video_credits?: number;
-    image_credits?: number;
-    audio_credits?: number;
-    popular?: boolean;
-    allowedModels?: string[];
-    defaultPinnedModel?: string;
-    maxRequestsPerMonth?: number;
-    priorityLevel?: number;
-    ttsVoices?: string[];
-    rollbackWindowDays?: number;
-  };
-  type PaymentMethod = { id: string; name: string; description: string; icon: any };
 
   // Load plans from API with graceful fallback to static tiers
   useEffect(() => {

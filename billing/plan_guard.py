@@ -97,6 +97,12 @@ class PlanGuard:
         # Add more detailed quota checks here based on feature and usage_amount
         print(f"User {user_id} on plan {user_plan.name} is allowed to use {feature}.")
 
+    async def check_rollback_permission(self, user_id: str) -> None:
+        user_plan = await self.get_user_plan(user_id)
+        if user_plan.rollback_window_days == 0:
+            raise PlanGuardException(f"Rollback is not allowed for your '{user_plan.name}' plan. Please upgrade.")
+        print(f"User {user_id} on plan {user_plan.name} has rollback permission.")
+
 # Example usage (for testing purposes)
 async def main():
     plan_guard = PlanGuard()

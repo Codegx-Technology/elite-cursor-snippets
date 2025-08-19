@@ -5,9 +5,11 @@ from typing import Dict, Any, List, Optional
 import logging
 
 from backend.ai_models.model_store import ModelStore # Assuming ModelStore is accessible this way
+from billing.plan_guard import PlanGuard, PlanGuardException # New import
 
 logger = logging.getLogger(__name__)
 model_store = ModelStore()
+plan_guard = PlanGuard() # Instantiate PlanGuard
 
 # Determine project root (assuming rollback.py is in backend/ai_health/)
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent.resolve()
@@ -49,11 +51,18 @@ def should_rollback(agg_metrics: Dict[str, Any], thresholds: Dict[str, Any]) -> 
 
     return False
 
-def perform_rollback(provider: str, model_name: str, dry_run: bool = False, user_id: Optional[str] = None) -> Optional[str]:
+async def perform_rollback(provider: str, model_name: str, dry_run: bool = False, user_id: Optional[str] = None) -> Optional[str]:
     """
     Performs a rollback to the last known good version of a model.
     Returns the tag of the version rolled back to, or None if no rollback occurred.
     """
+    if user_id:
+        try:
+            await plan_guard.check_rollback_permission(user_id)
+        except PlanGuardException as e:
+            logger.error(f"PlanGuardException in perform_rollback for user {user_id}, model {model_name}: {e}")
+            raise e
+
     history = _read_model_history(provider, model_name)
     
     # Find the last successfully activated version that is not the current one

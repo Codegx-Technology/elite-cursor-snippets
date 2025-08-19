@@ -773,6 +773,16 @@ async def generate_video_endpoint(request_data: GenerateVideoRequest, current_us
             raise HTTPException(status_code=500, detail=result.get("message"))
 
         status_label = "success" # ADD THIS LINE
+
+        # Conceptual Model Usage Tracking
+        user_id = str(current_user.get("user_id"))
+        model_name_used = "gpt-4o" # Placeholder: In reality, this comes from pipeline result
+        model_version_used = "latest" # Placeholder
+        tokens_used = 1000 # Placeholder: In reality, this comes from pipeline result
+        
+        model_cost = calculate_model_cost(model_name_used, tokens_used)
+        await record_model_usage(user_id, model_name_used, model_version_used, tokens_used, model_cost)
+
         return result
     finally: # ADD THIS BLOCK
         end_time = time.time()
@@ -781,6 +791,30 @@ async def generate_video_endpoint(request_data: GenerateVideoRequest, current_us
         VIDEO_GENERATION_DURATION.labels(status=status_label).observe(duration)
         if status_label != "success":
             VIDEO_GENERATION_FAILURES.inc()
+
+@app.post("/generate_tts")
+@RateLimiter(times=1, seconds=5, key_func=user_id_key_func)
+async def generate_tts_endpoint(text: str, voice_name: str, current_user: dict = Depends(get_current_user)):
+    """
+    Conceptual endpoint for TTS generation, including usage tracking.
+    """
+    user_id = str(current_user.get("user_id"))
+    tts_version_used = "v1.0" # Placeholder
+    seconds_generated = len(text) / 10 # Placeholder: 10 chars per second
+
+    try:
+        # Check if user has access to this voice
+        await plan_guard.check_tts_voice_access(user_id, voice_name)
+
+        tts_cost = calculate_tts_cost(voice_name, seconds_generated)
+        await record_tts_usage(user_id, voice_name, tts_version_used, seconds_generated, tts_cost)
+
+        return {"status": "success", "message": "TTS generated successfully (conceptual).", "audio_url": "https://example.com/audio.mp3"}
+    except PlanGuardException as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error generating TTS for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate TTS.")
 
 @app.post("/batch_generate_video")
 async def batch_generate_video_endpoint(batch_request: BatchGenerateVideoRequest, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db), request: Request = None):
@@ -1041,6 +1075,7 @@ async def rollback_model(request: RollbackRequest, current_user: User = Depends(
     """
     user_id = str(current_user.id) # Get user_id
     try:
+        await plan_guard.check_rollback_permission(user_id) # Check rollback permission
         # perform_rollback internally calls model_store.rollback, which will use the PlanGuard
         rolled_back_to_tag = perform_rollback(request.provider, request.model_name, dry_run=False, user_id=user_id) # Pass user_id
         if rolled_back_to_tag:

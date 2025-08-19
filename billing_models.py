@@ -118,9 +118,9 @@ def get_default_plans() -> List[Plan]:
             name="Starter",
             price=500,
             currency="KES",
-            max_requests_per_day=5, # Keeping this for now, will use max_requests_per_month
+            max_requests_per_day=166, # 5000 requests / 30 days (approx)
             features_enabled=["text_gen", "image_gen", "tts", "stt"],
-            tier_code="FREE", # Keeping FREE for now, can be changed later
+            tier_code="FREE",
             model_policy=ModelPolicy(
                 allowed_models=["gpt-4o-mini"],
                 default_pinned_model="gpt-4o-mini",
@@ -137,7 +137,7 @@ def get_default_plans() -> List[Plan]:
             name="Pro",
             price=2500,
             currency="KES",
-            max_requests_per_day=100,
+            max_requests_per_day=1666, # 50000 requests / 30 days (approx)
             features_enabled=["text_gen", "image_gen", "tts", "stt", "youtube_upload"],
             tier_code="PRO",
             model_policy=ModelPolicy(
@@ -153,31 +153,10 @@ def get_default_plans() -> List[Plan]:
             rollback_window_days=7
         ),
         Plan(
-            name="Business",
-            price=99.99, # Keeping original price for now
-            currency="KES",
-            max_requests_per_day=500,
-            features_enabled=["text_gen", "image_gen", "tts", "stt", "youtube_upload", "analytics", "crm_integration", "priority_support"],
-            tier_code="BUSINESS",
-            model_policy=ModelPolicy(
-                defaultRouting="allow_minor",
-                providers={"tts":["elevenlabs","xtts","local"]},
-                allowed_models=["gpt-4o", "gpt-5", "custom-finetunes"], # Example, adjust as needed
-                default_pinned_model="gpt-5", # Example, adjust as needed
-                tts_voices=["xtts-v2", "elevenlabs-pro", "elevenlabs-multi"] # Example, adjust as needed
-            ),
-            quotas=Quotas(monthly=MonthlyQuotas(tokens=500000, audioSecs=3000, videoMins=50, jobs=500), concurrency=20, rateLimit=RateLimit(rpm=500, rps=50, burst=100)),
-            priority_level=3, # Adjusted priority level
-            cost_caps=CostCaps(monthlyUsd=500.0, hardStop=False),
-            visibility=Visibility(showBetaModels=True, allowUnverified=False),
-            max_requests_per_month=500000, # Example, adjust as needed
-            rollback_window_days=14 # Example, adjust as needed
-        ),
-        Plan(
             name="Enterprise",
             price=15000,
             currency="KES",
-            max_requests_per_day=1000,
+            max_requests_per_day=16666, # 500000 requests / 30 days (approx)
             features_enabled=["text_gen", "image_gen", "tts", "stt", "youtube_upload", "analytics", "crm_integration", "priority_support", "dedicated_instance"],
             tier_code="ENTERPRISE",
             model_policy=ModelPolicy(
