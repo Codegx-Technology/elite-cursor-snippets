@@ -210,7 +210,7 @@ class ModelStore:
         history_entry = next((entry for entry in history if entry["version_tag"] == target_tag), None)
 
         if history_entry and history_entry["checksum"] != target_checksum:
-            logger.warning(f"Checksum mismatch for rollback target {target_tag}. Expected {history_entry["checksum"]}, got {target_checksum}.")
+            logger.warning(f"Checksum mismatch for rollback target {target_tag}. Expected {history_entry['checksum']}, got {target_checksum}.")
             # Decide whether to proceed or raise error. For safety, raise error.
             raise ValueError(f"Checksum mismatch for rollback target {target_tag}. Aborting rollback.")
 

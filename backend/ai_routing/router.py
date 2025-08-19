@@ -19,6 +19,8 @@ from backend.ai_routing.providers.gemini_provider import GeminiProvider
 from backend.ai_health.healthcheck import record_metric, aggregate, score_inference
 # Import ModelStore to get model metadata (e.g., blue/green strategy)
 from backend.ai_models.model_store import ModelStore
+from backend.ai_health.rollback import should_rollback, perform_rollback
+from backend.notifications.admin_notify import send_admin_email
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -205,22 +207,49 @@ class Router:
                 if strategy == "bluegreen" and model_name and provider_name:
                     # Aggregate metrics for the current tag (blue or green)
                     agg_metrics = aggregate(provider.name, model_name, active_tag)
-                    # Get min_health_score from config/model_registry (assuming it's loaded somewhere)
-                    # For now, use a placeholder
-                    min_health_score = 0.9 # Placeholder: Get from model registry config
-                    
-                    if active_tag == "green" and agg_metrics["avg_score"] >= min_health_score and agg_metrics["count"] >= 100:
+                    # Determine thresholds (min_score sourced from config if present)
+                    try:
+                        min_health_score = getattr(self.config.models.image_generation, 'min_health_score', 0.9)
+                    except Exception:
+                        min_health_score = 0.9
+                    thresholds = {
+                        "max_error_rate": 0.08,
+                        "min_score": float(min_health_score),
+                        "p95_sla_ms": 2000,
+                    }
+
+                    if active_tag == "green" and agg_metrics.get("avg_score", 0.0) >= float(min_health_score) and agg_metrics.get("count", 0) >= 100:
                         logger.info(f"Canary (green) version for {model_name} is healthy. Promoting to active.")
                         # Promote green to active
                         # This would involve calling model_store.activate(..., version_tag=green_tag, metadata={"strategy":"blue"})
                         # For now, just log
                         pass
-                    elif active_tag == "green" and agg_metrics["avg_score"] < min_health_score and agg_metrics["count"] >= 100:
-                        logger.warning(f"Canary (green) version for {model_name} is unhealthy. Rolling back to blue.")
-                        # Auto-rollback to blue
-                        # This would involve calling model_store.rollback(..., target_tag=blue_tag)
-                        # For now, just log
-                        pass
+                    elif active_tag == "green" and agg_metrics.get("count", 0) >= 100:
+                        # Evaluate rollback trigger using thresholds
+                        if should_rollback(agg_metrics, thresholds):
+                            logger.warning(f"Canary (green) version for {model_name} is unhealthy. Rolling back to blue.")
+                            # Execute rollback and notify admin
+                            try:
+                                old_tag = active_tag
+                                target_tag = perform_rollback(provider_name, model_name, dry_run=False)
+                                if target_tag:
+                                    subject = f"🚨 Auto-rollback executed: {provider_name}/{model_name}"
+                                    body = (
+                                        f"Provider: {provider_name}\n"
+                                        f"Model: {model_name}\n"
+                                        f"Old tag: {old_tag} -> New tag: {target_tag}\n"
+                                        f"Metrics: count={agg_metrics.get('count', 0)}, "
+                                        f"error_rate={agg_metrics.get('error_rate', 'n/a')}, "
+                                        f"avg_score={agg_metrics.get('avg_score', 'n/a')}, "
+                                        f"p95_latency_ms={agg_metrics.get('p95_latency_ms', 'n/a')}\n"
+                                        f"Thresholds: {thresholds}\n"
+                                        f"Time: {time.strftime('%Y-%m-%d %H:%M:%S')}"
+                                    )
+                                    send_admin_email(subject, body)
+                                else:
+                                    logger.error("Rollback could not determine target tag (no history).")
+                            except Exception as ex:
+                                logger.error(f"Rollback attempt failed: {ex}")
 
 
         raise RuntimeError(f"Failed to execute task '{task_type}' after {self.fallback_retries + 1} attempts.")

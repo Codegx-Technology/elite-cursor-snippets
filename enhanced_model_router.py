@@ -15,6 +15,11 @@ import requests
 from logging_setup import get_logger
 from config_loader import get_config
 from dialect_rag_manager import DialectRAGManager
+from datetime import datetime # Added for rollback notification timestamp
+
+# New imports for rollback and notifications
+from backend.ai_health.rollback import should_rollback, perform_rollback
+from backend.notifications.admin_notify import send_admin_notification
 
 # [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent + augmentsearch
 # [CONTEXT]: Enhanced model routing with intelligent fallbacks and Kenya-first design
@@ -184,6 +189,26 @@ class EnhancedModelRouter:
             GenerationMethod.CACHED_CONTENT,
             GenerationMethod.FRIENDLY_FALLBACK
         ]
+
+        # Rollback thresholds for each provider/model type
+        self.rollback_thresholds = {
+            "default": {
+                "error_rate_threshold": 0.1, # 10% error rate
+                "min_success_rate": 0.9,     # 90% success rate
+                "max_avg_response_time": 15.0 # 15 seconds average response time
+            },
+            "huggingface_api": {
+                "error_rate_threshold": 0.15,
+                "min_success_rate": 0.85,
+                "max_avg_response_time": 20.0
+            },
+            "gemini_api": {
+                "error_rate_threshold": 0.08,
+                "min_success_rate": 0.92,
+                "max_avg_response_time": 10.0
+            }
+            # Add more specific thresholds for other providers/models as needed
+        }
     
     def _assess_prompt_complexity(self, prompt: str) -> str:
         """Assess prompt complexity for resource planning"""
@@ -434,9 +459,9 @@ class EnhancedModelRouter:
         return final_result
 
     def _log_generation_analytics(self, request: GenerationRequest, final_result: GenerationResult, all_attempts: List[GenerationResult]):
-        """Logs detailed analytics for a generation request."""
+        """Logs detailed analytics for a generation request and triggers rollback if necessary."""
         analytics_data = {
-            "request_id": str(uuid.uuid4()), # Generate a unique ID for each request
+            "request_id": str(uuid.uuid4()),
             "timestamp": time.time(),
             "prompt": request.prompt,
             "type": request.type,
@@ -447,6 +472,66 @@ class EnhancedModelRouter:
             "total_attempts": len(all_attempts),
             "attempts_details": []
         }
+        
+        # Aggregate metrics for the specific provider/model that was used
+        # For simplicity, we'll aggregate based on the final_method_used
+        # In a more complex system, you might aggregate per model within a provider
+        provider_key = final_result.method_used.value if final_result.method_used else "N/A"
+        
+        # Initialize if not exists
+        if provider_key not in self.historical_performance:
+            self.historical_performance[provider_key] = {"success_count": 0, "fail_count": 0, "total_time": 0.0, "call_count": 0}
+        
+        # Update historical performance
+        self.historical_performance[provider_key]["call_count"] += 1
+        self.historical_performance[provider_key]["total_time"] += final_result.provider_response_time
+        if final_result.success:
+            self.historical_performance[provider_key]["success_count"] += 1
+        else:
+            self.historical_performance[provider_key]["fail_count"] += 1
+        
+        # Calculate aggregated metrics for rollback check
+        current_stats = self.historical_performance[provider_key]
+        total_calls = current_stats["call_count"]
+        
+        if total_calls > 0:
+            error_rate = current_stats["fail_count"] / total_calls
+            success_rate = current_stats["success_count"] / total_calls
+            avg_response_time = current_stats["total_time"] / total_calls
+        else:
+            error_rate = 0.0
+            success_rate = 1.0
+            avg_response_time = 0.0
+
+        aggregated_metrics = {
+            "error_rate": error_rate,
+            "success_rate": success_rate,
+            "avg_response_time": avg_response_time
+        }
+
+        # Get relevant thresholds
+        thresholds = self.rollback_thresholds.get(provider_key, self.rollback_thresholds["default"])
+
+        # Check for rollback condition
+        if should_rollback(aggregated_metrics, thresholds):
+            logger.warning(f"Rollback condition met for {provider_key}. Aggregated metrics: {aggregated_metrics}")
+            rolled_back_to_tag = perform_rollback(provider_key, request.type) # Assuming request.type can act as model_name
+            
+            if rolled_back_to_tag:
+                subject = f"🚨 Auto-rollback executed: {provider_key}/{request.type}"
+                body = (
+                    f"Model {provider_key}/{request.type} has been automatically rolled back.\n"
+                    f"Metrics leading to rollback:\n"
+                    f"  - Error Rate: {error_rate:.2f} (Threshold: {thresholds['error_rate_threshold']:.2f})\n"
+                    f"  - Success Rate: {success_rate:.2f} (Threshold: {thresholds['min_success_rate']:.2f})\n"
+                    f"  - Avg Response Time: {avg_response_time:.2f}s (Threshold: {thresholds['max_avg_response_time']:.2f}s)\n"
+                    f"Rolled back to version: {rolled_back_to_tag}\n"
+                    f"Time: {datetime.now().isoformat()}"
+                )
+                send_admin_notification(subject, body, metadata=aggregated_metrics)
+                logger.info(f"Admin notification sent for rollback of {provider_key}/{request.type}.")
+            else:
+                logger.info(f"Rollback failed for {provider_key}/{request.type}. No notification sent.")
         
         for attempt in all_attempts:
             attempt_detail = {
@@ -459,18 +544,6 @@ class EnhancedModelRouter:
                 "metadata": attempt.metadata
             }
             analytics_data["attempts_details"].append(attempt_detail)
-            
-            # Store historical performance for smart routing
-            method_key = attempt.method_used.value if attempt.method_used else "N/A"
-            if method_key not in self.historical_performance:
-                self.historical_performance[method_key] = {"success_count": 0, "fail_count": 0, "total_time": 0.0, "call_count": 0}
-            
-            self.historical_performance[method_key]["call_count"] += 1
-            self.historical_performance[method_key]["total_time"] += attempt.provider_response_time
-            if attempt.success:
-                self.historical_performance[method_key]["success_count"] += 1
-            else:
-                self.historical_performance[method_key]["fail_count"] += 1
             
         logger.info(f"GENERATION_ANALYTICS: {json.dumps(analytics_data, indent=2)}") # Log as JSON
         logger.debug(f"HISTORICAL_PERFORMANCE: {json.dumps(self.historical_performance, indent=2)}") # Log historical performance for debugging
