@@ -651,7 +651,11 @@ async def get_api_keys():
 
 
 @app.post("/api/keys", response_model=ApiKey)
-async def generate_api_key():
+async def generate_api_key(current_user: User = Depends(get_current_active_user)):
+    user_id = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "WRITE")
+
     # TODO: Replace with real key generation and database storage
     new_key = {
         "id": str(uuid.uuid4()),
@@ -664,7 +668,11 @@ async def generate_api_key():
 
 
 @app.delete("/api/keys/{key_id}")
-async def revoke_api_key(key_id: str):
+async def revoke_api_key(key_id: str, current_user: User = Depends(get_current_active_user)):
+    user_id = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "DELETE")
+
     # TODO: Replace with real database update
     return {"success": True}
 
@@ -679,13 +687,21 @@ async def get_integrations():
 
 
 @app.put("/api/integrations/{integration_id}", response_model=Integration)
-async def update_integration(integration_id: str, config: dict):
+async def update_integration(integration_id: str, config: dict, current_user: User = Depends(get_current_active_user)):
+    user_id = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "WRITE")
+
     # TODO: Replace with real database update
     return {"id": integration_id, "name": "Google Drive", "type": "storage", "is_enabled": config.get("is_enabled"), "config": {"folder": "/ShujaaStudio"}}
 
 
 @app.get("/api/users", response_model=List[UserData])
-async def get_users():
+async def get_users(current_user: User = Depends(get_current_admin_user)):
+    user_id = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "READ")
+
     # TODO: Replace with real data from a database
     return [
         {"id": 1, "username": "testuser", "email": "testuser@example.com", "role": "user", "tenant_name": "default", "is_active": True},
@@ -694,31 +710,51 @@ async def get_users():
 
 
 @app.get("/api/users/{user_id}", response_model=UserData)
-async def get_user(user_id: int):
+async def get_user(user_id: int, current_user: User = Depends(get_current_admin_user)):
+    user_id_str = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id_str, "READ")
+
     # TODO: Replace with real data from a database
     return {"id": user_id, "username": "testuser", "email": "testuser@example.com", "role": "user", "tenant_name": "default", "is_active": True}
 
 
 @app.post("/api/users", response_model=UserData)
-async def create_user(user: UserData):
+async def create_user(user: UserData, current_user: User = Depends(get_current_admin_user)):
+    user_id = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "WRITE")
+
     # TODO: Replace with real database insertion
     return user
 
 
 @app.put("/api/users/{user_id}", response_model=UserData)
-async def update_user(user_id: int, user: UserData):
+async def update_user(user_id: int, user: UserData, current_user: User = Depends(get_current_admin_user)):
+    user_id_str = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id_str, "WRITE")
+
     # TODO: Replace with real database update
     return user
 
 
 @app.delete("/api/users/{user_id}")
-async def delete_user(user_id: int):
+async def delete_user(user_id: int, current_user: User = Depends(get_current_admin_user)):
+    user_id_str = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id_str, "DELETE")
+
     # TODO: Replace with real database deletion
     return {"success": True}
 
 
 @app.get("/api/projects", response_model=List[Project])
-async def get_projects(page: int = 1, limit: int = 6):
+async def get_projects(page: int = 1, limit: int = 6, current_user: User = Depends(get_current_active_user)):
+    user_id = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "READ")
+
     # TODO: Replace with real data from a database
     return {
         "projects": [
@@ -732,25 +768,41 @@ async def get_projects(page: int = 1, limit: int = 6):
 
 
 @app.post("/api/projects", response_model=Project)
-async def create_project(project: Project):
+async def create_project(project: Project, current_user: User = Depends(get_current_active_user)):
+    user_id = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "WRITE")
+
     # TODO: Replace with real database insertion
     return project
 
 
 @app.put("/api/projects/{project_id}", response_model=Project)
-async def update_project(project_id: str, project: Project):
+async def update_project(project_id: str, project: Project, current_user: User = Depends(get_current_active_user)):
+    user_id = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "WRITE")
+
     # TODO: Replace with real database update
     return project
 
 
 @app.delete("/api/projects/{project_id}")
-async def delete_project(project_id: str):
+async def delete_project(project_id: str, current_user: User = Depends(get_current_active_user)):
+    user_id = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "DELETE")
+
     # TODO: Replace with real database deletion
     return {"success": True}
 
 
 @app.get("/api/assets", response_model=List[Asset])
-async def get_assets(page: int = 1, limit: int = 10, type: Optional[str] = None):
+async def get_assets(page: int = 1, limit: int = 10, type: Optional[str] = None, current_user: User = Depends(get_current_active_user)):
+    user_id = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "READ")
+
     # TODO: Replace with real data from a database
     return {
         "assets": [
@@ -763,13 +815,21 @@ async def get_assets(page: int = 1, limit: int = 10, type: Optional[str] = None)
 
 
 @app.post("/api/assets")
-async def upload_asset(file: UploadFile):
+async def upload_asset(file: UploadFile, current_user: User = Depends(get_current_active_user)):
+    user_id = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "WRITE")
+
     # TODO: Replace with real file upload and database insertion
     return {"id": "3", "name": file.filename, "type": "image", "url": "https://example.com/image2.jpg", "size": 1024, "uploaded_at": "2025-08-18", "usage_count": 0}
 
 
 @app.delete("/api/assets/{asset_id}")
-async def delete_asset(asset_id: str):
+async def delete_asset(asset_id: str, current_user: User = Depends(get_current_active_user)):
+    user_id = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "DELETE")
+
     # TODO: Replace with real database deletion
     return {"success": True}
 
@@ -780,10 +840,14 @@ async def delete_asset(asset_id: str):
 async def generate_video_endpoint(request_data: GenerateVideoRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
     start_time = time.time() # ADD THIS LINE
     status_label = "failure" # Default status for metrics # ADD THIS LINE
+    user_id = str(current_user.get("user_id")) # Get user_id
     try: # Wrap existing code in try-finally for metrics # ADD THIS LINE
-        audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_video.", user_id=current_user.get('user_id'), tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/generate_video", "request_data": request_data.dict()})
+        # Check action permission
+        await plan_guard.check_action_permission(user_id, "WRITE")
+
+        audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Access granted: User {user_id} (Tenant: {current_tenant}) accessing /generate_video.", user_id=user_id, tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/generate_video", "request_data": request_data.dict()})
         try:
-            enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="video_generation")
+            enforce_limits(user_id=user_id, feature_name="video_generation")
         except BillingException as e:
             status_label = "billing_failure" # ADD THIS LINE
             raise HTTPException(status_code=403, detail=str(e))
@@ -845,6 +909,9 @@ async def generate_tts_endpoint(text: str, voice_name: str, current_user: dict =
     seconds_generated = len(text) / 10 # Placeholder: 10 chars per second
 
     try:
+        # Check action permission
+        await plan_guard.check_action_permission(user_id, "WRITE")
+
         # Check if user has access to this voice
         await plan_guard.check_tts_voice_access(user_id, voice_name)
 
@@ -860,7 +927,11 @@ async def generate_tts_endpoint(text: str, voice_name: str, current_user: dict =
 
 @app.post("/batch_generate_video")
 async def batch_generate_video_endpoint(batch_request: BatchGenerateVideoRequest, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db), request: Request = None):
-    audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Batch video generation request received from user {current_user.get('user_id')}. Count: {len(batch_request.requests)}", user_id=current_user.get('user_id'), tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/batch_generate_video", "batch_size": len(batch_request.requests)})
+    user_id = str(current_user.get("user_id")) # Get user_id
+    # Check action permission for batch operation
+    await plan_guard.check_action_permission(user_id, "WRITE")
+
+    audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Batch video generation request received from user {user_id}. Count: {len(batch_request.requests)}", user_id=user_id, tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/batch_generate_video", "batch_size": len(batch_request.requests)})
     MAX_BATCH_SIZE = config.video.get('max_batch_size', 10)
     if len(batch_request.requests) > MAX_BATCH_SIZE:
         raise HTTPException(status_code=400, detail=f"Batch size cannot exceed {MAX_BATCH_SIZE}.")
@@ -901,9 +972,13 @@ async def batch_generate_video_endpoint(batch_request: BatchGenerateVideoRequest
 
 @app.post("/generate_landing_page")
 async def generate_landing_page_endpoint(request_data: GenerateLandingPageRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
-    audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /generate_landing_page.", user_id=current_user.get('user_id'), tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/generate_landing_page", "qr_code_id": request_data.qr_code_id})
+    user_id = str(current_user.get("user_id")) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "WRITE")
+
+    audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Access granted: User {user_id} (Tenant: {current_tenant}) accessing /generate_landing_page.", user_id=user_id, tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/generate_landing_page", "qr_code_id": request_data.qr_code_id})
     try:
-        enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="landing_page_generation")
+        enforce_limits(user_id=user_id, feature_name="landing_page_generation")
     except BillingException as e:
         raise HTTPException(status_code=403, detail=str(e))
     result = await landing_page_service.generate_landing_page(request_data.qr_code_id, request_data.brand_metadata)
@@ -915,9 +990,13 @@ async def generate_landing_page_endpoint(request_data: GenerateLandingPageReques
 @app.post("/scan_alert")
 @RateLimiter(times=10, seconds=60, key_func=user_id_key_func)
 async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
-    audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /scan_alert.", user_id=current_user.get('user_id'), tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/scan_alert", "qr_code_id": request_data.qr_code_id})
+    user_id = str(current_user.get("user_id")) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "WRITE")
+
+    audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Access granted: User {user_id} (Tenant: {current_tenant}) accessing /scan_alert.", user_id=user_id, tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/scan_alert", "qr_code_id": request_data.qr_code_id})
     try:
-        enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="scan_alert")
+        enforce_limits(user_id=user_id, feature_name="scan_alert")
     except BillingException as e:
         raise HTTPException(status_code=403, detail=str(e))
     result = await scan_alert_system.trigger_scan_alert(
@@ -934,9 +1013,13 @@ async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict
 @app.post("/crm_push_contact")
 @RateLimiter(times=5, seconds=60, key_func=user_id_key_func)
 async def crm_push_contact_endpoint(request_data: CRMPushContactRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
-    audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Access granted: User {current_user.get('user_id')} (Tenant: {current_tenant}) accessing /crm_push_contact.", user_id=current_user.get('user_id'), tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/crm_push_contact", "crm_name": request_data.crm_name})
+    user_id = str(current_user.get("user_id")) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "WRITE")
+
+    audit_log_manager.log_event(db, AuditEventType.API_ACCESS, f"Access granted: User {user_id} (Tenant: {current_tenant}) accessing /crm_push_contact.", user_id=user_id, tenant_id=current_tenant, ip_address=request.client.host, event_details={"endpoint": "/crm_push_contact", "crm_name": request_data.crm_name})
     try:
-        enforce_limits(user_id=current_user.get('user_id', 'anonymous_user'), feature_name="crm_push_contact")
+        enforce_limits(user_id=user_id, feature_name="crm_push_contact")
     except BillingException as e:
         raise HTTPException(status_code=403, detail=str(e))
     result = await crm_integration_service.push_contact_to_crm(request_data.crm_name, request_data.contact_data)
@@ -962,6 +1045,10 @@ WEBHOOK_SECRET = "your_webhook_secret_key" # TODO: Load from secure config (e.g.
 
 @app.post("/webhook/payment_status")
 async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request, db: Session = Depends(get_db)):
+    user_id = payload.user_id # Get user_id from payload
+    # Check action permission (this is a write operation as it updates subscription status)
+    await plan_guard.check_action_permission(user_id, "WRITE")
+
     # // [TASK]: Implement secure signature verification for payment callbacks
     # // [GOAL]: Ensure webhook authenticity and prevent tampering
     # // [ELITE_CURSOR_SNIPPET]: securitycheck
@@ -1098,6 +1185,9 @@ async def promote_model(request: PromoteRequest, current_user: User = Depends(ge
     Promotes a specified model version to active. Requires admin access.
     """
     user_id = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "WRITE")
+
     try:
         await model_store.activate(user_id, request.provider, request.model_name, request.version_tag, metadata={"promoted_by": current_user.username, "action": "admin_promote"})
         subject = f"✅ Model Promoted: {request.provider}/{request.model_name} to {request.version_tag}"
@@ -1116,6 +1206,9 @@ async def rollback_model(request: RollbackRequest, current_user: User = Depends(
     Rolls back a specified model to a target version. Requires admin access.
     """
     user_id = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "WRITE")
+
     try:
         await plan_guard.check_rollback_permission(user_id) # Check rollback permission
         # perform_rollback internally calls model_store.rollback, which will use the PlanGuard
@@ -1179,6 +1272,10 @@ async def rollback_voice_endpoint(request: RollbackRequest, current_user: User =
     """
     Rolls back a specified TTS voice to a target version. Requires admin access.
     """
+    user_id = str(current_user.id) # Get user_id
+    # Check action permission
+    await plan_guard.check_action_permission(user_id, "WRITE")
+
     # Input Validation: Check if voice_name exists in config
     if not hasattr(config.models, 'tts_models') or request.model_name not in config.models.tts_models:
         logger.warning(f"Admin {current_user.username} attempted rollback for non-existent voice: {request.model_name}")

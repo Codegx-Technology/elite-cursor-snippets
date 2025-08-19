@@ -5,10 +5,11 @@ from billing_models import get_default_plans, Plan, ModelPolicy, Quotas, Monthly
 
 class PlanGuardException(Exception):
     """Custom exception for PlanGuard related errors."""
-    def __init__(self, message: str, is_in_grace_mode: bool = False, grace_expires_at: Optional[datetime] = None):
+    def __init__(self, message: str, is_in_grace_mode: bool = False, grace_expires_at: Optional[datetime] = None, is_view_only: bool = False):
         super().__init__(message)
         self.is_in_grace_mode = is_in_grace_mode
         self.grace_expires_at = grace_expires_at
+        self.is_view_only = is_view_only
 
 class PlanGuard:
     def __init__(self, backend_api_url: str = "http://localhost:8000"):
@@ -85,10 +86,10 @@ class PlanGuard:
                     grace_expires_at=user_sub.grace_expires_at
                 )
             else:
-                # Grace period expired, full hard-lock
+                # Grace period expired, enter view-only mode
                 user_sub.grace_expires_at = None # Reset grace period
                 user_sub.is_active = False # Ensure it's marked inactive
-                raise PlanGuardException("Plan expired. Grace period exhausted. Please upgrade.")
+                raise PlanGuardException("Plan expired. Grace period exhausted. Entering view-only mode.", is_view_only=True)
         elif not user_sub.is_active and current_plan.grace_period_hours == 0:
             # Immediate hard-lock for plans with no grace period
             raise PlanGuardException("Plan expired. Please upgrade.")
@@ -124,6 +125,30 @@ class PlanGuard:
         if user_plan.rollback_window_days == 0:
             raise PlanGuardException(f"Rollback is not allowed for your '{user_plan.name}' plan. Please upgrade.")
         print(f"User {user_id} on plan {user_plan.name} has rollback permission.")
+
+    async def check_action_permission(self, user_id: str, action_type: str) -> None:
+        """
+        Checks if the user has permission to perform a specific action type.
+        Allows READ/EXPORT in view-only mode, blocks others.
+        """
+        try:
+            user_plan = await self.get_user_plan(user_id)
+            # If get_user_plan raises PlanGuardException with is_view_only=True,
+            # it means the user is in view-only mode.
+        except PlanGuardException as e:
+            if e.is_view_only:
+                if action_type.upper() in ["READ", "EXPORT"]:
+                    print(f"User {user_id} is in view-only mode, but action '{action_type}' is allowed.")
+                    return # Allowed
+                else:
+                    raise PlanGuardException(f"Action '{action_type}' is blocked in view-only mode. Upgrade required for full access.", is_view_only=True)
+            else:
+                # Re-raise other PlanGuardExceptions
+                raise e
+        
+        # If no exception was raised by get_user_plan, the user is active or in grace mode
+        # and can perform any action (assuming other checks like check_model_access pass).
+        print(f"User {user_id} on plan {user_plan.name} is allowed to perform action '{action_type}'.")
 
 # Example usage (for testing purposes)
 async def main():
