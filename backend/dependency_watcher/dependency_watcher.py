@@ -5,10 +5,14 @@ import subprocess
 import importlib.metadata
 from packaging.version import parse as parse_version
 from backend.notifications.admin_notifier import notify_admin
-from typing import Optional
+from typing import Optional, List, Dict, Any
+from backend.core.dependency_ws import manager # Import the WebSocket manager
+import asyncio
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+_last_dependency_status: List[Dict[str, Any]] = [] # Global to store last known status
 
 def load_config(config_path: str) -> dict:
     with open(config_path, 'r') as f:
@@ -53,7 +57,9 @@ class DependencyWatcher:
     def __init__(self, config_path: str):
         self.config = load_config(config_path)
 
-    def check_dependencies(self):
+    def check_dependencies(self) -> List[Dict[str, Any]]:
+        global _last_dependency_status # Declare intent to modify global variable
+        
         dependencies_status = []
         for dep in self.config.get('dependencies', []):
             name = dep['name']
@@ -95,7 +101,7 @@ class DependencyWatcher:
                         max_version = parse_version(max_version_str)
                         if installed_version > max_version:
                             status = "UNSUPPORTED"
-                            message = f"Package '{name}' is version {installed_version_str}, which is greater than maximum supported {max_version_str}."
+                            message = f"Package '{name}' is version {installed_version_str}, which is greater than maximum supported {max_version_str}. If this is intentional, please update max_version in config."
                 else:
                     status = "MISSING"
                     message = f"Package '{name}' not found."
@@ -117,6 +123,18 @@ class DependencyWatcher:
             else:
                 logger.info(message)
         
+        # Compare with last status and broadcast if changed
+        if dependencies_status != _last_dependency_status:
+            logger.info("Dependency status changed. Broadcasting update via WebSocket.")
+            # Use asyncio.run to run the async broadcast function from a sync context
+            asyncio.run(manager.broadcast({
+                "event": "dependency_status",
+                "data": dependencies_status
+            }))
+            _last_dependency_status = dependencies_status # Update last status
+        else:
+            logger.info("Dependency status unchanged.")
+
         return dependencies_status
 
 
