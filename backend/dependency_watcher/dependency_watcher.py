@@ -8,8 +8,11 @@ from backend.notifications.admin_notifier import notify_admin
 from typing import Optional, List, Dict, Any
 from backend.core.dependency_ws import manager # Import the WebSocket manager
 import asyncio
+from backend.core.feature_flags import ALLOW_AUTOPATCH # Import feature flag
+from backend.depwatcher.patcher import apply_patch_plan # Import apply_patch_plan
+from datetime import datetime
+import uuid
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 _last_dependency_status: List[Dict[str, Any]] = [] # Global to store last known status
@@ -57,9 +60,7 @@ class DependencyWatcher:
     def __init__(self, config_path: str):
         self.config = load_config(config_path)
 
-    def check_dependencies(self) -> List[Dict[str, Any]]:
-        global _last_dependency_status # Declare intent to modify global variable
-        
+    def _check_dependencies_internal(self) -> List[Dict[str, Any]]:
         dependencies_status = []
         for dep in self.config.get('dependencies', []):
             name = dep['name']
@@ -79,10 +80,6 @@ class DependencyWatcher:
                     message = f"Model '{name}' not found at path: {dep_path}"
                 else:
                     message = f"Model '{name}' found at path: {dep_path}"
-                    # For models, version check might be more complex, or not applicable
-                    # For now, just check existence. If min_version is provided, assume it's a version check for the model itself.
-                    # This part needs clarification from user if models have explicit versions to check.
-                    # For now, if path exists, it's healthy.
             else: # It's a package
                 venv_path = Path(f"./{venv_name}").resolve() if venv_name else None
                 installed_version_str = resolve_installed_version(name, venv_path)
@@ -123,19 +120,104 @@ class DependencyWatcher:
             else:
                 logger.info(message)
         
+        return dependencies_status
+
+    def run_checks(self, auto_approve: bool = False) -> List[Dict[str, Any]]:
+        """
+        Runs dependency checks. If auto_approve is True and ALLOW_AUTOPATCH is True,
+        it will attempt to apply patches for OUTDATED/MISSING dependencies.
+        """
+        global _last_dependency_status
+        
+        logger.info("Starting dependency checks...")
+        current_status_report = self._check_dependencies_internal()
+
         # Compare with last status and broadcast if changed
-        if dependencies_status != _last_dependency_status:
+        if current_status_report != _last_dependency_status:
             logger.info("Dependency status changed. Broadcasting update via WebSocket.")
-            # Use asyncio.run to run the async broadcast function from a sync context
             asyncio.run(manager.broadcast({
                 "event": "dependency_status",
-                "data": dependencies_status
+                "data": current_status_report
             }))
-            _last_dependency_status = dependencies_status # Update last status
+            _last_dependency_status = current_status_report # Update last status
         else:
             logger.info("Dependency status unchanged.")
 
-        return dependencies_status
+        # Auto-patching logic
+        if auto_approve and ALLOW_AUTOPATCH:
+            logger.info("Auto-approve mode enabled. Checking for patchable dependencies.")
+            patch_candidates = []
+            for dep in current_status_report:
+                if dep['status'] == 'OUTDATED' or dep['status'] == 'MISSING':
+                    # Create a PatchCandidate from the dependency info
+                    # This is a simplified conversion; real implementation might need more data
+                    patch_candidates.append({
+                        "id": str(uuid.uuid4()), # Generate a new ID for the candidate
+                        "kind": "pip" if dep['message'].startswith("Package") else "model",
+                        "env": dep['message'].split('venv: ')[1].split(')')[0] if 'venv' in dep['message'] else None,
+                        "name": dep['name'],
+                        "fromVersion": dep['installed_version'],
+                        "toVersion": dep['required_range'].split('-')[0] if dep['required_range'] else dep['installed_version'], # Target version
+                        "source": "pypi" if dep['message'].startswith("Package") else "huggingface", # Simplified source
+                        "downloadSizeMB": None # To be determined by patcher
+                    })
+            
+            if patch_candidates:
+                logger.info(f"Found {len(patch_candidates)} patch candidates. Creating and applying patch plan.")
+                # Create a dummy PatchPlan object for apply_patch_plan
+                # In a real scenario, this would come from the approvals system
+                dummy_plan = {
+                    "id": str(uuid.uuid4()),
+                    "items": patch_candidates,
+                    "mode": "apply",
+                    "createdBy": "auto-watcher",
+                    "createdAt": datetime.now(),
+                    "status": "pending"
+                }
+                # Convert dict to PatchPlan object
+                from backend.depwatcher.schemas import PatchPlan as ActualPatchPlan
+                patch_plan_obj = ActualPatchPlan(**dummy_plan)
+
+                try:
+                    asyncio.run(apply_patch_plan(patch_plan_obj))
+                    logger.info("Auto-patch plan applied successfully.")
+                except Exception as e:
+                    logger.error(f"Auto-patch plan failed: {e}")
+                    notify_admin(
+                        subject="Auto-Patch Failed",
+                        message=f"An attempt to auto-patch dependencies failed: {e}"
+                    )
+            else:
+                logger.info("No patchable dependencies found.")
+        elif auto_approve and not ALLOW_AUTOPATCH:
+            logger.warning("Auto-approve requested, but ALLOW_AUTOPATCH feature flag is disabled. Skipping auto-patch.")
+            notify_admin(
+                subject="Auto-Patch Disabled",
+                message="Auto-approve was requested for dependency watcher, but ALLOW_AUTOPATCH feature flag is disabled."
+            )
+        
+        return current_status_report
+
+    def dependencies_ok(self, model_name: str = None) -> bool:
+        """
+        Checks if dependencies are healthy.
+        If model_name is provided, checks only dependencies related to that model.
+        """
+        status_report = self._check_dependencies_internal() # Get current status
+
+        if model_name:
+            # Check only the specific model/package
+            for dep in status_report:
+                if dep['name'] == model_name:
+                    return dep['status'] == 'HEALTHY'
+            logger.warning(f"Dependency '{model_name}' not found in config.")
+            return False # If model_name not in config, assume not ok or needs attention
+        else:
+            # Check all dependencies
+            for dep in status_report:
+                if dep['status'] != 'HEALTHY':
+                    return False
+            return True
 
 
 def run_dependency_check():
@@ -143,7 +225,7 @@ def run_dependency_check():
     Entrypoint to run the dependency watcher.
     """
     watcher = DependencyWatcher('backend/dependency_watcher/config/dependency_config.yaml')
-    status_report = watcher.check_dependencies()
+    status_report = watcher.run_checks() # Call run_checks
     logger.info("\n--- Dependency Check Report ---")
     for dep in status_report:
         logger.info(f"  {dep['name']:<15} | Installed: {dep['installed_version']:<10} | Required: {dep['required_range']:<10} | Status: {dep['status']:<10} | Message: {dep['message']}")

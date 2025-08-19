@@ -27,15 +27,27 @@ models:
   text_generation:
     hf_api_id: "mistralai/Mistral-7B-Instruct-v0.2" # Default for scene generation
     local_fallback_path: "" # Path to local LLM model (e.g., LLaMA.cpp compatible)
+    versioning: true
+    checksum: "" # Optional
+    min_health_score: 0.9
   image_generation:
     hf_api_id: "stabilityai/stable-diffusion-xl-base-1.0" # Example HF model
     local_fallback_path: "models/stable-diffusion-2-1" # Path to local Stable Diffusion model
+    versioning: true
+    checksum: "" # Optional
+    min_health_score: 0.9
   voice_synthesis:
     hf_api_id: "suno/bark"
     local_fallback_path: "models/mms-tts-eng" # Path to local Bark/CoquiTTS model
+    versioning: true
+    checksum: "" # Optional
+    min_health_score: 0.9
   speech_to_text:
     hf_api_id: "openai/whisper-large-v2"
     local_fallback_path: "" # Path to local Whisper model
+    versioning: true
+    checksum: "" # Optional
+    min_health_score: 0.9
 
 # GPU Management (HybridGPUManager settings)
 gpu_manager:

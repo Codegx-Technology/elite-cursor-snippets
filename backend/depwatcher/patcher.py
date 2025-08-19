@@ -8,6 +8,7 @@ from backend.depwatcher.model_store import fetch_model
 from backend.core.dependency_ws import manager as ws_manager # WebSocket manager
 from backend.depwatcher.rollback import pre_patch_snapshot, rollback # Import rollback functions
 import asyncio
+import shutil # For copying assets
 
 logger = logging.getLogger(__name__)
 
@@ -78,12 +79,25 @@ async def apply_patch_plan(plan: PatchPlan):
                 step_info.update({"status": "completed", "message": f"Successfully fetched model {item.name}", "downloadSizeMB": size_mb})
 
             elif item.kind == "asset":
-                # Placeholder for asset fetching
-                # This would involve downloading from a URL or copying from a source
-                logger.info(f"Fetching asset: {item.name}")
-                # Simulate download
-                await asyncio.sleep(1)
-                step_info.update({"status": "completed", "message": f"Successfully fetched asset {item.name}"})
+                # For assets, assume item.name is the source path (relative to project root)
+                # and item.toVersion is the destination path (relative to assets directory)
+                # This is a simplified implementation. A real asset management system would be more complex.
+                project_root = Path(__file__).parent.parent.parent.parent # Get to ShujaaStudio root
+                source_asset_path = project_root / item.name
+                destination_asset_dir = project_root / "assets" / item.toVersion # Assuming toVersion is a subdirectory in assets
+
+                destination_asset_dir.mkdir(parents=True, exist_ok=True)
+                destination_asset_path = destination_asset_dir / source_asset_path.name
+
+                if source_asset_path.exists():
+                    try:
+                        shutil.copy(source_asset_path, destination_asset_path)
+                        logger.info(f"Copied asset from {source_asset_path} to {destination_asset_path}")
+                        step_info.update({"status": "completed", "message": f"Successfully fetched asset {item.name} to {destination_asset_path}"})
+                    except Exception as e:
+                        raise Exception(f"Failed to copy asset {item.name}: {e}")
+                else:
+                    raise FileNotFoundError(f"Source asset not found: {source_asset_path}")
 
             else:
                 raise ValueError(f"Unknown patch item kind: {item.kind}")
