@@ -80,6 +80,7 @@ from backend.ai_health.healthcheck import score_inference, record_metric, aggreg
 from backend.ai_health.rollback import should_rollback, perform_rollback
 from backend.notifications.admin_notify import send_admin_notification
 from backend.startup import run_safety_rollback_on_boot # New import for safety rollback
+from backend.core.voices.versioning import register_voice, rollback_voice, get_active_voice, get_latest_voice, load_versions # Voice versioning imports
 
 # Initialize ModelStore
 model_store = ModelStore()
@@ -269,6 +270,17 @@ class RollbackRequest(BaseModel):
     provider: str
     model_name: str
     target_tag: str # The version to rollback to
+
+# Pydantic Models for Voice Management Admin Widget
+class VoiceVersionInfo(BaseModel):
+    version: str
+    registered_at: str
+    metadata: Optional[Dict[str, Any]] = None
+
+class VoiceStatusResponse(BaseModel):
+    voice_name: str
+    active_version: Optional[VoiceVersionInfo] = None
+    available_versions: List[VoiceVersionInfo]
 
 # --- Dependency Functions ---
 
@@ -1021,6 +1033,64 @@ async def rollback_model(request: RollbackRequest, current_user: User = Depends(
     except Exception as e:
         logger.error(f"Failed to rollback model {request.model_name} to {request.target_tag}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to rollback model: {e}")
+
+@app.get("/admin/voices/status", response_model=List[VoiceStatusResponse])
+async def get_voice_status(current_user: User = Depends(get_current_admin_user)):
+    """
+    Retrieves the status of all configured TTS voices, including active versions
+    and available versions. Requires admin access.
+    """
+    all_voice_statuses = []
+    
+    # Assuming TTS voice configurations are under config.models.tts_models
+    if hasattr(config.models, 'tts_models'):
+        for voice_type, voice_config in config.models.tts_models.items():
+            voice_name = voice_config.model_name # Assuming model_name is the voice identifier
+            
+            active_version_tag = get_active_voice(voice_name)
+            all_versions_data = load_versions().get(voice_name, {})
+            
+            active_version_info = None
+            if active_version_tag and active_version_tag in all_versions_data:
+                active_version_info = VoiceVersionInfo(
+                    version=active_version_tag,
+                    registered_at=all_versions_data[active_version_tag]["registered_at"],
+                    metadata=all_versions_data[active_version_tag]["metadata"]
+                )
+
+            available_versions_list = []
+            for version_tag, version_data in all_versions_data.items():
+                if version_tag != "active": # Exclude the "active" pointer
+                    available_versions_list.append(VoiceVersionInfo(
+                        version=version_tag,
+                        registered_at=version_data["registered_at"],
+                        metadata=version_data["metadata"]
+                    ))
+            
+            all_voice_statuses.append(VoiceStatusResponse(
+                voice_name=voice_name,
+                active_version=active_version_info,
+                available_versions=sorted(available_versions_list, key=lambda x: x.registered_at, reverse=True)
+            ))
+            
+    return all_voice_statuses
+
+@app.post("/admin/voices/rollback")
+async def rollback_voice_endpoint(request: RollbackRequest, current_user: User = Depends(get_current_admin_user)):
+    """
+    Rolls back a specified TTS voice to a target version. Requires admin access.
+    """
+    try:
+        rolled_back_to_version = rollback_voice(request.model_name, request.target_tag)
+        subject = f"🚨 Voice Rolled Back: {request.model_name} to {rolled_back_to_version}"
+        body = f"Admin {current_user.username} rolled back voice {request.model_name} to version {rolled_back_to_version}."
+        send_admin_notification(subject, body)
+        return {"status": "success", "message": f"Voice {request.model_name} rolled back to version {rolled_back_to_version}."}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Rollback failed: {e}")
+    except Exception as e:
+        logger.error(f"Failed to rollback voice {request.model_name} to {request.target_tag}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to rollback voice: {e}")
 
 @app.get("/feature_status/{feature_name}")
 async def get_feature_status(feature_name: str, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
