@@ -23,7 +23,7 @@ api_keys:
 
 # Model Configuration
 models:
-  disable_model_loading: true # Set to true to prevent any model loading or downloading
+  disable_model_loading: false # Enable to allow local/API models to load
   text_generation:
     hf_api_id: "mistralai/Mistral-7B-Instruct-v0.2" # Default for scene generation
     local_fallback_path: "" # Path to local LLM model (e.g., LLaMA.cpp compatible)

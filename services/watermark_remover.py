@@ -9,6 +9,9 @@ import logging
 from config_loader import get_config
 from error_utils import retry_on_exception
 from functools import lru_cache
+import subprocess
+import tempfile
+from pathlib import Path
 
 # Elite Cursor Snippet: Imports for Watermark Removal
 # ELITE_CURSOR_SNIPPET_START: watermark_removal_imports
@@ -18,15 +21,6 @@ except ImportError:
     sam_model_registry = None
     SamPredictor = None
     print("segment_anything not installed. SAM features will be unavailable.")
-
-try:
-    # Assuming lama_cleaner is installed and provides a LaMa model
-    from lama_cleaner.model.lama import LaMa
-    import torch
-except ImportError:
-    LaMa = None
-    torch = None
-    print("lama_cleaner or torch not installed. LaMa features will be unavailable.")
 
 # ELITE_CURSOR_SNIPPET_END: watermark_removal_imports
 
@@ -64,22 +58,13 @@ def load_sam_predictor():
 @lru_cache(maxsize=1)
 def load_lama():
     """
-    Load LaMa inpainting model.
-    Implementation depends on which library you pick.
-    We'll assume `lama_cleaner` exposes `inpaint_image_pil(image, mask)`.
+    Check if the LaMa virtual environment is available.
     """
-    if LaMa is None or torch is None:
-        raise ImportError("lama_cleaner or torch is not installed.")
-    try:
-        # Example: lama-cleaner provides LamaInpainting (this is illustrative)
-        # from lama_cleaner import LaMaInpaint  # adjust to real import
-        # impl = LaMaInpaint(model_path=cfg.get('lama_model_path'))
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        impl = LaMa(device=device) # Assuming LaMa class from lama_cleaner.model.lama
-        return impl
-    except Exception as e:
-        logger.debug("LaMa load failed", exc_info=e)
-        raise
+    lama_venv_path = Path("./.venv312-lama").resolve()
+    if lama_venv_path.exists() and (lama_venv_path / "pyvenv.cfg").exists():
+        return True
+    else:
+        raise ImportError("LaMa virtual environment not found.")
 
 @lru_cache(maxsize=1)
 def load_sd_inpaint():
@@ -145,24 +130,38 @@ def detect_watermark_heuristic(image: Image.Image) -> np.ndarray:
 @retry_on_exception(max_retries=2)
 def inpaint_with_lama(image: Image.Image, mask: np.ndarray) -> Image.Image:
     """
-    Inpaint image using LaMa. Assumes load_lama() returns an object with `inpaint_pil(image, mask_pil)`.
+    Inpaint image using LaMa by calling a helper script in the correct virtual environment.
     """
-    try:
-        impl = load_lama()
-        from PIL import Image
-        mask_pil = Image.fromarray(mask).convert("L")
-        # method depends on implementation; this is a common pattern
-        # LaMa model expects numpy arrays, not PIL images for inpainting
-        # The lama_cleaner library's LaMa model typically has a __call__ method
-        # that takes image and mask as numpy arrays.
-        # Convert PIL image to numpy array for LaMa
-        image_np = np.array(image.convert("RGB"))
-        result_np = impl(image_np, mask) # Assuming LaMa model's call method
-        result = Image.fromarray(result_np)
-        return result
-    except Exception as e:
-        logger.warning("LaMa inpaint failed", exc_info=e)
-        raise
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        image_path = temp_path / "image.png"
+        mask_path = temp_path / "mask.png"
+        output_path = temp_path / "output.png"
+
+        image.save(image_path)
+        Image.fromarray(mask).save(mask_path)
+
+        lama_venv_python = Path("./.venv312-lama/Scripts/python.exe").resolve()
+        helper_script = Path("./services/lama_inpaint_helper.py").resolve()
+
+        if not lama_venv_python.exists():
+            raise FileNotFoundError("LaMa virtual environment not found.")
+
+        cmd = [
+            str(lama_venv_python),
+            str(helper_script),
+            str(image_path),
+            str(mask_path),
+            str(output_path),
+        ]
+
+        try:
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+            output_image_path = result.stdout.strip()
+            return Image.open(output_image_path)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"LaMa helper script failed: {e.stderr}")
+            raise
 
 @retry_on_exception(max_retries=2)
 def inpaint_with_sd(image: Image.Image, mask: np.ndarray, prompt: str = "") -> Image.Image:
@@ -207,7 +206,9 @@ def remove_watermark(
                 if sam_model_registry is None or SamPredictor is None:
                     logger.warning("SAM not available, skipping sam+lama backend.")
                     continue
-                if LaMa is None or torch is None:
+                try:
+                    load_lama()
+                except ImportError:
                     logger.warning("LaMa not available, skipping sam+lama backend.")
                     continue
                 try:
