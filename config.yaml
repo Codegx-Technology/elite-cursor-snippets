@@ -8,6 +8,12 @@ app:
     - "https://cdn1.example.com/assets/"
     - "https://cdn2.example.com/assets/"
     - "https://fallback.example.com/assets/"
+  watched_models: # Models to be continuously monitored for updates
+    llm: {"provider": "huggingface", "name": "gpt-neo-2.7B", "type": "text_generation"}
+    embedding: {"provider": "openai", "name": "text-embedding-3-small", "type": "embedding"} # Assuming an embedding model type
+    tts_voice_xtts: {"provider": "huggingface", "name": "coqui/XTTS-v2", "type": "voice_synthesis"}
+    tts_voice_eleven: {"provider": "elevenlabs", "name": "english-female-v1", "type": "voice_synthesis"}
+  model_check_interval_seconds: 3600 # How often to check for model updates (1 hour)
 
 # API Keys and Credentials (sensitive, loaded from .env or secrets management)
 api_keys:
@@ -48,6 +54,21 @@ models:
     versioning: true
     checksum: "" # Optional
     min_health_score: 0.9
+  tts_models: # New section for TTS models
+    elevenlabs:
+      provider: "elevenlabs"
+      model_name: "elevenlabs-voice-en"
+      api_id: "some_elevenlabs_voice_id" # Example ElevenLabs voice ID
+      versioning: true
+      checksum: "def456" # Example checksum
+      min_health_score: 0.9
+    xtts_v2:
+      provider: "local"
+      model_name: "xtts-v2"
+      local_fallback_path: "models/tts/xtts-v2" # Path to local XTTS v2 model
+      versioning: true
+      checksum: "abc123" # Example checksum
+      min_health_score: 0.9
 
 # GPU Management (HybridGPUManager settings)
 gpu_manager:
@@ -93,3 +114,5 @@ feature_flags:
   beta_video_pipeline:
     enabled: false
     # users: ["admin_user"]
+  AUTO_ROLLBACK_ON_BOOT:
+    enabled: true # Enable auto-rollback on boot by default

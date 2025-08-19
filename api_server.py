@@ -79,6 +79,7 @@ from backend.ai_models.model_store import ModelStore
 from backend.ai_health.healthcheck import score_inference, record_metric, aggregate
 from backend.ai_health.rollback import should_rollback, perform_rollback
 from backend.notifications.admin_notify import send_admin_notification
+from backend.startup import run_safety_rollback_on_boot # New import for safety rollback
 
 # Initialize ModelStore
 model_store = ModelStore()
@@ -345,6 +346,9 @@ async def startup():
     redis_connection = redis.from_url(config.redis.url, encoding="utf-8", decode_responses=True)
     await FastAPILimiter.init(redis_connection)
     logger.info("FastAPI-Limiter initialized.")
+    
+    # Run safety rollback check on boot
+    run_safety_rollback_on_boot()
 
 # --- API Endpoints ---
 

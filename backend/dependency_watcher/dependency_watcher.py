@@ -13,7 +13,17 @@ from backend.depwatcher.patcher import apply_patch_plan # Import apply_patch_pla
 from datetime import datetime
 import uuid
 
+# New imports for model integrity and health checks
+from backend.ai_models.model_store import ModelStore
+from backend.ai_health.healthcheck import aggregate
+from backend.ai_health.rollback import should_rollback, perform_rollback
+from config_loader import get_config # To get model configuration
+
 logger = logging.getLogger(__name__)
+
+# Initialize ModelStore and config
+model_store = ModelStore()
+config = get_config()
 
 _last_dependency_status: List[Dict[str, Any]] = [] # Global to store last known status
 
@@ -218,6 +228,166 @@ class DependencyWatcher:
                 if dep['status'] != 'HEALTHY':
                     return False
             return True
+
+    def check_model_store_integrity(self) -> List[Dict[str, Any]]:
+        """
+        Verifies the integrity of models in the ModelStore.
+        Checks if active pointers are valid and target directories exist.
+        """
+        integrity_report = []
+        
+        # Helper function to process a single model configuration
+        def process_model_config(model_config_item, model_type_key):
+            provider = "unknown"
+            model_name = model_type_key
+            
+            if hasattr(model_config_item, 'hf_api_id') and model_config_item.hf_api_id:
+                model_name = model_config_item.hf_api_id.split('/')[-1]
+                provider = "huggingface"
+            elif hasattr(model_config_item, 'local_fallback_path') and model_config_item.local_fallback_path:
+                model_name = Path(model_config_item.local_fallback_path).name
+                provider = "local"
+            elif hasattr(model_config_item, 'provider') and model_config_item.provider: # For TTS models
+                provider = model_config_item.provider
+                model_name = model_config_item.model_name
+
+            status = "HEALTHY"
+            message = "Active model pointer is valid and target exists."
+            
+            try:
+                current_active = model_store.current(provider, model_name)
+                if not current_active:
+                    status = "MISSING_ACTIVE"
+                    message = f"No active version found for {provider}/{model_name}."
+                else:
+                    active_path = Path(current_active.get("path", ""))
+                    if not active_path.exists():
+                        status = "BROKEN_POINTER"
+                        message = f"Active model path {active_path} for {provider}/{model_name} does not exist."
+                    elif not active_path.is_dir() and not active_path.is_file():
+                        status = "INVALID_TARGET"
+                        message = f"Active model path {active_path} for {provider}/{model_name} is not a valid file or directory."
+            except Exception as e:
+                status = "ERROR"
+                message = f"Error checking integrity for {provider}/{model_name}: {e}"
+                logger.error(message)
+
+            integrity_report.append({
+                "provider": provider,
+                "model_name": model_name,
+                "status": status,
+                "message": message
+            })
+            
+            if status != "HEALTHY":
+                notify_admin(subject=f"Model Integrity Alert: {model_name} is {status}", message=message)
+        
+        # Iterate through top-level configured models
+        for model_type, model_config_item in config.models.items():
+            # Check if it's a nested group like 'tts_models'
+            if isinstance(model_config_item, dict) and 'provider' not in model_config_item:
+                for sub_model_type, sub_model_config_item in model_config_item.items():
+                    process_model_config(sub_model_config_item, sub_model_type)
+            else:
+                process_model_config(model_config_item, model_type)
+                
+        return integrity_report
+
+    def report_canary_health(self, auto_rollback_bad: bool = False) -> List[Dict[str, Any]]:
+        """
+        Reports the health of canary deployments and optionally triggers rollback.
+        """
+        canary_health_report = []
+        
+        # Helper function to process a single model configuration for canary health
+        def process_canary_config(model_config_item, model_type_key):
+            provider = "unknown"
+            model_name = model_type_key
+            
+            if hasattr(model_config_item, 'hf_api_id') and model_config_item.hf_api_id:
+                model_name = model_config_item.hf_api_id.split('/')[-1]
+                provider = "huggingface"
+            elif hasattr(model_config_item, 'local_fallback_path') and model_config_item.local_fallback_path:
+                model_name = Path(model_config_item.local_fallback_path).name
+                provider = "local"
+            elif hasattr(model_config_item, 'provider') and model_config_item.provider: # For TTS models
+                provider = model_config_item.provider
+                model_name = model_config_item.model_name
+
+            current_model_info = model_store.current(provider, model_name)
+            if not current_model_info:
+                return # Skip if no active model info
+
+            model_metadata = current_model_info.get("metadata", {})
+            strategy = model_metadata.get("strategy")
+            
+            if strategy == "bluegreen":
+                active_tag = current_model_info.get("version_tag") # This is the blue tag
+                green_tag = model_metadata.get("green_version_tag") # This is the green tag
+                
+                if not green_tag:
+                    logger.warning(f"Blue/Green strategy enabled for {provider}/{model_name} but no green_version_tag found in metadata.")
+                    return
+
+                # Aggregate metrics for the green (canary) tag
+                # Assuming aggregate can handle non-active tags for historical data
+                agg_metrics = aggregate(provider, model_name, green_tag)
+                
+                # Get thresholds from config (assuming they are defined in config.yaml under models.<type>)
+                # Or use default thresholds if not found
+                thresholds = config.models.get(model_type_key, {}).get("rollback_thresholds", {
+                    "error_rate_threshold": 0.1,
+                    "min_success_rate": 0.9,
+                    "max_avg_response_time": 15.0
+                })
+                
+                health_status = "HEALTHY"
+                health_message = "Canary is healthy."
+                
+                if should_rollback(agg_metrics, thresholds):
+                    health_status = "DEGRADED"
+                    health_message = f"Canary health degraded. Metrics: {agg_metrics}. Thresholds: {thresholds}"
+                    logger.warning(health_message)
+                    
+                    if auto_rollback_bad:
+                        logger.info(f"Attempting auto-rollback for {provider}/{model_name} due to degraded canary health.")
+                        rolled_back_to_tag = perform_rollback(provider, model_name, dry_run=False)
+                        if rolled_back_to_tag:
+                            notify_admin(
+                                subject=f"🚨 Auto-Rollback: {model_name} Canary Degraded",
+                                message=f"Canary for {provider}/{model_name} was degraded and automatically rolled back to {rolled_back_to_tag}. Metrics: {agg_metrics}"
+                            )
+                            health_message += f" Auto-rolled back to {rolled_back_to_tag}."
+                        else:
+                            health_message += " Auto-rollback failed." # Changed from error to warning
+                            notify_admin(
+                                subject=f"❌ Auto-Rollback Failed: {model_name} Canary Degraded",
+                                message=f"Canary for {provider}/{model_name} was degraded but auto-rollback failed. Metrics: {agg_metrics}"
+                            )
+                
+                canary_health_report.append({
+                    "provider": provider,
+                    "model_name": model_name,
+                    "canary_tag": green_tag,
+                    "active_tag": active_tag,
+                    "health_status": health_status,
+                    "health_message": health_message,
+                    "metrics": agg_metrics
+                })
+                
+                if health_status == "DEGRADED":
+                    notify_admin(subject=f"Canary Health Alert: {model_name} is {health_status}", message=health_message)
+        
+        # Iterate through top-level configured models
+        for model_type, model_config_item in config.models.items():
+            # Check if it's a nested group like 'tts_models'
+            if isinstance(model_config_item, dict) and 'provider' not in model_config_item:
+                for sub_model_type, sub_model_config_item in model_config_item.items():
+                    process_canary_config(sub_model_config_item, sub_model_type)
+            else:
+                process_canary_config(model_config_item, model_type)
+                
+        return canary_health_report
 
 
 def run_dependency_check():
