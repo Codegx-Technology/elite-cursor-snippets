@@ -114,12 +114,12 @@ export default function VideoGeneratePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Video Generation Form */}
           <Card className="p-6">
-            <h2 className="section-title mb-4">Video Configuration</h2>
+            <h2 className="section-title mb-4 text-charcoal">Video Configuration</h2>
 
             <div className="space-y-6">
               {/* Script Input */}
               <div>
-                <label className="block text-sm font-medium text-charcoal-text mb-2">
+                <label className="block text-sm font-medium text-charcoal mb-2">
                   <FaMicrophone className="inline mr-2" aria-label="Microphone Icon" />
                   Video Script *
                 </label>
@@ -141,6 +141,8 @@ export default function VideoGeneratePage() {
                 name="culturalPreset"
                 value={formData.culturalPreset}
                 onChange={(e) => handleInputChange('culturalPreset', e.target.value)}
+                className="text-white bg-neutral-800 border-gray-600 focus:border-green-500 focus:ring-green-200"
+                labelClassName="text-charcoal"
               />
 
               {/* Voice Selection */}
@@ -151,6 +153,8 @@ export default function VideoGeneratePage() {
                 name="voice"
                 value={formData.voice}
                 onChange={(e) => handleInputChange('voice', e.target.value)}
+                className="text-white bg-neutral-800 border-gray-600 focus:border-green-500 focus:ring-green-200"
+                labelClassName="text-charcoal"
               />
 
               {/* Language Mix */}
@@ -161,6 +165,8 @@ export default function VideoGeneratePage() {
                 name="language"
                 value={formData.language}
                 onChange={(e) => handleInputChange('language', e.target.value)}
+                className="text-white bg-neutral-800 border-gray-600 focus:border-green-500 focus:ring-green-200"
+                labelClassName="text-charcoal"
               />
 
               {/* Visual Style */}
@@ -171,6 +177,8 @@ export default function VideoGeneratePage() {
                 name="visualStyle"
                 value={formData.visualStyle}
                 onChange={(e) => handleInputChange('visualStyle', e.target.value)}
+                className="text-white bg-neutral-800 border-gray-600 focus:border-green-500 focus:ring-green-200"
+                labelClassName="text-charcoal"
               />
 
               {/* Duration */}
@@ -181,6 +189,8 @@ export default function VideoGeneratePage() {
                 name="duration"
                 value={formData.duration}
                 onChange={(e) => handleInputChange('duration', e.target.value)}
+                className="text-white bg-neutral-800 border-gray-600 focus:border-green-500 focus:ring-green-200"
+                labelClassName="text-charcoal"
               />
 
               {/* Music Style */}
@@ -191,6 +201,8 @@ export default function VideoGeneratePage() {
                 name="musicStyle"
                 value={formData.musicStyle}
                 onChange={(e) => handleInputChange('musicStyle', e.target.value)}
+                className="text-white bg-neutral-800 border-gray-600 focus:border-green-500 focus:ring-green-200"
+                labelClassName="text-charcoal"
               />
 
               {/* Advanced Options */}
@@ -227,13 +239,13 @@ export default function VideoGeneratePage() {
 
                 {/* Export Format */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-charcoal mb-2">
                     📱 Export Format
                   </label>
                   <select
                     value={formData.exportFormat}
                     onChange={(e) => handleInputChange('exportFormat', e.target.value)}
-                    className="form-input w-full"
+                    className="form-input w-full bg-neutral-800 text-white border-gray-600 focus:border-green-500 focus:ring-green-200"
                   >
                     <option value="mp4">MP4 (Universal)</option>
                     <option value="tiktok">TikTok Optimized (9:16)</option>
@@ -292,12 +304,12 @@ export default function VideoGeneratePage() {
 
           {/* Progress and Preview */}
           <Card className="p-6">
-            <h2 className="section-title mb-4">Generation Progress</h2>
+            <h2 className="section-title mb-4 text-charcoal">Generation Progress</h2>
 
             {/* Progress Bar */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-charcoal-text">{progress.stage}</span>
+                <span className="text-sm font-medium text-charcoal">{progress.stage}</span>
                 <span className="text-sm text-soft-text">{progress.progress}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3">

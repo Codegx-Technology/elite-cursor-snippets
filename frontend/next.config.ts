@@ -31,6 +31,12 @@ const nextConfig: NextConfig = {
 
   // Headers for caching
   async headers() {
+    // Do not set strict headers (like nosniff) in development because
+    // dev chunk requests may 404 to HTML and the browser will block them.
+    if (process.env.NODE_ENV !== 'production') {
+      return [];
+    }
+
     return [
       {
         source: '/(.*)',

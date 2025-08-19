@@ -20,16 +20,16 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
 from gpu_fallback import ShujaaGPUIntegration, TaskProfile, HybridGPUManager
-from ai_model_manager import generate_text, generate_image as ai_generate_image, text_to_speech, speech_to_text, init_hf_client
 from config_loader import get_config
 from utils.parallel_processing import ParallelProcessor # Import ParallelProcessor
 from error_utils import log_and_raise, retry_on_exception
 from enhanced_model_router import EnhancedModelRouter, GenerationRequest
-from logging_setup import get_logger
+from logging_setup import get_logger, setup_logging
 
 from dotenv import load_dotenv
 
-# Centralized logging
+# Centralized logging (explicit init)
+setup_logging()
 logger = get_logger(__name__)
 
 load_dotenv()
@@ -95,6 +95,28 @@ async def generate_scenes_from_text(text, enhanced_router: Any, dialect: Optiona
 
 
 async def generate_image(scene_text, output_path, enhanced_router: Any, dialect: Optional[str] = None):
+    # Fast path: if model loading is disabled, generate a placeholder immediately.
+    if getattr(config.models, 'disable_model_loading', False):
+        width, height = 1280, 720
+        img = Image.new("RGB", (width, height), color="#1a4d80")
+        draw = ImageDraw.Draw(img)
+        try:
+            font = ImageFont.truetype("arial.ttf", 40)
+        except IOError:
+            font = ImageFont.load_default()
+        words = scene_text.split()
+        lines = [" ".join(words[i:i+6]) for i in range(0, len(words), 6)]
+        y_offset = (height - (len(lines) * 50)) // 2
+        for line in lines:
+            bbox = draw.textbbox((0, 0), line, font=font)
+            text_width = bbox[2] - bbox[0]
+            x = (width - text_width) // 2
+            draw.text((x, y_offset), line, fill="white", font=font)
+            y_offset += 50
+        img.save(output_path)
+        logger.info(f"  Placeholder image generated (models disabled): {output_path}")
+        return output_path
+
     request = GenerationRequest(
         prompt=scene_text,
         type="image",
@@ -165,6 +187,41 @@ async def generate_image(scene_text, output_path, enhanced_router: Any, dialect:
         return output_path
 
 async def generate_voiceover_from_text(text, output_file, enhanced_router: Any, dialect: Optional[str] = None):
+    # Fast path: if model loading is disabled, use gTTS or silence immediately.
+    if getattr(config.models, 'disable_model_loading', False):
+        from gtts import gTTS
+        try:
+            tts = gTTS(text)
+            tts.save(output_file)
+            logger.info(f"Voiceover generated (gTTS fast path, models disabled): {output_file}")
+            return output_file
+        except Exception as gtts_e:
+            logger.error(f"gTTS fast path failed: {gtts_e}")
+            # Create 2s silence WAV
+            try:
+                import io as _io
+                import wave as _wave
+                import struct as _struct
+                sample_rate = 22050
+                duration_sec = 2
+                num_channels = 1
+                sampwidth = 2
+                num_frames = sample_rate * duration_sec
+                buf = _io.BytesIO()
+                with _wave.open(buf, 'wb') as wf:
+                    wf.setnchannels(num_channels)
+                    wf.setsampwidth(sampwidth)
+                    wf.setframerate(sample_rate)
+                    silence_frame = _struct.pack('<h', 0)
+                    wf.writeframes(silence_frame * num_frames)
+                with open(output_file, 'wb') as f:
+                    f.write(buf.getvalue())
+                logger.warning(f"Created placeholder silence audio (models disabled): {output_file}")
+                return output_file
+            except Exception as silent_e:
+                logger.exception(f"Failed to create silence fallback: {silent_e}")
+                return None
+
     request = GenerationRequest(
         prompt=text,
         type="audio",
@@ -362,7 +419,13 @@ async def youtube_upload(video_file, title, description, tags):
         log_and_raise(e, f"Failed to upload video to YouTube: {video_file}")
 
 async def main(news: str = None, script_file: str = None, prompt: str = None, upload_youtube: bool = False, user_preferences: Dict = None, enhanced_router: Any = None, parallel_processor: Any = None, scene_processor: Any = None):
-    init_hf_client()
+    # Initialize HF client only if model loading is enabled (avoid heavy imports otherwise)
+    if not getattr(config.models, 'disable_model_loading', False):
+        try:
+            from ai_model_manager import init_hf_client
+            init_hf_client()
+        except Exception as e:
+            logger.warning(f"Skipping HF client init due to error: {e}")
     logger.info(f"GPU Integration Status: {gpu_integration.get_integration_status()}")
 
     text_content = None
@@ -474,6 +537,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     try:
+        print("ENTRY: Starting news_video_generator main run...")
         logger.info("Starting news_video_generator main run...")
         asyncio.run(main(news=args.news, script_file=args.script, prompt=args.prompt, upload_youtube=args.upload_youtube))
     except Exception as e:

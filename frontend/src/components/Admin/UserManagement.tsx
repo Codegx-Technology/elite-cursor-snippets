@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useUserManagement, UserData } from '@/hooks/useUserManagement';
 import { FaSpinner, FaTrash, FaEdit, FaPlus } from 'react-icons/fa';
 import Card from '@/components/Card';
-import DeleteUserModal from './DeleteUserModal';
+import DeleteUserModal from '@/components/Admin/DeleteUserModal';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Reusable user management component
