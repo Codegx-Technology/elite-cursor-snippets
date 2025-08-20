@@ -527,6 +527,58 @@ async def get_user_plan(current_user: dict = Depends(get_current_user)):
         "is_active": user_sub.is_active
     }
 
+@app.get("/api/plan/status")
+async def get_plan_status(current_user: User = Depends(get_current_active_user)):
+    """
+    Returns the detailed plan status for the current user, including quotas and usage.
+    This endpoint is used by the PlanGuardWidget.
+    """
+    user_id = str(current_user.id)
+    try:
+        user_plan = await plan_guard.get_user_plan(user_id)
+        # In a real system, you'd fetch actual usage data here
+        # For now, we'll use placeholder usage
+        usage = {
+            "tokens": 5000, # Example: 5000 tokens used
+            "audioMins": 10, # Example: 10 audio minutes used
+            ""videoMins": 5, # Example: 5 video minutes used
+        }
+
+        return {
+            "planCode": user_plan.name.lower().replace(" ", "_"),
+            "planName": user_plan.name,
+            "state": "healthy", # Default to healthy, will be overridden by PlanGuardException
+            "quota": {
+                "tokens": user_plan.quotas.monthly.tokens,
+                "audioMins": user_plan.quotas.monthly.audioMins,
+                "videoMins": user_plan.quotas.monthly.videoMins,
+            },
+            "usage": usage,
+            "expiresAt": None, # Placeholder
+            "graceExpiresAt": None, # Placeholder
+            "upgradeUrl": "/billing", # Placeholder
+            "lastCheckedAt": datetime.utcnow().isoformat(),
+            "adminConsoleUrl": None, # Placeholder
+        }
+    except PlanGuardException as e:
+        # If PlanGuard raises an exception, it means the plan is not healthy
+        return {
+            "planCode": "unknown", # Or derive from e.plan_name if available
+            "planName": "Unknown",
+            "state": "view_only" if e.is_view_only else ("grace" if e.is_in_grace_mode else "locked"),
+            "quota": { "tokens": 0, "audioMins": 0, "videoMins": 0 }, # Set to 0 for restricted plans
+            "usage": { "tokens": 0, "audioMins": 0, "videoMins": 0 },
+            "expiresAt": None,
+            "graceExpiresAt": e.grace_expires_at.isoformat() if e.grace_expires_at else None,
+            "upgradeUrl": "/billing",
+            "lastCheckedAt": datetime.utcnow().isoformat(),
+            "adminConsoleUrl": None,
+            "message": str(e) # Include the PlanGuard message
+        }
+    except Exception as e:
+        logger.error(f"Error fetching plan status for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch plan status.")
+
 @app.get("/api/plans")
 async def get_all_plans():
     # // [TASK]: Expose API for frontend to display all available plans
