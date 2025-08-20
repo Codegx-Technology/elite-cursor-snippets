@@ -3,8 +3,13 @@ import os
 import random
 from bs4 import BeautifulSoup
 from PIL import Image, ImageDraw, ImageFont
-from moviepy.editor import *
-import moviepy.audio.fx.all as afx
+try:
+    from moviepy.editor import ImageClip, concatenate_videoclips, AudioFileClip, CompositeAudioClip, TextClip
+    import moviepy.audio.fx.all as afx
+    MOVIEPY_AVAILABLE = True
+except Exception as _moviepy_err:
+    MOVIEPY_AVAILABLE = False
+    MOVIEPY_IMPORT_ERROR = _moviepy_err
 from dotenv import load_dotenv
 import asyncio
 import feedparser
@@ -344,6 +349,9 @@ def get_background_music(music_dir="music"):
     return os.path.join(music_dir, random.choice(music_files))
 
 async def compile_video(image_files, audio_file, music_file, captions, output_file):
+    if not MOVIEPY_AVAILABLE:
+        logger.warning(f"MoviePy not available ({MOVIEPY_IMPORT_ERROR}). Skipping video compilation and returning None.")
+        return None
     try:
         if not image_files:
             logger.error("Cannot compile video, no image files.")
