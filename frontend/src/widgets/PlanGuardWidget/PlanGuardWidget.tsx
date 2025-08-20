@@ -19,9 +19,6 @@ export default function PlanGuardWidget({
   showUpgradeBtn = true,
   theme = "default",
 }: Props) {
-  // Declare widget dependencies
-  PlanGuardWidget.dependencies = ["core_ai", "realtime_updates"]; // Example dependencies
-
   const [status, setStatus] = useState<PlanStatus | null>(null);
   const [events, setEvents] = useState<PlanEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +26,6 @@ export default function PlanGuardWidget({
 
   useEffect(() => {
     let mounted = true;
-
     async function load() {
       setLoading(true);
       try {
@@ -42,10 +38,7 @@ export default function PlanGuardWidget({
         if (mounted) setLoading(false);
       }
     }
-
     load();
-
-    // poll fallback
     const poll = setInterval(load, pollIntervalMs);
     return () => {
       mounted = false;
@@ -54,10 +47,8 @@ export default function PlanGuardWidget({
   }, [userId, pollIntervalMs]);
 
   useEffect(() => {
-    // prefer WebSocket for real-time events, fallback to poll if unavailable.
     const ws = subscribePlanEvents(userId, (ev) => {
-      setEvents((prev) => [ev, ...prev].slice(0, 50)); // keep last 50 events
-      // update status if event contains a status change
+      setEvents((prev) => [ev, ...prev].slice(0, 50));
       if (ev.type === "status_change" && ev.payload?.status) {
         setStatus(ev.payload.status as PlanStatus);
       }
@@ -108,14 +99,12 @@ export default function PlanGuardWidget({
         </div>
       </div>
 
-      {/* Quota bars */}
       <div className="mt-4 space-y-3">
         <QuotaBar label="API Calls (monthly)" used={status.usage.tokens} limit={status.quota.tokens} />
         <QuotaBar label="Audio (mins)" used={status.usage.audioMins} limit={status.quota.audioMins} />
         <QuotaBar label="Video (mins)" used={status.usage.videoMins} limit={status.quota.videoMins} />
       </div>
 
-      {/* Events */}
       <div className="mt-4">
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-medium">Recent enforcement events</h4>
@@ -142,10 +131,9 @@ export default function PlanGuardWidget({
         </div>
       </div>
 
-      {/* View-only overlay */}
       {isViewOnly && status.graceExpiresAt && (
         <ViewOnlyOverlay
-          expiredAt={new Date(status.expiresAt).toLocaleString()}
+          expiredAt={new Date(status.expiresAt || status.graceExpiresAt).toLocaleString()}
           onUpgrade={() => window.open(status.upgradeUrl || "/billing", "_blank")}
         />
       )}
@@ -153,11 +141,9 @@ export default function PlanGuardWidget({
   );
 }
 
-/* small subcomponent */
 function QuotaBar({ label, used, limit }: { label: string; used: number; limit: number }) {
   const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
-  const color =
-    pct < 60 ? "bg-emerald-500" : pct < 90 ? "bg-yellow-400" : "bg-red-500";
+  const color = pct < 60 ? "bg-emerald-500" : pct < 90 ? "bg-yellow-400" : "bg-red-500";
   return (
     <div>
       <div className="flex justify-between text-xs text-gray-500">

@@ -1,13 +1,5 @@
+/* src/widgets/PlanGuardWidget/planService.ts */
 import type { PlanStatus, PlanEvent } from "./types";
-
-/**
- * Required backend endpoints (implement them on server):
- * GET  /api/plan/status?userId=...    -> returns PlanStatus
- * WS   /ws/plan-events?userId=...     -> streams PlanEvent messages
- * POST /api/plan/upgrade-link         -> returns { url }
- *
- * PlanGuard events are JSON: { id, ts, type, message, payload }
- */
 
 export async function fetchPlanStatus(userId?: string): Promise<PlanStatus> {
   const q = userId ? `?userId=${encodeURIComponent(userId)}` : "";
@@ -18,7 +10,8 @@ export async function fetchPlanStatus(userId?: string): Promise<PlanStatus> {
 
 export function subscribePlanEvents(userId: string | undefined, onEvent: (ev: PlanEvent) => void): WebSocket | null {
   try {
-    const url = new URL((process.env.NEXT_PUBLIC_WS_BASE || "ws://localhost:8000") + "/ws/plan-events");
+    const base = process.env.NEXT_PUBLIC_WS_BASE || (typeof window !== "undefined" ? window.location.origin.replace(/^http/, "ws") : "ws://localhost:3000");
+    const url = new URL(`${base}/ws/plan-events`);
     if (userId) url.searchParams.set("userId", userId);
     const ws = new WebSocket(url.toString());
     ws.onopen = () => console.debug("PlanGuard WS connected");

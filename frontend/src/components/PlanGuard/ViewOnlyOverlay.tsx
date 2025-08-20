@@ -23,7 +23,7 @@ export default function ViewOnlyOverlay({ expiredAt, onUpgrade }: Props) {
           <Lock className="w-12 h-12 text-red-500" />
           <h2 className="text-2xl font-bold">🔒 View-Only Mode</h2>
           <p className="text-gray-600">
-            Your plan expired on <span className="font-semibold">{expiredAt}</span>.  
+            Your plan expired on <span className="font-semibold">{expiredAt}</span>.
             You can still browse past data, but all actions are disabled until you upgrade.
           </p>
         </div>
@@ -38,5 +38,3 @@ export default function ViewOnlyOverlay({ expiredAt, onUpgrade }: Props) {
     </motion.div>
   );
 }
-
-export default ViewOnlyOverlay;

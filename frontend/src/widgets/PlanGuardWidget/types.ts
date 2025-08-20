@@ -1,7 +1,8 @@
+/* src/widgets/PlanGuardWidget/types.ts */
 export type PlanState = "healthy" | "grace" | "view_only" | "locked";
 
 export interface PlanStatus {
-  planCode: string;           // "FREE" | "PRO" | "ENTERPRISE"
+  planCode: string;
   planName: string;
   state: PlanState;
   quota: {
@@ -14,20 +15,15 @@ export interface PlanStatus {
     audioMins: number;
     videoMins: number;
   };
-  expiresAt?: string | null;        // iso
-  graceExpiresAt?: string | null;   // iso if grace active
+  expiresAt?: string | null;
+  graceExpiresAt?: string | null;
   upgradeUrl?: string | null;
-  upgradeNote?: string | null;
-  upgradeUrlLabel?: string | null;
-  // internal diagnostics
   lastCheckedAt?: string | null;
-  // admin URLs for tenant-level actions
   adminConsoleUrl?: string | null;
 }
-
 export interface PlanEvent {
   id: string;
-  ts: string; // ISO
+  ts: string;
   type: "slowdown" | "lock" | "view_only" | "quota_warning" | "status_change" | "other";
   message: string;
   payload?: any;
