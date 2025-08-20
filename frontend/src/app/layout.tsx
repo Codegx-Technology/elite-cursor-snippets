@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Layout from "@/components/Layout";
 import ClientBoot from "@/components/ClientBoot";
+import { PlanGuardProvider } from "@/context/PlanGuardContext"; // New import
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Root layout with Kenya-first design system and enterprise styling
@@ -103,7 +104,9 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="//fonts.gstatic.com" />
       </head>
       <body className={inter.className} suppressHydrationWarning={true}>
-        <Layout>{children}</Layout>
+        <PlanGuardProvider userId="test_user_id"> {/* Wrap with PlanGuardProvider */}
+          <Layout>{children}</Layout>
+        </PlanGuardProvider>
         <ClientBoot />
       </body>
     </html>

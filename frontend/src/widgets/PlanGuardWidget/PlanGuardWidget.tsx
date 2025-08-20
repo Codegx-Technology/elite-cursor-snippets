@@ -19,6 +19,9 @@ export default function PlanGuardWidget({
   showUpgradeBtn = true,
   theme = "default",
 }: Props) {
+  // Declare widget dependencies
+  PlanGuardWidget.dependencies = ["core_ai", "realtime_updates"]; // Example dependencies
+
   const [status, setStatus] = useState<PlanStatus | null>(null);
   const [events, setEvents] = useState<PlanEvent[]>([]);
   const [loading, setLoading] = useState(true);

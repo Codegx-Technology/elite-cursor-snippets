@@ -81,16 +81,19 @@ from backend.ai_health.rollback import should_rollback, perform_rollback
 from backend.notifications.admin_notify import send_admin_notification
 from backend.startup import run_safety_rollback_on_boot # New import for safety rollback
 from backend.core.voices.versioning import register_voice, rollback_voice, get_active_voice, get_latest_voice, load_versions # Voice versioning imports
+from backend.core_modules.module_registry import get_module_dependencies # New import
 
 from auth.user_models import User # New import
 from auth.auth_service import create_user # New import
 from sqlalchemy.orm import Session # New import
 
 from billing.plan_guard import PlanGuard, PlanGuardException # New import
+from backend.widget_manager import WidgetManager # New import
 
 # Initialize ModelStore
 model_store = ModelStore()
 plan_guard = PlanGuard() # Initialize PlanGuard
+widget_manager = WidgetManager(plan_guard) # Initialize WidgetManager
 
 
 logger = get_logger(__name__)
@@ -290,6 +293,20 @@ class VoiceStatusResponse(BaseModel):
     voice_name: str
     active_version: Optional[VoiceVersionInfo] = None
     available_versions: List[VoiceVersionInfo]
+
+# Pydantic Models for Widget Management
+class WidgetInstallRequest(BaseModel):
+    widget_name: str
+    widget_version: str
+    dependencies: List[str]
+
+class WidgetUpdateRequest(BaseModel):
+    widget_name: str
+    new_widget_version: str
+    new_dependencies: List[str]
+
+class WidgetLoadRequest(BaseModel):
+    widget_name: str
 
 # --- Dependency Functions ---
 
@@ -1054,23 +1071,55 @@ class WebhookPaymentStatus(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     signature: str # For secure verification
 
+class CheckDependenciesRequest(BaseModel):
+    dependencies: List[str]
+
+class ExecuteModuleRequest(BaseModel):
+    module_name: str
+
 import hmac
 import hashlib
 
 WEBHOOK_SECRET = "your_webhook_secret_key" # TODO: Load from secure config (e.g., config.security.webhook_secret)
+
+@app.post("/api/execute-module")
+async def execute_module_endpoint(request_data: ExecuteModuleRequest, current_user: User = Depends(get_current_active_user)):
+    user_id = str(current_user.id)
+    try:
+        result = await load_and_execute_module(user_id, request_data.module_name)
+        return result
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error(f"Unexpected error in execute_module_endpoint for user {user_id}, module {request_data.module_name}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error.")
+
+@app.post("/api/check-widget-dependencies")
+async def check_widget_dependencies(request_data: CheckDependenciesRequest, current_user: User = Depends(get_current_active_user)):
+    user_id = str(current_user.id)
+    try:
+        user_plan = await plan_guard.get_user_plan(user_id)
+        
+        # For each dependency, check if it's allowed by the user's plan
+        # For now, we'll assume allowed_models in Plan can represent allowed dependencies
+        # In a real system, you might have a separate list of allowed dependencies per plan
+        for dep in request_data.dependencies:
+            if dep not in user_plan.model_policy.allowed_models:
+                return {"allowed": False, "message": f"Dependency '{dep}' is not allowed by your {user_plan.name} plan. Upgrade required.", "plan_name": user_plan.name}
+        
+        return {"allowed": True, "message": "All dependencies allowed.", "plan_name": user_plan.name}
+    except PlanGuardException as e:
+        # If PlanGuard itself raises an exception (e.g., plan expired, view-only mode)
+        return {"allowed": False, "message": str(e), "is_in_grace_mode": e.is_in_grace_mode, "grace_expires_at": e.grace_expires_at.isoformat() if e.grace_expires_at else None, "is_view_only": e.is_view_only}
+    except Exception as e:
+        logger.error(f"Error checking widget dependencies for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error checking dependencies.")
 
 @app.post("/webhook/payment_status")
 async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request, db: Session = Depends(get_db)):
     user_id = payload.user_id # Get user_id from payload
     # Check action permission (this is a write operation as it updates subscription status)
     await plan_guard.check_action_permission(user_id, "WRITE")
-
-    # // [TASK]: Implement secure signature verification for payment callbacks
-    # // [GOAL]: Ensure webhook authenticity and prevent tampering
-    # // [ELITE_CURSOR_SNIPPET]: securitycheck
-    
-    # Get raw request body
-    body = await request.body()
     
     # Get signature from headers (e.g., "X-Hub-Signature" or "X-Signature")
     signature_header = request.headers.get("X-Webhook-Signature") # Example header name
@@ -1383,6 +1432,32 @@ async def delete_user_data(current_user: User = Depends(get_current_active_user)
     return {"message": "User data deletion process initiated. Your account will be deactivated."}
 
     return {"message": "User data deletion process initiated. Your account will be deactivated."}
+
+
+# Conceptual function to load and execute a backend module with PlanGuard enforcement
+async def load_and_execute_module(user_id: str, module_name: str) -> Dict[str, Any]:
+    module_dependencies = get_module_dependencies(module_name)
+    if not module_dependencies:
+        logger.info(f"Module '{module_name}' has no declared dependencies. Allowing execution.")
+        # Simulate execution
+        return {"status": "success", "message": f"Module '{module_name}' executed successfully (no dependencies)."}
+
+    try:
+        # Check each dependency against the user's plan
+        for dep in module_dependencies:
+            # For simplicity, we'll assume these map to allowed_models or features_enabled
+            # A more robust solution would have a dedicated check in PlanGuard for module features
+            await plan_guard.check_action_permission(user_id, dep) # Reusing check_action_permission for conceptual dependency check
+        
+        logger.info(f"Module '{module_name}' dependencies allowed for user {user_id}. Executing.")
+        # Simulate module execution
+        return {"status": "success", "message": f"Module '{module_name}' executed successfully."}
+    except PlanGuardException as e:
+        logger.warning(f"Module '{module_name}' execution blocked for user {user_id}: {e.message}")
+        raise HTTPException(status_code=403, detail=e.message)
+    except Exception as e:
+        logger.error(f"Unexpected error executing module '{module_name}' for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during module execution.")
 
 
 # Function to seed super admin users

@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import Card from '@/components/Card';
 import { FaCheck, FaCrown, FaFlag, FaMountain, FaRocket } from 'react-icons/fa6';
-import GraceCountdownOverlay from '@/components/GraceCountdownOverlay'; // New import
+import GraceCountdownOverlay from '@/components/GraceCountdownOverlay';
+import { useWidgetLoader } from '@/utils/widgetLoader';
+import { usePlanGuard } from '@/context/PlanGuardContext'; // New import
 
 // Import with error handling
 let paymentUtils: any;
