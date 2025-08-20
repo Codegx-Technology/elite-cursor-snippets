@@ -69,17 +69,43 @@ export default function AdminDashboardPage() {
   }, [isAuthenticated, user]);
 
   const handleApprove = async (key: string) => {
-    // TODO: Implement API call to approve update
-    console.log(`Approving update for: ${key}`);
-    // After approval, refetch pending updates
-    // fetchPendingUpdates();
+    try {
+      const token = localStorage.getItem('jwt_token');
+      const response = await fetch(`http://localhost:8000/superadmin/model-updates/approve/${key}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      // Refetch pending updates after successful approval
+      fetchPendingUpdates();
+    } catch (error: any) {
+      console.error(`Failed to approve update ${key}:`, error);
+      setErrorUpdates(error.message || 'Failed to approve update.');
+    }
   };
 
   const handleReject = async (key: string) => {
-    // TODO: Implement API call to reject update
-    console.log(`Rejecting update for: ${key}`);
-    // After rejection, refetch pending updates
-    // fetchPendingUpdates();
+    try {
+      const token = localStorage.getItem('jwt_token');
+      const response = await fetch(`http://localhost:8000/superadmin/model-updates/reject/${key}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      // Refetch pending updates after successful rejection
+      fetchPendingUpdates();
+    } catch (error: any) {
+      console.error(`Failed to reject update ${key}:`, error);
+      setErrorUpdates(error.message || 'Failed to reject update.');
+    }
   };
 
   return (

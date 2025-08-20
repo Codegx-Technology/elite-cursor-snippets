@@ -2,6 +2,7 @@ from config_loader import get_config
 from logging_setup import get_logger
 import asyncio
 import functools
+from typing import Any
 from enhanced_model_router import enhanced_router
 
 # Import pipeline entrypoints (do not call them yet)
@@ -140,10 +141,8 @@ class PipelineOrchestrator:
                 func = functools.partial(self.pipelines[chosen], prompt=input_data, **pipeline_kwargs)
                 result = await loop.run_in_executor(None, func)
             elif chosen == "cartoon_anime_pipeline":
-                # Run sync function in a separate thread
-                loop = asyncio.get_running_loop()
-                func = functools.partial(self.pipelines[chosen], script=input_data, **pipeline_kwargs)
-                result = await loop.run_in_executor(None, func)
+                # The cartoon pipeline is async; call it directly
+                result = await self.pipelines[chosen](script=input_data, **pipeline_kwargs)
             elif chosen == "basic_video_generator":
                 logger.warning("Basic_video_generator (Gradio UI) cannot be executed from the API.")
                 return {"status": "error", "message": "The selected pipeline is interactive and cannot be run from the API."}

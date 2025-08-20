@@ -78,11 +78,54 @@ class DependencyWatcher:
             max_version_str = dep.get('max_version')
             dep_path = dep.get('path') # For models
             venv_name = dep.get('venv')
+            kind = dep.get('kind')
 
             installed_version = None
             status = "HEALTHY"
             message = ""
 
+            if kind == 'node':
+                # Node project dependency check (package.json based)
+                workdir = Path(dep.get('workdir') or dep_path or '.')
+                pkg_json = workdir / 'package.json'
+                node_modules = workdir / 'node_modules'
+                lock_candidates = [
+                    workdir / 'pnpm-lock.yaml',
+                    workdir / 'yarn.lock',
+                    workdir / 'package-lock.json',
+                ]
+
+                if not pkg_json.exists():
+                    status = 'MISSING'
+                    message = f"Node project '{name}' missing package.json at {pkg_json}"
+                elif not any(p.exists() for p in lock_candidates):
+                    status = 'MISSING'
+                    message = f"Node project '{name}' missing lockfile in {workdir}"
+                elif not node_modules.exists():
+                    status = 'MISSING'
+                    message = f"Node project '{name}' missing node_modules in {workdir}"
+                else:
+                    status = 'HEALTHY'
+                    message = f"Node project '{name}' dependencies present in {workdir}"
+
+                dependencies_status.append({
+                    "name": name,
+                    "installed_version": 'N/A',
+                    "required_range": '',
+                    "status": status,
+                    "message": message,
+                    "path": str(workdir),
+                    "venv": '',
+                    "workdir": str(workdir),
+                    "kind": 'node'
+                })
+                if status != 'HEALTHY':
+                    logger.error(message)
+                    notify_admin(message, f"Dependency Alert: {name} is {status}")
+                else:
+                    logger.info(message)
+                continue
+            
             if dep_path: # It's a model (file/directory)
                 model_path = Path(dep_path)
                 if not model_path.exists():
@@ -120,7 +163,10 @@ class DependencyWatcher:
                 "installed_version": str(installed_version) if installed_version else "N/A",
                 "required_range": f"{min_version_str or ''}-{max_version_str or ''}",
                 "status": status,
-                "message": message
+                "message": message,
+                "path": dep_path or "",
+                "venv": venv_name or "",
+                "kind": kind or ("model" if dep_path else "pip")
             })
 
             if status != "HEALTHY":
@@ -159,17 +205,27 @@ class DependencyWatcher:
             patch_candidates = []
             for dep in current_status_report:
                 if dep['status'] == 'OUTDATED' or dep['status'] == 'MISSING':
-                    # Create a PatchCandidate from the dependency info
-                    # This is a simplified conversion; real implementation might need more data
+                    # Create a PatchCandidate from the dependency info using explicit fields
+                    dep_kind = dep.get('kind') or ('model' if dep.get('path') else 'pip')
+                    is_model = dep_kind == 'model'
+                    kind = dep_kind
+                    source = 'local_path' if is_model else ('pypi' if dep_kind == 'pip' else 'node')
+                    env = dep.get('venv') or None
+                    # Prefer min_version as target; if empty, fall back to installed or latest (empty means unpinned)
+                    req_range = dep.get('required_range') or ''
+                    min_req = req_range.split('-')[0].strip() if '-' in req_range else req_range.strip()
+                    to_version = min_req if min_req else (None if kind == 'pip' else 'latest')
+
                     patch_candidates.append({
-                        "id": str(uuid.uuid4()), # Generate a new ID for the candidate
-                        "kind": "pip" if dep['message'].startswith("Package") else "model",
-                        "env": dep['message'].split('venv: ')[1].split(')')[0] if 'venv' in dep['message'] else None,
+                        "id": str(uuid.uuid4()),
+                        "kind": kind,
+                        "env": env,
                         "name": dep['name'],
-                        "fromVersion": dep['installed_version'],
-                        "toVersion": dep['required_range'].split('-')[0] if dep['required_range'] else dep['installed_version'], # Target version
-                        "source": "pypi" if dep['message'].startswith("Package") else "huggingface", # Simplified source
-                        "downloadSizeMB": None # To be determined by patcher
+                        "fromVersion": dep.get('installed_version'),
+                        "toVersion": to_version or "",
+                        "source": source,
+                        "downloadSizeMB": None,
+                        "workdir": dep.get('workdir') if dep_kind == 'node' else None
                     })
             
             if patch_candidates:

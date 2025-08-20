@@ -1,7 +1,7 @@
 import os
 import hashlib
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 import logging
 from huggingface_hub import snapshot_download, HfApi
 import sys
@@ -126,3 +126,40 @@ async def fetch_model(provider: str, model_id: str, revision: Optional[str] = No
         downloaded = False
     
     return downloaded, size_mb
+
+# ---------------- New utilities to prevent duplicate downloads ----------------
+def project_root() -> Path:
+    """Returns the project root (assumes this file lives under ShujaaStudio/backend/depwatcher)."""
+    return Path(__file__).resolve().parents[3]
+
+def models_root() -> Path:
+    """Preferred local models directory under project root."""
+    return project_root() / "models"
+
+def find_existing_model_dirs(model_id: str) -> List[Path]:
+    """
+    Scan the project models directory for directories that likely correspond to model_id.
+    Heuristics:
+    - Exact folder name match to the last segment of model_id (e.g., "stabilityai/sdxl-turbo" -> "sdxl-turbo").
+    - Case-insensitive match.
+    """
+    found: List[Path] = []
+    base = models_root()
+    if not base.exists():
+        return found
+    try:
+        last = model_id.split("/")[-1].lower()
+        for p in base.iterdir():
+            if p.is_dir() and p.name.lower() == last:
+                found.append(p)
+    except Exception:
+        pass
+    return found
+
+def ensure_preferred_model_dir(model_id: str) -> Path:
+    """
+    Returns the preferred destination dir for a model under models/.
+    Does not create it.
+    """
+    last = model_id.split("/")[-1]
+    return models_root() / last

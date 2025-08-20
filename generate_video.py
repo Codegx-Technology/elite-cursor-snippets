@@ -13,8 +13,25 @@ import time
 from pathlib import Path
 from typing import List, Dict, Optional
 import numpy as np
-import whisper
-import gradio as gr
+
+# Optional: whisper (speech-to-text)
+try:
+    import whisper
+    WHISPER_AVAILABLE = True
+except ImportError:
+    whisper = None  # type: ignore
+    WHISPER_AVAILABLE = False
+    print("⚠️ whisper not available – subtitles will be disabled by default.")
+
+# Optional: gradio (only needed for CLI UI mode)
+try:
+    import gradio as gr
+    GRADIO_AVAILABLE = True
+except ImportError:
+    gr = None  # type: ignore
+    GRADIO_AVAILABLE = False
+    print("ℹ️ gradio not installed – web UI mode will be unavailable.")
+
 from PIL import Image, ImageDraw, ImageFont
 import soundfile as sf
 import tempfile
@@ -48,11 +65,14 @@ class ShujaaStudio:
         print("🔄 Setting up AI models...")
         
         # Initialize Whisper for subtitles
-        try:
-            self.whisper_model = whisper.load_model("base")
-            print("✅ Whisper model loaded")
-        except Exception as e:
-            print(f"⚠️ Whisper model failed: {e}")
+        if WHISPER_AVAILABLE:
+            try:
+                self.whisper_model = whisper.load_model("base")
+                print("✅ Whisper model loaded")
+            except Exception as e:
+                print(f"⚠️ Whisper model failed: {e}")
+        else:
+            print("ℹ️ Whisper not available; skipping subtitle model initialization.")
         
         # Skip TTS initialization to avoid hanging issues
         print("✅ Using fallback audio generation (no TTS)")
@@ -207,7 +227,7 @@ class ShujaaStudio:
     def generate_subtitles(self, audio_path: str, output_path: str) -> str:
         """Generate subtitles from audio using Whisper"""
         try:
-            if self.whisper_model:
+            if WHISPER_AVAILABLE and self.whisper_model:
                 result = self.whisper_model.transcribe(audio_path)
                 subtitle_text = result["text"]
                 
@@ -376,6 +396,8 @@ class ShujaaStudio:
 
 def create_gradio_interface():
     """Create enhanced Gradio web interface"""
+    if not GRADIO_AVAILABLE:
+        raise ImportError("gradio is not installed. Install with `pip install gradio` to use the web UI.")
     studio = ShujaaStudio()
     
     def process_prompt(prompt, language="English", style="African storytelling"):

@@ -1,0 +1,15 @@
+{
+  "plan_id": "335af8e2-1ac8-4261-b4aa-4708fac458fc",
+  "status": "failed",
+  "error": "Environment 'venv312-lama' not found for pip package 'lama-cleaner'",
+  "events": [
+    {
+      "step": 1,
+      "total_steps": 1,
+      "item_name": "lama-cleaner",
+      "item_kind": "pip",
+      "status": "in_progress",
+      "message": "Processing pip: lama-cleaner"
+    }
+  ]
+}

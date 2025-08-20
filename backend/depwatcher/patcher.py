@@ -1,10 +1,16 @@
 import logging
 import json
+import subprocess
 from pathlib import Path
 from typing import Dict, Any
 from backend.depwatcher.schemas import PatchPlan, PatchCandidate
 from backend.depwatcher.envs import detect_envs, run_in_env
-from backend.depwatcher.model_store import fetch_model
+from backend.depwatcher.model_store import (
+    fetch_model,
+    is_model_present,
+    find_existing_model_dirs,
+    ensure_preferred_model_dir,
+)
 from backend.core.dependency_ws import manager as ws_manager # WebSocket manager
 from backend.depwatcher.rollback import pre_patch_snapshot, rollback # Import rollback functions
 import asyncio
@@ -48,16 +54,25 @@ async def apply_patch_plan(plan: PatchPlan):
             logger.info(f"Processing {item.kind}: {item.name} from {item.fromVersion} to {item.toVersion}")
 
             if item.kind == "pip":
-                env = available_envs.get(item.env)
+                # Resolve environment; fallback to first detected env if none provided
+                env = available_envs.get(item.env) if item.env else None
                 if not env:
-                    raise ValueError(f"Environment '{item.env}' not found for pip package '{item.name}'")
+                    if available_envs:
+                        env = next(iter(available_envs.values()))
+                        logger.warning(
+                            f"No environment specified for {item.name}; defaulting to detected env '{env.get('name','unknown')}'."
+                        )
+                    else:
+                        raise ValueError(
+                            f"No Python environments detected for pip package '{item.name}'. Configure an env or install manually."
+                        )
                 
                 # Construct pip install command
                 pip_cmd = [env["pip"], "install", "--upgrade", "--no-warn-script-location"]
-                if item.source == "pypi": # Assuming pypi for now
-                    pip_cmd.append(f"{item.name}=={item.toVersion}") # Pin exact version
-                else:
-                    pip_cmd.append(f"{item.name}=={item.toVersion}") # Fallback for other sources
+                pkg_spec = item.name
+                if item.toVersion:
+                    pkg_spec = f"{item.name}=={item.toVersion}"
+                pip_cmd.append(pkg_spec)
 
                 # Add --only-binary=:all: if applicable and desired
                 # pip_cmd.append("--only-binary=:all:") 
@@ -71,12 +86,54 @@ async def apply_patch_plan(plan: PatchPlan):
                 step_info.update({"status": "completed", "message": f"Successfully installed/upgraded {item.name}", "stdout": result.stdout, "stderr": result.stderr})
 
             elif item.kind == "model":
-                # Assuming model_id is item.name, and provider is inferred or passed
-                # For now, assume huggingface provider
-                downloaded, size_mb = await fetch_model(provider="huggingface", model_id=item.name, revision=item.toVersion)
-                if not downloaded:
-                    raise Exception(f"Failed to fetch model: {item.name}")
-                step_info.update({"status": "completed", "message": f"Successfully fetched model {item.name}", "downloadSizeMB": size_mb})
+                # Determine provider from item.source
+                provider = (item.source or "huggingface").lower()
+                model_id = item.name
+                revision = item.toVersion if item.toVersion and item.toVersion != "latest" else None
+
+                # 0) Prefer placing under models/<last-segment>
+                preferred_dir = ensure_preferred_model_dir(model_id)
+
+                # 1) Check existing project models directory for a matching folder
+                existing_dirs = find_existing_model_dirs(model_id)
+                if existing_dirs:
+                    logger.info(f"Model '{model_id}' already present at: {existing_dirs[0]}; skipping download.")
+                    step_info.update({
+                        "status": "completed",
+                        "message": f"Model present at {existing_dirs[0]}, no download.",
+                        "downloadSizeMB": 0.0,
+                    })
+                else:
+                    # 2) Provider-specific presence check and fetch
+                    if provider == "huggingface":
+                        present = await is_model_present("huggingface", model_id, revision=revision)
+                        if present:
+                            logger.info(f"HF model '{model_id}' already cached; no download needed.")
+                            step_info.update({
+                                "status": "completed",
+                                "message": f"HF cache already has {model_id}",
+                                "downloadSizeMB": 0.0,
+                            })
+                        else:
+                            downloaded, size_mb = await fetch_model(provider="huggingface", model_id=model_id, revision=revision)
+                            if not downloaded:
+                                raise Exception(f"Failed to fetch model: {model_id}")
+                            step_info.update({
+                                "status": "completed",
+                                "message": f"Fetched model {model_id}",
+                                "downloadSizeMB": size_mb,
+                            })
+                    elif provider == "local_path":
+                        # Ensure the preferred directory exists; do not attempt remote download
+                        preferred_dir.mkdir(parents=True, exist_ok=True)
+                        logger.info(f"Ensured local model directory at {preferred_dir}")
+                        step_info.update({
+                            "status": "completed",
+                            "message": f"Ensured local model dir {preferred_dir}",
+                            "downloadSizeMB": 0.0,
+                        })
+                    else:
+                        raise ValueError(f"Unsupported model provider: {provider}")
 
             elif item.kind == "asset":
                 # For assets, assume item.name is the source path (relative to project root)
@@ -91,7 +148,7 @@ async def apply_patch_plan(plan: PatchPlan):
 
                 if source_asset_path.exists():
                     try:
-                        shutil.copy(source_asset_path, destination_asset_path)
+                        shutil.copy2(source_asset_path, destination_asset_path)
                         logger.info(f"Copied asset from {source_asset_path} to {destination_asset_path}")
                         step_info.update({"status": "completed", "message": f"Successfully fetched asset {item.name} to {destination_asset_path}"})
                     except Exception as e:
@@ -99,8 +156,49 @@ async def apply_patch_plan(plan: PatchPlan):
                 else:
                     raise FileNotFoundError(f"Source asset not found: {source_asset_path}")
 
+            elif item.kind == "node":
+                workdir = Path(item.workdir or ".").resolve()
+                if not workdir.exists():
+                    raise FileNotFoundError(f"Node workdir not found: {workdir}")
+                pkg_json = workdir / "package.json"
+                if not pkg_json.exists():
+                    raise FileNotFoundError(f"package.json not found in {workdir}")
+
+                # Choose package manager based on lockfiles
+                pnpm_lock = workdir / "pnpm-lock.yaml"
+                yarn_lock = workdir / "yarn.lock"
+                npm_lock = workdir / "package-lock.json"
+
+                if pnpm_lock.exists():
+                    cmd = ["pnpm", "install", "--frozen-lockfile"]
+                elif yarn_lock.exists():
+                    cmd = ["yarn", "install", "--frozen-lockfile"]
+                elif npm_lock.exists():
+                    cmd = ["npm", "ci"]
+                else:
+                    cmd = ["npm", "install"]
+
+                # Idempotent behavior: if node_modules exists and lockfile exists, skip
+                node_modules = workdir / "node_modules"
+                if node_modules.exists() and (pnpm_lock.exists() or yarn_lock.exists() or npm_lock.exists()):
+                    logger.info(f"Node dependencies already present in {workdir}; skipping install.")
+                    step_info.update({"status": "completed", "message": f"Node deps present in {workdir}", "downloadSizeMB": 0.0})
+                else:
+                    logger.info(f"Installing Node dependencies in {workdir} with: {' '.join(cmd)}")
+                    try:
+                        result = subprocess.run(cmd, cwd=str(workdir), capture_output=True, text=True, check=True)
+                        step_info.update({
+                            "status": "completed",
+                            "message": f"Installed Node deps in {workdir}",
+                            "stdout": result.stdout,
+                            "stderr": result.stderr,
+                        })
+                    except subprocess.CalledProcessError as e:
+                        raise Exception(f"Node install failed in {workdir}: {e.stderr}")
+
             else:
                 raise ValueError(f"Unknown patch item kind: {item.kind}")
+
             
             progress_events[-1] = step_info # Update the last event with final status
 

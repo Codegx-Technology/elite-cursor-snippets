@@ -23,7 +23,7 @@ from pathlib import Path
 from time import sleep
 import tempfile
 import asyncio
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 
 from config_loader import get_config
 from ai_model_manager import generate_text, generate_image as ai_generate_image, text_to_speech, speech_to_text
@@ -32,19 +32,28 @@ from error_utils import log_and_raise, retry_on_exception
 config = get_config()
 
 # Import our new voice and music engines
-from voice_engine import VoiceEngine
-from music_engine import MusicEngine
-from video_effects import VideoEffects
+try:
+    import voice_engine as voice_engine  # module provides CLI/functions, no class required
+except Exception:
+    voice_engine = None
+try:
+    import music_engine as music_engine  # module provides functions, no class required
+except Exception:
+    music_engine = None
+try:
+    from . import video_effects as video_effects  # optional effects module
+except Exception:
+    video_effects = None
 
 # Performance and concurrency enhancements (non-breaking integrations)
-from analytics import log_event, timed, mark_stage
-from model_cache import initialize_cache, model_cache
+from .analytics import log_event, timed, mark_stage
+from .model_cache import initialize_cache, model_cache
 try:
     from utils.parallel_processing import ParallelProcessor, SceneProcessor
 except Exception:
     ParallelProcessor = None
     SceneProcessor = None
-from social_optimizer import generate_all as generate_social_all
+from .social_optimizer import generate_all as generate_social_all
 
 # SDXL and AI imports for Combo Pack C
 pass
@@ -167,7 +176,7 @@ class OfflineVideoMaker:
     def _try_import_video_effects(self) -> bool:
         """Try importing VideoEffects"""
         try:
-            from video_effects import VideoEffects
+            from .video_effects import VideoEffects
 
             self.video_effects = VideoEffects()
             return True
@@ -238,8 +247,8 @@ class OfflineVideoMaker:
         logger.info(f"[STORY] Generating AI-powered story breakdown from prompt: {prompt}")
         logger.info("[AI] Using semantic scene detection...")
 
-        # AI-powered scene breakdown
-        scenes = self._create_intelligent_scenes(prompt)
+        # AI-powered scene breakdown (call async helper synchronously)
+        scenes = asyncio.run(self._create_intelligent_scenes(prompt, enhanced_router, dialect))
 
         # Save scene data
         scene_file = self.temp_dir / "scenes.json"
@@ -966,8 +975,8 @@ class OfflineVideoMaker:
                 logger.info("\n[SEQUENTIAL] 🐌 Sequential scene processing enabled")
                 for scene in scenes:
                     logger.info(f"\n[SCENE] Processing {scene['id']}...")
-                    audio_file = await self.generate_voice(scene, enhanced_router, dialect)
-                    image_file = await self.generate_image(scene, enhanced_router, dialect)
+                    audio_file = asyncio.run(self.generate_voice(scene, enhanced_router, dialect))
+                    image_file = asyncio.run(self.generate_image(scene, enhanced_router, dialect))
                     video_file = self.create_scene_video(scene, audio_file, image_file)
                     enhanced_video = self.add_professional_effects(video_file, scene)
                     scene_videos.append(enhanced_video)
@@ -1111,3 +1120,7 @@ def main(**kwargs):
     try:
         video_maker = OfflineVideoMaker()
         final_video = video_maker.generate_video(prompt, enhanced_router=enhanced_router, dialect=dialect)
+        logger.info(f"[DONE] Video saved to: {final_video}")
+        return
+    except Exception as e:
+        log_and_raise(e, "CLI run failed")

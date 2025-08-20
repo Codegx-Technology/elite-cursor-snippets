@@ -74,3 +74,328 @@
 2025-08-20 22:55:47,861 - gpu_fallback - INFO -    Cloud providers: 3
 2025-08-20 22:55:47,902 - gpu_fallback - INFO -    Cloud providers: 3
 2025-08-20 22:55:47,920 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:56:36,260 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:56:36,261 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:56:36,280 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:56:36,303 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:56:36,307 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:56:36,360 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:56:49,640 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:56:49,687 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:56:49,776 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:56:49,810 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:56:49,824 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:56:50,039 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:57:02,979 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:57:03,006 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:57:03,064 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:57:03,164 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:57:03,190 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:57:03,230 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:57:17,106 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:57:17,109 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:57:17,140 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:57:17,162 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:57:17,164 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:57:17,248 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:57:28,911 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:57:28,950 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:57:28,952 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:57:28,984 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:57:29,003 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:57:29,058 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:57:49,993 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:57:50,011 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:57:50,024 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:57:50,040 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:57:50,070 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:57:50,074 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:58:25,483 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:58:25,514 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:58:25,548 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:58:25,558 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:58:25,578 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:58:25,611 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:58:40,739 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:58:42,725 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:58:42,732 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:58:42,828 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:58:42,838 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:59:04,052 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:59:04,153 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:59:04,182 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:59:04,184 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:59:04,247 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:59:22,377 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:59:22,403 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:59:22,459 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:59:22,593 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:59:22,618 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:59:22,718 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:59:42,080 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:59:42,091 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:59:42,117 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:59:42,142 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:59:42,159 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:59:42,254 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:59:57,044 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:59:57,063 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:59:57,095 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:01:00,402 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:01:00,404 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:01:00,436 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:01:00,451 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:01:00,501 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:01:00,513 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:01:11,963 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:01:12,294 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:01:12,326 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:01:12,330 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:01:12,359 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:01:12,363 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:01:24,755 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:01:24,773 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:01:24,789 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:01:24,820 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:01:24,853 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:01:24,874 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:11:27,479 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:11:27,495 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:11:27,512 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:12:48,679 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:12:48,703 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:12:48,717 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:12:49,375 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:12:49,547 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:12:49,591 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:12:51,025 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:12:51,045 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:12:51,071 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:14:31,346 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:14:31,359 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:14:31,375 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:18:49,732 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:18:49,744 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:18:49,828 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:18:49,840 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:18:50,135 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:18:50,169 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:19:06,049 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:19:06,062 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:19:06,076 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:23:20,894 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:23:20,919 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:23:20,952 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:23:20,987 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:23:21,014 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:23:21,043 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:24:34,899 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:24:34,914 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:24:34,929 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:29:08,825 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:29:08,874 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:29:08,949 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:29:08,998 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:29:09,109 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:29:09,193 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:31:31,896 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:31:31,913 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:31:31,927 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:32:45,359 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:32:45,376 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:32:45,391 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:32:45,459 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:32:45,572 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:32:45,627 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:32:45,684 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:32:45,719 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:32:45,745 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:34:42,300 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:34:42,306 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:34:42,320 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:34:42,346 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:34:42,351 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:34:42,361 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:34:42,401 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:34:42,404 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:34:42,405 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:15,557 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:35:15,557 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:35:15,592 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:15,607 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:15,629 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:15,644 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:16,162 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:35:16,589 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:16,701 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:34,115 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:35:34,182 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:35:34,201 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:34,238 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:34,252 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:35:34,286 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:34,299 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:34,321 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:34,325 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:47,484 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:35:47,497 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:35:47,522 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:47,553 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:47,559 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:47,593 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:35:47,610 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:47,622 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:35:47,629 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:37:55,532 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:37:55,535 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:37:55,549 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:37:55,568 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:37:55,587 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:37:55,823 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:37:56,342 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:37:56,517 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:37:56,707 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:38:19,244 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:38:19,247 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:38:19,280 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:38:19,293 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:38:19,316 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:38:19,332 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:38:19,464 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:38:19,533 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:38:19,626 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:40:23,497 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:40:23,512 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:40:23,525 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:42:34,895 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:42:34,913 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:42:34,936 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:42:34,939 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:42:34,965 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:42:34,980 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:42:35,040 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:42:35,059 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:42:35,131 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:42:35,199 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:42:35,291 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:42:35,309 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:44:23,571 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:44:23,624 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:44:23,629 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:44:23,645 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:44:23,658 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:44:23,673 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:44:23,720 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:44:23,721 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:44:23,743 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:44:23,761 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:44:23,812 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:44:23,831 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:44:54,169 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:44:54,260 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:44:54,266 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:44:54,361 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:44:54,386 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:44:54,407 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:44:54,944 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:44:54,961 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:44:55,034 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:44:55,052 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:44:55,081 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:44:55,100 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:45:17,817 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:45:17,818 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:45:17,852 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:45:17,855 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:45:17,908 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:45:17,921 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:45:17,922 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:45:17,934 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:51:03,542 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:51:03,581 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:51:03,614 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:51:03,627 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:51:03,635 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:51:03,662 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:51:03,699 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:51:03,713 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:51:37,664 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:51:37,666 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:51:37,691 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:51:37,742 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:51:37,763 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:51:37,764 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:51:37,837 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:51:37,850 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:52:17,885 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:52:17,950 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:52:17,968 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:52:18,221 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:52:18,239 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:52:18,270 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:52:18,385 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:52:18,399 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:52:22,928 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:52:22,951 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:52:22,973 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:52:22,996 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:56:55,560 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:56:55,562 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:56:55,577 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:56:55,584 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:56:55,600 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:56:55,618 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:56:55,695 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:56:55,713 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:56:55,732 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:56:55,758 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:56:55,803 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:56:55,832 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:57:25,701 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:57:25,707 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:57:25,734 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:57:25,747 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:57:25,766 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:57:25,774 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:57:25,778 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:57:25,778 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:57:25,807 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:57:25,817 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:57:25,821 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:57:25,829 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:58:05,937 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:58:05,956 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:58:05,967 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:58:05,967 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:58:05,990 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:58:05,995 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:58:06,007 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:58:06,009 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:58:06,032 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:58:06,050 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:58:06,068 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:58:06,085 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:58:24,920 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:58:24,942 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:58:24,960 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:58:24,968 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:58:24,990 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:58:24,993 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:58:25,004 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:58:25,005 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:58:25,561 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:58:25,580 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:58:25,608 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:58:25,621 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:59:45,397 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:59:45,407 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:59:45,423 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:59:45,445 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:59:45,464 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:59:45,526 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 23:59:45,748 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:59:45,807 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:59:45,897 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:59:45,909 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-20 23:59:45,957 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 23:59:45,998 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless

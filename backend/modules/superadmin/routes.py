@@ -46,3 +46,33 @@ async def reject_model_update(update_key: str, current_superadmin: Any = Depends
     # TODO: Implement logic to reject the update (e.g., remove from staging)
     print(f"Superadmin {current_superadmin.username} rejected update: {update_key}")
     return {"status": "success", "message": f"Update {update_key} rejected."}
+
+@router.get("/voices", response_model=List[Dict[str, Any]])
+async def get_tts_voice_status(current_superadmin: Any = Depends(get_current_superadmin_user)):
+    # TODO: Fetch real TTS voice status from backend.core.voices.versioning
+    # For now, return mock data
+    return [
+        {
+            "voice_name": "XTTS-v2",
+            "active_version": {"version": "v2.0", "registered_at": "2025-08-01T10:00:00Z"},
+            "available_versions": [
+                {"version": "v1.0", "registered_at": "2024-01-01T00:00:00Z"},
+                {"version": "v2.0", "registered_at": "2025-08-01T10:00:00Z"},
+                {"version": "v2.5", "registered_at": "2025-08-15T12:00:00Z"}
+            ]
+        },
+        {
+            "voice_name": "ElevenLabs-Pro",
+            "active_version": {"version": "1.3.0", "registered_at": "2025-07-01T00:00:00Z"},
+            "available_versions": [
+                {"version": "1.2.0", "registered_at": "2025-06-01T00:00:00Z"},
+                {"version": "1.3.0", "registered_at": "2025-07-01T00:00:00Z"}
+            ]
+        }
+    ]
+
+@router.post("/voices/activate/{voice_name}/{version}")
+async def activate_tts_voice(voice_name: str, version: str, current_superadmin: Any = Depends(get_current_superadmin_user)):
+    # TODO: Implement logic to activate a specific TTS voice version
+    print(f"Superadmin {current_superadmin.username} activated voice {voice_name} version {version}")
+    return {"status": "success", "message": f"Voice {voice_name} version {version} activated."}
