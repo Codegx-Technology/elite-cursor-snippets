@@ -1,104 +1,60 @@
-# New module to handle core + widget dependencies globally
-# - Validate dependencies on widget install/update
-# - Enforce PlanGuard rules at runtime
-# - Return structured error messages if dependency missing
-# - Provide global grace (24h) + degrade modes (slowdown, view-only)
-# Hook into widget_manager + plan_guard
+# backend/core/dependencies_enforcer.py
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from billing.plan_guard import PlanGuard, PlanGuardException
-import logging
-
-logger = logging.getLogger(__name__)
+from auth.user_models import User # Assuming User model is accessible
 
 class DependencyEnforcer:
     def __init__(self, plan_guard: PlanGuard):
         self.plan_guard = plan_guard
 
-    async def check_dependencies(self, user_id: str, dependencies: List[str]) -> Dict[str, Any]:
+    async def check_widget_dependencies(self, user_id: str, widget_name: str, dependencies: List[str]) -> None:
         """
-        Checks if a user's plan allows all specified dependencies.
-        Returns a structured response indicating allowance and any issues.
+        Validates if a user's plan allows for the given widget and its dependencies.
+        Raises PlanGuardException if not allowed.
         """
         try:
-            user_plan = await self.plan_guard.get_user_plan(user_id)
-            
-            disallowed_deps = []
+            # First, check if the user's plan state allows any operation
+            # The plan_guard.check_action_permission already handles view_only/locked modes
+            await self.plan_guard.check_action_permission(user_id, "widget_operation")
+
+            # Then, check each specific dependency
             for dep in dependencies:
-                # For simplicity, we'll assume dependencies map to allowed_models or features_enabled
-                # A more robust system would have a dedicated mapping for each dependency type
-                if dep not in user_plan.model_policy.allowed_models and dep not in user_plan.features_enabled:
-                    disallowed_deps.append(dep)
+                await self.plan_guard.check_dependency_access(user_id, dep)
             
-            if disallowed_deps:
-                message = f"Your plan ({user_plan.name}) does not allow the following dependencies: {', '.join(disallowed_deps)}. Upgrade required."
-                return {"allowed": False, "message": message, "plan_name": user_plan.name, "state": "locked"}
-            
-            # Check for grace mode or view-only mode
-            # This logic is already handled by plan_guard.get_user_plan and PlanGuardException
-            # If get_user_plan raises an exception, it will be caught by the caller
-
-            return {"allowed": True, "message": "All dependencies allowed.", "plan_name": user_plan.name, "state": "healthy"}
-        except PlanGuardException as e:
-            # Propagate PlanGuardException details
-            return {"allowed": False, "message": e.message, "state": "grace" if e.is_in_grace_mode else ("view_only" if e.is_view_only else "locked"), "grace_expires_at": e.grace_expires_at.isoformat() if e.grace_expires_at else None}
+        except PlanGuardException:
+            raise # Re-raise the exception
         except Exception as e:
-            logger.error(f"Unexpected error in DependencyEnforcer.check_dependencies for user {user_id}: {e}")
-            return {"allowed": False, "message": "Internal server error during dependency check.", "state": "error"}
+            raise PlanGuardException(f"An unexpected error occurred during dependency check for widget {widget_name}: {e}")
 
-    async def enforce_runtime(self, user_id: str, module_name: str, dependencies: List[str]) -> None:
+    async def enforce_runtime_dependencies(self, user_id: str, module_name: str, dependencies: List[str]) -> None:
         """
-        Enforces PlanGuard rules at runtime for a given module and its dependencies.
-        Raises PlanGuardException if enforcement fails (Hard Lock).
+        Enforces dependencies for a module at runtime. Raises PlanGuardException if not met.
         """
-        check_result = await self.check_dependencies(user_id, dependencies)
-        if not check_result["allowed"]:
-            raise PlanGuardException(check_result["message"], 
-                                     is_in_grace_mode=check_result.get("state") == "grace", 
-                                     grace_expires_at=check_result.get("grace_expires_at"),
-                                     is_view_only=check_result.get("state") == "view_only")
+        try:
+            # Check general module execution permission
+            await self.plan_guard.check_action_permission(user_id, f"execute_{module_name}")
 
-# Example usage (for testing purposes)
-async def main():
-    from billing.plan_guard import PlanGuard
-    plan_guard_instance = PlanGuard()
-    dependency_enforcer = DependencyEnforcer(plan_guard_instance)
+            # Check each specific dependency
+            for dep in dependencies:
+                await self.plan_guard.check_dependency_access(user_id, dep)
+        except PlanGuardException:
+            raise # Re-raise the exception
+        except Exception as e:
+            raise PlanGuardException(f"Runtime dependency enforcement failed for {module_name}: {e}")
 
-    print("\n--- Testing Dependency Enforcement ---")
+    async def check_update_dependencies(self, user_id: str, update_manifest: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Checks dependencies before applying a widget/module update.
+        """
+        widget_name = update_manifest.get("widget_name")
+        new_dependencies = update_manifest.get("dependencies", [])
+        
+        if not widget_name:
+            return {"allowed": False, "message": "Update manifest missing widget_name."}
 
-    # Test user with allowed dependencies
-    user_id_healthy = "test_pro_user"
-    deps_healthy = ["gpt-4o", "analytics"]
-    result_healthy = await dependency_enforcer.check_dependencies(user_id_healthy, deps_healthy)
-    print(f"User {user_id_healthy} with deps {deps_healthy}: {result_healthy}")
-    try:
-        await dependency_enforcer.enforce_runtime(user_id_healthy, "test_module", deps_healthy)
-        print(f"Runtime enforcement for {user_id_healthy} with {deps_healthy}: OK")
-    except PlanGuardException as e:
-        print(f"Runtime enforcement for {user_id_healthy} with {deps_healthy}: BLOCKED - {e.message}")
+        return await self.check_widget_dependencies(user_id, widget_name, new_dependencies)
 
-    # Test user with disallowed dependencies
-    user_id_blocked = "test_free_user"
-    deps_blocked = ["gpt-5", "enterprise_features"]
-    result_blocked = await dependency_enforcer.check_dependencies(user_id_blocked, deps_blocked)
-    print(f"User {user_id_blocked} with deps {deps_blocked}: {result_blocked}")
-    try:
-        await dependency_enforcer.enforce_runtime(user_id_blocked, "test_module", deps_blocked)
-        print(f"Runtime enforcement for {user_id_blocked} with {deps_blocked}: OK")
-    except PlanGuardException as e:
-        print(f"Runtime enforcement for {user_id_blocked} with {deps_blocked}: BLOCKED - {e.message}")
-
-    # Test user in grace mode
-    user_id_grace = "test_expired_pro_user"
-    deps_grace = ["gpt-4o"]
-    result_grace = await dependency_enforcer.check_dependencies(user_id_grace, deps_grace)
-    print(f"User {user_id_grace} with deps {deps_grace}: {result_grace}")
-    try:
-        await dependency_enforcer.enforce_runtime(user_id_grace, "test_module", deps_grace)
-        print(f"Runtime enforcement for {user_id_grace} with {deps_grace}: OK")
-    except PlanGuardException as e:
-        print(f"Runtime enforcement for {user_id_grace} with {deps_grace}: BLOCKED - {e.message}")
-
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+# Global instance (or can be passed via FastAPI dependency injection)
+# from database import get_db # Assuming get_db is available
+# dependencies_enforcer = DependencyEnforcer(PlanGuard(db_session_factory=get_db))

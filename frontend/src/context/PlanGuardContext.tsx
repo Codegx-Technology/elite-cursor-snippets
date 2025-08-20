@@ -25,7 +25,8 @@ export const PlanGuardProvider: React.FC<{ children: ReactNode }> = ({ children 
       setPlanStatus(status);
     } catch (err) {
       console.error("Failed to fetch plan status:", err);
-      setError("Failed to load plan status. Please try again.");
+      const msg = err instanceof Error ? err.message : "Failed to load plan status. Please try again.";
+      setError(msg);
     } finally {
       setLoading(false);
     }

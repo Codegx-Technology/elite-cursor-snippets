@@ -29,6 +29,19 @@ const nextConfig: NextConfig = {
   //   enabled: process.env.ANALYZE === 'true',
   // },
 
+  // In development, proxy API calls to the FastAPI backend to avoid CORS and ensure cookies flow.
+  async rewrites() {
+    if (process.env.NODE_ENV !== 'production') {
+      return [
+        {
+          source: '/api/:path*',
+          destination: 'http://localhost:8000/api/:path*',
+        },
+      ];
+    }
+    return [];
+  },
+
   // Headers for caching
   async headers() {
     // Do not set strict headers (like nosniff) in development because

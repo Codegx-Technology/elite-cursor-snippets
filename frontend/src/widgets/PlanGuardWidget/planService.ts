@@ -1,10 +1,56 @@
 /* src/widgets/PlanGuardWidget/planService.ts */
 import type { PlanStatus, PlanEvent } from "./types";
 
+const API_BASE = (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_BASE) || "";
+
+function joinUrl(base: string, path: string) {
+  if (!base) return path;
+  if (base.endsWith("/") && path.startsWith("/")) return base + path.slice(1);
+  if (!base.endsWith("/") && !path.startsWith("/")) return `${base}/${path}`;
+  return base + path;
+}
+
+function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem("access_token");
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchPlanStatus(userId?: string): Promise<PlanStatus> {
   const q = userId ? `?userId=${encodeURIComponent(userId)}` : "";
-  const res = await fetch(`/api/plan/status${q}`, { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch plan status");
+  const url = joinUrl(API_BASE, `/api/plan/status${q}`);
+  let res: Response;
+  try {
+    const token = getAuthToken();
+    res = await fetch(url, {
+      credentials: "include",
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+  } catch (e) {
+    throw new Error(`Network error while fetching plan status from ${url}. Possible CORS/back-end down. ${e instanceof Error ? e.message : String(e)}`);
+  }
+  if (!res.ok) {
+    let body = "";
+    try {
+      const ct = res.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const j = await res.json();
+        body = typeof j === "string" ? j : JSON.stringify(j);
+      } else {
+        body = await res.text();
+      }
+    } catch (_e) {
+      // ignore body parse errors
+    }
+    throw new Error(`Failed to fetch plan status (${res.status} ${res.statusText}) ${body ? "- " + body : ""}`);
+  }
   return res.json() as Promise<PlanStatus>;
 }
 

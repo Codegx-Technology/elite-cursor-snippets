@@ -17,7 +17,7 @@ class WidgetManager:
         """
         logger.info(f"Attempting to install widget '{widget_name}' for user {user_id}...")
         try:
-            await self.dependency_enforcer.enforce_runtime(user_id, widget_name, dependencies)
+            await self.dependency_enforcer.check_widget_dependencies(user_id, widget_name, dependencies)
             
             # Simulate installation process
             self.installed_widgets[widget_name] = {"version": widget_version, "dependencies": dependencies}
@@ -36,7 +36,7 @@ class WidgetManager:
         """
         logger.info(f"Attempting to update widget '{widget_name}' for user {user_id}...")
         try:
-            await self.dependency_enforcer.enforce_runtime(user_id, widget_name, new_dependencies)
+            await self.dependency_enforcer.check_widget_dependencies(user_id, widget_name, new_dependencies)
             
             # Simulate update process
             self.installed_widgets[widget_name] = {"version": new_widget_version, "dependencies": new_dependencies}
@@ -59,7 +59,7 @@ class WidgetManager:
 
         dependencies = self.installed_widgets[widget_name]["dependencies"]
         try:
-            await self.dependency_enforcer.enforce_runtime(user_id, widget_name, dependencies)
+            await self.dependency_enforcer.enforce_runtime_dependencies(user_id, widget_name, dependencies)
             
             logger.info(f"Widget '{widget_name}' loaded successfully for user {user_id}.")
             return {"status": "success", "message": f"Widget '{widget_name}' loaded."}

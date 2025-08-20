@@ -9,7 +9,20 @@ import logging
 import sys
 from huggingface_hub.utils import HfHub
 
+import os
+import shutil
+import json
+import hashlib
+from pathlib import Path
+from datetime import datetime
+from typing import Optional, Dict, Any, List, Tuple, Callable
+import logging
+import sys
+from sqlalchemy.orm import Session # Import Session
+
 from billing.plan_guard import PlanGuard, PlanGuardException # New import
+from backend.core.dependencies_enforcer import DependencyEnforcer # New import
+from database import get_db # New import
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +36,10 @@ class ModelStore:
     """
     _emergency_freeze_active: bool = False # Class-level flag for emergency freeze
 
-    def __init__(self):
+    def __init__(self, db_session_factory: Callable[[], Session] = get_db):
         MODELS_BASE_DIR.mkdir(parents=True, exist_ok=True)
-        self.plan_guard = PlanGuard() # Instantiate PlanGuard
+        self.plan_guard = PlanGuard(db_session_factory=db_session_factory) # Instantiate PlanGuard with db_session_factory
+        self.dependency_enforcer = DependencyEnforcer(self.plan_guard) # Instantiate DependencyEnforcer
 
     @classmethod
     def set_emergency_freeze(cls, active: bool):
@@ -122,12 +136,35 @@ class ModelStore:
         Appends activation to history.json.
         """
         self._check_freeze() # Check freeze before activating
-        # PlanGuard check for model access
+        
+        # Prepare update manifest for dependency check
+        update_manifest = {
+            "widget_name": model_name, # Using model_name as widget_name for consistency
+            "dependencies": [f"model:{model_name}@{version_tag}"], # Example dependency
+            "version_tag": version_tag,
+            "provider": provider,
+        }
+        
+        # Run dependencies_enforcer check before applying update
         try:
-            await self.plan_guard.check_model_access(user_id, model_name)
+            await self.dependency_enforcer.check_update_dependencies(user_id, update_manifest)
         except PlanGuardException as e:
-            logger.error(f"PlanGuardException in activate for user {user_id}, model {model_name}: {e}")
+            logger.error(f"PlanGuardException blocking model activation for user {user_id}, model {model_name}: {e}")
             raise e
+        except Exception as e:
+            logger.error(f"Unexpected error during dependency check for model activation for user {user_id}, model {model_name}: {e}")
+            raise PlanGuardException(f"Dependency check failed for model activation: {e}")
+
+        model_base_path = self._get_model_path(provider, model_name)
+        versions_path = self._get_versions_path(provider, model_name)
+        target_version_path = versions_path / version_tag
+        active_pointer_path = self._get_active_pointer_path(provider, model_name)
+        
+        if not target_version_path.exists():
+            raise FileNotFoundError(f"Version {version_tag} not found in staging for {model_name}.")
+
+        # Calculate checksum of the version being activated
+        version_checksum = self._calculate_dir_checksum(target_version_path)
         model_base_path = self._get_model_path(provider, model_name)
         versions_path = self._get_versions_path(provider, model_name)
         target_version_path = versions_path / version_tag
@@ -224,12 +261,31 @@ class ModelStore:
                     logger.warning(f"Could not calculate checksum for {version_dir.name}: {e}")
         return versions
 
-    def rollback(self, provider: str, model_name: str, target_tag: str) -> None:
+    async def rollback(self, user_id: str, provider: str, model_name: str, target_tag: str) -> None:
         """
         Atomically switches back to a target version.
         Validates presence + checksum before swap.
         """
         self._check_freeze() # Check freeze before rolling back
+
+        # Prepare update manifest for dependency check (for rollback)
+        rollback_manifest = {
+            "widget_name": model_name,
+            "dependencies": [f"model:{model_name}@{target_tag}"], # Dependency on the target version
+            "version_tag": target_tag,
+            "provider": provider,
+        }
+
+        # Run dependencies_enforcer check before applying rollback
+        try:
+            await self.dependency_enforcer.check_update_dependencies(user_id, rollback_manifest)
+        except PlanGuardException as e:
+            logger.error(f"PlanGuardException blocking model rollback for user {user_id}, model {model_name}: {e}")
+            raise e
+        except Exception as e:
+            logger.error(f"Unexpected error during dependency check for model rollback for user {user_id}, model {model_name}: {e}")
+            raise PlanGuardException(f"Dependency check failed for model rollback: {e}")
+
         model_base_path = self._get_model_path(provider, model_name)
         versions_path = self._get_versions_path(provider, model_name)
         target_version_path = versions_path / target_tag
