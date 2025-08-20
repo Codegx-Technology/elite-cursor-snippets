@@ -41,9 +41,13 @@ export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
-  const [isGraceMode, setIsGraceMode] = useState<boolean>(false); // New state
-  const [graceExpiresAt, setGraceExpiresAt] = useState<string | null>(null); // New state
   const { initializePayment, isLoading, error } = usePaystack();
+
+  const { planStatus, loading: planStatusLoading, error: planStatusError } = usePlanGuard(); // Use usePlanGuard hook
+
+  // Load PlanGuardWidget using the loader
+  const { component: PlanGuardWidgetComponent, allowed: planGuardWidgetAllowed, message: planGuardWidgetMessage } = useWidgetLoader("PlanGuardWidget", "test_user_id");
+  const { component: PlanGuardDashboardWidgetComponent, allowed: planGuardDashboardWidgetAllowed, message: planGuardDashboardWidgetMessage } = useWidgetLoader("PlanGuardDashboardWidget", "test_user_id");
 
   // Load plans from API with graceful fallback to static tiers
   useEffect(() => {
@@ -66,15 +70,6 @@ export default function PricingPage() {
           popular: t?.popular ?? false,
           grace_period_hours: t?.grace_period_hours ?? undefined, // New field
         }));
-
-        // Check for grace mode status from API response
-        if (data.status === 'grace_mode') {
-          setIsGraceMode(true);
-          setGraceExpiresAt(data.grace_expires_at);
-        } else {
-          setIsGraceMode(false);
-          setGraceExpiresAt(null);
-        }
 
         if (!cancelled && mapped.length) {
           setPlans(mapped);
@@ -464,9 +459,9 @@ export default function PricingPage() {
         </Card>
       )}
 
-      {isGraceMode && graceExpiresAt && (
+      {planStatus?.state === 'grace' && planStatus?.graceExpiresAt && (
         <GraceCountdownOverlay
-          graceExpiresAt={graceExpiresAt}
+          graceExpiresAt={planStatus.graceExpiresAt}
           onUpgradeClick={() => {
             // Handle upgrade click, e.g., scroll to pricing plans or open a modal
             console.log("Upgrade button clicked from grace overlay");

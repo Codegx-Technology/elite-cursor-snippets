@@ -92,7 +92,8 @@ from backend.widget_manager import WidgetManager # New import
 
 # Initialize ModelStore
 model_store = ModelStore()
-plan_guard = PlanGuard() # Initialize PlanGuard
+plan_guard = PlanGuard(db_session_factory=get_db) # Initialize PlanGuard with db_session_factory
+app.state.plan_guard = plan_guard # Store plan_guard in app.state for middleware access
 widget_manager = WidgetManager(plan_guard) # Initialize WidgetManager
 
 
@@ -130,9 +131,11 @@ FastAPIInstrumentor.instrument_app(app)
 
 from auth.tenancy import TenantMiddleware
 from backend.middleware.policy_resolver import PolicyResolverMiddleware # Import PolicyResolverMiddleware
+from backend.core.plan_guard import PlanGuardMiddleware # New import for PlanGuardMiddleware
 
 app.add_middleware(TenantMiddleware)
 app.add_middleware(PolicyResolverMiddleware) # Add PolicyResolverMiddleware
+app.add_middleware(PlanGuardMiddleware) # Add PlanGuardMiddleware
 app.add_route("/metrics", metrics)
 
 orchestrator = PipelineOrchestrator()

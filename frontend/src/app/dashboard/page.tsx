@@ -4,6 +4,8 @@ import Link from 'next/link';
 import Card from '@/components/Card';
 import { FaVideo, FaImages, FaMusic, FaUsers, FaClock, FaFlag, FaMountain, FaGlobe, FaHeart, FaExclamationTriangle } from 'react-icons/fa';
 import { useDashboard } from '@/hooks/useDashboard';
+import { useWidgetLoader } from '@/utils/widgetLoader'; // New import
+import { usePlanGuard } from '@/context/PlanGuardContext'; // New import
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean + augmentsearch
 // [CONTEXT]: Enterprise-grade dashboard with Kenya-first design and real backend integration
@@ -11,7 +13,12 @@ import { useDashboard } from '@/hooks/useDashboard';
 // [TASK]: Implement dashboard with backend API integration and mobile responsiveness
 
 export default function DashboardPage() {
-  const { stats, recentActivity, isLoading, error, backendStatus, loadDashboardData } = useDashboard();
+  const { stats, recentActivity, backendStatus, loadDashboardData } = useDashboard(); // Removed isLoading and error
+  const { planStatus, loading: planStatusLoading, error: planStatusError } = usePlanGuard(); // Get plan status from context
+
+  // Load PlanGuardWidget and PlanGuardDashboardWidget using the loader
+  const { component: PlanGuardWidgetComponent, allowed: planGuardWidgetAllowed, message: planGuardWidgetMessage } = useWidgetLoader("PlanGuardWidget", "test_user_id");
+  const { component: PlanGuardDashboardWidgetComponent, allowed: planGuardDashboardWidgetAllowed, message: planGuardDashboardWidgetMessage } = useWidgetLoader("PlanGuardDashboardWidget", "test_user_id");
 
   const getActivityStatusColor = (status: string) => {
     switch (status) {
@@ -31,20 +38,58 @@ export default function DashboardPage() {
     }
   };
 
-  if (isLoading) {
+  if (planStatusLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <span className="text-gray-600 font-medium">Loading dashboard...</span>
+          <span className="text-gray-600 font-medium">Loading plan status...</span>
           <p className="text-sm text-gray-500 mt-2">Connecting to backend services...</p>
         </div>
       </div>
     );
   }
 
+  if (planStatusError) {
+    return (
+      <Card className="p-8 text-center">
+        <div className="text-red-600 mb-4">
+          <FaExclamationTriangle className="text-4xl mx-auto mb-2" aria-label="Error Icon" />
+          <p className="font-medium">Unable to load plan status</p>
+          <p className="text-sm text-gray-600 mt-2">{planStatusError}</p>
+        </div>
+        <button
+          onClick={loadDashboardData} // Still use this to try reloading dashboard data
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+        >
+          Try Again
+        </button>
+      </Card>
+    );
+  }
+
+  const isRestricted = planStatus?.state === "view_only" || planStatus?.state === "locked";
+
   return (
     <div className="space-y-6">
+      {/* PlanGuard Widget */}
+      {planGuardWidgetAllowed ? (
+        <PlanGuardWidgetComponent userId="test_user_id" isRestricted={isRestricted} />
+      ) : (
+        <Card className="p-4 text-center bg-yellow-50 border border-yellow-200">
+          <p className="text-yellow-800">{planGuardWidgetMessage}</p>
+        </Card>
+      )}
+
+      {/* PlanGuard Dashboard Widget */}
+      {planGuardDashboardWidgetAllowed ? (
+        <PlanGuardDashboardWidgetComponent userId="test_user_id" isRestricted={isRestricted} />
+      ) : (
+        <Card className="p-4 text-center bg-yellow-50 border border-yellow-200">
+          <p className="text-yellow-800">{planGuardDashboardWidgetMessage}</p>
+        </Card>
+      )}
+
       {/* Kenya-First Hero Section */}
       <div className="bg-gradient-to-r from-green-600 via-red-600 to-black p-6 rounded-xl text-white shadow-lg">
         <div className="flex items-center justify-between">
@@ -151,7 +196,7 @@ export default function DashboardPage() {
         <h2 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link href="/video-generate">
-            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg transition-colors duration-200 flex items-center space-x-3">
+            <button className={`w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg transition-colors duration-200 flex items-center space-x-3 ${isRestricted ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isRestricted}>
               <FaVideo className="text-xl" aria-label="Video Icon" />
               <div className="text-left">
                 <h3 className="font-semibold">Generate Video</h3>
@@ -161,7 +206,7 @@ export default function DashboardPage() {
           </Link>
 
           <Link href="/gallery">
-            <button className="w-full bg-green-600 hover:bg-green-700 text-white p-4 rounded-lg transition-colors duration-200 flex items-center space-x-3">
+            <button className={`w-full bg-green-600 hover:bg-green-700 text-white p-4 rounded-lg transition-colors duration-200 flex items-center space-x-3 ${isRestricted ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isRestricted}>
               <FaImages className="text-xl" aria-label="Image Icon" />
               <div className="text-left">
                 <h3 className="font-semibold">Browse Gallery</h3>
@@ -171,7 +216,7 @@ export default function DashboardPage() {
           </Link>
 
           <Link href="/audio-studio">
-            <button className="w-full bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-lg transition-colors duration-200 flex items-center space-x-3">
+            <button className={`w-full bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-lg transition-colors duration-200 flex items-center space-x-3 ${isRestricted ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isRestricted}>
               <FaMusic className="text-xl" aria-label="Audio Icon" />
               <div className="text-left">
                 <h3 className="font-semibold">Audio Studio</h3>

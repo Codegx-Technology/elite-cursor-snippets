@@ -1,10 +1,11 @@
 "use client";
 
 import React from 'react';
+import SuperAdminDashboardWidget from '@/widgets/SuperAdminDashboardWidget/SuperAdminDashboardWidget';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
-export default function AdminUsersPage() {
+export default function AdminDashboardPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
@@ -20,15 +21,15 @@ export default function AdminUsersPage() {
   }
 
   if (!isAuthenticated || user?.role !== 'admin') {
-    router.push('/login');
+    // Redirect to login or show access denied message
+    router.push('/login'); // Or a more specific access denied page
     return null;
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Admin User Management</h1>
-      <p className="text-gray-600">This page will allow super admins to manage users.</p>
-      {/* TODO: Implement user management features */}
+      <h1 className="text-3xl font-bold text-gray-900">Super Admin Dashboard</h1>
+      <SuperAdminDashboardWidget userId={user.id} />
     </div>
   );
 }

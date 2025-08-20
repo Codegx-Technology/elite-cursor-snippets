@@ -11,6 +11,7 @@ type Props = {
   pollIntervalMs?: number;
   showUpgradeBtn?: boolean;
   theme?: "default" | "compact";
+  isRestricted?: boolean; // New prop to indicate if the widget is in a restricted state
 };
 
 export default function PlanGuardWidget({
@@ -109,7 +110,11 @@ export default function PlanGuardWidget({
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-medium">Recent enforcement events</h4>
           {showUpgradeBtn && (
-            <Button variant="ghost" onClick={() => window.open(status.upgradeUrl || "/billing", "_blank")}>
+            <Button
+              variant="ghost"
+              onClick={() => window.open(status.upgradeUrl || "/billing", "_blank")}
+              disabled={isRestricted} // Disable if restricted
+            >
               Upgrade
             </Button>
           )}

@@ -1,0 +1,82 @@
+import React from 'react';
+
+interface Props {
+  userId?: string;
+}
+
+export default function SuperAdminDashboardWidget({ userId }: Props) {
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-md">
+      <h2 className="text-2xl font-bold mb-4">Super Admin Dashboard</h2>
+      <p className="text-gray-600">Welcome, Super Admin! User ID: {userId}</p>
+
+      <div className="mt-6 space-y-4">
+        <h3 className="text-xl font-semibold">User Management</h3>
+        <ul className="list-disc list-inside ml-4">
+          <li>Create / Edit / Suspend / Delete any tenant admin or user (TODO)</li>
+          <li>Reset passwords (TODO)</li>
+          <li>Assign roles (Tenant Admin, Regular User, Developer, etc.) (TODO)</li>
+        </ul>
+
+        <h3 className="text-xl font-semibold">Tenant Management</h3>
+        <ul className="list-disc list-inside ml-4">
+          <li>Create tenants (organizations) (TODO)</li>
+          <li>View all tenants with plan info (Free, Pro, Enterprise) (TODO)</li>
+          <li>Assign / revoke tenant admins (TODO)</li>
+          <li>Manage subscription plans & billing states (TODO)</li>
+        </ul>
+
+        <h3 className="text-xl font-semibold">PlanGuard Control</h3>
+        <ul className="list-disc list-inside ml-4">
+          <li>Global PlanGuard override switch (TODO)</li>
+          <li>Force downgrade / upgrade tenants (TODO)</li>
+          <li>View all grace-period expirations (TODO)</li>
+          <li>Dependency enforcement monitor (TODO)</li>
+        </ul>
+
+        <h3 className="text-xl font-semibold">Widget Registry Oversight</h3>
+        <ul className="list-disc list-inside ml-4">
+          <li>Approve / remove widgets from marketplace (TODO)</li>
+          <li>Global widget updates (TODO)</li>
+          <li>Dependency lock management (TODO)</li>
+          <li>Audit logs of widget installs/updates (TODO)</li>
+        </ul>
+
+        <h3 className="text-xl font-semibold">Analytics & Monitoring</h3>
+        <ul className="list-disc list-inside ml-4">
+          <li>Active users per tenant (TODO)</li>
+          <li>Widget usage stats (per tenant & global) (TODO)</li>
+          <li>Billing usage (API calls, limits, overages) (TODO)</li>
+          <li>Error / crash reports (TODO)</li>
+        </ul>
+
+        <h3 className="text-xl font-semibold">System Config</h3>
+        <ul className="list-disc list-inside ml-4">
+          <li>Toggle experimental features (TODO)</li>
+          <li>Global branding (logo, theme, color) (TODO)</li>
+          <li>Backup & restore configs (TODO)</li>
+        </ul>
+
+        <h3 className="text-xl font-semibold">Audit & Logs</h3>
+        <ul className="list-disc list-inside ml-4">
+          <li>View all system events (logins, plan changes, widget installs) (TODO)</li>
+          <li>Export audit logs (CSV, JSON) (TODO)</li>
+          <li>Filter logs per tenant (TODO)</li>
+        </ul>
+
+        <h3 className="text-xl font-semibold">Security</h3>
+        <ul className="list-disc list-inside ml-4">
+          <li>Manage API keys / secrets per tenant (TODO)</li>
+          <li>Set password policies (TODO)</li>
+          <li>Global session invalidation (TODO)</li>
+        </ul>
+
+        <h3 className="text-xl font-semibold">Support</h3>
+        <ul className="list-disc list-inside ml-4">
+          <li>Ticket system (view + reassign tenant support requests) (TODO)</li>
+          <li>Impersonate tenant admin for debugging (TODO)</li>
+        </ul>
+      </div>
+    </div>
+  );
+}

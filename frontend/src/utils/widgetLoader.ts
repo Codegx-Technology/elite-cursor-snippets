@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import widgetRegistry from '@/widgets/widgetRegistry';
-import { fetchPlanStatus } from '@/widgets/PlanGuardWidget/planService'; // Reusing fetchPlanStatus
+import { usePlanGuard } from '@/context/PlanGuardContext'; // New import
 import type { PlanStatus } from '@/widgets/PlanGuardWidget/types';
 
 interface WidgetLoadResult {
@@ -12,10 +12,24 @@ interface WidgetLoadResult {
 
 // This function simulates checking widget dependencies against the user's plan
 // In a real scenario, this would call the backend /api/check-widget-dependencies
-async function checkWidgetDependencies(userId: string | undefined, widgetName: string): Promise<{ allowed: boolean; message: string; planStatus: PlanStatus | null }> {
+async function checkWidgetDependencies(userId: string | undefined, widgetName: string, currentPlanStatus: PlanStatus | null): Promise<{ allowed: boolean; message: string; planStatus: PlanStatus | null }> {
   const widgetEntry = widgetRegistry.get(widgetName);
   if (!widgetEntry) {
     return { allowed: false, message: `Widget '${widgetName}' not found in registry.`, planStatus: null };
+  }
+
+  // If plan status is not yet loaded, or there's an error, we can't check dependencies
+  if (!currentPlanStatus) {
+    return { allowed: false, message: "Plan status not available to check dependencies.", planStatus: null };
+  }
+
+  // Check plan state first
+  if (currentPlanStatus.state === "view_only" || currentPlanStatus.state === "locked") {
+    return {
+      allowed: false,
+      message: `Your plan is in "${currentPlanStatus.state}" mode. Please upgrade to access this feature.`,
+      planStatus: currentPlanStatus,
+    };
   }
 
   try {
@@ -33,9 +47,7 @@ async function checkWidgetDependencies(userId: string | undefined, widgetName: s
       return { allowed: false, message: data.message, planStatus: data };
     }
 
-    // Fetch full plan status for the widget to use (e.g., for quota bars)
-    const planStatus = await fetchPlanStatus(userId);
-    return { allowed: true, message: "", planStatus: planStatus };
+    return { allowed: true, message: "", planStatus: currentPlanStatus };
 
   } catch (error: any) {
     console.error("Error checking widget dependencies:", error);
@@ -52,11 +64,22 @@ export function useWidgetLoader(widgetName: string, userId?: string) {
     planStatus: null,
   });
 
+  const { planStatus: globalPlanStatus, loading: globalPlanLoading, error: globalPlanError } = usePlanGuard();
+
   useEffect(() => {
     let isMounted = true;
 
     async function loadWidget() {
-      const checkResult = await checkWidgetDependencies(userId, widgetName);
+      if (globalPlanLoading) {
+        setResult(prev => ({ ...prev, message: "Loading plan status..." }));
+        return;
+      }
+      if (globalPlanError) {
+        setResult(prev => ({ ...prev, message: `Error loading plan: ${globalPlanError}` }));
+        return;
+      }
+
+      const checkResult = await checkWidgetDependencies(userId, widgetName, globalPlanStatus);
       if (!isMounted) return;
 
       if (checkResult.allowed) {
@@ -104,7 +127,7 @@ export function useWidgetLoader(widgetName: string, userId?: string) {
     return () => {
       isMounted = false;
     };
-  }, [widgetName, userId]);
+  }, [widgetName, userId, globalPlanStatus, globalPlanLoading, globalPlanError]);
 
   return result;
 }

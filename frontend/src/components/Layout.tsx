@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import ErrorBoundary from './ErrorBoundary';
+import SuperAdminMenu from './SuperAdminMenu'; // New import
 
 // Dynamically import ScrollToTop on client only to avoid hydration mismatch
 const ScrollToTop = dynamic(() => import('./ScrollToTop'), { ssr: false });
@@ -58,6 +59,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       }`}>
         {/* Header */}
         <Header isSidebarOpen={isSidebarOpen} setSidebarOpen={setSidebarOpen} />
+
+        {/* Super Admin Menu (conditionally rendered) */}
+        <SuperAdminMenu />
 
         {/* Main Content with improved mobile spacing and error boundary */}
         <main className={`min-h-screen pt-4 pb-20 transition-all duration-300 ${

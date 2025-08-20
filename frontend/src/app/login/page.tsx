@@ -33,7 +33,26 @@ const LoginPage: React.FC = () => {
       const data = await response.json();
       const { access_token } = data;
       localStorage.setItem('jwt_token', access_token); // Store token securely
-      router.push('/dashboard'); // Redirect to dashboard
+
+      // Fetch user details to get the role
+      const userResponse = await fetch('http://localhost:8000/users/me', {
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+        },
+      });
+
+      if (!userResponse.ok) {
+        throw new Error('Failed to fetch user details after login.');
+      }
+
+      const userData = await userResponse.json();
+      const userRole = userData.role; // Assuming the /users/me endpoint returns a 'role' field
+
+      if (userRole === 'admin') { // Assuming 'admin' is the role for super admins
+        router.push('/admin/dashboard'); // Redirect to Super Admin Dashboard
+      } else {
+        router.push('/dashboard'); // Redirect to regular dashboard
+      }
 
     } catch (err: any) {
       const message = err?.message || 'An unexpected error occurred. Please try again.';

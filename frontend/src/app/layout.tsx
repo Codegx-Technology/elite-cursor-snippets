@@ -4,6 +4,7 @@ import "./globals.css";
 import Layout from "@/components/Layout";
 import ClientBoot from "@/components/ClientBoot";
 import { PlanGuardProvider } from "@/context/PlanGuardContext"; // New import
+import { AuthProvider } from "@/context/AuthContext"; // New import for AuthProvider
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Root layout with Kenya-first design system and enterprise styling
@@ -104,9 +105,11 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="//fonts.gstatic.com" />
       </head>
       <body className={inter.className} suppressHydrationWarning={true}>
-        <PlanGuardProvider userId="test_user_id"> {/* Wrap with PlanGuardProvider */}
-          <Layout>{children}</Layout>
-        </PlanGuardProvider>
+        <AuthProvider> {/* Wrap with AuthProvider */}
+          <PlanGuardProvider userId="test_user_id"> {/* Wrap with PlanGuardProvider */}
+            <Layout>{children}</Layout>
+          </PlanGuardProvider>
+        </AuthProvider>
         <ClientBoot />
       </body>
     </html>
