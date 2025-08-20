@@ -437,6 +437,8 @@ async def pii_redaction_middleware(request: Request, call_next):
 
 # --- Event Handlers ---
 
+from backend.superadmin.auth import create_superadmin_users # New import
+
 @app.on_event("startup")
 async def startup():
     redis_connection = redis.from_url(config.redis.url, encoding="utf-8", decode_responses=True)
@@ -448,7 +450,7 @@ async def startup():
 
     # Seed super admin users
     with next(get_db()) as db_session:
-        seed_super_admins(db_session)
+        await create_superadmin_users(db_session) # Call the new async function
 
 # --- API Endpoints ---
 
@@ -545,7 +547,7 @@ async def get_plan_status(current_user: User = Depends(get_current_active_user))
         usage = {
             "tokens": 5000, # Example: 5000 tokens used
             "audioMins": 10, # Example: 10 audio minutes used
-            ""videoMins": 5, # Example: 5 video minutes used
+            "videoMins": 5, # Example: 5 video minutes used
         }
 
         return {
@@ -1517,29 +1519,6 @@ async def load_and_execute_module(user_id: str, module_name: str) -> Dict[str, A
     except Exception as e:
         logger.error(f"Unexpected error executing module '{module_name}' for user {user_id}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error during module execution.")
-
-
-# Function to seed super admin users
-def seed_super_admins(db: Session):
-    super_admins_data = [
-        {"username": "peter", "email": "peter@shujaa.studio", "password": "aluru742!!", "role": "admin"},
-        {"username": "apollo", "email": "apollo@shujaa.studio", "password": "aluru742!!", "role": "admin"},
-    ]
-
-    for admin_data in super_admins_data:
-        existing_user = db.query(User).filter_by(username=admin_data["username"]).first()
-        if not existing_user:
-            logger.info(f"Seeding super admin user: {admin_data["username"]}")
-            create_user(
-                db,
-                username=admin_data["username"],
-                email=admin_data["email"],
-                password=admin_data["password"],
-                tenant_name="default", # Super admins belong to the default tenant
-                role=admin_data["role"]
-            )
-        else:
-            logger.info(f"Super admin user {admin_data["username"]} already exists.")
 
 
 if __name__ == "__main__":

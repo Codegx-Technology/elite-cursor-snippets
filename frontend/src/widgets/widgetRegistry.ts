@@ -27,9 +27,9 @@ widgetRegistry.set("PlanGuardDashboardWidget", {
   description: "Provides a detailed overview of user usage and enforcement history.",
 });
 
-// Example: Registering the SuperAdminDashboardWidget
-widgetRegistry.set("SuperAdminDashboardWidget", {
-  component: React.lazy(() => import('./SuperAdminDashboardWidget/SuperAdminDashboardWidget')),
+// Example: Registering the SuperAdminDashboard
+widgetRegistry.set("SuperAdminDashboard", {
+  component: React.lazy(() => import('./SuperAdminDashboard')), // Path to the new index.tsx
   dependencies: ["admin_access"], // Requires admin access
   description: "Provides a comprehensive dashboard for Super Administrators.",
 });

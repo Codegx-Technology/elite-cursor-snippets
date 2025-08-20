@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import SuperAdminDashboardWidget from '@/widgets/SuperAdminDashboardWidget/SuperAdminDashboardWidget';
+import SuperAdminDashboard from '@/widgets/SuperAdminDashboard'; // New import
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -29,7 +29,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900">Super Admin Dashboard</h1>
-      <SuperAdminDashboardWidget userId={user.id} />
+      <SuperAdminDashboard userRole={user.role} />
     </div>
   );
 }

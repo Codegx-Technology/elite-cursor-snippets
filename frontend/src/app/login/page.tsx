@@ -15,7 +15,12 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/token', {
+      // Determine login endpoint based on username for superadmin
+      const loginEndpoint = (username === 'peter' || username === 'apollo') 
+        ? 'http://localhost:8000/superadmin/token' 
+        : 'http://localhost:8000/token';
+
+      const response = await fetch(loginEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
