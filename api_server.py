@@ -381,15 +381,31 @@ async def pii_redaction_middleware(request: Request, call_next):
 
     # Grace Mode Middleware
     if hasattr(request.state, 'is_in_grace_mode') and request.state.is_in_grace_mode:
+        user_id = str(request.state.user_id) # Get user_id from request.state
+        grace_expires_at = request.state.grace_expires_at
+        
+        # Apply artificial delay
+        delay = plan_guard.get_grace_delay(grace_expires_at)
+        if delay > 0:
+            logger.info(f"User {user_id} in grace mode. Applying {delay}s delay.")
+            import time # Import time for sleep
+            time.sleep(delay)
+
         if isinstance(response, JSONResponse):
             response_body = json.loads(response.body.decode())
             response_body["status"] = "grace_mode"
-            response_body["grace_expires_at"] = request.state.grace_expires_at.isoformat()
+            response_body["grace_expires_at"] = grace_expires_at.isoformat()
             
-            time_left = request.state.grace_expires_at - datetime.now()
+            time_left = grace_expires_at - datetime.now()
             hours, remainder = divmod(int(time_left.total_seconds()), 3600)
             minutes, seconds = divmod(remainder, 60)
             response_body["remaining"] = f"{hours}h {minutes}m"
+
+            # Add slowdown message
+            if delay > 0:
+                response_body["message"] = f"You're in Grace Mode. Responses may feel slower as your plan is expiring. Upgrade now to restore full speed. ({hours}h {minutes}m left)"
+            else:
+                response_body["message"] = f"You're in Grace Mode. Your plan expires in {hours}h {minutes}m. Upgrade now!"
 
             response = JSONResponse(content=response_body, status_code=response.status_code)
 

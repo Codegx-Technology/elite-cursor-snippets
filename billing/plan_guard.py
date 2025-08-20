@@ -150,6 +150,22 @@ class PlanGuard:
         # and can perform any action (assuming other checks like check_model_access pass).
         print(f"User {user_id} on plan {user_plan.name} is allowed to perform action '{action_type}'.")
 
+    def get_grace_delay(self, grace_expires_at: datetime) -> float:
+        """
+        Calculates the artificial delay to inject during grace mode based on remaining time.
+        """
+        time_left = grace_expires_at - datetime.now()
+        remaining_hours = time_left.total_seconds() / 3600
+
+        if remaining_hours > 12:
+            return 0.0 # No slowdown for the first 12 hours
+        elif remaining_hours > 6:
+            return 1.0 # +1s delay for 12-6 hours left
+        elif remaining_hours > 1:
+            return 3.0 # +3s delay for 6-1 hours left
+        else:
+            return 5.0 # +5s delay for less than 1 hour left
+
 # Example usage (for testing purposes)
 async def main():
     plan_guard = PlanGuard()
