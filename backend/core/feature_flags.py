@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 def get_feature_flag(flag_name: str, default_value: Any) -> Any:
     """

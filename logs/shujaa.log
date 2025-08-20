@@ -8,3 +8,18 @@
 2025-08-11 01:09:40,395 - __main__ - WARNING - Failed to parse Accept-Language header: expected only letters, got 'sw-ke'
 2025-08-11 01:09:40,396 - __main__ - WARNING - Failed to parse Accept-Language header: expected only letters, got 'fr-fr'
 2025-08-11 01:09:40,396 - __main__ - WARNING - Failed to parse Accept-Language header: expected only letters, got 'de-de'
+2025-08-20 22:35:52,339 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:35:52,345 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:35:52,529 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:35:52,547 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:35:52,606 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:35:52,656 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:35:52,726 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:35:52,806 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:35:52,969 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:35:54,015 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:35:54,049 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:35:54,092 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:36:48,691 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-20 22:36:48,708 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-20 22:36:48,722 - gpu_fallback - INFO -    Cloud providers: 3

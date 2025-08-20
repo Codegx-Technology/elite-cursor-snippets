@@ -3,11 +3,20 @@ import hashlib
 from pathlib import Path
 from typing import Optional, Tuple
 import logging
-from huggingface_hub import snapshot_download, HfApi, HfHub
-from huggingface_hub.utils import HfHubDisabled, EntryNotFoundError
+from huggingface_hub import snapshot_download, HfApi
 import sys
 
 logger = logging.getLogger(__name__)
+
+# Try to import EntryNotFoundError in a version-agnostic way; define a fallback if unavailable
+try:
+    from huggingface_hub.errors import EntryNotFoundError  # newer versions
+except Exception:
+    try:
+        from huggingface_hub.utils import EntryNotFoundError  # older versions
+    except Exception:
+        class EntryNotFoundError(Exception):
+            pass
 
 def hf_cache_root() -> Path:
     """Determines the Hugging Face cache root, handling Windows specifics."""
@@ -41,16 +50,27 @@ async def is_model_present(provider: str, model_id: str, revision: Optional[str]
             # This is a more robust check than just looking at the directory
             repo_info = HfApi().repo_info(model_id, revision=revision, token=os.getenv("HF_TOKEN"))
             
-            # Check if the model is actually downloaded in the cache
-            # This is a heuristic, a more robust check would involve checking specific files
-            cache_path = HfHub.cached_repo_path(repo_id=model_id, revision=revision)
-            if Path(cache_path).exists() and any(Path(cache_path).iterdir()):
+            # Check if the model is actually downloaded in the local HF cache (heuristic)
+            # HF cache structure: <HF_HOME or ~/.cache/huggingface>/hub/models--{repo}/
+            hub_cache = hf_cache_root() / "hub"
+            repo_slug = f"models--{model_id.replace('/', '--')}"
+            found = False
+            if hub_cache.exists() and hub_cache.is_dir():
+                for d in hub_cache.iterdir():
+                    if d.is_dir() and d.name.startswith(repo_slug):
+                        # If there are files under snapshots/ or refs/, consider it cached
+                        snapshots = d / "snapshots"
+                        refs = d / "refs"
+                        if (snapshots.exists() and any(snapshots.iterdir())) or (refs.exists() and any(refs.iterdir())):
+                            found = True
+                            break
+            if found:
                 logger.info(f"Hugging Face model {model_id} (revision: {revision or 'main'}) found in cache.")
                 return True
             else:
                 logger.info(f"Hugging Face model {model_id} (revision: {revision or 'main'}) not fully cached.")
                 return False
-        except (EntryNotFoundError, HfHubDisabled):
+        except EntryNotFoundError:
             logger.warning(f"Hugging Face model {model_id} not found on Hub or Hub disabled.")
             return False
         except Exception as e:

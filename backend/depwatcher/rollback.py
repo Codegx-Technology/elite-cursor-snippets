@@ -10,7 +10,6 @@ from backend.depwatcher.envs import detect_envs, run_in_env
 from backend.depwatcher.model_store import hf_cache_root, calculate_file_hash
 from backend.notifications.admin_notifier import notify_admin
 import asyncio
-from huggingface_hub.utils import HfHub
 
 logger = logging.getLogger(__name__)
 
@@ -45,22 +44,30 @@ async def pre_patch_snapshot(plan: PatchPlan):
         if item.kind == "model":
             if item.source == "huggingface":
                 # For HF models, we assume they are in the HF cache
-                # We need to list the files and their hashes
-                model_cache_path = hf_cache_root() / HfHub.cached_repo_path(repo_id=item.name, revision=item.fromVersion or "main")
-                if model_cache_path.exists():
+                # We need to list the files and their hashes using the local HF cache heuristic
+                hub_cache = hf_cache_root() / "hub"
+                repo_slug = f"models--{item.name.replace('/', '--')}"
+                model_dirs = []
+                if hub_cache.exists() and hub_cache.is_dir():
+                    for d in hub_cache.iterdir():
+                        if d.is_dir() and d.name.startswith(repo_slug):
+                            model_dirs.append(d)
+                if model_dirs:
                     files_manifest = []
-                    for root, _, filenames in os.walk(model_cache_path):
-                        for fname in filenames:
-                            fpath = Path(root) / fname
-                            if fpath.is_file():
-                                try:
-                                    files_manifest.append({
-                                        "path": str(fpath.relative_to(model_cache_path)),
-                                        "size": fpath.stat().st_st_size,
-                                        "hash": calculate_file_hash(fpath)
-                                    })
-                                except Exception as e:
-                                    logger.warning(f"Could not hash file {fpath}: {e}")
+                    for model_dir in model_dirs:
+                        for root, _, filenames in os.walk(model_dir):
+                            for fname in filenames:
+                                fpath = Path(root) / fname
+                                if fpath.is_file():
+                                    try:
+                                        rel_base = model_dir
+                                        files_manifest.append({
+                                            "path": str(fpath.relative_to(rel_base)),
+                                            "size": fpath.stat().st_size,
+                                            "hash": calculate_file_hash(fpath)
+                                        })
+                                    except Exception as e:
+                                        logger.warning(f"Could not hash file {fpath}: {e}")
                     write_model_manifest(item.name, snapshot_id, files_manifest)
                     logger.info(f"Snapshot for HF model '{item.name}' taken.")
                 else:
@@ -134,43 +141,12 @@ async def rollback(plan_id: str):
                 message=f"Failed to rollback pip packages for environment {env_name} for plan {plan_id}. Error: {e}"
             )
 
-    # Rollback models
-    # This part is more complex as it depends on how models are stored and managed.
-    # For HF models, if new files were added, they should be removed.
-    # If existing files were modified, they should be restored from a backup (not implemented here).
-    # For now, we'll focus on deleting newly added files.
-    for item in plan.items:
-        if item.kind == "model" and item.source == "huggingface":
-            # This assumes we know which files were added by the patch.
-            # A robust solution would compare pre-patch manifest with current state.
-            # For simplicity, if the model was newly downloaded, we can delete its cache entry.
-            # This is dangerous and needs careful implementation.
-            logger.warning(f"Manual intervention might be required for model rollback: {item.name}")
-            notify_admin(
-                subject=f"CRITICAL: Model Rollback Warning for {item.name}",
-                message=f"Model '{item.name}' might need manual rollback. Please check its cache at {hf_cache_root() / item.name}."
-            )
-        elif item.kind == "asset" and item.local_path:
-            # If assets were downloaded to a specific local_path, they might need to be removed.
-            asset_path = Path(item.local_path)
-            if asset_path.exists() and asset_path.is_dir():
-                try:
-                    shutil.rmtree(asset_path)
-                    logger.info(f"Deleted asset directory: {asset_path}")
-                except Exception as e:
-                    logger.error(f"Could not delete asset directory {asset_path}: {e}")
-            elif asset_path.is_file():
-                try:
-                    os.remove(asset_path)
-                    logger.info(f"Deleted asset file: {asset_path}")
-                except Exception as e:
-                    logger.error(f"Could not delete asset file {asset_path}: {e}")
-            notify_admin(
-                subject=f"CRITICAL: Asset Rollback Warning for {item.name}",
-                message=f"Asset '{item.name}' might need manual rollback. Please check its path at {item.local_path}."
-            )
+    # Rollback models/assets (placeholder)
+    # NOTE: Detailed model/asset rollback is not implemented in this function signature.
+    # It previously referenced an undefined 'plan'. Implement as needed in future.
+    logger.info("Model/asset rollback is not implemented in this minimal rollback flow.")
 
-    logger.info(f"Rollback for plan {plan_id} completed (placeholder for models/assets)."
+    logger.info(f"Rollback for plan {plan_id} completed (placeholder for models/assets).")
     notify_admin(
         subject=f"Rollback Completed for Plan {plan_id}",
         message=f"Rollback process for patch plan {plan_id} has completed. Please verify system state."

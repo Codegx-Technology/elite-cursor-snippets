@@ -62,7 +62,7 @@ def detect_envs() -> List[Dict[str, str]]:
 def run_in_env(env: Dict[str, str], args: List[str], timeout: int = 1800) -> subprocess.CompletedProcess:
     """Runs a command within a specified Python environment."""
     cmd = [env["python"], *args]
-    logger.info(f"Running in env '{env["name"]}": {' '.join(cmd)})
+    logger.info(f"Running in env '{env['name']}': {' '.join(cmd)}")
     try:
         # Use shell=False and full paths for Windows safety
         result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=timeout)
@@ -71,11 +71,11 @@ def run_in_env(env: Dict[str, str], args: List[str], timeout: int = 1800) -> sub
             logger.warning(f"Stderr: {result.stderr}")
         return result
     except subprocess.CalledProcessError as e:
-        logger.error(f"Command failed in env '{env["name"]}": {e.cmd}\nStdout: {e.stdout}\nStderr: {e.stderr}")
+        logger.error(f"Command failed in env '{env['name']}': {e.cmd}\nStdout: {e.stdout}\nStderr: {e.stderr}")
         raise
     except subprocess.TimeoutExpired as e:
-        logger.error(f"Command timed out in env '{env["name"]}": {e.cmd}")
+        logger.error(f"Command timed out in env '{env['name']}': {e.cmd}")
         raise
     except Exception as e:
-        logger.error(f"Error running command in env '{env["name"]}": {e}")
+        logger.error(f"Error running command in env '{env['name']}': {e}")
         raise

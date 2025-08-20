@@ -4,7 +4,12 @@ import os
 import typing as t
 from PIL import Image
 import numpy as np
-import cv2
+try:
+    import cv2  # Optional, used for thresholding convenience
+    _CV2_AVAILABLE = True
+except Exception:
+    cv2 = None  # type: ignore
+    _CV2_AVAILABLE = False
 import logging
 from config_loader import get_config
 from error_utils import retry_on_exception
@@ -121,7 +126,13 @@ def detect_watermark_heuristic(image: Image.Image) -> np.ndarray:
     
     # Simple thresholding for light areas in ROI
     # You might need to adjust the threshold based on typical watermark appearance
-    _, thresh = cv2.threshold(img_np[roi_top:, roi_left:], 200, 255, cv2.THRESH_BINARY)
+    if _CV2_AVAILABLE:
+        # Use OpenCV if available
+        _, thresh = cv2.threshold(img_np[roi_top:, roi_left:], 200, 255, cv2.THRESH_BINARY)
+    else:
+        # NumPy fallback: binary mask where pixel >= 200
+        roi = img_np[roi_top:, roi_left:]
+        thresh = (roi >= 200).astype(np.uint8) * 255
     mask[roi_top:, roi_left:] = thresh
     
     return mask

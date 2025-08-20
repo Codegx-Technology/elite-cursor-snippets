@@ -34,6 +34,13 @@ widgetRegistry.set("SuperAdminDashboard", {
   description: "Provides a comprehensive dashboard for Super Administrators.",
 });
 
+// Example: Registering the UserPlanDashboardWidget
+widgetRegistry.set("UserPlanDashboardWidget", {
+  component: React.lazy(() => import('./UserPlanDashboard')), // Path to the new index.tsx
+  dependencies: ["user_dashboard_access"], // Example dependency
+  description: "Provides a user-facing dashboard for plan and usage tracking.",
+});
+
 // Add other widgets here as they are developed
 
 export default widgetRegistry;
