@@ -4,6 +4,7 @@ from dotmap import DotMap # For easy access to nested dicts
 import boto3 # Elite Cursor Snippet: boto3_import
 from botocore.exceptions import ClientError # Elite Cursor Snippet: botocore_exception_import
 import logging
+import base64
 
 # Import Vault and Kubernetes clients
 import hvac

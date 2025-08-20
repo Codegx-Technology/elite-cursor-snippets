@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 
 @dataclass
@@ -49,9 +49,9 @@ class Visibility:
 class Plan:
     name: str
     price: float # Renamed from cost_per_month to align with snippet
-    currency: str = "KES" # Added currency with Kenya-first default
     max_requests_per_day: int # Keep existing for now, will add max_requests_per_month
     features_enabled: List[str]
+    currency: str = "KES" # Added currency with Kenya-first default
     tier_code: str = "FREE" # 'FREE' | 'PRO' | 'BUSINESS' | 'ENTERPRISE'
     model_policy: ModelPolicy = field(default_factory=ModelPolicy)
     quotas: Quotas = field(default_factory=Quotas)
@@ -133,10 +133,6 @@ def get_default_plans() -> List[Plan]:
             cost_caps=CostCaps(monthlyUsd=0.0, hardStop=True),
             visibility=Visibility(showBetaModels=False, allowUnverified=False),
             max_requests_per_month=5000,
-            rollback_window_days=3
-        ),
-                    visibility=Visibility(showBetaModels=False, allowUnverified=False),
-            max_requests_per_month=5000,
             rollback_window_days=3,
             grace_period_hours=0 # Free users get no grace
         ),
@@ -182,29 +178,6 @@ def get_default_plans() -> List[Plan]:
             max_requests_per_month=500000,
             rollback_window_days=30,
             grace_period_hours=72 # Enterprise users get 72 hours grace
-        ),
-    ]
-        Plan(
-            name="Enterprise",
-            price=15000,
-            currency="KES",
-            max_requests_per_day=16666, # 500000 requests / 30 days (approx)
-            features_enabled=["text_gen", "image_gen", "tts", "stt", "youtube_upload", "analytics", "crm_integration", "priority_support", "dedicated_instance"],
-            tier_code="ENTERPRISE",
-            model_policy=ModelPolicy(
-                defaultRouting="pinned",
-                pinned={"tts":PinnedModel(model="xtts-v2",version="a1b2c3d4")},
-                providers={"tts":["local","elevenlabs","xtts"]},
-                allowed_models=["gpt-5", "gpt-5.5", "custom-finetunes"],
-                default_pinned_model="gpt-5.5",
-                tts_voices=["xtts-v2", "elevenlabs-pro", "elevenlabs-multi"]
-            ),
-            quotas=Quotas(monthly=MonthlyQuotas(tokens=5000000, audioSecs=30000, videoMins=500, jobs=5000), concurrency=100, rateLimit=RateLimit(rpm=5000, rps=500, burst=1000)),
-            priority_level=5,
-            cost_caps=CostCaps(monthlyUsd=5000.0, hardStop=True),
-            visibility=Visibility(showBetaModels=True, allowUnverified=True),
-            max_requests_per_month=500000,
-            rollback_window_days=30
         ),
     ]
 

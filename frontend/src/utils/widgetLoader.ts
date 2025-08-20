@@ -3,6 +3,7 @@ import widgetRegistry from '@/widgets/widgetRegistry';
 import { usePlanGuard } from '@/context/PlanGuardContext'; // New import
 import type { PlanStatus } from '@/widgets/PlanGuardWidget/types';
 import { checkWidgetDependencies as checkDependenciesFromGuard } from '@/lib/dependencyGuard'; // Import from new utility
+import { getDenyMessage } from '@/ui/planMessages'; // New import
 
 interface WidgetLoadResult {
   component: React.ComponentType<any> | null;
@@ -90,7 +91,7 @@ export function useWidgetLoader(widgetName: string, userId?: string) {
         setResult({
           component: null,
           allowed: false,
-          message: checkResult.message,
+          message: getDenyMessage(checkResult.message), // Use getDenyMessage
           planStatus: checkResult.planStatus,
         });
       }

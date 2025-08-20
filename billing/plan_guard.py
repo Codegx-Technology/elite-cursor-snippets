@@ -3,8 +3,9 @@ from typing import Optional, List, Dict, Any, Callable
 from dataclasses import asdict
 from datetime import datetime, timedelta # Import datetime and timedelta
 from sqlalchemy.orm import Session # Import Session
-from auth.user_models import User, Role # Import User and Role
+from auth.user_models import User # Import User only; no Role enum defined
 from billing_models import get_default_plans, Plan, ModelPolicy, Quotas, MonthlyQuotas, RateLimit, PinnedModel, CostCaps, Visibility
+from backend.notifications.admin_notify import send_admin_notification # New import
 
 class PlanGuardException(Exception):
     """Custom exception for PlanGuard related errors."""
@@ -20,7 +21,7 @@ class PlanGuard:
         self._cached_plans: Optional[List[Plan]] = None
         self.db_session_factory = db_session_factory # Store the session factory
 
-    async def _fetch_plans_from_api(self) -> Optional[List[Plan]>:
+    async def _fetch_plans_from_api(self) -> Optional[List[Plan]]:
         try:
             response = requests.get(f"{self.backend_api_url}/api/plans")
             response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
@@ -62,7 +63,8 @@ class PlanGuard:
         
         with self.db_session_factory() as db:
             user = db.query(User).filter(User.id == user_id).first()
-            if user and user.role == Role.ADMIN: # Assuming 'admin' is the role for super admins
+            # Treat 'admin' (and common variants) as super admin
+            if user and isinstance(user.role, str) and user.role.lower() in ("admin", "superadmin", "super_admin"):
                 return True
             return False
 
@@ -112,33 +114,83 @@ class PlanGuard:
         return current_plan
 
     async def check_model_access(self, user_id: str, requested_model: str) -> None:
+        if await self._is_super_admin(user_id):
+            print(f"Super admin {user_id} bypassing PlanGuard for model access '{requested_model}'.")
+            return # Super admins bypass all checks
+
         user_plan = await self.get_user_plan(user_id)
         if requested_model not in user_plan.model_policy.allowed_models:
-            raise PlanGuardException(f"Model '{requested_model}' is not allowed for your '{user_plan.name}' plan.")
+            message = f"Model '{requested_model}' is not allowed for your '{user_plan.name}' plan."
+            send_admin_notification(
+                subject=f"PlanGuard Block: Model Access Denied for {user_id}",
+                body=f"User {user_id} (Plan: {user_plan.name}) attempted to access model '{requested_model}' but was denied. Reason: {message}",
+                metadata={"user_id": user_id, "action": "model_access", "resource": requested_model, "reason_code": "NOT_ENTITLED", "plan_name": user_plan.name}
+            )
+            raise PlanGuardException(message)
 
     async def check_tts_voice_access(self, user_id: str, requested_voice: str) -> None:
+        if await self._is_super_admin(user_id):
+            print(f"Super admin {user_id} bypassing PlanGuard for TTS voice access '{requested_voice}'.")
+            return # Super admins bypass all checks
+
         user_plan = await self.get_user_plan(user_id)
         if requested_voice not in user_plan.model_policy.tts_voices:
-            raise PlanGuardException(f"TTS voice '{requested_voice}' is not allowed for your '{user_plan.name}' plan.")
+            message = f"TTS voice '{requested_voice}' is not allowed for your '{user_plan.name}' plan."
+            send_admin_notification(
+                subject=f"PlanGuard Block: TTS Voice Access Denied for {user_id}",
+                body=f"User {user_id} (Plan: {user_plan.name}) attempted to access TTS voice '{requested_voice}' but was denied. Reason: {message}",
+                metadata={"user_id": user_id, "action": "tts_voice_access", "resource": requested_voice, "reason_code": "NOT_ENTITLED", "plan_name": user_plan.name}
+            )
+            raise PlanGuardException(message)
 
     async def check_download_permission(self, user_id: str) -> None:
+        if await self._is_super_admin(user_id):
+            print(f"Super admin {user_id} bypassing PlanGuard for download permission.")
+            return # Super admins bypass all checks
+
         user_plan = await self.get_user_plan(user_id)
         # For simplicity, assume only Enterprise plan allows direct downloads
         if user_plan.name != "Enterprise":
-            raise PlanGuardException(f"Direct downloads are not allowed for your '{user_plan.name}' plan. Please upgrade to Enterprise.")
+            message = f"Direct downloads are not allowed for your '{user_plan.name}' plan. Please upgrade to Enterprise."
+            send_admin_notification(
+                subject=f"PlanGuard Block: Download Permission Denied for {user_id}",
+                body=f"User {user_id} (Plan: {user_plan.name}) attempted to download but was denied. Reason: {message}",
+                metadata={"user_id": user_id, "action": "download_permission", "reason_code": "NOT_ENTITLED", "plan_name": user_plan.name}
+            )
+            raise PlanGuardException(message)
 
     async def check_runtime_usage(self, user_id: str, feature: str, usage_amount: int = 1) -> None:
+        if await self._is_super_admin(user_id):
+            print(f"Super admin {user_id} bypassing PlanGuard for runtime usage '{feature}'.")
+            return # Super admins bypass all checks
+
         user_plan = await self.get_user_plan(user_id)
         # This is a simplified check. Real implementation would track actual usage.
         if feature == "video_generation" and user_plan.quotas.monthly.videoMins == 0:
-            raise PlanGuardException(f"Video generation is not allowed for your '{user_plan.name}' plan.")
+            message = f"Video generation is not allowed for your '{user_plan.name}' plan."
+            send_admin_notification(
+                subject=f"PlanGuard Block: Runtime Usage Denied for {user_id}",
+                body=f"User {user_id} (Plan: {user_plan.name}) attempted to use feature '{feature}' but was denied. Reason: {message}",
+                metadata={"user_id": user_id, "action": "runtime_usage", "resource": feature, "reason_code": "NOT_ENTITLED", "plan_name": user_plan.name}
+            )
+            raise PlanGuardException(message)
         # Add more detailed quota checks here based on feature and usage_amount
         print(f"User {user_id} on plan {user_plan.name} is allowed to use {feature}.")
 
     async def check_rollback_permission(self, user_id: str) -> None:
+        if await self._is_super_admin(user_id):
+            print(f"Super admin {user_id} bypassing PlanGuard for rollback permission.")
+            return # Super admins bypass all checks
+
         user_plan = await self.get_user_plan(user_id)
         if user_plan.rollback_window_days == 0:
-            raise PlanGuardException(f"Rollback is not allowed for your '{user_plan.name}' plan. Please upgrade.")
+            message = f"Rollback is not allowed for your '{user_plan.name}' plan. Please upgrade."
+            send_admin_notification(
+                subject=f"PlanGuard Block: Rollback Permission Denied for {user_id}",
+                body=f"User {user_id} (Plan: {user_plan.name}) attempted to rollback but was denied. Reason: {message}",
+                metadata={"user_id": user_id, "action": "rollback_permission", "reason_code": "NOT_ENTITLED", "plan_name": user_plan.name}
+            )
+            raise PlanGuardException(message)
         print(f"User {user_id} on plan {user_plan.name} has rollback permission.")
 
     async def check_action_permission(self, user_id: str, action_type: str) -> None:
@@ -161,9 +213,19 @@ class PlanGuard:
                     print(f"User {user_id} is in view-only mode, but action '{action_type}' is allowed.")
                     return # Allowed
                 else:
+                    send_admin_notification(
+                        subject=f"PlanGuard Block: Action Denied in View-Only for {user_id}",
+                        body=f"User {user_id} (Plan: {e.plan_name if hasattr(e, 'plan_name') else 'N/A'}) attempted action '{action_type}' but was denied in view-only mode. Reason: {e.message}",
+                        metadata={"user_id": user_id, "action": action_type, "reason_code": "VIEW_ONLY_BLOCKED", "plan_name": e.plan_name if hasattr(e, 'plan_name') else 'N/A'}
+                    )
                     raise PlanGuardException(f"Action '{action_type}' is blocked in view-only mode. Upgrade required for full access.", is_view_only=True)
             else:
                 # Re-raise other PlanGuardExceptions
+                send_admin_notification(
+                    subject=f"PlanGuard Block: Action Denied for {user_id}",
+                    body=f"User {user_id} (Plan: {e.plan_name if hasattr(e, 'plan_name') else 'N/A'}) attempted action '{action_type}' but was denied. Reason: {e.message}",
+                    metadata={"user_id": user_id, "action": action_type, "reason_code": "PLAN_BLOCKED", "plan_name": e.plan_name if hasattr(e, 'plan_name') else 'N/A'}
+                )
                 raise e
         
         # If no exception was raised by get_user_plan, the user is active or in grace mode
@@ -183,7 +245,13 @@ class PlanGuard:
         # Assuming dependencies are mapped to allowed_models or features_enabled in the plan
         if dependency not in user_plan.model_policy.allowed_models and \
            dependency not in user_plan.features_enabled: # Assuming features_enabled is a list of strings
-            raise PlanGuardException(f"Dependency '{dependency}' is not allowed for your '{user_plan.name}' plan. Upgrade required.")
+            message = f"Dependency '{dependency}' is not allowed for your '{user_plan.name}' plan. Upgrade required."
+            send_admin_notification(
+                subject=f"PlanGuard Block: Dependency Access Denied for {user_id}",
+                body=f"User {user_id} (Plan: {user_plan.name}) attempted to access dependency '{dependency}' but was denied. Reason: {message}",
+                metadata={"user_id": user_id, "action": "dependency_access", "resource": dependency, "reason_code": "NOT_ENTITLED", "plan_name": user_plan.name}
+            )
+            raise PlanGuardException(message)
         print(f"User {user_id} on plan {user_plan.name} is allowed to use dependency '{dependency}'.")
 
     def get_grace_delay(self, grace_expires_at: datetime) -> float:

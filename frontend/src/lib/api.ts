@@ -5,6 +5,9 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
+import { canUse, canDownload } from '@/core/planGuard'; // New import
+import { useAuth } from '@/context/AuthContext'; // New import
+
 export interface ApiResponse<T> {
   data?: T;
   error?: string;
@@ -330,6 +333,11 @@ class ApiClient {
     language?: string;
     speed?: number;
   }): Promise<ApiResponse<VideoGenerationResponse>> {
+    const { user } = useAuth(); // Get user from context
+    const check = canUse('tts:generation', { userId: user?.id || '', userRole: user?.role });
+    if (!check.ok) {
+      return { error: check.reason || 'TTS generation denied by PlanGuard', status: 403 };
+    }
     return this.request('/api/generate/audio', {
       method: 'POST',
       body: JSON.stringify(request),
@@ -560,10 +568,20 @@ class ApiClient {
 
   // Local Models
   async getLocalModels(): Promise<ApiResponse<LocalModel[]>> {
+    const { user } = useAuth(); // Get user from context
+    const check = canUse('models:local', { userId: user?.id || '', userRole: user?.role });
+    if (!check.ok) {
+      return { error: check.reason || 'Access denied by PlanGuard', status: 403 };
+    }
     return this.request('/api/models/local');
   }
 
   async downloadLocalModel(modelId: string): Promise<ApiResponse<{ success: boolean }>> {
+    const { user } = useAuth(); // Get user from context
+    const check = canDownload(`model:${modelId}`, { userId: user?.id || '', userRole: user?.role });
+    if (!check.ok) {
+      return { error: check.reason || 'Download denied by PlanGuard', status: 403 };
+    }
     return this.request(`/api/models/local/${modelId}/download`, {
       method: 'POST',
     });
@@ -599,6 +617,31 @@ class ApiClient {
     return this.request('/api/user/profile', {
       method: 'PUT',
       body: JSON.stringify(data),
+    });
+  }
+
+  // Widget Management
+  async installWidget(widgetName: string, widgetVersion: string, dependencies: string[]): Promise<ApiResponse<{ success: boolean; message: string }>> {
+    const { user } = useAuth();
+    const check = canDownload(`widget:${widgetName}`, { userId: user?.id || '', userRole: user?.role });
+    if (!check.ok) {
+      return { error: check.reason || 'Widget installation denied by PlanGuard', status: 403 };
+    }
+    return this.request('/api/widgets/install', {
+      method: 'POST',
+      body: JSON.stringify({ widget_name: widgetName, widget_version: widgetVersion, dependencies }),
+    });
+  }
+
+  async updateWidget(widgetName: string, newWidgetVersion: string, newDependencies: string[]): Promise<ApiResponse<{ success: boolean; message: string }>> {
+    const { user } = useAuth();
+    const check = canDownload(`widget:${widgetName}`, { userId: user?.id || '', userRole: user?.role });
+    if (!check.ok) {
+      return { error: check.reason || 'Widget update denied by PlanGuard', status: 403 };
+    }
+    return this.request('/api/widgets/update', {
+      method: 'POST',
+      body: JSON.stringify({ widget_name: widgetName, new_widget_version: newWidgetVersion, new_dependencies: newDependencies }),
     });
   }
 }

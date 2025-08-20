@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any, List, Tuple
 import logging
 import sys
-from huggingface_hub.utils import HfHub
+# Note: Avoid importing deprecated/removed symbols from huggingface_hub.utils
 
 import os
 import shutil
