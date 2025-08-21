@@ -11,7 +11,8 @@ class RedisClient:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(RedisClient, cls).__new__(cls)
-            cls._instance._client = cls._instance._connect()
+            # Do NOT connect during import/startup. Defer until first use.
+            cls._instance._client = None
         return cls._instance
 
     def _connect(self):
@@ -27,6 +28,9 @@ class RedisClient:
             return None
 
     def get_client(self):
+        # Lazy-connect on first access.
+        if self._client is None:
+            self._client = self._connect()
         return self._client
 
     def increment_counter(self, user_id: str, feature_name: str, expiry_seconds: int = 86400): # 24 hours
@@ -34,15 +38,16 @@ class RedisClient:
         // [TASK]: Increment a counter for a user and feature
         // [GOAL]: Track usage for billing limits
         """
-        if not self._client:
+        client = self.get_client()
+        if not client:
             logger.warning("Redis client not available. Cannot increment counter.")
             return
         
         key = f"user:{user_id}:feature:{feature_name}"
         try:
-            count = self._client.incr(key)
+            count = client.incr(key)
             if count == 1: # Set expiry only on first increment
-                self._client.expire(key, expiry_seconds)
+                client.expire(key, expiry_seconds)
             logger.debug(f"Incremented {key} to {count}")
             return count
         except Exception as e:
@@ -54,13 +59,14 @@ class RedisClient:
         // [TASK]: Get the current value of a counter
         // [GOAL]: Retrieve usage for billing limits
         """
-        if not self._client:
+        client = self.get_client()
+        if not client:
             logger.warning("Redis client not available. Cannot get counter.")
             return 0
 
         key = f"user:{user_id}:feature:{feature_name}"
         try:
-            count = self._client.get(key)
+            count = client.get(key)
             return int(count) if count else 0
         except Exception as e:
             logger.error(f"Failed to get Redis counter {key}: {e}")

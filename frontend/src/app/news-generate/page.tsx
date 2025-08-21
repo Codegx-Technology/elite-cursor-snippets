@@ -154,34 +154,14 @@ export default function NewsGeneratePage() {
       handleApiResponse(
         response,
         (data) => {
-          setCurrentJobId(data.video_id);
-          setProgress({
-            stage: 'Processing',
-            progress: 20,
-            message: 'News video generation started successfully...',
-            isGenerating: true
-          });
-          // Start polling for job status
-          pollJobStatus(data.video_id);
+          startPolling(data.video_id);
         },
         (error) => {
-          setError(error);
-          setProgress({
-            stage: 'Error',
-            progress: 0,
-            message: 'Failed to start news video generation',
-            isGenerating: false
-          });
+          setJobError(error);
         }
       );
-    } catch (err) {
-      setError('Failed to start news video generation');
-      setProgress({
-        stage: 'Error',
-        progress: 0,
-        message: 'Network error occurred',
-        isGenerating: false
-      });
+    } catch (err: any) {
+      setJobError(err.message || 'Failed to start news video generation');
     }
   };
 

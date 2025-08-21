@@ -257,15 +257,15 @@ export default function VideoGeneratePage() {
               </div>
 
               {/* Error Display */}
-              {error && (
+              {jobError && (
                 <div className="bg-red-50 border border-red-200 p-4 rounded-lg mb-4">
                   <div className="flex items-center space-x-2">
                     <FaExclamationTriangle className="text-red-600" aria-label="Error Icon" />
                     <p className="text-red-800 font-medium">Generation Error</p>
                   </div>
-                  <p className="text-red-700 text-sm mt-1">{error}</p>
+                  <p className="text-red-700 text-sm mt-1">{jobError}</p>
                   <button
-                    onClick={() => setError(null)}
+                    onClick={() => setJobError(null)}
                     className="text-red-600 hover:text-red-800 text-sm mt-2 underline"
                   >
                     Dismiss

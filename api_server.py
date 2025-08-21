@@ -414,7 +414,10 @@ async def pii_redaction_middleware(request: Request, call_next):
         # PII redaction middleware doesn't have direct access to db session easily
         # For now, we'll log using the regular logger or a simplified audit log call
         # A more robust solution would involve a dependency injection for db or a background task.
-        logger.info(f"Access to sensitive endpoint: {request.url.path}. PII redaction applied to logs.", extra={'user_id': request.state.get('user_id', None), 'ip_address': request.client.host})
+        logger.info(
+            f"Access to sensitive endpoint: {request.url.path}. PII redaction applied to logs.",
+            extra={'user_id': getattr(request.state, 'user_id', None), 'ip_address': request.client.host}
+        )
         # In a real scenario, you would read the request body, redact PII,
         # and then pass the redacted body to the next middleware/endpoint.
         # This requires careful handling of async request body reading.
@@ -460,9 +463,21 @@ from backend.superadmin.auth import create_superadmin_users # New import
 
 @app.on_event("startup")
 async def startup():
-    redis_connection = redis.from_url(config.redis.url, encoding="utf-8", decode_responses=True)
-    await FastAPILimiter.init(redis_connection)
-    logger.info("FastAPI-Limiter initialized.")
+    # Initialize rate limiter Redis with safe fallback
+    try:
+        redis_url = None
+        if hasattr(config, 'redis') and hasattr(config.redis, 'url'):
+            redis_url = config.redis.url
+        # Fallback if URL missing or missing scheme
+        if not redis_url or not str(redis_url).startswith(("redis://", "rediss://", "unix://")):
+            logger.warning("Invalid or missing Redis URL in config; defaulting to redis://localhost:6379/0")
+            redis_url = "redis://localhost:6379/0"
+
+        redis_connection = redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
+        await FastAPILimiter.init(redis_connection)
+        logger.info("FastAPI-Limiter initialized.")
+    except Exception as e:
+        logger.warning(f"FastAPI-Limiter Redis not available, continuing without rate limiting: {e}")
     
     # Run safety rollback check on boot
     run_safety_rollback_on_boot()
@@ -473,12 +488,12 @@ async def startup():
 
 # --- API Endpoints ---
 
-@app.get("/health", dependencies=[Depends(RateLimiter(times=5, seconds=10))])
+@app.get("/health")
 async def health_check(locale: str = Depends(get_current_locale)):
     logger.info("Health check requested.")
     return {"status": gettext("status_ok", locale=locale), "message": gettext("api_running_message", locale=locale)}
 
-@app.post("/register", response_model=UserCreate, dependencies=[Depends(RateLimiter(times=2, seconds=60))])
+@app.post("/register", response_model=UserCreate)
 async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db), locale: str = Depends(get_current_locale), current_user: User = Depends(get_current_active_user), request: Request = None):
     if user.role == Role.ADMIN and (not current_user or current_user.role != Role.ADMIN):
         raise HTTPException(status_code=403, detail="Only admins can create other admins")
@@ -489,7 +504,7 @@ async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db)
     audit_log_manager.log_event(db, AuditEventType.USER_REGISTER, f"User registered: {user.username} (Tenant: {user.tenant_name})", user_id=db_user.id, tenant_id=db_user.tenant_id, ip_address=request.client.host) # Pass request
     return db_user
 
-@app.post("/token", response_model=Token, dependencies=[Depends(RateLimiter(times=5, seconds=30))])
+@app.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db), request: Request = None):
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:

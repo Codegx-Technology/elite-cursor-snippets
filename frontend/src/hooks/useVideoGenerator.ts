@@ -1,6 +1,8 @@
 
 import { useState } from 'react';
 import { apiClient, handleApiResponse } from '@/lib/api';
+import { useJobStatusPolling } from './useJobStatusPolling';
+import { useError } from '@/context/ErrorContext';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Custom hook for managing enterprise-grade video generation state and logic
@@ -158,14 +160,9 @@ export function useVideoGenerator() {
           });
         }
       );
-    } catch (err) {
-      setError('Failed to start video generation');
-      setProgress({
-        stage: 'Error',
-        progress: 0,
-        message: 'Network error occurred',
-        isGenerating: false
-      });
+    } catch (err: any) {
+      setJobError(err.message || 'Failed to start video generation');
+      setGlobalError(err.message || 'Failed to start video generation');
     }
   };
 
@@ -217,7 +214,7 @@ export function useVideoGenerator() {
                 message: 'Video generation failed',
                 isGenerating: false
               });
-              setError(job.error_message || 'Video generation failed');
+              setGlobalError(job.error_message || 'Video generation failed');
               setCurrentJobId(null);
             } else {
               const stageIndex = Math.min(Math.floor(job.progress / 20), stages.length - 1);
@@ -240,7 +237,7 @@ export function useVideoGenerator() {
                   message: 'Video generation timed out',
                   isGenerating: false
                 });
-                setError('Video generation timed out. Please try again.');
+                setGlobalError('Video generation timed out. Please try again.');
                 setCurrentJobId(null);
               }
             }
@@ -263,7 +260,7 @@ export function useVideoGenerator() {
           message: 'Network error during generation',
           isGenerating: false
         });
-        setError('Network error during generation');
+        setGlobalError('Network error during generation');
         setCurrentJobId(null);
       }
     };
@@ -283,14 +280,14 @@ export function useVideoGenerator() {
   return {
     formData,
     progress,
-    generatedVideo,
-    error,
-    setError,
-    scriptError, // Expose scriptError
+    generatedUrl,
+    jobError,
+    scriptError,
     friendlyFallback,
     handleInputChange,
     handleGenerateVideo,
     handleStopGeneration,
+    setJobError,
     setFriendlyFallback
   };
 }

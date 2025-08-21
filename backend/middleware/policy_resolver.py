@@ -12,12 +12,20 @@ config = get_config()
 
 class PolicyResolverMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[JSONResponse]]):
-        # Skip policy resolution for health checks or static files
-        if request.url.path.startswith("/health") or request.url.path.startswith("/static"):
+        # Skip policy resolution for health checks, docs, openapi, auth, or static files
+        if (
+            request.url.path.startswith("/health")
+            or request.url.path.startswith("/static")
+            or request.url.path.startswith("/docs")
+            or request.url.path.startswith("/openapi")
+            or request.url.path.startswith("/token")
+            or request.url.path.startswith("/register")
+            or request.url.path.startswith("/superadmin/token")
+        ):
             return await call_next(request)
 
-        # Get user ID from request state (assuming it's set by an auth middleware)
-        user_id = request.state.get("user_id") # Or however user_id is extracted
+        # Get user ID from request state (Starlette State is attribute-based)
+        user_id = getattr(request.state, "user_id", None)
 
         user_plan = None
         if not user_id:
