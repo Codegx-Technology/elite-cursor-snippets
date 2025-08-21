@@ -409,7 +409,7 @@ def create_gradio_interface():
             video_path = studio.generate_video(prompt)
             
             # Get video info
-            video_info = f"✅ Video generated successfully!\n📁 Path: {video_path}\n⏱️ Duration: ~14 seconds"
+            video_info = f"✅ Video generated successfully!\n📁 Path: {video_path}\n(STOPWATCH) Duration: ~14 seconds"
             
             return video_info, video_path, "Ready for download"
             
@@ -441,7 +441,7 @@ def create_gradio_interface():
         outputs=[
             gr.Textbox(label="📊 Status", lines=3),
             gr.Video(label="🎬 Generated Video"),
-            gr.Textbox(label="💬 Message")
+            gr.Textbox(label="(SPEECH_BALLOON) Message")
         ],
         title="🔥 Shujaa Studio - African AI Video Generator",
         description="Transform your stories into videos with AI - 100% Offline, 100% African",
