@@ -123,10 +123,18 @@ export default function NewsGeneratePage() {
       } else if (inputMode === 'query' && formData.newsQuery) {
         requestData.news_query = formData.newsQuery;
       } else if (inputMode === 'script' && formData.scriptFile) {
-        // For script upload, we'd need to handle file upload differently
-        // For now, we'll use the filename as a placeholder
-        requestData.script_content = `Script from file: ${formData.scriptFile.name}`;
+        const fileContent = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.onerror = (e) => reject(e);
+          reader.readAsText(formData.scriptFile);
+        });
+        requestData.script_content = fileContent;
       } else {
+        setError('Please provide news URL, search query, or upload a script file');
+        setProgress(prev => ({ ...prev, isGenerating: false }));
+        return;
+      }
         setError('Please provide news URL, search query, or upload a script file');
         setProgress(prev => ({ ...prev, isGenerating: false }));
         return;
