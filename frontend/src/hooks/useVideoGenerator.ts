@@ -49,6 +49,7 @@ export function useVideoGenerator() {
 
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [scriptError, setScriptError] = useState<string | null>(null);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [friendlyFallback, setFriendlyFallback] = useState<{
     message: string;
@@ -61,11 +62,23 @@ export function useVideoGenerator() {
       ...prev,
       [field]: value
     }));
+
+    if (field === 'script') {
+      if (typeof value === 'string' && value.trim().length < 10) {
+        setScriptError('Script must be at least 10 characters long.');
+      } else {
+        setScriptError(null);
+      }
+    }
   };
 
   const handleGenerateVideo = async () => {
     if (!formData.script.trim()) {
-      alert('Please enter a video script to continue.');
+      setScriptError('Please enter a video script to continue.');
+      return;
+    }
+    if (scriptError) {
+      alert('Please fix the script errors before generating.');
       return;
     }
 
@@ -161,11 +174,11 @@ export function useVideoGenerator() {
     let attempts = 0;
 
     const stages = [
-      { stage: 'Script Analysis', progress: 30, message: 'Understanding your Kenya-first narrative...' },
-      { stage: 'Generating Visuals', progress: 50, message: 'Creating authentic African imagery...' },
-      { stage: 'Adding Voice', progress: 70, message: 'Recording Kenyan voice narration...' },
-      { stage: 'Cultural Enhancement', progress: 85, message: 'Infusing cultural elements and music...' },
-      { stage: 'Final Processing', progress: 95, message: 'Polishing your masterpiece...' }
+      { stage: 'Script Analysis', progress: 30, message: 'Analyzing your script and understanding the narrative.' },
+      { stage: 'Generating Visuals', progress: 50, message: 'Creating stunning visuals based on your script.' },
+      { stage: 'Adding Voice', progress: 70, message: 'Generating authentic voiceovers for your video.' },
+      { stage: 'Cultural Enhancement', progress: 85, message: 'Infusing unique cultural elements and background music.' },
+      { stage: 'Final Processing', progress: 95, message: 'Assembling and polishing your high-quality video.' }
     ];
 
     const poll = async () => {
@@ -213,7 +226,7 @@ export function useVideoGenerator() {
               setProgress({
                 stage: currentStage.stage,
                 progress: job.progress || currentStage.progress,
-                message: currentStage.message,
+                message: job.message || currentStage.message, // Use job.message if available
                 isGenerating: true
               });
 
@@ -273,6 +286,7 @@ export function useVideoGenerator() {
     generatedVideo,
     error,
     setError,
+    scriptError, // Expose scriptError
     friendlyFallback,
     handleInputChange,
     handleGenerateVideo,

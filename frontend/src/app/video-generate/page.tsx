@@ -279,7 +279,7 @@ export default function VideoGeneratePage() {
                   <button
                     onClick={handleGenerateVideo}
                     className="btn-primary flex items-center space-x-2 flex-1"
-                    disabled={!formData.script.trim()}
+                                        disabled={!formData.script.trim() || !!scriptError}
                   >
                     <FaPlay aria-label="Play Icon" />
                     <span>Generate Kenya-First Video</span>
@@ -357,25 +357,27 @@ export default function VideoGeneratePage() {
                     </p>
 
                     {/* Retry Options */}
-                    <div className="space-y-2">
-                      {friendlyFallback.retryOptions.map((option, index) => (
-                        <button
-                          key={index}
-                          onClick={() => {
-                            if (option.includes('Try again')) {
-                              setFriendlyFallback(null);
-                              handleGenerateVideo();
-                            } else if (option.includes('Browse')) {
-                              // Navigate to gallery
-                              window.location.href = '/gallery';
-                            }
-                          }}
-                          className="block w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200"
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
+                    {friendlyFallback.retryOptions.length > 0 && (
+                      <div className="space-y-2">
+                        {friendlyFallback.retryOptions.map((option, index) => (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              if (option.includes('Try again')) {
+                                setFriendlyFallback(null);
+                                handleGenerateVideo();
+                              } else if (option.includes('Browse')) {
+                                // Navigate to gallery
+                                window.location.href = '/gallery';
+                              }
+                            }}
+                            className="block w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200"
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     <button
                       onClick={() => setFriendlyFallback(null)}
