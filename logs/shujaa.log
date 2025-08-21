@@ -642,3 +642,75 @@
 2025-08-21 07:46:41,818 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
 2025-08-21 07:46:41,868 - gpu_fallback - INFO -    Cloud providers: 3
 2025-08-21 07:46:41,881 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 07:52:59,227 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 07:52:59,338 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 07:52:59,429 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:52:59,432 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:52:59,471 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 07:52:59,494 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:52:59,501 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:52:59,510 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 07:52:59,515 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 07:52:59,558 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:52:59,613 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:52:59,624 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 07:54:30,875 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 07:54:30,903 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:54:30,940 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:54:30,952 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 07:54:31,085 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 07:54:31,113 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:54:31,144 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:54:31,156 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 07:54:31,319 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 07:54:31,332 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:54:31,344 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:54:31,355 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 07:55:55,094 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 07:55:55,094 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 07:55:55,114 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:55:55,118 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 07:55:55,119 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:55:55,138 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:55:55,145 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:55:55,149 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 07:55:55,158 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 07:55:55,168 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:55:55,224 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:55:55,239 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 07:56:20,770 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 07:56:20,778 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 07:56:20,790 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:56:20,812 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:56:20,819 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:56:20,836 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 07:56:20,861 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:56:20,874 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 07:56:20,993 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 07:56:21,011 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:56:21,046 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 07:56:21,057 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:04:07,019 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:04:07,036 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:04:07,042 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:04:07,052 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:04:07,064 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:04:07,080 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:04:07,087 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:04:07,094 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:04:07,102 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:04:07,106 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:04:07,132 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:04:07,144 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:05:40,884 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:05:40,900 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:05:40,920 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:05:40,931 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:05:40,972 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:05:41,010 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:05:41,042 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:05:41,053 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:05:41,119 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:05:41,139 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:05:41,161 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:05:41,174 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless

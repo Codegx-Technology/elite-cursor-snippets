@@ -646,6 +646,8 @@ async def update_tenant_branding(
     audit_log_manager.log_event(db, AuditEventType.TENANT_BRANDING_UPDATE, f"Tenant branding updated for tenant ID: {tenant_id}", user_id=current_user.id, tenant_id=tenant_id, ip_address=request.client.host, event_details=branding_data.dict(exclude_unset=True))
     return {"message": "Tenant branding updated successfully", "tenant_id": tenant_id}
 
+from backend.mock_db import mock_db # New import
+
 @app.get("/reports/sla/{tenant_id}/{month}")
 async def get_sla_report(tenant_id: str, month: str, current_user: User = Depends(get_current_active_user)):
     # // [TASK]: Implement API endpoint for SLA reports
@@ -655,7 +657,7 @@ async def get_sla_report(tenant_id: str, month: str, current_user: User = Depend
     if str(current_user.tenant_id) != tenant_id and current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Not authorized to view this tenant's SLA.")
     
-    record = sla_tracker.get_sla_record(tenant_id, month)
+    record = mock_db.get_sla_record(tenant_id, month) # Use mock_db
     if not record:
         raise HTTPException(status_code=404, detail="SLA record not found for specified tenant and month.")
     return record
@@ -669,11 +671,7 @@ async def get_billing_transactions(user_id: str, current_user: User = Depends(ge
     if str(current_user.id) != user_id and current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Not authorized to view these transactions.")
     
-    # Return mock data for now
-    return [
-        {"transaction_id": "mock_txn_1", "amount": 25.0, "currency": "KES", "timestamp": datetime.utcnow().isoformat(), "provider": "Mpesa"},
-        {"transaction_id": "mock_txn_2", "amount": 19.99, "currency": "USD", "timestamp": datetime.utcnow().isoformat(), "provider": "Stripe"}
-    ]
+    return mock_db.get_billing_transactions(user_id) # Use mock_db
 
 @app.get("/reports/usage/{user_id}")
 async def get_usage_records(user_id: str, current_user: User = Depends(get_current_active_user)):
@@ -684,11 +682,7 @@ async def get_usage_records(user_id: str, current_user: User = Depends(get_curre
     if str(current_user.id) != user_id and current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Not authorized to view these usage records.")
     
-    # Return mock data for now
-    return [
-        {"feature": "video_generation", "count": 5, "timestamp": datetime.utcnow().isoformat()},
-        {"feature": "image_generation", "count": 150, "timestamp": datetime.utcnow().isoformat()}
-    ]
+    return mock_db.get_usage_records(user_id) # Use mock_db
 
 @app.get("/reports/reconciliation/{month}")
 async def get_reconciliation_report(month: str, current_user: User = Depends(get_current_active_user)):
@@ -698,7 +692,7 @@ async def get_reconciliation_report(month: str, current_user: User = Depends(get
     if current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Admin access required for reconciliation reports.")
     
-    report = billing_reconciler.get_reconciliation_report(month)
+    report = mock_db.get_reconciliation_report(month) # Use mock_db
     if not report:
         raise HTTPException(status_code=404, detail="Reconciliation report not found for specified month.")
     return report
@@ -1299,6 +1293,33 @@ async def start_dlq_retry_task():
 async def protected_data(current_user: User = Depends(get_current_active_user), current_tenant: str = current_tenant):
     audit_logger.info(f"Access granted: User {current_user.username} (Tenant: {current_tenant}) accessing /protected_data.", extra={'user_id': current_user.id})
     return {"message": f"Welcome, {current_user.username} from tenant {current_tenant}! This is protected data.", "user": UserProfile.from_orm(current_user), "tenant": current_tenant}
+
+@app.post("/webhook/simulate")
+async def simulate_webhook(payload: WebhookPaymentStatus, request: Request, db: Session = Depends(get_db)):
+    """
+    Simulates a webhook call to the /webhook/payment_status endpoint.
+    Useful for testing webhook processing logic without an external sender.
+    """
+    logger.info(f"Simulating webhook for user {payload.user_id} with status {payload.status}.")
+    # Directly call the webhook_payment_status function
+    # Note: This bypasses FastAPI's dependency injection for the request body and signature verification
+    # For a true simulation, you might construct a dummy Request object or use httpx.AsyncClient
+    # For this conceptual example, we'll just call the processing logic directly.
+    try:
+        # Simulate the signature header for the processing function
+        # In a real scenario, you'd generate a valid signature based on the payload and WEBHOOK_SECRET
+        request.headers.__dict__["_list"].append(
+            (b"x-webhook-signature", b"simulated_signature")
+        )
+        
+        response = await webhook_payment_status(payload, request, db)
+        return {"status": "success", "message": "Webhook simulation successful.", "response": response}
+    except HTTPException as e:
+        logger.error(f"Simulated webhook failed with HTTPException: {e.detail}")
+        raise e
+    except Exception as e:
+        logger.error(f"Simulated webhook failed with unexpected error: {e}")
+        raise HTTPException(status_code=500, detail=f"Webhook simulation failed: {e}")
 
 @app.post("/webhook/simulate")
 async def simulate_webhook(payload: WebhookPaymentStatus, request: Request, db: Session = Depends(get_db)):
