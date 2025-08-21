@@ -10,6 +10,7 @@ import uuid
 from fastapi.responses import JSONResponse # Elite Cursor Snippet: json_response_import
 
 from logging_setup import get_logger
+from logging_setup import get_audit_logger
 from config_loader import get_config
 from auth.jwt_utils import verify_jwt
 from pipeline_orchestrator import PipelineOrchestrator
@@ -95,7 +96,6 @@ from backend.widget_manager import WidgetManager # New import
 # Initialize ModelStore
 model_store = ModelStore()
 plan_guard = PlanGuard(db_session_factory=get_db) # Initialize PlanGuard with db_session_factory
-app.state.plan_guard = plan_guard # Store plan_guard in app.state for middleware access
 widget_manager = WidgetManager(plan_guard) # Initialize WidgetManager
 
 
@@ -110,6 +110,9 @@ app = FastAPI(
     version=config.app.version,
     description="API for Shujaa Studio - Enterprise AI Video Generation"
 )
+
+# Attach PlanGuard after app is created
+app.state.plan_guard = plan_guard # Store plan_guard in app.state for middleware access
 
 # --- Prometheus Custom Metrics ---
 VIDEO_GENERATION_REQUESTS = Counter(
@@ -1293,6 +1296,33 @@ async def start_dlq_retry_task():
 async def protected_data(current_user: User = Depends(get_current_active_user), current_tenant: str = current_tenant):
     audit_logger.info(f"Access granted: User {current_user.username} (Tenant: {current_tenant}) accessing /protected_data.", extra={'user_id': current_user.id})
     return {"message": f"Welcome, {current_user.username} from tenant {current_tenant}! This is protected data.", "user": UserProfile.from_orm(current_user), "tenant": current_tenant}
+
+@app.post("/webhook/simulate")
+async def simulate_webhook(payload: WebhookPaymentStatus, request: Request, db: Session = Depends(get_db)):
+    """
+    Simulates a webhook call to the /webhook/payment_status endpoint.
+    Useful for testing webhook processing logic without an external sender.
+    """
+    logger.info(f"Simulating webhook for user {payload.user_id} with status {payload.status}.")
+    # Directly call the webhook_payment_status function
+    # Note: This bypasses FastAPI's dependency injection for the request body and signature verification
+    # For a true simulation, you might construct a dummy Request object or use httpx.AsyncClient
+    # For this conceptual example, we'll just call the processing logic directly.
+    try:
+        # Simulate the signature header for the processing function
+        # In a real scenario, you'd generate a valid signature based on the payload and WEBHOOK_SECRET
+        request.headers.__dict__["_list"].append(
+            (b"x-webhook-signature", b"simulated_signature")
+        )
+        
+        response = await webhook_payment_status(payload, request, db)
+        return {"status": "success", "message": "Webhook simulation successful.", "response": response}
+    except HTTPException as e:
+        logger.error(f"Simulated webhook failed with HTTPException: {e.detail}")
+        raise e
+    except Exception as e:
+        logger.error(f"Simulated webhook failed with unexpected error: {e}")
+        raise HTTPException(status_code=500, detail=f"Webhook simulation failed: {e}")
 
 @app.post("/webhook/simulate")
 async def simulate_webhook(payload: WebhookPaymentStatus, request: Request, db: Session = Depends(get_db)):

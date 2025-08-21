@@ -2,6 +2,7 @@ import jwt
 from datetime import datetime, timedelta
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.backends import default_backend
 from logging_setup import get_logger
 from config_loader import get_config
 

@@ -750,3 +750,123 @@
 2025-08-21 08:24:31,118 - chaos_utils - INFO - ChaosInjector initialized.
 2025-08-21 08:24:31,216 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
 2025-08-21 08:24:31,218 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:30:54,135 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:30:54,151 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:30:54,164 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:30:54,176 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:30:58,377 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:30:58,379 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:32:42,322 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:32:42,359 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:32:42,416 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:32:42,431 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:32:42,524 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:32:42,543 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:32:42,548 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:32:42,586 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:32:42,991 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:32:43,011 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:32:43,047 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:32:43,060 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:32:47,142 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:32:47,143 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:32:47,159 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:32:47,160 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:32:47,321 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:32:47,323 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:33:02,610 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:33:02,614 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:33:02,639 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:33:02,643 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:33:02,667 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:33:02,684 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:33:02,685 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:33:02,688 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:33:02,701 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:33:02,715 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:33:02,760 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:33:02,781 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:33:07,050 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:33:07,052 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:33:07,126 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:33:07,139 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:33:07,155 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:33:07,157 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:44:43,049 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:44:43,062 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:44:43,077 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:44:43,089 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:44:43,100 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:44:43,145 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:44:43,197 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:44:43,211 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:44:44,391 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:44:44,411 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:44:44,436 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:44:44,449 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:44:47,503 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:44:47,505 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:44:47,789 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:44:47,790 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:44:48,822 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:44:48,824 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:49:27,066 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:49:27,411 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:49:27,411 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:49:27,443 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:49:27,444 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:49:27,457 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:49:27,476 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:49:27,482 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:49:27,489 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:49:27,495 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:49:27,502 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:49:27,520 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:49:31,868 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:49:31,871 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:49:31,884 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:49:31,885 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:49:31,907 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:49:31,910 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:53:42,478 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:53:42,481 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:53:42,530 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:53:42,533 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:53:42,584 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:53:42,587 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:53:42,601 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:53:42,605 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:53:47,199 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:53:47,200 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:53:47,203 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:53:47,203 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:54:00,475 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:54:00,475 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:54:00,494 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:54:00,511 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:54:00,517 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:54:00,531 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:54:00,546 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:54:00,566 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:54:04,736 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:54:04,737 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:54:04,789 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:54:04,790 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:54:17,754 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:54:17,790 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:54:17,791 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:54:17,828 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:54:17,844 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:54:17,860 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:54:17,988 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:54:18,004 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:54:22,258 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:54:22,259 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:54:22,287 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:54:22,289 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 08:56:00,526 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 08:56:00,541 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:56:00,555 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 08:56:00,567 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 08:56:04,757 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 08:56:04,758 - chaos_utils - INFO - ChaosInjector initialized.
