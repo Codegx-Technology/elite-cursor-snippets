@@ -48,6 +48,11 @@ const GenerateVideoPage: React.FC = () => { // Renamed to GenerateVideoPage
       }, { headers });
 
       setResult(response.data);
+      // For now, we'll just display the initial response from the Next.js API route.
+      // Full job polling and progress tracking would be integrated here in a more complete implementation.
+      if (response.data.status === 'queued') {
+        setResult({ status: 'queued', message: `Video generation job ${response.data.video_id} queued.` });
+      }
 
     } catch (err: any) {
       if (err.response && err.response.data && err.response.data.detail) {
