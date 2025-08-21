@@ -42,18 +42,9 @@ export default function NewsGeneratePage() {
     uploadToYoutube: false
   });
 
-  const [progress, setProgress] = useState<GenerationProgress>({
-    stage: 'Ready',
-    progress: 0,
-    message: 'Ready to create your Kenya-first news video',
-    isGenerating: false
-  });
-
-  const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [newsUrlError, setNewsUrlError] = useState<string | null>(null);
   const [newsQueryError, setNewsQueryError] = useState<string | null>(null);
-  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
+  const { progress, generatedUrl, jobError, friendlyFallback, startPolling, stopPolling, setJobError, setFriendlyFallback } = useJobStatusPolling();
   const [inputMode, setInputMode] = useState<'url' | 'query' | 'script'>('query');
 
   // Options
@@ -284,13 +275,7 @@ export default function NewsGeneratePage() {
   };
 
   const handleStopGeneration = () => {
-    setProgress({
-      stage: 'Stopped',
-      progress: 0,
-      message: 'News video generation stopped',
-      isGenerating: false
-    });
-    setCurrentJobId(null);
+    stopPolling();
   };
 
   return (
