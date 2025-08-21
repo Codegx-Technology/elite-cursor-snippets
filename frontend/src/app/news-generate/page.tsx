@@ -51,6 +51,8 @@ export default function NewsGeneratePage() {
 
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [newsUrlError, setNewsUrlError] = useState<string | null>(null);
+  const [newsQueryError, setNewsQueryError] = useState<string | null>(null);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [inputMode, setInputMode] = useState<'url' | 'query' | 'script'>('query');
 
@@ -87,6 +89,21 @@ export default function NewsGeneratePage() {
       ...prev,
       [field]: value
     }));
+
+    // Validation logic
+    if (field === 'newsUrl') {
+      if (typeof value === 'string' && !value.match(/^(ftp|http|https):\/\/[^ "]+$/)) {
+        setNewsUrlError('Please enter a valid URL.');
+      } else {
+        setNewsUrlError(null);
+      }
+    } else if (field === 'newsQuery') {
+      if (typeof value === 'string' && value.trim().length < 3) {
+        setNewsQueryError('Query must be at least 3 characters long.');
+      } else {
+        setNewsQueryError(null);
+      }
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -182,11 +199,11 @@ export default function NewsGeneratePage() {
     let attempts = 0;
 
     const stages = [
-      { stage: 'Fetching News', progress: 30, message: 'Gathering latest Kenya news...' },
-      { stage: 'Processing Content', progress: 50, message: 'Analyzing news content for video creation...' },
-      { stage: 'Generating Visuals', progress: 70, message: 'Creating Kenya-relevant imagery...' },
-      { stage: 'Adding Voice', progress: 85, message: 'Recording professional Kenyan narration...' },
-      { stage: 'Final Assembly', progress: 95, message: 'Assembling your news video...' }
+      { stage: 'Fetching News', progress: 30, message: 'Gathering and analyzing the latest news content.' },
+      { stage: 'Processing Content', progress: 50, message: 'Extracting key information and structuring the narrative.' },
+      { stage: 'Generating Visuals', progress: 70, message: 'Creating compelling visuals to accompany the news story.' },
+      { stage: 'Adding Voice', progress: 85, message: 'Recording and synchronizing professional narration.' },
+      { stage: 'Final Assembly', progress: 95, message: 'Assembling and polishing your news video for delivery.' }
     ];
 
     const poll = async () => {
@@ -218,10 +235,10 @@ export default function NewsGeneratePage() {
               const stageIndex = Math.min(Math.floor(job.progress / 20), stages.length - 1);
               const currentStage = stages[stageIndex] || stages[0];
               
-              setProgress({
+                            setProgress({
                 stage: currentStage.stage,
                 progress: job.progress || currentStage.progress,
-                message: currentStage.message,
+                message: job.message || currentStage.message, // Use job.message if available
                 isGenerating: true
               });
 
@@ -364,6 +381,7 @@ export default function NewsGeneratePage() {
               onChange={(e) => handleInputChange('newsUrl', e.target.value)}
               placeholder="https://example.com/news-article"
               helperText="Paste URL of news article to convert to video"
+              error={newsUrlError}
             />
           )}
 
@@ -468,9 +486,9 @@ export default function NewsGeneratePage() {
               <button
                 onClick={handleGenerateNews}
                 className="btn-primary flex items-center space-x-2 flex-1"
-                disabled={
-                  (inputMode === 'query' && !formData.newsQuery.trim()) ||
-                  (inputMode === 'url' && !formData.newsUrl.trim()) ||
+                                disabled={
+                  (inputMode === 'query' && (!formData.newsQuery.trim() || !!newsQueryError)) ||
+                  (inputMode === 'url' && (!formData.newsUrl.trim() || !!newsUrlError)) ||
                   (inputMode === 'script' && !formData.scriptFile)
                 }
               >
