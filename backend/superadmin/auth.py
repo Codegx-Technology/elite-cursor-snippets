@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 
 from auth.jwt_utils import create_access_token, verify_jwt
-from auth.user_models import User, Role
+from auth.user_models import User
+from auth.rbac import Role
 from auth.auth_service import authenticate_user, create_user
 from database import get_db
 from logging_setup import get_logger
@@ -29,7 +30,7 @@ async def create_superadmin_users(db: Session):
     for admin_data in super_admins_data:
         existing_user = db.query(User).filter_by(username=admin_data["username"]).first()
         if not existing_user:
-            logger.info(f"Seeding super admin user: {admin_data["username"]}")
+            logger.info(f"Seeding super admin user: {admin_data['username']}")
             create_user(
                 db,
                 username=admin_data["username"],
@@ -39,7 +40,7 @@ async def create_superadmin_users(db: Session):
                 role=admin_data["role"]
             )
         else:
-            logger.info(f"Super admin user {admin_data["username"]} already exists.")
+            logger.info(f"Super admin user {admin_data['username']} already exists.")
 
 async def superadmin_login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = authenticate_user(db, form_data.username, form_data.password)

@@ -66,6 +66,18 @@ def create_jwt(payload: dict, expiry_minutes: int = 30) -> str:
     logger.info(f"JWT created for user: {payload.get('user_id')}")
     return encoded_jwt
 
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+    """
+    Compatibility wrapper: create an access token using the existing create_jwt.
+    """
+    minutes = 30
+    if expires_delta is not None:
+        try:
+            minutes = max(1, int(expires_delta.total_seconds() // 60))
+        except Exception:
+            minutes = 30
+    return create_jwt(data, expiry_minutes=minutes)
+
 def verify_jwt(token: str) -> dict:
     """
     // [TASK]: Verify a JWT token

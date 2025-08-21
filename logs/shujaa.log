@@ -870,3 +870,379 @@
 2025-08-21 08:56:00,567 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
 2025-08-21 08:56:04,757 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
 2025-08-21 08:56:04,758 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:17:20,847 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 09:17:20,860 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:17:20,868 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 09:17:20,886 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:17:20,905 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 09:17:20,909 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:17:20,972 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:17:21,016 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 09:17:21,076 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 09:17:21,099 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:17:21,125 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:17:21,137 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 09:17:25,310 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 09:17:25,312 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:17:25,430 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 09:17:25,510 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:17:25,648 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 09:17:25,663 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:34:06,462 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 09:34:06,565 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 09:34:06,583 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:34:06,596 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:34:06,613 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 09:34:06,615 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:34:06,618 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 09:34:06,752 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:34:06,773 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:34:06,795 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 09:34:06,822 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:34:06,839 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 09:34:11,091 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 09:34:11,093 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:34:11,239 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 09:34:11,295 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 09:34:11,301 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:34:11,505 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 09:34:11,570 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 09:34:11,622 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:34:12,371 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 09:44:59,490 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 09:44:59,497 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 09:44:59,516 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:44:59,539 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:44:59,548 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:44:59,561 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 09:44:59,570 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:44:59,584 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 09:45:00,074 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 09:45:00,089 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:45:00,114 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:45:00,126 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 09:45:03,932 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 09:45:03,934 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:45:04,048 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 09:45:04,138 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 09:45:04,140 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:45:04,258 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 09:45:04,459 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 09:45:04,460 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:45:04,605 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 09:46:53,636 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 09:46:53,670 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 09:46:53,715 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 09:46:53,747 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:46:53,749 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:46:53,754 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:46:53,789 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:46:53,795 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:46:53,799 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:46:53,805 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 09:46:53,812 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 09:46:53,814 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 09:46:58,031 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 09:46:58,033 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:46:58,036 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 09:46:58,038 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:46:58,080 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 09:46:58,081 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:46:58,167 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 09:46:58,168 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 09:46:58,215 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 09:46:58,787 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 09:46:58,787 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 09:46:58,788 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 09:46:58,787 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 09:46:58,791 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 09:46:58,791 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 09:46:58,792 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 09:46:58,793 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 09:46:58,793 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 09:46:59,712 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 09:46:59,712 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 09:46:59,713 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 09:46:59,714 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 09:46:59,714 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 09:46:59,714 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 09:46:59,716 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 09:46:59,716 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 09:46:59,728 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 09:47:14,077 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 09:47:14,078 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 09:47:14,094 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:47:14,111 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:47:14,122 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 09:47:14,125 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 09:47:14,153 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:47:14,214 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:47:14,263 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:47:14,279 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 09:47:14,306 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:47:14,319 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 09:47:18,596 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 09:47:18,597 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:47:18,624 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 09:47:18,625 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:47:18,715 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 09:47:18,738 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 09:47:18,739 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 09:47:18,739 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 09:47:18,741 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 09:47:18,772 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 09:47:18,773 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 09:47:18,775 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 09:47:18,822 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 09:47:18,824 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:47:18,946 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 09:47:18,974 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 09:47:18,975 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 09:47:18,975 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 09:47:19,040 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 09:47:19,040 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 09:47:19,041 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 09:47:19,041 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 09:47:19,042 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 09:47:19,042 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 09:47:19,230 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 09:47:19,232 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 09:47:19,233 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 09:50:50,286 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 09:50:50,316 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:50:50,353 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 09:50:50,366 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 09:50:54,578 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 09:50:54,580 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 09:50:54,741 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 09:50:54,768 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 09:50:54,768 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 09:50:54,769 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 09:50:55,330 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 09:50:55,348 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 09:50:55,348 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 10:01:16,681 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 10:01:16,800 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 10:01:16,818 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:01:17,333 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:01:17,368 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:01:17,388 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 10:01:17,490 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 10:01:17,508 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:01:17,523 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 10:01:17,539 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:01:17,605 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:01:17,618 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 10:01:18,158 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 10:01:18,175 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:01:18,194 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:01:18,206 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 10:01:21,940 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 10:01:21,943 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 10:01:21,945 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 10:01:21,946 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 10:01:22,012 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 10:01:22,022 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 10:01:22,111 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 10:01:22,111 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 10:01:22,138 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 10:01:22,141 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 10:01:22,141 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 10:01:22,144 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 10:01:22,146 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 10:01:22,147 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 10:01:22,155 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 10:01:22,183 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 10:01:22,187 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 10:01:22,189 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 10:01:22,481 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 10:01:22,484 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 10:01:22,486 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 10:01:22,487 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 10:01:22,490 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 10:01:22,491 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 10:01:22,492 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 10:01:22,493 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 10:01:22,511 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 10:01:22,518 - fastapi - ERROR - Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+2025-08-21 10:01:22,523 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 10:01:22,523 - fastapi - ERROR - Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+2025-08-21 10:01:22,526 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 10:01:22,549 - fastapi - ERROR - Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+2025-08-21 10:01:22,634 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 10:01:22,670 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 10:01:22,677 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 10:01:22,679 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 10:01:23,267 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 10:01:23,308 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 10:01:23,355 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 10:01:23,478 - fastapi - ERROR - Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+2025-08-21 10:37:08,527 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 10:37:08,568 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:37:08,574 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:40:18,897 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 10:40:18,900 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 10:40:19,215 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:40:19,230 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:40:19,363 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 10:40:19,439 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:40:19,441 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:40:19,463 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 10:40:19,465 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 10:40:19,563 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:40:19,757 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:40:19,842 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 10:40:20,204 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 10:40:20,216 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:40:20,230 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:40:20,243 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 10:40:23,779 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 10:40:23,780 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 10:40:23,921 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 10:40:23,954 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 10:40:23,955 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 10:40:23,956 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 10:40:24,179 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 10:40:24,181 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 10:40:24,322 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 10:40:24,330 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 10:40:24,331 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 10:40:24,351 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 10:40:24,357 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 10:40:24,357 - fastapi - ERROR - Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+2025-08-21 10:40:24,359 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 10:40:24,395 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 10:40:24,411 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 10:40:24,413 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 10:40:24,572 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 10:40:24,597 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 10:40:24,664 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 10:40:24,779 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 10:40:24,844 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 10:40:24,863 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 10:40:24,936 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 10:40:25,031 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 10:40:25,058 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 10:40:25,067 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 10:40:25,084 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 10:40:25,072 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 10:40:25,128 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 10:40:25,144 - fastapi - ERROR - Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+2025-08-21 10:40:25,284 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 10:40:25,298 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 10:40:25,309 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 10:40:25,340 - fastapi - ERROR - Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+2025-08-21 10:40:25,507 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 10:40:25,528 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 10:40:25,532 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 10:40:25,584 - fastapi - ERROR - Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+2025-08-21 10:46:23,895 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 10:46:23,944 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:46:24,022 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:46:24,022 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 10:46:24,042 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 10:46:24,226 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:46:24,459 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 10:46:24,477 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 10:46:24,524 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:46:24,552 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:46:24,563 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:46:24,578 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:46:24,593 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 10:46:24,604 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:46:24,609 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 10:46:24,623 - cartoon_anime_pipeline - WARNING - OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless
+2025-08-21 10:46:28,476 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 10:46:28,477 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 10:46:28,622 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 10:46:28,654 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 10:46:28,656 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 10:46:28,656 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 10:46:28,841 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 10:46:28,846 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 10:46:29,029 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 10:46:29,052 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 10:46:29,304 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 10:46:29,308 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 10:46:29,312 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 10:46:29,309 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 10:46:29,376 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 10:46:29,379 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 10:46:29,391 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 10:46:29,439 - fastapi - ERROR - Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+2025-08-21 10:46:29,571 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 10:46:29,604 - feature_flags - INFO - FeatureFlagManager initialized with flags: DotMap(new_ui=DotMap(enabled=False, rollout_percentage=10), beta_video_pipeline=DotMap(enabled=False), AUTO_ROLLBACK_ON_BOOT=DotMap(enabled=True))
+2025-08-21 10:46:29,609 - chaos_utils - INFO - ChaosInjector initialized.
+2025-08-21 10:46:29,619 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 10:46:29,626 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 10:46:29,627 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 10:46:29,689 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 10:46:29,693 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 10:46:29,704 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 10:46:29,735 - fastapi - ERROR - Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+2025-08-21 10:46:29,842 - backend.services.quota_service - WARNING - Redis disabled: Invalid or missing Redis URL in config. Expected scheme like redis://localhost:6379/0. Falling back to Noop client; rate limits/quotas won't be enforced.
+2025-08-21 10:46:29,884 - utils.parallel_processing - INFO - [PARALLEL] Initialized with 4 workers. GPU available: False
+2025-08-21 10:46:29,890 - utils.parallel_processing - INFO - SceneProcessor initialized. Temp directory: temp\parallel
+2025-08-21 10:46:29,892 - pipeline_orchestrator - INFO - PipelineOrchestrator initialized.
+2025-08-21 10:46:30,018 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 10:46:30,029 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 10:46:30,060 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 10:46:30,109 - fastapi - ERROR - Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+2025-08-21 10:46:30,258 - landing_page_service - INFO - S3 client initialized for bucket: shujaa-landing-pages
+2025-08-21 10:46:30,260 - scan_alert_system - INFO - ScanAlertSystem initialized. (Celery/Redis integration pending)
+2025-08-21 10:46:30,262 - crm_integration - INFO - CRMIntegrationService initialized.
+2025-08-21 10:46:30,327 - fastapi - ERROR - Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+2025-08-21 10:47:09,528 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 10:47:09,538 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:47:09,545 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:49:03,911 - logging_setup - INFO - Audit logging enabled to database.
+2025-08-21 10:49:03,919 - gpu_fallback - INFO -    Cloud providers: 3
+2025-08-21 10:49:03,925 - gpu_fallback - INFO -    Cloud providers: 3

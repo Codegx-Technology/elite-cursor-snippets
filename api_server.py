@@ -459,14 +459,12 @@ async def startup():
 
 # --- API Endpoints ---
 
-@app.get("/health")
-@RateLimiter(times=5, seconds=10)
+@app.get("/health", dependencies=[Depends(RateLimiter(times=5, seconds=10))])
 async def health_check(locale: str = Depends(get_current_locale)):
     logger.info("Health check requested.")
     return {"status": gettext("status_ok", locale=locale), "message": gettext("api_running_message", locale=locale)}
 
-@app.post("/register", response_model=UserCreate)
-@RateLimiter(times=2, seconds=60)
+@app.post("/register", response_model=UserCreate, dependencies=[Depends(RateLimiter(times=2, seconds=60))])
 async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db), locale: str = Depends(get_current_locale), current_user: User = Depends(get_current_active_user), request: Request = None):
     if user.role == Role.ADMIN and (not current_user or current_user.role != Role.ADMIN):
         raise HTTPException(status_code=403, detail="Only admins can create other admins")
@@ -477,8 +475,7 @@ async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db)
     audit_log_manager.log_event(db, AuditEventType.USER_REGISTER, f"User registered: {user.username} (Tenant: {user.tenant_name})", user_id=db_user.id, tenant_id=db_user.tenant_id, ip_address=request.client.host) # Pass request
     return db_user
 
-@app.post("/token", response_model=Token)
-@RateLimiter(times=5, seconds=30)
+@app.post("/token", response_model=Token, dependencies=[Depends(RateLimiter(times=5, seconds=30))])
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db), request: Request = None):
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
@@ -954,8 +951,7 @@ async def delete_asset(asset_id: str, current_user: User = Depends(get_current_a
 
 
 
-@app.post("/generate_video")
-@RateLimiter(times=1, seconds=5, key_func=user_id_key_func)
+@app.post("/generate_video", dependencies=[Depends(RateLimiter(times=1, seconds=5, key_func=user_id_key_func))])
 async def generate_video_endpoint(request_data: GenerateVideoRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
     start_time = time.time() # ADD THIS LINE
     status_label = "failure" # Default status for metrics # ADD THIS LINE
@@ -1017,8 +1013,7 @@ async def generate_video_endpoint(request_data: GenerateVideoRequest, current_us
         if status_label != "success":
             VIDEO_GENERATION_FAILURES.inc()
 
-@app.post("/generate_tts")
-@RateLimiter(times=1, seconds=5, key_func=user_id_key_func)
+@app.post("/generate_tts", dependencies=[Depends(RateLimiter(times=1, seconds=5, key_func=user_id_key_func))])
 async def generate_tts_endpoint(text: str, voice_name: str, current_user: dict = Depends(get_current_user)):
     """
     Conceptual endpoint for TTS generation, including usage tracking.
@@ -1106,8 +1101,7 @@ async def generate_landing_page_endpoint(request_data: GenerateLandingPageReques
     else:
         raise HTTPException(status_code=500, detail=f"Landing page generation failed: {result.get('message', 'Unknown error')}")
 
-@app.post("/scan_alert")
-@RateLimiter(times=10, seconds=60, key_func=user_id_key_func)
+@app.post("/scan_alert", dependencies=[Depends(RateLimiter(times=10, seconds=60, key_func=user_id_key_func))])
 async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
     user_id = str(current_user.get("user_id")) # Get user_id
     # Check action permission
@@ -1129,8 +1123,7 @@ async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict
     else:
         raise HTTPException(status_code=500, detail=f"Scan alert failed: {result.get('message', 'Unknown error')}")
 
-@app.post("/crm_push_contact")
-@RateLimiter(times=5, seconds=60, key_func=user_id_key_func)
+@app.post("/crm_push_contact", dependencies=[Depends(RateLimiter(times=5, seconds=60, key_func=user_id_key_func))])
 async def crm_push_contact_endpoint(request_data: CRMPushContactRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
     user_id = str(current_user.get("user_id")) # Get user_id
     # Check action permission

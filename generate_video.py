@@ -21,7 +21,7 @@ try:
 except ImportError:
     whisper = None  # type: ignore
     WHISPER_AVAILABLE = False
-    print("⚠️ whisper not available – subtitles will be disabled by default.")
+    print("WARNING: whisper not available – subtitles will be disabled by default.")
 
 # Optional: gradio (only needed for CLI UI mode)
 try:
@@ -30,7 +30,7 @@ try:
 except ImportError:
     gr = None  # type: ignore
     GRADIO_AVAILABLE = False
-    print("ℹ️ gradio not installed – web UI mode will be unavailable.")
+    print("INFO: gradio not installed – web UI mode will be unavailable.")
 
 from PIL import Image, ImageDraw, ImageFont
 import soundfile as sf

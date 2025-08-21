@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
 
 from database import get_db
-from auth.user_models import User, Tenant, Role
+from auth.user_models import User, Tenant
+from auth.rbac import Role
 from auth.auth_service import create_user, update_user_profile, authenticate_user # Assuming these exist
 from backend.superadmin.auth import get_current_superadmin_user
 from billing.plan_guard import PlanGuard, PlanGuardException

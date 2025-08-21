@@ -9,7 +9,6 @@ from enhanced_model_router import enhanced_router
 import news_video_generator
 import offline_video_maker.generate_video
 import cartoon_anime_pipeline
-import generate_video # Original basic pipeline
 
 # Import parallel processing utilities
 from utils.parallel_processing import ParallelProcessor, SceneProcessor
@@ -27,7 +26,7 @@ class PipelineOrchestrator:
             "news_video_generator": news_video_generator.main,
             "offline_video_maker": offline_video_maker.generate_video.main,
             "cartoon_anime_pipeline": cartoon_anime_pipeline.create_african_cartoon_video,
-            "basic_video_generator": generate_video.create_gradio_interface
+            "basic_video_generator": lambda *args, **kwargs: __import__('generate_video').create_gradio_interface(*args, **kwargs)
         }
         self.parallel_processor = ParallelProcessor()
         self.scene_processor = SceneProcessor()
