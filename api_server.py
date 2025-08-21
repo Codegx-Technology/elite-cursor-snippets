@@ -1348,6 +1348,33 @@ async def simulate_webhook(payload: WebhookPaymentStatus, request: Request, db: 
         logger.error(f"Simulated webhook failed with unexpected error: {e}")
         raise HTTPException(status_code=500, detail=f"Webhook simulation failed: {e}")
 
+@app.post("/webhook/simulate")
+async def simulate_webhook(payload: WebhookPaymentStatus, request: Request, db: Session = Depends(get_db)):
+    """
+    Simulates a webhook call to the /webhook/payment_status endpoint.
+    Useful for testing webhook processing logic without an external sender.
+    """
+    logger.info(f"Simulating webhook for user {payload.user_id} with status {payload.status}.")
+    # Directly call the webhook_payment_status function
+    # Note: This bypasses FastAPI's dependency injection for the request body and signature verification
+    # For a true simulation, you might construct a dummy Request object or use httpx.AsyncClient
+    # For this conceptual example, we'll just call the processing logic directly.
+    try:
+        # Simulate the signature header for the processing function
+        # In a real scenario, you'd generate a valid signature based on the payload and WEBHOOK_SECRET
+        request.headers.__dict__["_list"].append(
+            (b"x-webhook-signature", b"simulated_signature")
+        )
+        
+        response = await webhook_payment_status(payload, request, db)
+        return {"status": "success", "message": "Webhook simulation successful.", "response": response}
+    except HTTPException as e:
+        logger.error(f"Simulated webhook failed with HTTPException: {e.detail}")
+        raise e
+    except Exception as e:
+        logger.error(f"Simulated webhook failed with unexpected error: {e}")
+        raise HTTPException(status_code=500, detail=f"Webhook simulation failed: {e}")
+
 @app.post("/admin/chaos/inject")
 async def inject_chaos(
     scenario_type: str,
