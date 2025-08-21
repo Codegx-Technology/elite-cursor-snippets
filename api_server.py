@@ -1,3 +1,5 @@
+import asyncio # New import
+import json # New import
 from fastapi import FastAPI, HTTPException, Depends, Request, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
@@ -898,13 +900,39 @@ async def get_assets(page: int = 1, limit: int = 10, type: Optional[str] = None,
     await plan_guard.check_action_permission(user_id, "READ")
 
     # TODO: Replace with real data from a database
+    # For now, using mock data and applying CDN logic
+    mock_assets = [
+        {"id": "1", "name": "Asset 1", "type": "image", "url": "/local_assets/image1.jpg", "size": 1024, "uploaded_at": "2025-08-01", "usage_count": 5},
+        {"id": "2", "name": "Asset 2", "type": "audio", "url": "/local_assets/audio1.mp3", "size": 2048, "uploaded_at": "2025-08-02", "usage_count": 10},
+    ]
+
+    cdn_endpoints = config.app.get("cdn_endpoints", [])
+    processed_assets = []
+
+    from utils.asset_utils import generate_signed_url # Import here to avoid circular dependency if asset_utils imports config
+
+    for asset in mock_assets:
+        asset_url = asset["url"]
+        if cdn_endpoints:
+            # Try to prepend CDN URL, assuming asset_url is a relative path or local path
+            for cdn_base_url in cdn_endpoints:
+                # Simple concatenation for demonstration. In a real scenario,
+                # you'd handle path joining carefully (e.g., urllib.parse.urljoin)
+                cdn_url = f"{cdn_base_url}{asset_url.lstrip('/')}"
+                # In a real system, you'd check if the CDN asset exists/is reachable
+                # For now, we'll just use the first CDN URL
+                asset["url"] = cdn_url
+                break # Use the first CDN endpoint
+        else:
+            # If no CDN, generate a signed URL for the local asset path
+            # Assuming asset["url"] is a path relative to some base asset storage
+            asset["url"] = generate_signed_url(asset_url)
+        processed_assets.append(asset)
+
     return {
-        "assets": [
-            {"id": "1", "name": "Asset 1", "type": "image", "url": "https://example.com/image1.jpg", "size": 1024, "uploaded_at": "2025-08-01", "usage_count": 5},
-            {"id": "2", "name": "Asset 2", "type": "audio", "url": "https://example.com/audio1.mp3", "size": 2048, "uploaded_at": "2025-08-02", "usage_count": 10},
-        ],
+        "assets": processed_assets,
         "pages": 1,
-        "total": 2,
+        "total": len(processed_assets),
     }
 
 
@@ -1176,6 +1204,31 @@ async def check_widget_dependencies(request_data: CheckDependenciesRequest, curr
         logger.error(f"Error checking widget dependencies for user {user_id}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error checking dependencies.")
 
+webhook_queue = []
+webhook_dlq = []
+
+async def process_webhook_payload(payload: WebhookPaymentStatus, db: Session):
+    """Conceptual function to process webhook payload."""
+    try:
+        # Simulate processing success or failure
+        if payload.status == "completed":
+            logger.info(f"Processing completed payment for user {payload.user_id} for plan {payload.plan_name}.")
+            # In a real system:
+            # 1. Find user in DB
+            # 2. Update their subscription plan and dates
+            # 3. Log the change
+            return {"status": "success", "message": "Webhook processed successfully."}
+        elif payload.status == "failed":
+            logger.warning(f"Processing failed payment for user {payload.user_id}, transaction {payload.transaction_id}.")
+            # Handle failed payments (e.g., downgrade plan, send notification)
+            raise ValueError("Simulated processing failure for failed payment.")
+        else:
+            logger.info(f"Processing webhook for user {payload.user_id}, status {payload.status}.")
+            return {"status": "success", "message": "Webhook processed successfully."}
+    except Exception as e:
+        logger.error(f"Error processing webhook for user {payload.user_id}: {e}")
+        raise # Re-raise to be caught by the caller for DLQ handling
+
 @app.post("/webhook/payment_status")
 async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request, db: Session = Depends(get_db)):
     user_id = payload.user_id # Get user_id from payload
@@ -1190,6 +1243,11 @@ async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request
         raise HTTPException(status_code=403, detail="Signature header missing")
 
     # Calculate expected signature
+    # In a real scenario, 'body' would be the raw request body, not the parsed payload
+    # For conceptual example, we'll use a simplified representation
+    # body = await request.body() # Uncomment in real implementation
+    body = str(payload.dict()).encode('utf-8') # Simplified for conceptual example
+
     expected_signature = hmac.new(
         WEBHOOK_SECRET.encode('utf-8'),
         body,
@@ -1203,27 +1261,71 @@ async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request
 
     audit_log_manager.log_event(db, AuditEventType.WEBHOOK_RECEIVED, f"Webhook received for user {payload.user_id}, transaction {payload.transaction_id}, status {payload.status}.", user_id=payload.user_id, ip_address=request.client.host, event_details={"webhook_id": payload.transaction_id, "status": payload.status})
 
-    # // [TASK]: Update user subscription status based on webhook notification
-    # // [GOAL]: Automate subscription management in real-time
-    # // [ELITE_CURSOR_SNIPPET]: aihandle
-    # This would involve updating the database with the new subscription status
-    # For now, we'll just log it.
-    if payload.status == "completed":
-        logger.info(f"Payment completed for user {payload.user_id} for plan {payload.plan_name}. Updating subscription.")
-        # In a real system:
-        # 1. Find user in DB
-        # 2. Update their subscription plan and dates
-        # 3. Log the change
-    elif payload.status == "failed":
-        logger.warning(f"Payment failed for user {payload.user_id}, transaction {payload.transaction_id}.")
-        # Handle failed payments (e.g., downgrade plan, send notification)
-    
-    return {"message": "Webhook received and processed"}
+    try:
+        # Attempt to process the webhook payload
+        result = await process_webhook_payload(payload, db)
+        return result
+    except Exception as e:
+        logger.error(f"Failed to process webhook for user {payload.user_id}. Adding to DLQ. Error: {e}")
+        webhook_dlq.append({"payload": payload.dict(), "error": str(e), "timestamp": datetime.utcnow().isoformat()})
+        # In a real system, you'd return a 200 OK to the webhook sender to avoid retries from their end
+        # and handle retries from your DLQ processing.
+        return JSONResponse(status_code=200, content={"message": "Webhook received, but processing failed. Added to DLQ."})
+
+# Background task to retry webhooks from DLQ (conceptual)
+async def retry_dlq_webhooks():
+    while True:
+        if webhook_dlq:
+            dlq_item = webhook_dlq.pop(0) # Get the oldest item
+            payload = WebhookPaymentStatus(**dlq_item["payload"])
+            logger.info(f"Attempting to retry webhook for user {payload.user_id} from DLQ.")
+            try:
+                # In a real system, you'd get a new DB session for this background task
+                with next(get_db()) as db_session:
+                    await process_webhook_payload(payload, db_session)
+                logger.info(f"Successfully retried webhook for user {payload.user_id}.")
+            except Exception as e:
+                logger.error(f"Retry failed for webhook {payload.user_id}. Re-adding to DLQ. Error: {e}")
+                # In a real system, you'd implement exponential backoff and max retries
+                webhook_dlq.append(dlq_item) # Re-add to DLQ if retry fails
+        await asyncio.sleep(60) # Check DLQ every 60 seconds (conceptual)
+
+# Add the retry task to FastAPI startup events
+@app.on_event("startup")
+async def start_dlq_retry_task():
+    asyncio.create_task(retry_dlq_webhooks())
 
 @app.get("/protected_data")
 async def protected_data(current_user: User = Depends(get_current_active_user), current_tenant: str = current_tenant):
     audit_logger.info(f"Access granted: User {current_user.username} (Tenant: {current_tenant}) accessing /protected_data.", extra={'user_id': current_user.id})
     return {"message": f"Welcome, {current_user.username} from tenant {current_tenant}! This is protected data.", "user": UserProfile.from_orm(current_user), "tenant": current_tenant}
+
+@app.post("/webhook/simulate")
+async def simulate_webhook(payload: WebhookPaymentStatus, request: Request, db: Session = Depends(get_db)):
+    """
+    Simulates a webhook call to the /webhook/payment_status endpoint.
+    Useful for testing webhook processing logic without an external sender.
+    """
+    logger.info(f"Simulating webhook for user {payload.user_id} with status {payload.status}.")
+    # Directly call the webhook_payment_status function
+    # Note: This bypasses FastAPI's dependency injection for the request body and signature verification
+    # For a true simulation, you might construct a dummy Request object or use httpx.AsyncClient
+    # For this conceptual example, we'll just call the processing logic directly.
+    try:
+        # Simulate the signature header for the processing function
+        # In a real scenario, you'd generate a valid signature based on the payload and WEBHOOK_SECRET
+        request.headers.__dict__["_list"].append(
+            (b"x-webhook-signature", b"simulated_signature")
+        )
+        
+        response = await webhook_payment_status(payload, request, db)
+        return {"status": "success", "message": "Webhook simulation successful.", "response": response}
+    except HTTPException as e:
+        logger.error(f"Simulated webhook failed with HTTPException: {e.detail}")
+        raise e
+    except Exception as e:
+        logger.error(f"Simulated webhook failed with unexpected error: {e}")
+        raise HTTPException(status_code=500, detail=f"Webhook simulation failed: {e}")
 
 @app.post("/admin/chaos/inject")
 async def inject_chaos(
@@ -1493,6 +1595,110 @@ async def delete_user_data(current_user: User = Depends(get_current_active_user)
     return {"message": "User data deletion process initiated. Your account will be deactivated."}
 
     return {"message": "User data deletion process initiated. Your account will be deactivated."}
+
+
+# Conceptual function to load and execute a backend module with PlanGuard enforcement
+async def load_and_execute_module(user_id: str, module_name: str) -> Dict[str, Any]:
+    module_dependencies = get_module_dependencies(module_name)
+    if not module_dependencies:
+        logger.info(f"Module '{module_name}' has no declared dependencies. Allowing execution.")
+        # Simulate execution
+        return {"status": "success", "message": f"Module '{module_name}' executed successfully (no dependencies)."}
+
+    try:
+        # Check each dependency against the user's plan
+        for dep in module_dependencies:
+            # For simplicity, we'll assume these map to allowed_models or features_enabled
+            # A more robust solution would have a dedicated check in PlanGuard for module features
+            await plan_guard.check_action_permission(user_id, dep) # Reusing check_action_permission for conceptual dependency check
+        
+        logger.info(f"Module '{module_name}' dependencies allowed for user {user_id}. Executing.")
+        # Simulate module execution
+        return {"status": "success", "message": f"Module '{module_name}' executed successfully."}
+    except PlanGuardException as e:
+        logger.warning(f"Module '{module_name}' execution blocked for user {user_id}: {e.message}")
+        raise HTTPException(status_code=403, detail=e.message)
+    except Exception as e:
+        logger.error(f"Unexpected error executing module '{module_name}' for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during module execution.")
+
+
+# Conceptual function to load and execute a backend module with PlanGuard enforcement
+async def load_and_execute_module(user_id: str, module_name: str) -> Dict[str, Any]:
+    module_dependencies = get_module_dependencies(module_name)
+    if not module_dependencies:
+        logger.info(f"Module '{module_name}' has no declared dependencies. Allowing execution.")
+        # Simulate execution
+        return {"status": "success", "message": f"Module '{module_name}' executed successfully (no dependencies)."}
+
+    try:
+        # Check each dependency against the user's plan
+        for dep in module_dependencies:
+            # For simplicity, we'll assume these map to allowed_models or features_enabled
+            # A more robust solution would have a dedicated check in PlanGuard for module features
+            await plan_guard.check_action_permission(user_id, dep) # Reusing check_action_permission for conceptual dependency check
+        
+        logger.info(f"Module '{module_name}' dependencies allowed for user {user_id}. Executing.")
+        # Simulate module execution
+        return {"status": "success", "message": f"Module '{module_name}' executed successfully."}
+    except PlanGuardException as e:
+        logger.warning(f"Module '{module_name}' execution blocked for user {user_id}: {e.message}")
+        raise HTTPException(status_code=403, detail=e.message)
+    except Exception as e:
+        logger.error(f"Unexpected error executing module '{module_name}' for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during module execution.")
+
+
+# Conceptual function to load and execute a backend module with PlanGuard enforcement
+async def load_and_execute_module(user_id: str, module_name: str) -> Dict[str, Any]:
+    module_dependencies = get_module_dependencies(module_name)
+    if not module_dependencies:
+        logger.info(f"Module '{module_name}' has no declared dependencies. Allowing execution.")
+        # Simulate execution
+        return {"status": "success", "message": f"Module '{module_name}' executed successfully (no dependencies)."}
+
+    try:
+        # Check each dependency against the user's plan
+        for dep in module_dependencies:
+            # For simplicity, we'll assume these map to allowed_models or features_enabled
+            # A more robust solution would have a dedicated check in PlanGuard for module features
+            await plan_guard.check_action_permission(user_id, dep) # Reusing check_action_permission for conceptual dependency check
+        
+        logger.info(f"Module '{module_name}' dependencies allowed for user {user_id}. Executing.")
+        # Simulate module execution
+        return {"status": "success", "message": f"Module '{module_name}' executed successfully."}
+    except PlanGuardException as e:
+        logger.warning(f"Module '{module_name}' execution blocked for user {user_id}: {e.message}")
+        raise HTTPException(status_code=403, detail=e.message)
+    except Exception as e:
+        logger.error(f"Unexpected error executing module '{module_name}' for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during module execution.")
+
+
+# Conceptual function to load and execute a backend module with PlanGuard enforcement
+async def load_and_execute_module(user_id: str, module_name: str) -> Dict[str, Any]:
+    module_dependencies = get_module_dependencies(module_name)
+    if not module_dependencies:
+        logger.info(f"Module '{module_name}' has no declared dependencies. Allowing execution.")
+        # Simulate execution
+        return {"status": "success", "message": f"Module '{module_name}' executed successfully (no dependencies)."}
+
+    try:
+        # Check each dependency against the user's plan
+        for dep in module_dependencies:
+            # For simplicity, we'll assume these map to allowed_models or features_enabled
+            # A more robust solution would have a dedicated check in PlanGuard for module features
+            await plan_guard.check_action_permission(user_id, dep) # Reusing check_action_permission for conceptual dependency check
+        
+        logger.info(f"Module '{module_name}' dependencies allowed for user {user_id}. Executing.")
+        # Simulate module execution
+        return {"status": "success", "message": f"Module '{module_name}' executed successfully."}
+    except PlanGuardException as e:
+        logger.warning(f"Module '{module_name}' execution blocked for user {user_id}: {e.message}")
+        raise HTTPException(status_code=403, detail=e.message)
+    except Exception as e:
+        logger.error(f"Unexpected error executing module '{module_name}' for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during module execution.")
 
 
 # Conceptual function to load and execute a backend module with PlanGuard enforcement

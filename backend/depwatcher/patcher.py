@@ -54,10 +54,30 @@ async def apply_patch_plan(plan: PatchPlan):
             logger.info(f"Processing {item.kind}: {item.name} from {item.fromVersion} to {item.toVersion}")
 
             if item.kind == "pip":
-                # Resolve environment; fallback to first detected env if none provided
+                # Resolve environment; prefer explicit path, else current, else first detected
                 env = available_envs.get(item.env) if item.env else None
+                # Tolerate leading dot differences in env names
+                if not env and item.env:
+                    alt1 = item.env.lstrip('.')
+                    alt2 = f".{alt1}"
+                    env = available_envs.get(alt1) or available_envs.get(alt2)
+                if not env and item.env:
+                    # If item.env looks like a python executable path, use it directly
+                    py_path = Path(item.env)
+                    if py_path.exists() and py_path.is_file():
+                        pip_exe = py_path.parent / ("pip.exe" if py_path.suffix.lower() == ".exe" else "pip")
+                        env = {
+                            "name": str(py_path),
+                            "path": str(py_path.parent.parent),
+                            "python": str(py_path),
+                            "pip": str(pip_exe),
+                        }
+                        logger.info(f"Using explicit python path for {item.name}: {py_path}")
                 if not env:
-                    if available_envs:
+                    if "current" in available_envs:
+                        env = available_envs["current"]
+                        logger.info(f"No env specified for {item.name}; defaulting to current runtime environment.")
+                    elif available_envs:
                         env = next(iter(available_envs.values()))
                         logger.warning(
                             f"No environment specified for {item.name}; defaulting to detected env '{env.get('name','unknown')}'."
