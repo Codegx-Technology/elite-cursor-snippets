@@ -322,6 +322,20 @@ class WidgetLoadRequest(BaseModel):
 
 # --- Dependency Functions ---
 
+# Pydantic model for tenant branding updates
+class TenantBrandingUpdate(BaseModel):
+    theme: Optional[str] = None
+    logo_url: Optional[str] = None
+    primary_color: Optional[str] = None
+    secondary_color: Optional[str] = None
+    accent_color: Optional[str] = None
+    favicon_url: Optional[str] = None
+    custom_domain: Optional[str] = None
+    tagline: Optional[str] = None
+
+    class Config:
+        extra = "ignore"  # Ignore unknown fields to keep endpoint flexible
+
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db), request: Request = None):
     try:
         payload = verify_jwt(token)

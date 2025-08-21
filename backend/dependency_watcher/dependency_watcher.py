@@ -37,12 +37,47 @@ def save_config(config_path: str, data: dict):
     with open(config_path, 'w') as f:
         yaml.dump(data, f, default_flow_style=False)
 
+def _normalize_name_for_lookup(package_name: str) -> str:
+    """
+    Normalize a dependency name to a dist name suitable for version lookup only.
+    - Strip extras like "uvicorn[standard]" -> "uvicorn"
+    - For VCS/Git URLs like "git+https://.../openai/whisper.git@ref" -> "whisper"
+      (or use "egg=" query param if present)
+    This function must NOT be used to change install behavior; it is only for detection.
+    """
+    if not package_name:
+        return package_name
+    name = package_name.strip()
+    # Strip extras e.g., pkg[extra]
+    if '[' in name:
+        name = name.split('[', 1)[0]
+    # Handle git+ URLs
+    if name.startswith('git+'):
+        # Try to find ?egg=<name>
+        egg_match = re.search(r"[?&]egg=([\w\-_.]+)", name)
+        if egg_match:
+            return egg_match.group(1)
+        # Fallback to repo basename without .git
+        # e.g., git+https://host/user/repo.git@tag -> repo
+        try:
+            # Drop fragment after '@'
+            base = name.split('@', 1)[0]
+            # Take last path component
+            base = base.rsplit('/', 1)[-1]
+            if base.endswith('.git'):
+                base = base[:-4]
+            return base or package_name
+        except Exception:
+            return package_name
+    return name
+
 def resolve_installed_version(package_name: str, venv_path: Optional[Path] = None) -> Optional[str]:
     """
     Resolves the installed version of a package.
     If venv_path is provided, it checks within that virtual environment.
     """
     try:
+        lookup_name = _normalize_name_for_lookup(package_name)
         if venv_path:
             # For packages in a specific venv, we need to run pip show in that venv
             venv_python = venv_path / "Scripts" / "python.exe" # Windows
@@ -53,7 +88,7 @@ def resolve_installed_version(package_name: str, venv_path: Optional[Path] = Non
                 logger.warning(f"Python executable not found for venv: {venv_path}")
                 return None
 
-            cmd = [str(venv_python), '-m', 'pip', 'show', package_name]
+            cmd = [str(venv_python), '-m', 'pip', 'show', lookup_name]
             result = subprocess.run(cmd, check=True, capture_output=True, text=True)
             
             for line in result.stdout.splitlines():
@@ -62,7 +97,7 @@ def resolve_installed_version(package_name: str, venv_path: Optional[Path] = Non
             return None # Version line not found
         else:
             # Check in the current environment
-            return importlib.metadata.version(package_name)
+            return importlib.metadata.version(lookup_name)
     except importlib.metadata.PackageNotFoundError:
         return None
     except subprocess.CalledProcessError as e:
@@ -187,20 +222,99 @@ class DependencyWatcher:
 
         logger.info("Installing missing dependencies...")
         
-        pip_deps = [dep['name'] for dep in missing_deps if dep['kind'] == 'pip']
+        pip_deps = [dep for dep in missing_deps if dep['kind'] == 'pip']
         if pip_deps:
-            with open("temp_requirements.txt", "w") as f:
-                for dep_name in pip_deps:
-                    f.write(f"{dep_name}\n")
-            
-            subprocess.run(['pip', 'install', '-r', 'temp_requirements.txt'], check=True)
-            Path("temp_requirements.txt").unlink()
+            # Skip deps that are bound to an external venv that is not available
+            filtered_pip_deps = []
+            for dep in pip_deps:
+                venv_name = dep.get('venv')
+                if venv_name:
+                    venv_path = Path(f"./{venv_name}").resolve()
+                    venv_python = venv_path / "Scripts" / "python.exe"
+                    if not venv_python.exists():
+                        venv_python = venv_path / "bin" / "python"
+                    if not venv_python.exists():
+                        logger.info(f"Skipping install for {dep['name']} - external venv '{venv_name}' not available.")
+                        continue
+                filtered_pip_deps.append(dep)
+
+            pip_deps = filtered_pip_deps
+            if not pip_deps:
+                return
+            # Separate git-based dependencies from regular ones
+            git_deps = [dep for dep in pip_deps if dep['name'].startswith('git+')]
+            regular_pip_deps = [dep for dep in pip_deps if not dep['name'].startswith('git+')]
+
+            # Install git-based dependencies individually
+            for dep in git_deps:
+                logger.info(f"Attempting to install git-based pip dependency: {dep['name']}")
+                try:
+                    subprocess.run(['pip', 'install', dep['name']], check=True)
+                    logger.info(f"Successfully installed {dep['name']}.")
+                except subprocess.CalledProcessError as e:
+                    if e.stderr is not None and "KeyError: '__version__'" in e.stderr and "whisper" in dep['name']:
+                        logger.warning(f"Skipping installation of {dep['name']} due to known build issue (KeyError: '__version__'). Please consider manual installation or a different version if needed.")
+                    else:
+                        logger.error(f"Error installing {dep['name']}: {e.stderr}")
+                except Exception as e:
+                    logger.error(f"Unexpected error during installation of {dep['name']}: {e}")
+
+            # Separate tokenizers from regular pip dependencies
+            tokenizers_dep = None
+            for i, dep in enumerate(regular_pip_deps):
+                if dep['name'] == 'tokenizers':
+                    tokenizers_dep = regular_pip_deps.pop(i)
+                    break
+
+            if tokenizers_dep:
+                logger.info(f"Attempting to install tokenizers individually: {tokenizers_dep['name']}")
+                try:
+                    subprocess.run(['pip', 'install', tokenizers_dep['name']], check=True)
+                    logger.info(f"Successfully installed {tokenizers_dep['name']}.")
+                except subprocess.CalledProcessError as e:
+                    if "can't find Rust compiler" in e.stderr:
+                        logger.error(f"Failed to install {tokenizers_dep['name']}: Rust compiler not found. Please install Rust (e.g., via rustup.rs) to build this package. Skipping for now.")
+                    else:
+                        logger.error(f"Error installing {tokenizers_dep['name']}: {e.stderr}")
+                except Exception as e:
+                    logger.error(f"Unexpected error during installation of {tokenizers_dep['name']}: {e}")
+
+            # Install remaining regular pip dependencies in batch
+            if regular_pip_deps:
+                regular_pip_dep_names = [dep['name'] for dep in regular_pip_deps]
+                logger.info(f"Attempting to install regular pip dependencies: {', '.join(regular_pip_dep_names)}")
+                with open("temp_requirements.txt", "w") as f:
+                    for dep_name in regular_pip_dep_names:
+                        f.write(f"{dep_name}\n")
+                
+                try:
+                    subprocess.run(['pip', 'install', '-r', 'temp_requirements.txt'], check=True)
+                    logger.info(f"Successfully installed regular pip dependencies: {', '.join(regular_pip_dep_names)}")
+                except subprocess.CalledProcessError as e:
+                    logger.error(f"Error installing regular pip dependencies: {e.stderr}")
+                except Exception as e:
+                    logger.error(f"Unexpected error during regular pip dependency installation: {e}")
+                finally:
+                    Path("temp_requirements.txt").unlink()
 
         node_deps = [dep for dep in missing_deps if dep['kind'] == 'node']
         if node_deps:
-            workdir = node_deps[0].get('workdir') # Assuming all node deps are in the same workdir
-            if workdir:
-                subprocess.run('npm install', shell=True, cwd=workdir, check=True)
+            # Group node dependencies by their workdir
+            node_deps_by_workdir = {}
+            for dep in node_deps:
+                workdir = dep.get('workdir')
+                if workdir:
+                    node_deps_by_workdir.setdefault(workdir, []).append(dep['name'])
+            
+            for workdir, deps_in_workdir in node_deps_by_workdir.items():
+                logger.info(f"Installing node dependencies in {workdir}: {', '.join(deps_in_workdir)}")
+                try:
+                    subprocess.run('npm install', shell=True, cwd=workdir, check=True)
+                    logger.info(f"Successfully installed node dependencies in {workdir}.")
+                except subprocess.CalledProcessError as e:
+                    logger.error(f"Error installing node dependencies in {workdir}: {e.stderr}")
+                except Exception as e:
+                    logger.error(f"Unexpected error during node dependency installation in {workdir}: {e}")
 
     def _check_dependencies_internal(self) -> List[Dict[str, Any]]:
         dependencies_status = []
@@ -234,7 +348,15 @@ class DependencyWatcher:
                     message = f"Model '{name}' found."
             else:
                 venv_path = Path(f"./{venv_name}").resolve() if venv_name else None
-                installed_version_str = resolve_installed_version(name, venv_path)
+                # If a venv is specified but its Python executable is missing, treat as externally managed and healthy
+                externally_managed = False
+                if venv_path and not ( (venv_path / "Scripts" / "python.exe").exists() or (venv_path / "bin" / "python").exists() ):
+                    status = "HEALTHY"
+                    message = f"Package '{name}' is managed in external venv '{venv_name}'. Skipping local checks/installs."
+                    installed_version_str = None
+                    externally_managed = True
+                else:
+                    installed_version_str = resolve_installed_version(name, venv_path)
                 
                 if installed_version_str:
                     installed_version = parse_version(installed_version_str)
@@ -254,8 +376,10 @@ class DependencyWatcher:
                             status = "PATCH_AVAILABLE"
                             message += f" (New version {latest_version} available)"
                 else:
-                    status = "MISSING"
-                    message = f"Package '{name}' not found."
+                    # Only mark missing if not explicitly handled as externally managed
+                    if not externally_managed:
+                        status = "MISSING"
+                        message = f"Package '{name}' not found."
 
             dep_status = {
                 "name": name,
@@ -285,7 +409,7 @@ class DependencyWatcher:
         current_status_report = self._check_dependencies_internal()
 
         if auto_install:
-            self._install_dependencies(current_status_report, install_patches=auto_patch)
+            self._install_dependencies(current_status_report)
             current_status_report = self._check_dependencies_internal()
 
         if current_status_report != _last_dependency_status:
@@ -483,12 +607,12 @@ class DependencyWatcher:
         return canary_health_report
 
 
-def run_dependency_check(auto_install=False, auto_patch=False):
+def run_dependency_check(auto_install=False):
     """
     Entrypoint to run the dependency watcher.
     """
     watcher = DependencyWatcher('backend/dependency_watcher/config/dependency_config.yaml')
-    status_report = watcher.run_checks(auto_install=auto_install, auto_patch=auto_patch)
+    status_report = watcher.run_checks(auto_install=auto_install)
     logger.info("\n--- Dependency Check Report ---")
     for dep in status_report:
         logger.info(f"  {dep['name']:<15} | Installed: {dep['installed_version']:<10} | Required: {dep['required_range']:<10} | Status: {dep['status']:<10} | Message: {dep['message']}")
@@ -496,8 +620,4 @@ def run_dependency_check(auto_install=False, auto_patch=False):
 
 
 if __name__ == '__main__':
-    run_dependency_check(auto_install=True, auto_patch=True)
-
-
-if __name__ == '__main__':
-    run_dependency_check()
+    run_dependency_check(auto_install=True)
