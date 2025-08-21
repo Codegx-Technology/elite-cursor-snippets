@@ -44,7 +44,7 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
 
   const navigationItems = [
     {
-      href: '/',
+      href: '/dashboard',
       icon: FaHome,
       label: 'Dashboard',
       description: 'Overview & Stats'

@@ -6,6 +6,7 @@ import FormInput from '@/components/FormInput';
 import FormSelect from '@/components/FormSelect';
 import { FaNewspaper, FaPlay, FaStop, FaDownload, FaEye, FaFlag, FaMountain, FaGlobe, FaUpload, FaSearch, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
 import { apiClient, handleApiResponse } from '@/lib/api';
+import { useJobStatusPolling } from '@/hooks/useJobStatusPolling';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent + augmentsearch
 // [CONTEXT]: News video generation interface with Kenya-first design and real backend integration
@@ -46,6 +47,7 @@ export default function NewsGeneratePage() {
   const [newsQueryError, setNewsQueryError] = useState<string | null>(null);
   const { progress, generatedUrl, jobError, friendlyFallback, startPolling, stopPolling, setJobError, setFriendlyFallback } = useJobStatusPolling();
   const [inputMode, setInputMode] = useState<'url' | 'query' | 'script'>('query');
+  const [error, setError] = useState<string | null>(null);
 
   // Options
   const languageOptions = [
@@ -109,12 +111,6 @@ export default function NewsGeneratePage() {
 
   const handleGenerateNews = async () => {
     setError(null);
-    setProgress({
-      stage: 'Starting',
-      progress: 5,
-      message: 'Initializing Kenya-first news video generation...',
-      isGenerating: true
-    });
 
     try {
       let requestData: any = {
@@ -135,16 +131,11 @@ export default function NewsGeneratePage() {
           const reader = new FileReader();
           reader.onload = (e) => resolve(e.target?.result as string);
           reader.onerror = (e) => reject(e);
-          reader.readAsText(formData.scriptFile);
+          reader.readAsText(formData.scriptFile as File);
         });
         requestData.script_content = fileContent;
       } else {
         setError('Please provide news URL, search query, or upload a script file');
-        setProgress(prev => ({ ...prev, isGenerating: false }));
-        return;
-      }
-        setError('Please provide news URL, search query, or upload a script file');
-        setProgress(prev => ({ ...prev, isGenerating: false }));
         return;
       }
 
@@ -163,95 +154,6 @@ export default function NewsGeneratePage() {
     } catch (err: any) {
       setJobError(err.message || 'Failed to start news video generation');
     }
-  };
-
-  const pollJobStatus = async (jobId: string) => {
-    const maxAttempts = 60; // 5 minutes max
-    let attempts = 0;
-
-    const stages = [
-      { stage: 'Fetching News', progress: 30, message: 'Gathering and analyzing the latest news content.' },
-      { stage: 'Processing Content', progress: 50, message: 'Extracting key information and structuring the narrative.' },
-      { stage: 'Generating Visuals', progress: 70, message: 'Creating compelling visuals to accompany the news story.' },
-      { stage: 'Adding Voice', progress: 85, message: 'Recording and synchronizing professional narration.' },
-      { stage: 'Final Assembly', progress: 95, message: 'Assembling and polishing your news video for delivery.' }
-    ];
-
-    const poll = async () => {
-      try {
-        const response = await apiClient.getGenerationJob(jobId);
-        handleApiResponse(
-          response,
-          (job) => {
-            if (job.status === 'completed') {
-              setProgress({
-                stage: 'Complete',
-                progress: 100,
-                message: 'Your Kenya-first news video is ready! 🇰🇪',
-                isGenerating: false
-              });
-              setGeneratedVideo(job.result_url || `kenya_news_video_${Date.now()}.mp4`);
-              setCurrentJobId(null);
-            } else if (job.status === 'failed') {
-              setProgress({
-                stage: 'Error',
-                progress: 0,
-                message: 'News video generation failed',
-                isGenerating: false
-              });
-              setError(job.error_message || 'News video generation failed');
-              setCurrentJobId(null);
-            } else {
-              // Still processing
-              const stageIndex = Math.min(Math.floor(job.progress / 20), stages.length - 1);
-              const currentStage = stages[stageIndex] || stages[0];
-              
-                            setProgress({
-                stage: currentStage.stage,
-                progress: job.progress || currentStage.progress,
-                message: job.message || currentStage.message, // Use job.message if available
-                isGenerating: true
-              });
-
-              attempts++;
-              if (attempts < maxAttempts) {
-                setTimeout(poll, 5000);
-              } else {
-                setProgress({
-                  stage: 'Timeout',
-                  progress: 0,
-                  message: 'News video generation timed out',
-                  isGenerating: false
-                });
-                setError('News video generation timed out. Please try again.');
-                setCurrentJobId(null);
-              }
-            }
-          },
-          (error) => {
-            setProgress({
-              stage: 'Error',
-              progress: 0,
-              message: 'Failed to check generation status',
-              isGenerating: false
-            });
-            setError(error);
-            setCurrentJobId(null);
-          }
-        );
-      } catch (err) {
-        setProgress({
-          stage: 'Error',
-          progress: 0,
-          message: 'Network error during generation',
-          isGenerating: false
-        });
-        setError('Failed to check generation status');
-        setCurrentJobId(null);
-      }
-    };
-
-    poll();
   };
 
   const handleStopGeneration = () => {
@@ -346,7 +248,7 @@ export default function NewsGeneratePage() {
               onChange={(e) => handleInputChange('newsUrl', e.target.value)}
               placeholder="https://example.com/news-article"
               helperText="Paste URL of news article to convert to video"
-              error={newsUrlError}
+              error={newsUrlError ?? undefined}
             />
           )}
 
@@ -496,29 +398,6 @@ export default function NewsGeneratePage() {
               </div>
               <p className="text-sm text-gray-600 mt-2">{progress.message}</p>
             </div>
-
-            {/* Generated Video Preview */}
-            {generatedVideo && (
-              <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-medium text-green-800">News Video Generated Successfully! 🎉</h3>
-                  <FaNewspaper className="text-green-600" />
-                </div>
-                <p className="text-sm text-green-700 mb-3">
-                  Your Kenya-first news video "{generatedVideo}" is ready for download.
-                </p>
-                <div className="flex space-x-2">
-                  <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm flex items-center space-x-1">
-                    <FaDownload />
-                    <span>Download</span>
-                  </button>
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm flex items-center space-x-1">
-                    <FaEye />
-                    <span>Preview</span>
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </Card>
       </div>

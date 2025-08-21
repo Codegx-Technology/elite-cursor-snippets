@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import SuperAdminCard from "./SuperAdminCard";
-import { getSuperAdminMetrics } from "../../../api/superadmin";
+import UserManagementSection from './UserManagementSection';
+import TenantManagementSection from './TenantManagementSection';
+import TTSVoiceManagementSection from './TTSVoiceManagementSection';
+import { apiClient } from '@/lib/api'; // Import apiClient
 
 interface SuperAdminDashboardProps {
   userRole: string;
@@ -11,15 +14,17 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userRole }) =
 
   useEffect(() => {
     if (userRole === "superadmin") {
-      getSuperAdminMetrics().then(setMetrics);
+      apiClient.getSuperAdminMetrics().then(response => {
+        if (response.data) {
+          setMetrics(response.data);
+        } else if (response.error) {
+          console.error("Failed to fetch super admin metrics:", response.error);
+        }
+      });
     }
   }, [userRole]);
 
   if (userRole !== "superadmin") return null; // hide for non-superadmins
-
-  import UserManagementSection from './UserManagementSection'; // New import
-import TenantManagementSection from './TenantManagementSection'; // New import
-import TTSVoiceManagementSection from './TTSVoiceManagementSection'; // New import
 
   return (
     <div className="superadmin-dashboard p-4">

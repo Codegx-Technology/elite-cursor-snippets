@@ -1,3 +1,4 @@
+'use client';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
@@ -21,7 +22,7 @@ const DependencyWatcher: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [alertedDeps, setAlertedDeps] = useState<Set<string>>(new Set());
-  const { toast } = useToast();
+  const { addToast } = useToast();
   const prevDependenciesRef = useRef<Dependency[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttempts = useRef(0);
@@ -36,10 +37,10 @@ const DependencyWatcher: React.FC = () => {
 
         if (oldDep && oldDep.status !== newDep.status) {
           if ((newDep.status === 'MISSING' || newDep.status === 'OUTDATED') && !alertedDeps.has(newDep.name)) {
-            toast({
+            addToast({
               title: "Dependency Issue Detected",
               description: `${newDep.name} is now ${newDep.status}. ${newDep.message}`,
-              variant: newDep.status === 'MISSING' ? 'destructive' : 'warning',
+              type: newDep.status === 'MISSING' ? 'destructive' : 'warning',
             });
             setAlertedDeps(prev => new Set(prev).add(newDep.name));
           } else if (newDep.status === 'HEALTHY' && alertedDeps.has(newDep.name)) {
@@ -54,7 +55,7 @@ const DependencyWatcher: React.FC = () => {
     }
     setDependencies(newDependencies);
     prevDependenciesRef.current = newDependencies;
-  }, [alertedDeps, toast]);
+  }, [alertedDeps, addToast]);
 
   const connectWebSocket = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -146,17 +147,18 @@ const DependencyWatcher: React.FC = () => {
       const planId = planResponse.data.id;
 
       const dryRunResponse = await axios.post(`/api/depwatcher/dry-run/${planId}`);
-      toast({
+      addToast({
         title: "Dry Run Initiated",
         description: `Dry run for ${dep.name} simulated. Plan ID: ${planId}. Check backend logs for details.`,
+        type: "info",
       });
       // Optionally, show a modal with dryRunResponse.data
     } catch (err: any) {
       console.error('Dry Run failed:', err.response?.data || err);
-      toast({
+      addToast({
         title: "Dry Run Failed",
         description: err.response?.data?.detail || "Failed to initiate dry run.",
-        variant: "destructive",
+        type: "destructive",
       });
     }
   };
@@ -174,16 +176,17 @@ const DependencyWatcher: React.FC = () => {
       const planId = planResponse.data.id;
 
       await axios.post(`/api/depwatcher/approve/${planId}`);
-      toast({
+      addToast({
         title: "Approval Sent",
         description: `Approval for ${dep.name} (Plan ID: ${planId}) sent.`,
+        type: "info",
       });
     } catch (err: any) {
       console.error('Approval failed:', err.response?.data || err);
-      toast({
+      addToast({
         title: "Approval Failed",
         description: err.response?.data?.detail || "Failed to approve plan.",
-        variant: "destructive",
+        type: "destructive",
       });
     }
   };
@@ -202,18 +205,19 @@ const DependencyWatcher: React.FC = () => {
       const applyResponse = await axios.post(`/api/depwatcher/apply/${planId}`);
       const jobId = applyResponse.data.job_id;
       
-      toast({
+      addToast({
         title: "Apply Initiated",
         description: `Applying patch for ${dep.name}. Job ID: ${jobId}.`,
+        type: "info",
       });
       setCurrentJobId(jobId);
       setShowJobLogPanel(true);
     } catch (err: any) {
       console.error('Apply failed:', err.response?.data || err);
-      toast({
+      addToast({
         title: "Apply Failed",
         description: err.response?.data?.detail || "Failed to apply patch.",
-        variant: "destructive",
+        type: "destructive",
       });
     }
   };

@@ -40,29 +40,29 @@ export default function AdminDashboardPage() {
   const [loadingUpdates, setLoadingUpdates] = useState(true);
   const [errorUpdates, setErrorUpdates] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchPendingUpdates = async () => {
-      setLoadingUpdates(true);
-      setErrorUpdates(null);
-      try {
-        const token = localStorage.getItem('jwt_token'); // Assuming JWT token is stored in localStorage
-        const response = await fetch('http://localhost:8000/superadmin/model-updates', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        setPendingUpdates(data);
-      } catch (error: any) {
-        setErrorUpdates(error.message || 'Failed to fetch pending updates.');
-      } finally {
-        setLoadingUpdates(false);
+  const fetchPendingUpdates = async () => {
+    setLoadingUpdates(true);
+    setErrorUpdates(null);
+    try {
+      const token = localStorage.getItem('jwt_token'); // Assuming JWT token is stored in localStorage
+      const response = await fetch('http://localhost:8000/superadmin/model-updates', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
+      const data = await response.json();
+      setPendingUpdates(data);
+    } catch (error: any) {
+      setErrorUpdates(error.message || 'Failed to fetch pending updates.');
+    } finally {
+      setLoadingUpdates(false);
+    }
+  };
 
+  useEffect(() => {
     if (isAuthenticated && user?.role === 'admin') {
       fetchPendingUpdates();
     }

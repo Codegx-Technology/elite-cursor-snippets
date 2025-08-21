@@ -620,6 +620,19 @@ class ApiClient {
     });
   }
 
+  // Super Admin
+  async getSuperAdminMetrics(): Promise<ApiResponse<any>> { // Define a proper type for SuperAdminMetrics later
+    return this.request('/api/superadmin/metrics');
+  }
+
+  async getSuperAdminUsers(): Promise<ApiResponse<UserData[]>> {
+    return this.request('/api/superadmin/users');
+  }
+
+  async getSuperAdminTenants(): Promise<ApiResponse<any[]>> { // Define a proper type for TenantData later
+    return this.request('/api/superadmin/tenants');
+  }
+
   // Widget Management
   async installWidget(widgetName: string, widgetVersion: string, dependencies: string[]): Promise<ApiResponse<{ success: boolean; message: string }>> {
     const { user } = useAuth();

@@ -13,7 +13,7 @@ const JobLogPanel: React.FC<JobLogPanelProps> = ({ jobId }) => {
   const [jobStatus, setJobStatus] = useState<string>('pending');
   const wsRef = useRef<WebSocket | null>(null);
   const logEndRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
+  const { addToast } = useToast();
 
   const connectWebSocket = () => {
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -32,10 +32,10 @@ const JobLogPanel: React.FC<JobLogPanelProps> = ({ jobId }) => {
       } else if (data.event === 'job_status_update') {
         setJobStatus(data.status);
         if (data.status === 'completed' || data.status === 'failed') {
-          toast({
+          addToast({
             title: `Job ${data.status.charAt(0).toUpperCase() + data.status.slice(1)}: ${jobId}`,
             description: data.message || `Job ${jobId} has ${data.status}`,
-            variant: data.status === 'failed' ? 'destructive' : 'default',
+            type: data.status === 'failed' ? 'destructive' : 'info',
           });
           wsRef.current?.close();
         }
@@ -52,10 +52,10 @@ const JobLogPanel: React.FC<JobLogPanelProps> = ({ jobId }) => {
     wsRef.current.onerror = (err) => {
       console.error(`WebSocket error for job ${jobId}:`, err);
       setJobStatus('error');
-      toast({
+      addToast({
         title: "WebSocket Error",
         description: `Failed to stream logs for job ${jobId}`,
-        variant: "destructive",
+        type: "destructive",
       });
     };
   };
@@ -76,8 +76,15 @@ const JobLogPanel: React.FC<JobLogPanelProps> = ({ jobId }) => {
 
   const handleCopyToClipboard = () => {
     navigator.clipboard.writeText(logs.join('\n'))
-      .then(() => toast({ title: "Logs copied to clipboard" }))
-      .catch(err => console.error('Failed to copy logs:', err));
+      .then(() => addToast({ title: "Logs copied to clipboard", type: "info" }))
+      .catch(err => {
+        console.error('Failed to copy logs:', err);
+        addToast({
+          title: "Copy Failed",
+          description: "Failed to copy logs to clipboard.",
+          type: "destructive",
+        });
+      });
   };
 
   return (
@@ -101,7 +108,7 @@ const JobLogPanel: React.FC<JobLogPanelProps> = ({ jobId }) => {
           )}
           <div ref={logEndRef} />
         </ScrollArea>
-        <div classNameName="text-right text-sm text-gray-500 mt-2">
+        <div className="text-right text-sm text-gray-500 mt-2">
           Status: {jobStatus}
         </div>
       </CardContent>

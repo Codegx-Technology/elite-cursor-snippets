@@ -4,14 +4,8 @@ import "./globals.css";
 import Layout from "@/components/Layout";
 import ClientBoot from "@/components/ClientBoot";
 import { PlanGuardProvider } from "@/context/PlanGuardContext"; // New import
-import { Inter } from "next/font/google";
-import "./globals.css";
-import Layout from "@/components/Layout";
-import ClientBoot from "@/components/ClientBoot";
-import { PlanGuardProvider } from "@/context/PlanGuardContext"; // New import
 import { AuthProvider } from "@/context/AuthContext"; // New import for AuthProvider
-import { ErrorProvider } from "@/context/ErrorContext"; // New import for ErrorProvider
-import ErrorNotification from "@/components/ErrorNotification"; // New import for ErrorNotification
+// Removed unused ErrorProvider and ErrorNotification imports (surgicalfix)
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Root layout with Kenya-first design system and enterprise styling
@@ -113,7 +107,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className} suppressHydrationWarning={true}>
         <AuthProvider> {/* Wrap with AuthProvider */}
-          <PlanGuardProvider userId="test_user_id"> {/* Wrap with PlanGuardProvider */}
+          <PlanGuardProvider> {/* Wrap with PlanGuardProvider */}
             <Layout>{children}</Layout>
           </PlanGuardProvider>
         </AuthProvider>
