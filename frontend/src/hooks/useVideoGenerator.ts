@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { apiClient, handleApiResponse } from '@/lib/api';
-import { useJobStatusPolling } from './useJobStatusPolling';
 import { useError } from '@/context/ErrorContext';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
@@ -58,6 +57,9 @@ export function useVideoGenerator() {
     retryOptions: string[];
     spinnerType: string;
   } | null>(null);
+
+  // Global error reporter from ErrorContext
+  const { setGlobalError } = useError();
 
   const handleInputChange = (field: keyof VideoGenerationForm, value: string | boolean) => {
     setFormData(prev => ({
@@ -161,7 +163,7 @@ export function useVideoGenerator() {
         }
       );
     } catch (err: any) {
-      setJobError(err.message || 'Failed to start video generation');
+      setError(err.message || 'Failed to start video generation');
       setGlobalError(err.message || 'Failed to start video generation');
     }
   };
@@ -223,7 +225,7 @@ export function useVideoGenerator() {
               setProgress({
                 stage: currentStage.stage,
                 progress: job.progress || currentStage.progress,
-                message: job.message || currentStage.message, // Use job.message if available
+                message: currentStage.message,
                 isGenerating: true
               });
 
@@ -243,13 +245,13 @@ export function useVideoGenerator() {
             }
           },
           (error) => {
+            setError(error);
             setProgress({
               stage: 'Error',
               progress: 0,
               message: 'Failed to check generation status',
               isGenerating: false
             });
-            setError(error);
             setCurrentJobId(null);
           }
         );
@@ -280,14 +282,14 @@ export function useVideoGenerator() {
   return {
     formData,
     progress,
-    generatedUrl,
-    jobError,
+    generatedVideo,
+    error,
+    setError,
     scriptError,
     friendlyFallback,
     handleInputChange,
     handleGenerateVideo,
     handleStopGeneration,
-    setJobError,
     setFriendlyFallback
   };
 }

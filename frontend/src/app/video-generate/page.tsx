@@ -21,6 +21,7 @@ export default function VideoGeneratePage() {
     error,
     setError,
     friendlyFallback,
+    scriptError,
     handleInputChange,
     handleGenerateVideo,
     handleStopGeneration,
@@ -257,15 +258,15 @@ export default function VideoGeneratePage() {
               </div>
 
               {/* Error Display */}
-              {jobError && (
+              {error && (
                 <div className="bg-red-50 border border-red-200 p-4 rounded-lg mb-4">
                   <div className="flex items-center space-x-2">
                     <FaExclamationTriangle className="text-red-600" aria-label="Error Icon" />
                     <p className="text-red-800 font-medium">Generation Error</p>
                   </div>
-                  <p className="text-red-700 text-sm mt-1">{jobError}</p>
+                  <p className="text-red-700 text-sm mt-1">{error}</p>
                   <button
-                    onClick={() => setJobError(null)}
+                    onClick={() => setError(null)}
                     className="text-red-600 hover:text-red-800 text-sm mt-2 underline"
                   >
                     Dismiss
