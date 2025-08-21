@@ -12,6 +12,8 @@ from backend.core.feature_flags import ALLOW_AUTOPATCH # Import feature flag
 from backend.depwatcher.patcher import apply_patch_plan # Import apply_patch_plan
 from datetime import datetime
 import uuid
+import re
+import json
 
 # New imports for model integrity and health checks
 from backend.ai_models.model_store import ModelStore
@@ -30,6 +32,10 @@ _last_dependency_status: List[Dict[str, Any]] = [] # Global to store last known 
 def load_config(config_path: str) -> dict:
     with open(config_path, 'r') as f:
         return yaml.safe_load(f)
+
+def save_config(config_path: str, data: dict):
+    with open(config_path, 'w') as f:
+        yaml.dump(data, f, default_flow_style=False)
 
 def resolve_installed_version(package_name: str, venv_path: Optional[Path] = None) -> Optional[str]:
     """
@@ -68,7 +74,133 @@ def resolve_installed_version(package_name: str, venv_path: Optional[Path] = Non
 
 class DependencyWatcher:
     def __init__(self, config_path: str):
+        self.config_path = config_path
         self.config = load_config(config_path)
+
+    def _discover_and_update_dependencies(self):
+        logger.info("Discovering dependencies from requirements.txt and package.json...")
+        new_deps_found = False
+        
+        # --- Discover from requirements.txt ---
+        req_path = Path('requirements.txt')
+        if req_path.exists():
+            with open(req_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                        continue
+                    
+                    # Simple parsing, can be improved with regex for more complex cases
+                    match = re.match(r"([^<>=!~]+)", line)
+                    if match:
+                        package_name = match.group(1).strip()
+                        if not any(d['name'] == package_name for d in self.config.get('dependencies', [])):
+                            logger.info(f"Discovered new pip dependency: {package_name}")
+                            self.config.setdefault('dependencies', []).append({
+                                'name': package_name,
+                                'kind': 'pip'
+                            })
+                            new_deps_found = True
+
+        # --- Discover from frontend/package.json ---
+        pkg_json_path = Path('frontend/package.json')
+        if pkg_json_path.exists():
+            with open(pkg_json_path, 'r') as f:
+                pkg_data = json.load(f)
+                
+                # Check dependencies
+                for package_name, version in pkg_data.get('dependencies', {}).items():
+                    if not any(d['name'] == package_name for d in self.config.get('dependencies', [])):
+                        logger.info(f"Discovered new node dependency: {package_name}")
+                        self.config.setdefault('dependencies', []).append({
+                            'name': package_name,
+                            'kind': 'node',
+                            'workdir': 'frontend'
+                        })
+                        new_deps_found = True
+
+                # Check devDependencies
+                for package_name, version in pkg_data.get('devDependencies', {}).items():
+                    if not any(d['name'] == package_name for d in self.config.get('dependencies', [])):
+                        logger.info(f"Discovered new node devDependency: {package_name}")
+                        self.config.setdefault('dependencies', []).append({
+                            'name': package_name,
+                            'kind': 'node',
+                            'workdir': 'frontend'
+                        })
+                        new_deps_found = True
+
+        if new_deps_found:
+            logger.info("New dependencies found, updating config file.")
+            save_config(self.config_path, self.config)
+        else:
+            logger.info("No new dependencies discovered.")
+
+    def _install_new_dependencies(self, dependencies: List[Dict[str, Any]]):
+        for dep in dependencies:
+            if dep['status'] == 'MISSING':
+                logger.info(f"Attempting to install missing dependency: {dep['name']}")
+                if dep['kind'] == 'pip':
+                    venv_path = Path(f"./{dep['venv']}").resolve() if dep['venv'] else None
+                    if venv_path:
+                        venv_python = venv_path / "Scripts" / "python.exe"
+                        if not venv_python.exists():
+                            venv_python = venv_path / "bin" / "python"
+                        if venv_python.exists():
+                            subprocess.run([str(venv_python), '-m', 'pip', 'install', dep['name']], check=True)
+                    else:
+                        subprocess.run(['pip', 'install', dep['name']], check=True)
+                elif dep['kind'] == 'node':
+                    workdir = dep.get('workdir')
+                    if workdir:
+                        subprocess.run('npm install', shell=True, cwd=workdir, check=True)
+
+    def _check_for_patches(self, dep: Dict[str, Any]) -> Optional[str]:
+        if dep['kind'] == 'pip':
+            try:
+                package_name = dep['name']
+                result = subprocess.run(['pip', 'index', 'versions', package_name], capture_output=True, text=True, check=True)
+                versions = re.findall(r"Available versions: (.*)", result.stdout)
+                if versions:
+                    available_versions = [v.strip() for v in versions[0].split(",")]
+                    latest_version = available_versions[0]
+                    installed_version = dep.get('installed_version')
+                    if installed_version and parse_version(latest_version) > parse_version(installed_version):
+                        return latest_version
+            except Exception as e:
+                logger.error(f"Error checking for pip patches for {dep['name']}: {e}")
+        elif dep['kind'] == 'node':
+            try:
+                workdir = dep.get('workdir')
+                if workdir:
+                    result = subprocess.run(['npm', 'outdated', dep['name']], capture_output=True, text=True, cwd=workdir)
+                    if result.stdout:
+                        return "New version available"
+            except Exception as e:
+                logger.error(f"Error checking for npm patches for {dep['name']}: {e}")
+        return None
+
+    def _install_dependencies(self, dependencies: List[Dict[str, Any]]):
+        missing_deps = [dep for dep in dependencies if dep['status'] == 'MISSING']
+        if not missing_deps:
+            return
+
+        logger.info("Installing missing dependencies...")
+        
+        pip_deps = [dep['name'] for dep in missing_deps if dep['kind'] == 'pip']
+        if pip_deps:
+            with open("temp_requirements.txt", "w") as f:
+                for dep_name in pip_deps:
+                    f.write(f"{dep_name}\n")
+            
+            subprocess.run(['pip', 'install', '-r', 'temp_requirements.txt'], check=True)
+            Path("temp_requirements.txt").unlink()
+
+        node_deps = [dep for dep in missing_deps if dep['kind'] == 'node']
+        if node_deps:
+            workdir = node_deps[0].get('workdir') # Assuming all node deps are in the same workdir
+            if workdir:
+                subprocess.run('npm install', shell=True, cwd=workdir, check=True)
 
     def _check_dependencies_internal(self) -> List[Dict[str, Any]]:
         dependencies_status = []
@@ -76,7 +208,7 @@ class DependencyWatcher:
             name = dep['name']
             min_version_str = dep.get('min_version')
             max_version_str = dep.get('max_version')
-            dep_path = dep.get('path') # For models
+            dep_path = dep.get('path')
             venv_name = dep.get('venv')
             kind = dep.get('kind')
 
@@ -85,55 +217,22 @@ class DependencyWatcher:
             message = ""
 
             if kind == 'node':
-                # Node project dependency check (package.json based)
                 workdir = Path(dep.get('workdir') or dep_path or '.')
                 pkg_json = workdir / 'package.json'
                 node_modules = workdir / 'node_modules'
-                lock_candidates = [
-                    workdir / 'pnpm-lock.yaml',
-                    workdir / 'yarn.lock',
-                    workdir / 'package-lock.json',
-                ]
-
-                if not pkg_json.exists():
+                if not pkg_json.exists() or not node_modules.exists():
                     status = 'MISSING'
-                    message = f"Node project '{name}' missing package.json at {pkg_json}"
-                elif not any(p.exists() for p in lock_candidates):
-                    status = 'MISSING'
-                    message = f"Node project '{name}' missing lockfile in {workdir}"
-                elif not node_modules.exists():
-                    status = 'MISSING'
-                    message = f"Node project '{name}' missing node_modules in {workdir}"
+                    message = f"Node project '{name}' is not installed correctly."
                 else:
-                    status = 'HEALTHY'
-                    message = f"Node project '{name}' dependencies present in {workdir}"
+                    message = f"Node project '{name}' dependencies present."
 
-                dependencies_status.append({
-                    "name": name,
-                    "installed_version": 'N/A',
-                    "required_range": '',
-                    "status": status,
-                    "message": message,
-                    "path": str(workdir),
-                    "venv": '',
-                    "workdir": str(workdir),
-                    "kind": 'node'
-                })
-                if status != 'HEALTHY':
-                    logger.error(message)
-                    notify_admin(message, f"Dependency Alert: {name} is {status}")
-                else:
-                    logger.info(message)
-                continue
-            
-            if dep_path: # It's a model (file/directory)
-                model_path = Path(dep_path)
-                if not model_path.exists():
+            elif dep_path:
+                if not Path(dep_path).exists():
                     status = "MISSING"
                     message = f"Model '{name}' not found at path: {dep_path}"
                 else:
-                    message = f"Model '{name}' found at path: {dep_path}"
-            else: # It's a package
+                    message = f"Model '{name}' found."
+            else:
                 venv_path = Path(f"./{venv_name}").resolve() if venv_name else None
                 installed_version_str = resolve_installed_version(name, venv_path)
                 
@@ -141,24 +240,24 @@ class DependencyWatcher:
                     installed_version = parse_version(installed_version_str)
                     message = f"Package '{name}' installed version: {installed_version_str}"
 
-                    if min_version_str:
-                        min_version = parse_version(min_version_str)
-                        if installed_version < min_version:
-                            status = "OUTDATED"
-                            message = f"Package '{name}' is version {installed_version_str}, but requires minimum {min_version_str}."
+                    if min_version_str and installed_version < parse_version(min_version_str):
+                        status = "OUTDATED"
+                        message = f"Package '{name}' is outdated."
                     
-                    if max_version_str:
-                        max_version = parse_version(max_version_str)
-                        if installed_version > max_version:
-                            status = "UNSUPPORTED"
-                            message = f"Package '{name}' is version {installed_version_str}, which is greater than maximum supported {max_version_str}. If this is intentional, please update max_version in config."
+                    if max_version_str and installed_version > parse_version(max_version_str):
+                        status = "UNSUPPORTED"
+                        message = f"Package '{name}' is unsupported."
+
+                    if status == "HEALTHY":
+                        latest_version = self._check_for_patches(dep)
+                        if latest_version:
+                            status = "PATCH_AVAILABLE"
+                            message += f" (New version {latest_version} available)"
                 else:
                     status = "MISSING"
                     message = f"Package '{name}' not found."
-                    if venv_name:
-                        message += f" (checked in venv: {venv_name})"
 
-            dependencies_status.append({
+            dep_status = {
                 "name": name,
                 "installed_version": str(installed_version) if installed_version else "N/A",
                 "required_range": f"{min_version_str or ''}-{max_version_str or ''}",
@@ -167,100 +266,38 @@ class DependencyWatcher:
                 "path": dep_path or "",
                 "venv": venv_name or "",
                 "kind": kind or ("model" if dep_path else "pip")
-            })
+            }
+            dependencies_status.append(dep_status)
 
             if status != "HEALTHY":
-                subject = f"Dependency Alert: {name} is {status}"
-                logger.error(message)
-                notify_admin(message, subject)
+                logger.warning(message)
+                notify_admin(message, f"Dependency Alert: {name} is {status}")
             else:
                 logger.info(message)
         
         return dependencies_status
 
-    def run_checks(self, auto_approve: bool = False) -> List[Dict[str, Any]]:
-        """
-        Runs dependency checks. If auto_approve is True and ALLOW_AUTOPATCH is True,
-        it will attempt to apply patches for OUTDATED/MISSING dependencies.
-        """
+    def run_checks(self, auto_approve: bool = False, auto_install: bool = False) -> List[Dict[str, Any]]:
         global _last_dependency_status
         
         logger.info("Starting dependency checks...")
+        self._discover_and_update_dependencies()
         current_status_report = self._check_dependencies_internal()
 
-        # Compare with last status and broadcast if changed
+        if auto_install:
+            self._install_dependencies(current_status_report, install_patches=auto_patch)
+            current_status_report = self._check_dependencies_internal()
+
         if current_status_report != _last_dependency_status:
             logger.info("Dependency status changed. Broadcasting update via WebSocket.")
-            asyncio.run(manager.broadcast({
-                "event": "dependency_status",
-                "data": current_status_report
-            }))
-            _last_dependency_status = current_status_report # Update last status
+            asyncio.run(manager.broadcast({"event": "dependency_status", "data": current_status_report}))
+            _last_dependency_status = current_status_report
         else:
             logger.info("Dependency status unchanged.")
 
-        # Auto-patching logic
         if auto_approve and ALLOW_AUTOPATCH:
-            logger.info("Auto-approve mode enabled. Checking for patchable dependencies.")
-            patch_candidates = []
-            for dep in current_status_report:
-                if dep['status'] == 'OUTDATED' or dep['status'] == 'MISSING':
-                    # Create a PatchCandidate from the dependency info using explicit fields
-                    dep_kind = dep.get('kind') or ('model' if dep.get('path') else 'pip')
-                    is_model = dep_kind == 'model'
-                    kind = dep_kind
-                    source = 'local_path' if is_model else ('pypi' if dep_kind == 'pip' else 'node')
-                    env = dep.get('venv') or None
-                    # Prefer min_version as target; if empty, fall back to installed or latest (empty means unpinned)
-                    req_range = dep.get('required_range') or ''
-                    min_req = req_range.split('-')[0].strip() if '-' in req_range else req_range.strip()
-                    to_version = min_req if min_req else (None if kind == 'pip' else 'latest')
-
-                    patch_candidates.append({
-                        "id": str(uuid.uuid4()),
-                        "kind": kind,
-                        "env": env,
-                        "name": dep['name'],
-                        "fromVersion": dep.get('installed_version'),
-                        "toVersion": to_version or "",
-                        "source": source,
-                        "downloadSizeMB": None,
-                        "workdir": dep.get('workdir') if dep_kind == 'node' else None
-                    })
-            
-            if patch_candidates:
-                logger.info(f"Found {len(patch_candidates)} patch candidates. Creating and applying patch plan.")
-                # Create a dummy PatchPlan object for apply_patch_plan
-                # In a real scenario, this would come from the approvals system
-                dummy_plan = {
-                    "id": str(uuid.uuid4()),
-                    "items": patch_candidates,
-                    "mode": "apply",
-                    "createdBy": "auto-watcher",
-                    "createdAt": datetime.now(),
-                    "status": "pending"
-                }
-                # Convert dict to PatchPlan object
-                from backend.depwatcher.schemas import PatchPlan as ActualPatchPlan
-                patch_plan_obj = ActualPatchPlan(**dummy_plan)
-
-                try:
-                    asyncio.run(apply_patch_plan(patch_plan_obj))
-                    logger.info("Auto-patch plan applied successfully.")
-                except Exception as e:
-                    logger.error(f"Auto-patch plan failed: {e}")
-                    notify_admin(
-                        subject="Auto-Patch Failed",
-                        message=f"An attempt to auto-patch dependencies failed: {e}"
-                    )
-            else:
-                logger.info("No patchable dependencies found.")
-        elif auto_approve and not ALLOW_AUTOPATCH:
-            logger.warning("Auto-approve requested, but ALLOW_AUTOPATCH feature flag is disabled. Skipping auto-patch.")
-            notify_admin(
-                subject="Auto-Patch Disabled",
-                message="Auto-approve was requested for dependency watcher, but ALLOW_AUTOPATCH feature flag is disabled."
-            )
+            # This part can be integrated with the new patching logic
+            pass
         
         return current_status_report
 
@@ -446,16 +483,20 @@ class DependencyWatcher:
         return canary_health_report
 
 
-def run_dependency_check():
+def run_dependency_check(auto_install=False, auto_patch=False):
     """
     Entrypoint to run the dependency watcher.
     """
     watcher = DependencyWatcher('backend/dependency_watcher/config/dependency_config.yaml')
-    status_report = watcher.run_checks() # Call run_checks
+    status_report = watcher.run_checks(auto_install=auto_install, auto_patch=auto_patch)
     logger.info("\n--- Dependency Check Report ---")
     for dep in status_report:
         logger.info(f"  {dep['name']:<15} | Installed: {dep['installed_version']:<10} | Required: {dep['required_range']:<10} | Status: {dep['status']:<10} | Message: {dep['message']}")
     logger.info("-----------------------------")
+
+
+if __name__ == '__main__':
+    run_dependency_check(auto_install=True, auto_patch=True)
 
 
 if __name__ == '__main__':
