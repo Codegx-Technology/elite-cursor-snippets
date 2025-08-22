@@ -6,10 +6,7 @@ import { FaCheck, FaCrown, FaFlag, FaMountain, FaRocket } from 'react-icons/fa6'
 import GraceCountdownOverlay from '@/components/GraceCountdownOverlay';
 import { useWidgetLoader } from '@/utils/widgetLoader';
 import { usePlanGuard } from '@/context/PlanGuardContext'; // New import
-
-// Import with error handling
-let paymentUtils: any;
-let usePaystack: any;
+import { paymentUtils, usePaystack } from '@/lib/paystack'; // Correct import for paymentUtils and usePaystack
 
 // Local types for plan and payment method to satisfy TS when using require()
 type Plan = {

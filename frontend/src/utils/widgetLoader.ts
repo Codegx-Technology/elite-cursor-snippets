@@ -20,13 +20,13 @@ async function checkWidgetDependencies(userId: string | undefined, widgetName: s
   }
 
   // Use the imported checkDependenciesFromGuard
-  const result = await checkDependenciesFromGuard(userId || "anonymous", widgetName, widgetEntry.dependencies);
+  const result = await checkDependenciesFromGuard(widgetName, widgetEntry.dependencies);
 
   // Map the result from dependencyGuard to the expected WidgetLoadResult format
   return {
-    allowed: result.allowed,
-    message: result.message,
-    planStatus: result.planStatus || currentPlanStatus, // Prefer planStatus from backend, fallback to current
+    allowed: result.ok,
+    message: result.reason || '',
+    planStatus: currentPlanStatus,
   };
 }
 
@@ -61,10 +61,9 @@ export function useWidgetLoader(widgetName: string, userId?: string) {
         try {
           const widgetEntry = widgetRegistry.get(widgetName);
           if (widgetEntry) {
-            const module = await widgetEntry.component();
             if (isMounted) {
               setResult({
-                component: module.default,
+                component: widgetEntry.component,
                 allowed: true,
                 message: "",
                 planStatus: checkResult.planStatus,

@@ -5,7 +5,8 @@ import Layout from "@/components/Layout";
 import ClientBoot from "@/components/ClientBoot";
 import { PlanGuardProvider } from "@/context/PlanGuardContext"; // New import
 import { AuthProvider } from "@/context/AuthContext"; // New import for AuthProvider
-// Removed unused ErrorProvider and ErrorNotification imports (surgicalfix)
+import { ErrorProvider } from "@/context/ErrorContext"; // Re-added ErrorProvider
+import ErrorNotification from "@/components/ErrorNotification"; // Re-added ErrorNotification
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Root layout with Kenya-first design system and enterprise styling
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Shujaa Studio - Kenya-First AI Video Platform",
-    description: "Empowering African storytellers with cutting-edge AI video generation technology",
+    description: "Empowering African storytellers with cutting-edge AI Video Platform",
     url: 'https://shujaa.studio',
     siteName: 'Shujaa Studio',
     images: [
@@ -49,7 +50,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: "Shujaa Studio - Kenya-First AI Video Platform",
-    description: "Empowering African storytellers with cutting-edge AI video generation technology",
+    description: "Empowering African storytellers with cutting-edge AI Video Platform",
     images: ['/twitter-image.png'],
     creator: '@ShujaaStudio',
   },
@@ -106,12 +107,15 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="//fonts.gstatic.com" />
       </head>
       <body className={inter.className} suppressHydrationWarning={true}>
-        <AuthProvider> {/* Wrap with AuthProvider */}
-          <PlanGuardProvider> {/* Wrap with PlanGuardProvider */}
-            <Layout>{children}</Layout>
-          </PlanGuardProvider>
-        </AuthProvider>
-        <ClientBoot />
+        <ErrorProvider> {/* Wrap with ErrorProvider */}
+          <AuthProvider> {/* Wrap with AuthProvider */}
+            <PlanGuardProvider> {/* Wrap with PlanGuardProvider */}
+              <Layout>{children}</Layout>
+            </PlanGuardProvider>
+          </AuthProvider>
+          <ClientBoot />
+          <ErrorNotification /> {/* Render ErrorNotification */}
+        </ErrorProvider>
       </body>
     </html>
   );

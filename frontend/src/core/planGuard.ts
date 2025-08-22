@@ -58,7 +58,7 @@ export async function getCurrentPlan(ctx: { userId: string; userRole?: string })
   } catch (error) {
     console.error("PlanGuard: Failed to fetch plan from API. Falling back to defaults.", error);
     // Graceful fallback: provide default entitlements if API fails
-    const defaultPlan = {
+    const defaultPlan: { tier: string; entitlements: Entitlement[] } = {
       tier: "Fallback (Free)",
       entitlements: [
         { key: 'core_features', level: 'free' },

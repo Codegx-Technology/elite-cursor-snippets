@@ -19,6 +19,7 @@ export default function PlanGuardWidget({
   pollIntervalMs = 30000,
   showUpgradeBtn = true,
   theme = "default",
+  isRestricted = false, // Destructure and provide a default value
 }: Props) {
   const [status, setStatus] = useState<PlanStatus | null>(null);
   const [events, setEvents] = useState<PlanEvent[]>([]);

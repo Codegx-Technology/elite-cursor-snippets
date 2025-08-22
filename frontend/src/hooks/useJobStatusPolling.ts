@@ -9,7 +9,7 @@ export interface JobProgress {
 }
 
 export interface JobStatusResponse {
-  status: 'queued' | 'processing' | 'completed' | 'failed' | 'friendly_fallback';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'friendly_fallback';
   progress?: number;
   friendly_message?: string;
   error_message?: string;

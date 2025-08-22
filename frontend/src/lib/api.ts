@@ -264,18 +264,41 @@ class ApiClient {
         ...options,
         headers,
       });
-
-      const data = await response.json();
+      // Safely parse response body (JSON preferred, fallback to text)
+      const contentType = response.headers.get('content-type') || '';
+      let parsed: any = null;
+      try {
+        if (contentType.includes('application/json')) {
+          parsed = await response.json();
+        } else {
+          const text = await response.text();
+          // Attempt to parse JSON from text if it looks like JSON
+          if (text && (text.startsWith('{') || text.startsWith('['))) {
+            try {
+              parsed = JSON.parse(text);
+            } catch {
+              parsed = { message: text };
+            }
+          } else {
+            parsed = { message: text };
+          }
+        }
+      } catch (e) {
+        // Parsing failed; leave parsed null
+        parsed = null;
+      }
 
       if (!response.ok) {
+        const errMsg = (parsed && (parsed.detail || parsed.error || parsed.message))
+          || `HTTP ${response.status}: ${response.statusText}`;
         return {
-          error: data.detail || `HTTP ${response.status}: ${response.statusText}`,
+          error: errMsg,
           status: response.status,
         };
       }
 
       return {
-        data,
+        data: parsed as T,
         status: response.status,
       };
     } catch (error) {

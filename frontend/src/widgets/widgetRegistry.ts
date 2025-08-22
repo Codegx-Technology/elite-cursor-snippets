@@ -15,14 +15,14 @@ const widgetRegistry = new Map<string, WidgetRegistryEntry>();
 // Example: Registering the PlanGuardWidget
 // Lazy load the component to improve initial bundle size
 widgetRegistry.set("PlanGuardWidget", {
-  component: React.lazy(() => import('./PlanGuardWidget')), // Path relative to this file
+  component: React.lazy(() => import('./PlanGuardWidget/PlanGuardWidget')), // Path relative to this file
   dependencies: ["core_ai", "realtime_updates"], // Example dependencies
   description: "Displays user plan status and grace period countdown.",
 });
 
 // Example: Registering the PlanGuardDashboardWidget
 widgetRegistry.set("PlanGuardDashboardWidget", {
-  component: React.lazy(() => import('./PlanGuardDashboardWidget')), // Path relative to this file
+  component: React.lazy(() => import('./PlanGuardDashboardWidget/PlanGuardDashboardWidget')), // Path relative to this file
   dependencies: ["analytics_pro", "reporting_suite"], // Example dependencies
   description: "Provides a detailed overview of user usage and enforcement history.",
 });

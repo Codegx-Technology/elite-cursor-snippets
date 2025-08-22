@@ -11,8 +11,6 @@ interface Props {
 }
 
 export default function PlanGuardDashboardWidget({ userId }: Props) {
-  // Declare widget dependencies
-  PlanGuardDashboardWidget.dependencies = ["analytics_pro", "reporting_suite"]; // Example dependencies
 
   const [data, setData] = useState<PlanDashboardData | null>(null);
   const [loading, setLoading] = useState(true);

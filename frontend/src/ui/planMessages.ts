@@ -9,6 +9,10 @@ export const PlanMessages = {
   VIEW_ONLY_MODE: "View-only mode: this widget is interactive on Pro+ plans.",
   API_DOWN_LIMITED_MODE: "Limited mode due to billing API connectivity. Some premium features may be restricted.",
   GENERIC_DENY: "Access denied due to plan restrictions. Please check your subscription.",
+  GRACE_PERIOD_ACTIVE: "Your grace period is active. Please upgrade your plan soon.",
+  GRACE_PERIOD_WARNING: "Your plan has expired. Some features may be limited. Upgrade now to avoid interruptions.",
+  UPSELL_NUDGE_FREE_TO_PRO: "Unlock advanced features and higher limits with our Pro plan!",
+  UPSELL_NUDGE_PRO_TO_ENTERPRISE: "Take your creativity to the next level with our Enterprise solutions!",
 };
 
 /**

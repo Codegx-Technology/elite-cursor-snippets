@@ -11,6 +11,10 @@ import { usePlanGuard } from '@/context/PlanGuardContext';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { FaVideo, FaCreditCard, FaCog, FaChartLine } from 'react-icons/fa';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import type { PlanStatus } from '@/widgets/PlanGuardWidget/types';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean
 // [CONTEXT]: Dashboard page component for Shujaa Studio users.
@@ -20,6 +24,20 @@ import { FaVideo, FaCreditCard, FaCog, FaChartLine } from 'react-icons/fa';
 export default function DashboardPage() {
   const { planStatus, loading: planLoading, error: planError } = usePlanGuard();
   const { user, isLoading: authLoading } = useAuth();
+
+  const getPlanStateVariant = (state: PlanStatus['state']) => {
+    switch (state) {
+      case 'healthy':
+        return 'success'; // Assuming a 'success' variant for Badge
+      case 'grace':
+        return 'warning';
+      case 'view_only':
+      case 'locked':
+        return 'destructive';
+      default:
+        return 'default';
+    }
+  };
 
   if (planLoading || authLoading) {
     return (
@@ -55,19 +73,22 @@ export default function DashboardPage() {
                 Current Plan: <span className="font-bold text-green-700">{planStatus.planName}</span>
               </p>
               <p className="text-gray-600">
-                Status: <span className="font-medium">{planStatus.state}</span>
+                Status: <Badge variant={getPlanStateVariant(planStatus.state)}>{planStatus.state}</Badge>
               </p>
               <p className="text-gray-600">
                 Expires: <span className="font-medium">{planStatus.expiresAt ? new Date(planStatus.expiresAt).toLocaleDateString() : 'N/A'}</span>
               </p>
             </div>
             <div>
-              <p className="text-gray-700 text-lg">
+              <p className="text-gray-700 text-lg mb-2">
                 Video Minutes Used: <span className="font-bold">{planStatus.usage.videoMins} / {planStatus.quota.videoMins}</span>
               </p>
-              <Link href="/pricing" className="text-blue-600 hover:underline mt-2 inline-block">
-                Upgrade Your Plan
-              </Link>
+              <Progress value={(planStatus.usage.videoMins / planStatus.quota.videoMins) * 100} className="h-2 mb-4" />
+              <Button asChild className="mt-2">
+                <Link href="/pricing">
+                  Upgrade Your Plan
+                </Link>
+              </Button>
             </div>
           </div>
         ) : (

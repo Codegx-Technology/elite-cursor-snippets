@@ -1,8 +1,10 @@
+'use client';
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 
 interface ErrorContextType {
   globalError: string | null;
   setGlobalError: (message: string | null) => void;
+  clearError: () => void;
 }
 
 const ErrorContext = createContext<ErrorContextType | undefined>(undefined);
@@ -14,8 +16,12 @@ export const ErrorProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setGlobalError(message);
   }, []);
 
+  const clearError = useCallback(() => {
+    setGlobalError(null);
+  }, []);
+
   return (
-    <ErrorContext.Provider value={{ globalError, setGlobalError: memoizedSetGlobalError }}>
+    <ErrorContext.Provider value={{ globalError, setGlobalError: memoizedSetGlobalError, clearError }}>
       {children}
     </ErrorContext.Provider>
   );
