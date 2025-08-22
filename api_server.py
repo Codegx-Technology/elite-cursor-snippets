@@ -140,6 +140,7 @@ from backend.core.plan_guard import PlanGuardMiddleware # New import for PlanGua
 
 from backend.superadmin.routes import router as superadmin_router # New import
 from backend.routers.custom_domain import router as custom_domain_router # New import
+from backend.models.webhook_dlq import WebhookDLQItem # New import for DLQ model
 
 app.add_middleware(TenantMiddleware)
 app.add_middleware(PolicyResolverMiddleware) # Add PolicyResolverMiddleware
@@ -1190,7 +1191,7 @@ class ExecuteModuleRequest(BaseModel):
 import hmac
 import hashlib
 
-WEBHOOK_SECRET = "your_webhook_secret_key" # TODO: Load from secure config (e.g., config.security.webhook_secret)
+WEBHOOK_SECRET = config.security.webhook_secret # Load from secure config
 
 @app.post("/api/execute-module")
 async def execute_module_endpoint(request_data: ExecuteModuleRequest, current_user: User = Depends(get_current_active_user)):
@@ -1225,96 +1226,29 @@ async def check_widget_dependencies(request_data: CheckDependenciesRequest, curr
         logger.error(f"Error checking widget dependencies for user {user_id}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error checking dependencies.")
 
-webhook_queue = []
-webhook_dlq = []
-
-async def process_webhook_payload(payload: WebhookPaymentStatus, db: Session):
-    """Conceptual function to process webhook payload."""
-    try:
-        # Simulate processing success or failure
-        if payload.status == "completed":
-            logger.info(f"Processing completed payment for user {payload.user_id} for plan {payload.plan_name}.")
-            # In a real system:
-            # 1. Find user in DB
-            # 2. Update their subscription plan and dates
-            # 3. Log the change
-            return {"status": "success", "message": "Webhook processed successfully."}
-        elif payload.status == "failed":
-            logger.warning(f"Processing failed payment for user {payload.user_id}, transaction {payload.transaction_id}.")
-            # Handle failed payments (e.g., downgrade plan, send notification)
-            raise ValueError("Simulated processing failure for failed payment.")
-        else:
-            logger.info(f"Processing webhook for user {payload.user_id}, status {payload.status}.")
-            return {"status": "success", "message": "Webhook processed successfully."}
-    except Exception as e:
-        logger.error(f"Error processing webhook for user {payload.user_id}: {e}")
-        raise # Re-raise to be caught by the caller for DLQ handling
-
-@app.post("/webhook/payment_status")
-async def webhook_payment_status(payload: WebhookPaymentStatus, request: Request, db: Session = Depends(get_db)):
-    user_id = payload.user_id # Get user_id from payload
-    # Check action permission (this is a write operation as it updates subscription status)
-    await plan_guard.check_action_permission(user_id, "WRITE")
-    
-    # Get signature from headers (e.g., "X-Hub-Signature" or "X-Signature")
-    signature_header = request.headers.get("X-Webhook-Signature") # Example header name
-    
-    if not signature_header:
-        audit_log_manager.log_event(db, AuditEventType.WEBHOOK_RECEIVED, "Webhook received without signature header.", user_id=payload.user_id, ip_address=request.client.host, event_details={"webhook_id": payload.transaction_id, "status": "missing_signature"})
-        raise HTTPException(status_code=403, detail="Signature header missing")
-
-    # Calculate expected signature
-    # In a real scenario, 'body' would be the raw request body, not the parsed payload
-    # For conceptual example, we'll use a simplified representation
-    # body = await request.body() # Uncomment in real implementation
-    body = str(payload.dict()).encode('utf-8') # Simplified for conceptual example
-
-    expected_signature = hmac.new(
-        WEBHOOK_SECRET.encode('utf-8'),
-        body,
-        hashlib.sha256
-    ).hexdigest()
-
-    # Compare signatures
-    if not hmac.compare_digest(expected_signature, signature_header):
-        audit_log_manager.log_event(db, AuditEventType.WEBHOOK_SIGNATURE_MISMATCH, f"Webhook signature mismatch for user {payload.user_id}. Potential tampering.", user_id=payload.user_id, ip_address=request.client.host, event_details={"webhook_id": payload.transaction_id})
-        raise HTTPException(status_code=403, detail="Invalid signature")
-
-    audit_log_manager.log_event(db, AuditEventType.WEBHOOK_RECEIVED, f"Webhook received for user {payload.user_id}, transaction {payload.transaction_id}, status {payload.status}.", user_id=payload.user_id, ip_address=request.client.host, event_details={"webhook_id": payload.transaction_id, "status": payload.status})
+async def load_and_execute_module(user_id: str, module_name: str) -> Dict[str, Any]:
+    module_dependencies = get_module_dependencies(module_name)
+    if not module_dependencies:
+        logger.info(f"Module '{module_name}' has no declared dependencies. Allowing execution.")
+        # Simulate execution
+        return {"status": "success", "message": f"Module '{module_name}' executed successfully (no dependencies)."}
 
     try:
-        # Attempt to process the webhook payload
-        result = await process_webhook_payload(payload, db)
-        return result
+        # Check each dependency against the user's plan
+        for dep in module_dependencies:
+            # For simplicity, we'll assume these map to allowed_models or features_enabled
+            # A more robust solution would have a dedicated check in PlanGuard for module features
+            await plan_guard.check_action_permission(user_id, dep) # Reusing check_action_permission for conceptual dependency check
+        
+        logger.info(f"Module '{module_name}' dependencies allowed for user {user_id}. Executing.")
+        # Simulate module execution
+        return {"status": "success", "message": f"Module '{module_name}' executed successfully."}
+    except PlanGuardException as e:
+        logger.warning(f"Module '{module_name}' execution blocked for user {user_id}: {e.message}")
+        raise HTTPException(status_code=403, detail=e.message)
     except Exception as e:
-        logger.error(f"Failed to process webhook for user {payload.user_id}. Adding to DLQ. Error: {e}")
-        webhook_dlq.append({"payload": payload.dict(), "error": str(e), "timestamp": datetime.utcnow().isoformat()})
-        # In a real system, you'd return a 200 OK to the webhook sender to avoid retries from their end
-        # and handle retries from your DLQ processing.
-        return JSONResponse(status_code=200, content={"message": "Webhook received, but processing failed. Added to DLQ."})
-
-# Background task to retry webhooks from DLQ (conceptual)
-async def retry_dlq_webhooks():
-    while True:
-        if webhook_dlq:
-            dlq_item = webhook_dlq.pop(0) # Get the oldest item
-            payload = WebhookPaymentStatus(**dlq_item["payload"])
-            logger.info(f"Attempting to retry webhook for user {payload.user_id} from DLQ.")
-            try:
-                # In a real system, you'd get a new DB session for this background task
-                with next(get_db()) as db_session:
-                    await process_webhook_payload(payload, db_session)
-                logger.info(f"Successfully retried webhook for user {payload.user_id}.")
-            except Exception as e:
-                logger.error(f"Retry failed for webhook {payload.user_id}. Re-adding to DLQ. Error: {e}")
-                # In a real system, you'd implement exponential backoff and max retries
-                webhook_dlq.append(dlq_item) # Re-add to DLQ if retry fails
-        await asyncio.sleep(60) # Check DLQ every 60 seconds (conceptual)
-
-# Add the retry task to FastAPI startup events
-@app.on_event("startup")
-async def start_dlq_retry_task():
-    asyncio.create_task(retry_dlq_webhooks())
+        logger.error(f"Unexpected error executing module '{module_name}' for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during module execution.")
 
 @app.get("/protected_data")
 async def protected_data(current_user: User = Depends(get_current_active_user), current_tenant: str = current_tenant):

@@ -115,6 +115,7 @@ auth:
 security:
   encryption_password: "${SHUJAA_ENCRYPTION_PASSWORD}" # Loaded from environment variable
   encryption_salt: "${SHUJAA_ENCRYPTION_SALT}" # Loaded from environment variable
+  webhook_secret: "${SHUJAA_WEBHOOK_SECRET}" # Loaded from environment variable
 
 storage:
   provider: "s3" # "local" or "s3"
@@ -128,6 +129,11 @@ storage:
 i18n:
   supported_languages: ["en", "sw", "fr"] # English, Swahili, French
   default_language: "en"
+
+webhook:
+  initial_retry_delay_seconds: 10 # Initial delay before first retry (seconds)
+  max_retries: 5 # Maximum number of retry attempts
+  dlq_check_interval_seconds: 60 # How often the DLQ background task checks for items (seconds)
 
 feature_flags:
   new_ui:

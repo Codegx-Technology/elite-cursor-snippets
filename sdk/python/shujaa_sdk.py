@@ -181,27 +181,103 @@ class ShujaaSDK:
         return self._request("POST", "/generate_video", data=data, idempotency_key=idempotency_key)
 
     def batch_generate_video(self, requests: List[Dict], idempotency_key: Optional[str] = None) -> Dict:
-        """Generates multiple videos in a batch."""
+        """Generates multiple videos in a batch.
+
+        Args:
+            requests: A list of dictionaries, where each dictionary represents a video generation request.
+            idempotency_key: An optional key to ensure the request is idempotent.
+
+        Returns:
+            A dictionary containing the batch video generation status and results.
+
+        Raises:
+            APIError: If the API returns an error.
+            ConnectionError: If there is a connection error.
+            AuthenticationError: If the user is not authenticated.
+        """
         data = {"requests": requests}
         return self._request("POST", "/batch_generate_video", data=data, idempotency_key=idempotency_key)
 
     def generate_landing_page(self, qr_code_id: str, brand_metadata: Dict, idempotency_key: Optional[str] = None) -> Dict:
-        """Generates a landing page for a QR code."""
+        """Generates a landing page for a QR code.
+
+        Args:
+            qr_code_id: The ID of the QR code.
+            brand_metadata: A dictionary containing branding metadata for the landing page.
+            idempotency_key: An optional key to ensure the request is idempotent.
+
+        Returns:
+            A dictionary containing the landing page generation status.
+
+        Raises:
+            APIError: If the API returns an error.
+            ConnectionError: If there is a connection error.
+            AuthenticationError: If the user is not authenticated.
+        """
         data = {"qr_code_id": qr_code_id, "brand_metadata": brand_metadata}
         return self._request("POST", "/generate_landing_page", data=data, idempotency_key=idempotency_key)
 
     def trigger_scan_alert(self, qr_code_id: str, location_data: Dict, device_type: str, user_settings: Dict, idempotency_key: Optional[str] = None) -> Dict:
-        """Triggers a scan alert."""
+        """Triggers a scan alert.
+
+        Args:
+            qr_code_id: The ID of the QR code that was scanned.
+            location_data: A dictionary containing location data of the scan.
+            device_type: The type of device used for the scan.
+            user_settings: A dictionary containing user settings related to the scan.
+            idempotency_key: An optional key to ensure the request is idempotent.
+
+        Returns:
+            A dictionary containing the scan alert status.
+
+        Raises:
+            APIError: If the API returns an error.
+            ConnectionError: If there is a connection error.
+            AuthenticationError: If the user is not authenticated.
+        """
         data = {"qr_code_id": qr_code_id, "location_data": location_data, "device_type": device_type, "user_settings": user_settings}
         return self._request("POST", "/scan_alert", data=data, idempotency_key=idempotency_key)
 
     def push_crm_contact(self, crm_name: str, contact_data: Dict, idempotency_key: Optional[str] = None) -> Dict:
-        """Pushes contact data to a CRM."""
+        """Pushes contact data to a CRM.
+
+        Args:
+            crm_name: The name of the CRM to push the contact to.
+            contact_data: A dictionary containing the contact data.
+            idempotency_key: An optional key to ensure the request is idempotent.
+
+        Returns:
+            A dictionary containing the CRM push status.
+
+        Raises:
+            APIError: If the API returns an error.
+            ConnectionError: If there is a connection error.
+            AuthenticationError: If the user is not authenticated.
+        """
         data = {"crm_name": crm_name, "contact_data": contact_data}
         return self._request("POST", "/crm_push_contact", data=data, idempotency_key=idempotency_key)
 
     def send_payment_webhook(self, user_id: str, transaction_id: str, status: str, amount: float, currency: str, plan_name: Optional[str] = None, signature: str = "mock_signature", idempotency_key: Optional[str] = None) -> Dict:
-        """Simulates sending a payment status webhook."""
+        """Simulates sending a payment status webhook.
+
+        Args:
+            user_id: The ID of the user associated with the payment.
+            transaction_id: The ID of the payment transaction.
+            status: The status of the payment (e.g., "completed", "failed", "pending").
+            amount: The amount of the payment.
+            currency: The currency of the payment.
+            plan_name: The name of the plan purchased (optional).
+            signature: The signature for webhook verification.
+            idempotency_key: An optional key to ensure the request is idempotent.
+
+        Returns:
+            A dictionary containing the webhook status.
+
+        Raises:
+            APIError: If the API returns an error.
+            ConnectionError: If there is a connection error.
+            AuthenticationError: If the user is not authenticated.
+        """
         data = {
             "user_id": user_id,
             "transaction_id": transaction_id,
@@ -214,38 +290,126 @@ class ShujaaSDK:
         return self._request("POST", "/webhook/payment_status", data=data, idempotency_key=idempotency_key)
 
     def get_feature_status(self, feature_name: str) -> Dict:
-        """Checks the status of a feature flag."""
+        """Checks the status of a feature flag.
+
+        Args:
+            feature_name: The name of the feature flag to check.
+
+        Returns:
+            A dictionary containing the feature flag status.
+
+        Raises:
+            APIError: If the API returns an error.
+            ConnectionError: If there is a connection error.
+            AuthenticationError: If the user is not authenticated.
+        """
         return self._request("GET", f"/feature_status/{feature_name}")
 
     def export_user_data(self) -> Dict:
-        """Exports the current user's data."""
+        """Exports the current user's data.
+
+        Returns:
+            A dictionary containing the exported user data.
+
+        Raises:
+            APIError: If the API returns an error.
+            ConnectionError: If there is a connection error.
+            AuthenticationError: If the user is not authenticated.
+        """
         return self._request("GET", "/users/me/data/export")
 
     def delete_user_data(self) -> Dict:
-        """Deletes the current user's data."""
+        """Deletes the current user's data.
+
+        Returns:
+            A dictionary indicating the success of the deletion.
+
+        Raises:
+            APIError: If the API returns an error.
+            ConnectionError: If there is a connection error.
+            AuthenticationError: If the user is not authenticated.
+        """
         return self._request("DELETE", "/users/me/data/delete")
 
     def get_protected_data(self) -> Dict:
-        """Retrieves protected data from the API."""
+        """Retrieves protected data from the API.
+
+        Returns:
+            A dictionary containing the protected data.
+
+        Raises:
+            APIError: If the API returns an error.
+            ConnectionError: If there is a connection error.
+            AuthenticationError: If the user is not authenticated.
+        """
         return self._request("GET", "/protected_data")
 
     def inject_chaos(self, scenario_type: str, duration_ms: Optional[int] = None, duration_s: Optional[int] = None, intensity: Optional[float] = None, size_mb: Optional[int] = None, probability: Optional[float] = None, idempotency_key: Optional[str] = None) -> Dict:
-        """Injects a chaos scenario into the system (admin access required)."""
+        """Injects a chaos scenario into the system (admin access required).
+
+        Args:
+            scenario_type: The type of chaos scenario to inject (e.g., "latency", "error").
+            duration_ms: The duration of the chaos in milliseconds.
+            duration_s: The duration of the chaos in seconds.
+            intensity: The intensity of the chaos.
+            size_mb: The size of the data to inject in MB.
+            probability: The probability of the chaos occurring.
+            idempotency_key: An optional key to ensure the request is idempotent.
+
+        Returns:
+            A dictionary containing the chaos injection status.
+
+        Raises:
+            APIError: If the API returns an error.
+            ConnectionError: If there is a connection error.
+            AuthenticationError: If the user is not authenticated.
+        """
         data = {k: v for k, v in locals().items() if k not in ['self', 'scenario_type', 'idempotency_key'] and v is not None}
         data["scenario_type"] = scenario_type # Ensure scenario_type is included
         return self._request("POST", "/admin/chaos/inject", data=data, idempotency_key=idempotency_key)
 
     def get_custom_domain(self) -> Dict:
-        """Retrieves the custom domain and TLS status for the current tenant."""
+        """Retrieves the custom domain and TLS status for the current tenant.
+
+        Returns:
+            A dictionary containing the custom domain and TLS status.
+
+        Raises:
+            APIError: If the API returns an error.
+            ConnectionError: If there is a connection error.
+            AuthenticationError: If the user is not authenticated.
+        """
         return self._request("GET", "/api/custom-domain")
 
     def set_custom_domain(self, domain: str, idempotency_key: Optional[str] = None) -> Dict:
-        """Sets the custom domain for the current tenant."""
+        """Sets the custom domain for the current tenant.
+
+        Args:
+            domain: The custom domain to set.
+            idempotency_key: An optional key to ensure the request is idempotent.
+
+        Returns:
+            A dictionary containing the custom domain and TLS status.
+
+        Raises:
+            APIError: If the API returns an error.
+            ConnectionError: If there is a connection error.
+            AuthenticationError: If the user is not authenticated.
+        """
         data = {"domain": domain}
         return self._request("POST", "/api/custom-domain", data=data, idempotency_key=idempotency_key)
 
     def delete_custom_domain(self) -> Dict:
-        """Deletes the custom domain for the current tenant."""
+        """Deletes the custom domain for the current tenant.
+
+        Returns:
+            A dictionary indicating the success of the deletion.
+
+        Raises:
+            APIError: If the API returns an error.
+            ConnectionError: If there is a connection error.
+            AuthenticationError: If the user is not authenticated.
+        """
         return self._request("DELETE", "/api/custom-domain")
 
 # Example Usage (for testing)
