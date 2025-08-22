@@ -34,21 +34,41 @@ const buttonVariants = cva(
   }
 );
 
+import { LoadingSpinner } from '@/components/LoadingSpinner'; // Import LoadingSpinner
+
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  loading?: boolean; // New prop for loading state
+  leadingIcon?: React.ReactNode; // New prop for leading icon
+  trailingIcon?: React.ReactNode; // New prop for trailing icon
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, loading, leadingIcon, trailingIcon, children, ...props }, ref) => {
     const Comp = asChild ? "span" : "button";
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(
+          buttonVariants({ variant, size, className }),
+          loading && "relative" // Add relative positioning for spinner overlay
+        )}
         ref={ref}
+        disabled={props.disabled || loading} // Disable button when loading
         {...props}
-      />
+      >
+        {loading && (
+          <span className="absolute inset-0 flex items-center justify-center">
+            <LoadingSpinner size="sm" variant="minimal" /> {/* Use minimal spinner for small size */}
+          </span>
+        )}
+        <span className={cn(loading && "opacity-0")}> {/* Hide content when loading */}
+          {leadingIcon && <span className="mr-2">{leadingIcon}</span>}
+          {children}
+          {trailingIcon && <span className="ml-2">{trailingIcon}</span>}
+        </span>
+      </Comp>
     );
   }
 );
