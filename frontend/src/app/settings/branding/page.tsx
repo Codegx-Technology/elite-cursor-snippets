@@ -51,7 +51,7 @@ const BrandingSettingsPage: React.FC = () => {
     if (!branding) return;
 
     try {
-      const response = await apiClient.updateTenantBranding(branding.tenant_id, branding);
+      const response = await apiClient.updateTenantBranding(branding.tenant_id!, branding);
       if (response.data) {
         alert('Branding settings saved successfully!');
       } else if (response.error) {

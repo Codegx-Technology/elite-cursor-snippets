@@ -31,7 +31,7 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
+  const { addToast } = useToast();
 
   const fetchUsers = async () => {
     setLoadingUsers(true);
@@ -46,10 +46,10 @@ export default function AdminUsersPage() {
     } catch (err: any) {
       console.error('Failed to fetch users:', err);
       setError(err.response?.data?.detail || 'Failed to fetch users.');
-      toast({
+      addToast({
         title: "Error",
         description: err.response?.data?.detail || 'Failed to fetch users.',
-        variant: "destructive",
+        type: "error",
       });
     } finally {
       setLoadingUsers(false);
@@ -73,17 +73,18 @@ export default function AdminUsersPage() {
           Authorization: `Bearer ${token}`,
         },
       });
-      toast({
+      addToast({
         title: "Success",
         description: "User deleted successfully.",
+        type: "success",
       });
       fetchUsers(); // Refresh the list
     } catch (err: any) {
       console.error('Failed to delete user:', err);
-      toast({
+      addToast({
         title: "Error",
         description: err.response?.data?.detail || 'Failed to delete user.',
-        variant: "destructive",
+        type: "error",
       });
     }
   };

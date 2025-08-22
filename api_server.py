@@ -1,6 +1,6 @@
 import asyncio # New import
 import json # New import
-from fastapi import FastAPI, HTTPException, Depends, Request, status
+from fastapi import FastAPI, HTTPException, Depends, Request, status, UploadFile, File
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -464,6 +464,20 @@ async def pii_redaction_middleware(request: Request, call_next):
 
 from backend.superadmin.auth import create_superadmin_users # New import
 
+# --- Rate Limiting Identifier Helper ---
+def user_id_key_func(request: Request) -> str:
+    """Identify a caller for rate-limiting purposes.
+    Prefer an auth-derived stable ID; fall back to client IP.
+    """
+    # Try Authorization header (hash to avoid leaking token)
+    auth = request.headers.get("authorization") or request.headers.get("Authorization")
+    if auth:
+        return f"auth:{hash(auth)}"
+    # Fall back to client IP
+    client = getattr(request, "client", None)
+    host = getattr(client, "host", "unknown") if client else "unknown"
+    return f"ip:{host}"
+
 @app.on_event("startup")
 async def startup():
     # Initialize rate limiter Redis with safe fallback
@@ -477,7 +491,8 @@ async def startup():
             redis_url = "redis://localhost:6379/0"
 
         redis_connection = redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
-        await FastAPILimiter.init(redis_connection)
+        # Set global identifier so individual RateLimiter(...) decorators don't need key_func
+        await FastAPILimiter.init(redis_connection, identifier=user_id_key_func)
         logger.info("FastAPI-Limiter initialized.")
     except Exception as e:
         logger.warning(f"FastAPI-Limiter Redis not available, continuing without rate limiting: {e}")
@@ -983,7 +998,7 @@ async def delete_asset(asset_id: str, current_user: User = Depends(get_current_a
 
 
 
-@app.post("/generate_video", dependencies=[Depends(RateLimiter(times=1, seconds=5, key_func=user_id_key_func))])
+@app.post("/generate_video", dependencies=[Depends(RateLimiter(times=1, seconds=5))])
 async def generate_video_endpoint(request_data: GenerateVideoRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
     start_time = time.time() # ADD THIS LINE
     status_label = "failure" # Default status for metrics # ADD THIS LINE
@@ -1045,7 +1060,7 @@ async def generate_video_endpoint(request_data: GenerateVideoRequest, current_us
         if status_label != "success":
             VIDEO_GENERATION_FAILURES.inc()
 
-@app.post("/generate_tts", dependencies=[Depends(RateLimiter(times=1, seconds=5, key_func=user_id_key_func))])
+@app.post("/generate_tts", dependencies=[Depends(RateLimiter(times=1, seconds=5))])
 async def generate_tts_endpoint(text: str, voice_name: str, current_user: dict = Depends(get_current_user)):
     """
     Conceptual endpoint for TTS generation, including usage tracking.
@@ -1133,7 +1148,7 @@ async def generate_landing_page_endpoint(request_data: GenerateLandingPageReques
     else:
         raise HTTPException(status_code=500, detail=f"Landing page generation failed: {result.get('message', 'Unknown error')}")
 
-@app.post("/scan_alert", dependencies=[Depends(RateLimiter(times=10, seconds=60, key_func=user_id_key_func))])
+@app.post("/scan_alert", dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
     user_id = str(current_user.get("user_id")) # Get user_id
     # Check action permission
@@ -1155,7 +1170,7 @@ async def scan_alert_endpoint(request_data: ScanAlertRequest, current_user: dict
     else:
         raise HTTPException(status_code=500, detail=f"Scan alert failed: {result.get('message', 'Unknown error')}")
 
-@app.post("/crm_push_contact", dependencies=[Depends(RateLimiter(times=5, seconds=60, key_func=user_id_key_func))])
+@app.post("/crm_push_contact", dependencies=[Depends(RateLimiter(times=5, seconds=60))])
 async def crm_push_contact_endpoint(request_data: CRMPushContactRequest, current_user: dict = Depends(get_current_user), current_tenant: str = current_tenant, db: Session = Depends(get_db), request: Request = None):
     user_id = str(current_user.get("user_id")) # Get user_id
     # Check action permission

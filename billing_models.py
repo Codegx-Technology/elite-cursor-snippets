@@ -223,10 +223,19 @@ def get_user_subscription(user_id: str) -> UserSubscription:
         )
     else:
         # Default to Starter for unknown users
+        default_end_date = datetime(2024, 1, 1) # This date is in the past (Aug 22, 2025)
+        # Dynamically determine is_active based on end_date
+        default_is_active = datetime.now() < default_end_date
+
+        # If the plan is expired, set grace_expires_at to None initially,
+        # PlanGuard will then handle grace period logic.
+        default_grace_expires_at = None
+
         return UserSubscription(
             user_id=user_id,
             plan_name="Starter",
             start_date=datetime(2023, 1, 1),
-            end_date=datetime(2024, 1, 1),
-            is_active=True
+            end_date=default_end_date,
+            is_active=default_is_active, # Now correctly reflects expiration
+            grace_expires_at=default_grace_expires_at
         )

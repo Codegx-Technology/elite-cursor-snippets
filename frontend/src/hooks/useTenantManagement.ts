@@ -8,7 +8,7 @@ export interface TenantData {
   name: string;
   is_active: boolean;
   plan: string;
-  # Add other tenant-specific fields as needed
+  // Add other tenant-specific fields as needed
 }
 
 export interface CreateTenantData {

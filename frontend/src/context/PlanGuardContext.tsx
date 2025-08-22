@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { fetchPlanStatus } from '@/widgets/PlanGuardWidget/planService';
 import type { PlanStatus } from '@/widgets/PlanGuardWidget/types';
+import { useAuth } from '@/context/AuthContext';
 
 interface PlanGuardContextType {
   planStatus: PlanStatus | null;
@@ -16,6 +17,7 @@ export const PlanGuardProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [planStatus, setPlanStatus] = useState<PlanStatus | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { token, isAuthenticated } = useAuth();
 
   const getPlanStatus = async () => {
     setLoading(true);
@@ -33,8 +35,16 @@ export const PlanGuardProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   useEffect(() => {
-    getPlanStatus();
-  }, []);
+    // Only fetch when authenticated and token is available
+    if (isAuthenticated && token) {
+      getPlanStatus();
+    } else {
+      // Not authenticated yet; don't call the API to avoid 401
+      setLoading(false);
+      setPlanStatus(null);
+      setError(null);
+    }
+  }, [isAuthenticated, token]);
 
   const refreshPlanStatus = () => {
     getPlanStatus();

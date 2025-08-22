@@ -22,7 +22,9 @@ const LoginForm: React.FC = () => {
       if (response.error) {
         setError(response.error);
       } else if (response.data) {
+        // Store under both keys for compatibility with various parts of the app
         localStorage.setItem('jwt_token', response.data.access_token);
+        localStorage.setItem('access_token', response.data.access_token);
         router.push('/dashboard');
       }
     } catch (err: any) {

@@ -61,6 +61,8 @@ mock_reconciliation_reports = {
     }
 }
 
+from typing import Dict, Any, Optional
+
 class MockDB:
     def get_sla_record(self, tenant_id: str, month: str) -> Optional[Dict[str, Any]]:
         return mock_sla_records.get(tenant_id, {}).get(month)

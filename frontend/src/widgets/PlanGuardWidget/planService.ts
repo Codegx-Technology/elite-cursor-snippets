@@ -13,7 +13,10 @@ function joinUrl(base: string, path: string) {
 function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    return window.localStorage.getItem("access_token");
+    return (
+      window.localStorage.getItem("access_token") ||
+      window.localStorage.getItem("jwt_token")
+    );
   } catch {
     return null;
   }

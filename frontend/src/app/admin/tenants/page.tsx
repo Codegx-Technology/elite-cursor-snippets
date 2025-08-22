@@ -20,7 +20,7 @@ export default function AdminTenantsPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const { tenants, loadTenants, isLoading: loadingTenants, error, deleteTenant } = useTenantManagement();
-  const { toast } = useToast();
+  const { addToast } = useToast();
 
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || user?.role !== 'admin')) {
@@ -35,16 +35,17 @@ export default function AdminTenantsPage() {
 
     try {
       await deleteTenant(tenantId);
-      toast({
+      addToast({
         title: "Success",
         description: "Tenant deleted successfully.",
+        type: "success"
       });
     } catch (err: any) {
       console.error('Failed to delete tenant:', err);
-      toast({
+      addToast({
         title: "Error",
         description: err.message || 'Failed to delete tenant.',
-        variant: "destructive",
+        type: "error",
       });
     }
   };
