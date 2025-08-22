@@ -9,6 +9,9 @@ import { usePlanGuard } from '@/context/PlanGuardContext'; // New import
 import { paymentUtils, usePaystack } from '@/lib/paystack'; // Correct import for paymentUtils and usePaystack
 import { Button } from '@/components/ui/button'; // New import
 import Link from 'next/link'; // New import
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'; // New import
+import { Badge } from '@/components/ui/badge'; // New import
+import { apiClient, BillingRecord } from '@/lib/api'; // New import
 
 // Local types for plan and payment method to satisfy TS when using require()
 type Plan = {
@@ -77,6 +80,10 @@ export default function PricingPage() {
   const { initializePayment, isLoading, error } = usePaystack();
 
   const { planStatus, loading: planStatusLoading, error: planStatusError } = usePlanGuard(); // Use usePlanGuard hook
+
+  const [billingHistory, setBillingHistory] = useState<BillingRecord[]>([]);
+  const [billingHistoryLoading, setBillingHistoryLoading] = useState(true);
+  const [billingHistoryError, setBillingHistoryError] = useState<string | null>(null);
 
   // Load PlanGuardWidget using the loader
   const { component: PlanGuardWidgetComponent, allowed: planGuardWidgetAllowed, message: planGuardWidgetMessage } = useWidgetLoader("PlanGuardWidget", "test_user_id");
@@ -190,6 +197,31 @@ export default function PricingPage() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    const fetchBillingHistory = async () => {
+      // [SNIPPET]: thinkwithai + kenyafirst + augmentsearch
+      // [CONTEXT]: Fetching user billing history for the pricing/billing page.
+      // [GOAL]: Display past transactions in a table.
+      // [TASK]: Call apiClient.getBillingHistory and handle response.
+      setBillingHistoryLoading(true);
+      setBillingHistoryError(null);
+      try {
+        const response = await apiClient.getBillingHistory();
+        if (response.data) {
+          setBillingHistory(response.data);
+        } else if (response.error) {
+          setBillingHistoryError(response.error);
+        }
+      } catch (err: any) {
+        setBillingHistoryError(err.message || 'Failed to fetch billing history.');
+      } finally {
+        setBillingHistoryLoading(false);
+      }
+    };
+
+    fetchBillingHistory();
   }, []);
 
   const handleSubscribe = async (planId: string) => {
@@ -461,17 +493,57 @@ export default function PricingPage() {
         ))}
       </div>
 
-      {/* Billing History (Placeholder) */}
+      {/* Billing History */}
       <Card className="p-6">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
           <FaCreditCard className="mr-3 text-purple-600" /> Billing History
         </h2>
-        <p className="text-gray-600 mb-4">
-          This section will display your past invoices and payment history.
-        </p>
-        <div className="text-center">
-          <p className="text-gray-500">No billing history available yet.</p>
-        </div>
+        {billingHistoryLoading ? (
+          <p className="text-gray-600">Loading billing history...</p>
+        ) : billingHistoryError ? (
+          <p className="text-red-600">Error loading billing history: {billingHistoryError}</p>
+        ) : billingHistory.length === 0 ? (
+          <div className="text-center">
+            <p className="text-gray-500">No billing history available yet.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Invoice</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {billingHistory.map((record) => (
+                  <TableRow key={record.id}>
+                    <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
+                    <TableCell>{record.description}</TableCell>
+                    <TableCell>{paymentUtils.formatAmount(record.amount, record.currency)}</TableCell>
+                    <TableCell>
+                      <Badge variant={record.status === 'paid' ? 'success' : record.status === 'failed' ? 'destructive' : 'default'}>
+                        {record.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {record.invoice_url ? (
+                        <Link href={record.invoice_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                          View Invoice
+                        </Link>
+                      ) : (
+                        'N/A'
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </Card>
 
       {/* Payment Methods */}

@@ -104,6 +104,16 @@ export interface UserSubscription {
   audio_credits_remaining: number;
 }
 
+export interface BillingRecord {
+  id: string;
+  date: string;
+  amount: number;
+  currency: string;
+  description: string;
+  status: 'paid' | 'failed' | 'pending';
+  invoice_url?: string;
+}
+
 export interface AnalyticsData {
   overview: {
     total_videos: number;
@@ -185,6 +195,12 @@ export interface UserData {
   is_active: boolean;
 }
 
+export interface Tenant {
+  id: string;
+  name: string;
+  // Add other tenant-specific properties as needed
+}
+
 export interface CreateUserData extends Omit<UserData, 'id'> {
   password: string;
 }
@@ -224,6 +240,26 @@ export interface UserProfileData {
   email: string;
   full_name?: string;
   bio?: string;
+}
+
+export interface SecuritySettings {
+  two_factor_enabled: boolean;
+}
+
+export interface LoginSession {
+  id: string;
+  device: string;
+  location: string;
+  ip_address: string;
+  last_activity: string;
+  current: boolean;
+}
+
+export interface NotificationPreferences {
+  email_notifications: boolean;
+  in_app_notifications: boolean;
+  sms_notifications: boolean;
+  push_notifications: boolean;
 }
 
 export interface TenantBrandingData {
@@ -447,6 +483,14 @@ class ApiClient {
     });
   }
 
+  async getBillingHistory(): Promise<ApiResponse<BillingRecord[]>> {
+    // [SNIPPET]: thinkwithai + kenyafirst + augmentsearch
+    // [CONTEXT]: Fetching user billing history for the pricing/billing page.
+    // [GOAL]: Provide a list of past transactions.
+    // [TASK]: Implement API call to /api/user/billing-history.
+    return this.request('/api/user/billing-history');
+  }
+
   // Analytics
   async getAnalytics(timeRange: '7d' | '30d' | '90d' = '30d'): Promise<ApiResponse<AnalyticsData>> {
     return this.request(`/api/analytics?range=${timeRange}`);
@@ -654,6 +698,52 @@ class ApiClient {
     });
   }
 
+  // Notification Preferences
+  async getNotificationPreferences(): Promise<ApiResponse<NotificationPreferences>> {
+    return this.request('/api/user/notifications/preferences');
+  }
+
+  async updateNotificationPreferences(preferences: Partial<NotificationPreferences>): Promise<ApiResponse<NotificationPreferences>> {
+    return this.request('/api/user/notifications/preferences', {
+      method: 'PUT',
+      body: JSON.stringify(preferences),
+    });
+  }
+
+  // Security Settings
+  async getSecuritySettings(): Promise<ApiResponse<SecuritySettings>> {
+    return this.request('/api/user/security/settings');
+  }
+
+  async updateSecuritySettings(settings: Partial<SecuritySettings>): Promise<ApiResponse<SecuritySettings>> {
+    return this.request('/api/user/security/settings', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    });
+  }
+
+  async enableTwoFactorAuth(): Promise<ApiResponse<{ success: boolean; qr_code_url?: string; secret?: string }>> {
+    return this.request('/api/user/security/2fa/enable', {
+      method: 'POST',
+    });
+  }
+
+  async disableTwoFactorAuth(): Promise<ApiResponse<{ success: boolean }>> {
+    return this.request('/api/user/security/2fa/disable', {
+      method: 'POST',
+    });
+  }
+
+  async getLoginSessions(): Promise<ApiResponse<LoginSession[]>> {
+    return this.request('/api/user/security/sessions');
+  }
+
+  async revokeLoginSession(sessionId: string): Promise<ApiResponse<{ success: boolean }>> {
+    return this.request(`/api/user/security/sessions/${sessionId}/revoke`, {
+      method: 'POST',
+    });
+  }
+
   // Super Admin
   async getSuperAdminMetrics(): Promise<ApiResponse<any>> { // Define a proper type for SuperAdminMetrics later
     return this.request('/api/superadmin/metrics');
@@ -663,7 +753,7 @@ class ApiClient {
     return this.request('/api/superadmin/users');
   }
 
-  async getSuperAdminTenants(): Promise<ApiResponse<any[]>> { // Define a proper type for TenantData later
+  async getSuperAdminTenants(): Promise<ApiResponse<Tenant[]>> { // Define a proper type for TenantData later
     return this.request('/api/superadmin/tenants');
   }
 

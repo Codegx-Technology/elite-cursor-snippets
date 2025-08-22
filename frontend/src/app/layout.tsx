@@ -7,6 +7,7 @@ import { PlanGuardProvider } from "@/context/PlanGuardContext"; // New import
 import { AuthProvider } from "@/context/AuthContext"; // New import for AuthProvider
 import { ErrorProvider } from "@/context/ErrorContext"; // Re-added ErrorProvider
 import ErrorNotification from "@/components/ErrorNotification"; // Re-added ErrorNotification
+import { ToastProvider } from "@/components/ui/use-toast"; // New import
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Root layout with Kenya-first design system and enterprise styling
@@ -107,15 +108,17 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="//fonts.gstatic.com" />
       </head>
       <body className={inter.className} suppressHydrationWarning={true}>
-        <ErrorProvider> {/* Wrap with ErrorProvider */}
-          <AuthProvider> {/* Wrap with AuthProvider */}
-            <PlanGuardProvider> {/* Wrap with PlanGuardProvider */}
-              <Layout>{children}</Layout>
-            </PlanGuardProvider>
-          </AuthProvider>
-          <ClientBoot />
-          <ErrorNotification /> {/* Render ErrorNotification */}
-        </ErrorProvider>
+        <ToastProvider> {/* Wrap with ToastProvider */}
+          <ErrorProvider> {/* Wrap with ErrorProvider */}
+            <AuthProvider> {/* Wrap with AuthProvider */}
+              <PlanGuardProvider> {/* Wrap with PlanGuardProvider */}
+                <Layout>{children}</Layout>
+              </PlanGuardProvider>
+            </AuthProvider>
+            <ClientBoot />
+            <ErrorNotification /> {/* Render ErrorNotification */}
+          </ErrorProvider>
+        </ToastProvider>
       </body>
     </html>
   );
