@@ -4,22 +4,47 @@ import React, { useState, useEffect } from 'react';
 import FormInput from '@/components/FormInput';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { apiClient, TenantBrandingData } from '@/lib/api'; // Import apiClient and TenantBrandingData
+import { apiClient, Tenant, TenantBrandingData } from '@/lib/api'; // Import Tenant type
 
 const TenantManagementSection: React.FC = () => {
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const [currentTenant, setCurrentTenant] = useState<TenantBrandingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Dummy tenant ID for now, will be dynamic later
-  const tenantId = 'tenant_1'; 
+  useEffect(() => {
+    const fetchTenants = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await apiClient.getSuperAdminTenants();
+        if (response.data) {
+          setTenants(response.data);
+          if (response.data.length > 0) {
+            setSelectedTenantId(response.data[0].id);
+          }
+        } else if (response.error) {
+          setError(response.error);
+        }
+      } catch (err: any) {
+        setError(err.message || 'Failed to fetch tenants.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTenants();
+  }, []);
 
   useEffect(() => {
+    if (!selectedTenantId) return;
+
     const fetchBranding = async () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await apiClient.getTenantBranding(tenantId);
+        const response = await apiClient.getTenantBranding(selectedTenantId);
         if (response.data) {
           setCurrentTenant(response.data);
         } else if (response.error) {
@@ -33,7 +58,7 @@ const TenantManagementSection: React.FC = () => {
     };
 
     fetchBranding();
-  }, [tenantId]);
+  }, [selectedTenantId]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

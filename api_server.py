@@ -139,6 +139,7 @@ from backend.middleware.policy_resolver import PolicyResolverMiddleware # Import
 from backend.core.plan_guard import PlanGuardMiddleware # New import for PlanGuardMiddleware
 
 from backend.superadmin.routes import router as superadmin_router # New import
+from backend.routers.custom_domain import router as custom_domain_router # New import
 
 app.add_middleware(TenantMiddleware)
 app.add_middleware(PolicyResolverMiddleware) # Add PolicyResolverMiddleware
@@ -146,6 +147,7 @@ app.add_middleware(PlanGuardMiddleware) # Add PlanGuardMiddleware
 app.add_route("/metrics", metrics)
 
 app.include_router(superadmin_router, prefix="/superadmin", tags=["SuperAdmin"]) # Include SuperAdmin router
+app.include_router(custom_domain_router, prefix="/api", tags=["Custom Domain"]) # Include Custom Domain router
 
 orchestrator = PipelineOrchestrator()
 landing_page_service = LandingPageService()

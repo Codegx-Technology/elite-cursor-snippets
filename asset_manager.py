@@ -5,6 +5,8 @@ import hashlib
 from pathlib import Path
 from typing import Optional, Dict, Any
 import logging
+import boto3
+from botocore.exceptions import ClientError
 from config_loader import get_config
 
 # Use standard logging to avoid circular import with logging_setup
@@ -66,29 +68,68 @@ class AssetManager:
     def __init__(self):
         self.cache_dir = Path("asset_cache")
         self.cache_dir.mkdir(exist_ok=True)
+        self.storage_provider = config.storage.provider
+        self.s3_client = self._get_s3_client() if self.storage_provider == "s3" else None
+        self.cdn_endpoints = config.app.cdn_endpoints or []
+        self.last_used_cdn_index = 0
         logger.info(f"AssetManager initialized. Cache directory: {self.cache_dir}")
+
+    def _get_s3_client(self):
+        # [SNIPPET]: thinkwithai + kenyafirst + enterprise-secure
+        # [CONTEXT]: Creating an S3 client for asset management.
+        # [GOAL]: Securely connect to S3 for asset operations.
+        # [TASK]: Initialize and return a boto3 S3 client.
+        try:
+            return boto3.client(
+                's3',
+                region_name=config.storage.s3.region_name,
+                aws_access_key_id=config.storage.s3.access_key_id,
+                aws_secret_access_key=config.storage.s3.secret_access_key
+            )
+        except Exception as e:
+            logger.error(f"Failed to create S3 client: {e}")
+            return None
+
+    def generate_signed_url(self, asset_key: str) -> Optional[str]:
+        # [SNIPPET]: thinkwithai + kenyafirst + enterprise-secure
+        # [CONTEXT]: Generating a signed URL for an S3 asset.
+        # [GOAL]: Provide secure, time-limited access to assets.
+        # [TASK]: Generate and return a presigned URL for a given asset key.
+        if self.storage_provider != "s3" or not self.s3_client:
+            return None
+
+        try:
+            return self.s3_client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': config.storage.s3.bucket_name, 'Key': asset_key},
+                ExpiresIn=config.storage.s3.signed_url_expiry
+            )
+        except ClientError as e:
+            logger.error(f"Failed to generate signed URL for {asset_key}: {e}")
+            return None
 
     async def _download_asset(self, url: str, destination_path: Path, signed_url: Optional[str] = None) -> bool:
         """
         // [TASK]: Download an asset asynchronously with CDN fallback and signed URLs
-        // [GOAL]: Support CDN fallback and signed URLs (conceptual)
+        // [GOAL]: Support round-robin CDN fallback and signed URLs
         // [ELITE_CURSOR_SNIPPET]: aihandle
         """
         urls_to_try = []
         if signed_url:
             urls_to_try.append(signed_url)
-        urls_to_try.append(url) # Always try the original URL first
 
-        # Add CDN endpoints for fallback
-        cdn_endpoints = config.get('app', {}).get('cdn_endpoints', [])
-        for cdn_base_url in cdn_endpoints:
-            # Construct the full CDN URL. Assuming 'url' is a relative path or filename.
-            # If 'url' is an absolute URL, we'll extract its basename.
-            asset_name = os.path.basename(url)
-            cdn_url = f"{cdn_base_url.rstrip('/')}/{asset_name}"
-            urls_to_try.append(cdn_url)
-        
-        for current_url in urls_to_try:
+        # Add CDN endpoints for fallback in a round-robin fashion
+        if self.cdn_endpoints:
+            for i in range(len(self.cdn_endpoints)):
+                cdn_index = (self.last_used_cdn_index + i) % len(self.cdn_endpoints)
+                cdn_base_url = self.cdn_endpoints[cdn_index]
+                asset_name = os.path.basename(url)
+                cdn_url = f"{cdn_base_url.rstrip('/')}/{asset_name}"
+                urls_to_try.append(cdn_url)
+
+        urls_to_try.append(url) # Always try the original URL as a last resort
+
+        for i, current_url in enumerate(urls_to_try):
             if not current_url:
                 continue
             logger.info(f"Attempting to download asset from: {current_url} to {destination_path}")
@@ -103,13 +144,14 @@ class AssetManager:
                                     break
                                 f.write(chunk)
                 logger.info(f"✅ Successfully downloaded asset: {destination_path}")
+                # Update the last used CDN index if a CDN was successful
+                if i > 0 and i < len(self.cdn_endpoints) + 1:
+                    self.last_used_cdn_index = (self.last_used_cdn_index + i) % len(self.cdn_endpoints)
                 return True
             except aiohttp.ClientError as e:
                 logger.error(f"❌ Failed to download asset from {current_url}: {e}")
-                # Try next URL in list if it's a CDN fallback scenario
             except Exception as e:
                 logger.error(f"An unexpected error occurred during download from {current_url}: {e}")
-                # Try next URL in list if it's a CDN fallback scenario
         
         return False # All download attempts failed
 
@@ -169,12 +211,18 @@ class AssetManager:
         else:
             raise IOError(f"Failed to download asset {asset_id} from {url}")
 
-    async def get_asset(self, asset_id: str, url: str, expected_checksum: str = None, version: str = "latest", signed_url: Optional[str] = None, lazy_load: bool = False) -> Path | LazyAsset:
+    async def get_asset(self, asset_id: str, url: str, expected_checksum: str = None, version: str = "latest", lazy_load: bool = False) -> Path | LazyAsset:
         """
         // [TASK]: Get an asset, prioritizing cache and handling downloads
-        // [GOAL]: Provide cached or newly downloaded assets with integrity checks
+        // [GOAL]: Provide cached or newly downloaded assets with integrity checks and signed URLs
         // [ELITE_CURSOR_SNIPPET]: aihandle
         """
+        signed_url = None
+        if self.storage_provider == "s3":
+            # Assuming the 'url' is the asset key in the S3 bucket
+            asset_key = url
+            signed_url = self.generate_signed_url(asset_key)
+
         if lazy_load:
             logger.info(f"Asset {asset_id} marked for lazy loading. Returning LazyAsset object.")
             return LazyAsset(self, asset_id, url, expected_checksum, version, signed_url)

@@ -116,6 +116,15 @@ security:
   encryption_password: "${SHUJAA_ENCRYPTION_PASSWORD}" # Loaded from environment variable
   encryption_salt: "${SHUJAA_ENCRYPTION_SALT}" # Loaded from environment variable
 
+storage:
+  provider: "s3" # "local" or "s3"
+  s3:
+    bucket_name: "shujaa-studio-assets"
+    region_name: "us-east-1"
+    access_key_id: "${AWS_ACCESS_KEY_ID}"
+    secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+    signed_url_expiry: 3600 # in seconds
+
 i18n:
   supported_languages: ["en", "sw", "fr"] # English, Swahili, French
   default_language: "en"

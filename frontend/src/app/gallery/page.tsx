@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Card from '@/components/Card';
+import LazyImage from '@/components/LazyImage'; // New import
 import { FaImages, FaVideo, FaMusic, FaDownload, FaPlay, FaEye, FaHeart, FaFlag, FaMountain } from 'react-icons/fa';
 import { apiClient, handleApiResponse } from '@/lib/api';
 
@@ -182,10 +183,17 @@ export default function GalleryPage() {
           {filteredItems.map((item) => (
             <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
               <div className="relative">
-                <div className="aspect-video bg-gray-200 flex items-center justify-center">
-                  {getTypeIcon(item.type)}
-                  <span className="ml-2 text-gray-600 font-medium">{item.type.toUpperCase()}</span>
-                </div>
+                <LazyImage
+                  src={item.thumbnail}
+                  alt={item.title}
+                  placeholder={
+                    <div className="aspect-video bg-gray-200 flex items-center justify-center">
+                      {getTypeIcon(item.type)}
+                      <span className="ml-2 text-gray-600 font-medium">{item.type.toUpperCase()}</span>
+                    </div>
+                  }
+                  className="aspect-video"
+                />
                 <div className="absolute top-2 right-2">
                   <span className="bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
                     {item.duration || item.size}

@@ -769,6 +769,19 @@ class ApiClient {
     });
   }
 
+  async setCustomDomain(data: { domain: string }): Promise<ApiResponse<any>> {
+    return this.request('/api/custom-domain', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCustomDomain(): Promise<ApiResponse<any>> {
+    return this.request('/api/custom-domain', {
+      method: 'DELETE',
+    });
+  }
+
   // Widget Management
   async installWidget(widgetName: string, widgetVersion: string, dependencies: string[]): Promise<ApiResponse<{ success: boolean; message: string }>> {
     const { user } = useAuth();

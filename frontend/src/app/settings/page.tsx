@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress'; // New import
 import { useToast } from '@/components/ui/use-toast';
+import BrandingSettingsPage from './branding/page'; // New import
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -646,6 +647,8 @@ export default function SettingsPage() {
             )}
           </div>
         );
+      case 'branding':
+        return <BrandingSettingsPage />;
       default:
         return null;
     }
@@ -707,6 +710,16 @@ export default function SettingsPage() {
             }`}
           >
             Storage & Models
+          </button>
+        <button
+            onClick={() => setActiveTab('branding')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'branding'
+                ? 'border-green-500 text-green-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Branding
           </button>
         </nav>
       </div>
