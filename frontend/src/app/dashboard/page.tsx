@@ -10,10 +10,11 @@ import React, { useEffect, useState } from 'react';
 import { usePlanGuard } from '@/context/PlanGuardContext';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
-import { FaVideo, FaCreditCard, FaCog, FaChartLine } from 'react-icons/fa';
+import { FaVideo, FaCreditCard, FaCog, FaChartLine, FaImage, FaMusic } from 'react-icons/fa';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card'; // New import
 import type { PlanStatus } from '@/widgets/PlanGuardWidget/types';
 import { apiClient, Project } from '@/lib/api'; // New imports
 
@@ -142,15 +143,21 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((project) => (
-              <div key={project.id} className="border border-gray-200 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-800 mb-2">{project.name}</h3>
-                <p className="text-sm text-gray-600 mb-2">Type: {project.type}</p>
-                <p className="text-sm text-gray-600 mb-2">Status: {project.status}</p>
-                <p className="text-xs text-gray-500">Created: {new Date(project.created_at).toLocaleDateString()}</p>
-                <Link href={`/projects/${project.id}`} className="text-blue-600 hover:underline mt-2 inline-block">
-                  View Project
+              <Card key={project.id} className="p-4 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center mb-2">
+                    {project.type === 'video' && <FaVideo className="text-blue-500 mr-2" />}
+                    {project.type === 'image' && <FaImage className="text-purple-500 mr-2" />}
+                    {project.type === 'audio' && <FaMusic className="text-orange-500 mr-2" />}
+                    <h3 className="font-semibold text-gray-800">{project.name}</h3>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-1">Status: {project.status}</p>
+                  <p className="text-xs text-gray-500">Created: {new Date(project.created_at).toLocaleDateString()}</p>
+                </div>
+                <Link href={`/projects/${project.id}`} className="text-blue-600 hover:underline mt-3 inline-block self-end">
+                  View Details
                 </Link>
-              </div>
+              </Card>
             ))}
           </div>
         )}
@@ -163,32 +170,32 @@ export default function DashboardPage() {
 
       {/* Quick Links */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-white shadow-lg rounded-lg p-6 flex flex-col items-center text-center">
+        <Card className="p-6 flex flex-col items-center text-center">
           <FaCog className="text-5xl text-purple-600 mb-4" />
           <h3 className="text-xl font-semibold text-gray-800 mb-2">Account Settings</h3>
           <p className="text-gray-600 mb-4">Manage your profile, security, and preferences.</p>
           <Link href="/profile" className="btn-primary">
             Go to Settings
           </Link>
-        </div>
+        </Card>
 
-        <div className="bg-white shadow-lg rounded-lg p-6 flex flex-col items-center text-center">
+        <Card className="p-6 flex flex-col items-center text-center">
           <FaChartLine className="text-5xl text-teal-600 mb-4" />
           <h3 className="text-xl font-semibold text-gray-800 mb-2">Usage & Analytics</h3>
           <p className="text-gray-600 mb-4">Monitor your resource consumption and performance.</p>
           <Link href="/usage" className="btn-primary">
             View Analytics
           </Link>
-        </div>
+        </Card>
 
-        <div className="bg-white shadow-lg rounded-lg p-6 flex flex-col items-center text-center">
+        <Card className="p-6 flex flex-col items-center text-center">
           <FaVideo className="text-5xl text-orange-600 mb-4" />
           <h3 className="text-xl font-semibold text-gray-800 mb-2">Start New Video</h3>
           <p className="text-gray-600 mb-4">Jump directly into creating your next masterpiece.</p>
           <Link href="/video-generate" className="btn-primary">
             Create Video
           </Link>
-        </div>
+        </Card>
       </section>
     </div>
   );

@@ -226,6 +226,17 @@ export interface UserProfileData {
   bio?: string;
 }
 
+export interface TenantBrandingData {
+  id: string;
+  tenant_id: string;
+  name: string;
+  logo_url: string;
+  primary_color: string;
+  secondary_color: string;
+  custom_domain: string;
+  tls_status: 'pending' | 'active' | 'failed';
+}
+
 class ApiClient {
   private baseUrl: string;
   private authToken: string | null = null;
@@ -654,6 +665,18 @@ class ApiClient {
 
   async getSuperAdminTenants(): Promise<ApiResponse<any[]>> { // Define a proper type for TenantData later
     return this.request('/api/superadmin/tenants');
+  }
+
+  // Tenant Branding
+  async getTenantBranding(tenantId: string): Promise<ApiResponse<TenantBrandingData>> {
+    return this.request(`/api/superadmin/tenants/${tenantId}/branding`);
+  }
+
+  async updateTenantBranding(tenantId: string, brandingData: Partial<TenantBrandingData>): Promise<ApiResponse<TenantBrandingData>> {
+    return this.request(`/api/superadmin/tenants/${tenantId}/branding`, {
+      method: 'PUT',
+      body: JSON.stringify(brandingData),
+    });
   }
 
   // Widget Management
