@@ -96,6 +96,21 @@ logging:
 
 auth:
   access_token_expire_minutes: 30 # JWT token expiry time in minutes
+  # List of super admin users. 
+  # For production, it is STRONGLY recommended to load this from a secure source 
+  # using environment variables or a secrets manager instead of hardcoding here.
+  # Example for env var: ${SHUJAA_SUPER_ADMINS}
+  # The value should be a JSON string of a list of objects, e.g.:
+  # '[{"username": "admin1", "email": "admin1@example.com", "password": "securepass1", "role": "admin"}]'
+  super_admins:
+    - username: "peter"
+      email: "peter@shujaa.studio"
+      password: "${PETER_PASSWORD}" # Loaded from environment variable
+      role: "admin"
+    - username: "apollo"
+      email: "apollo@shujaa.studio"
+      password: "${APOLLO_PASSWORD}" # Loaded from environment variable
+      role: "admin"
 
 security:
   encryption_password: "${SHUJAA_ENCRYPTION_PASSWORD}" # Loaded from environment variable

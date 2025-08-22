@@ -136,82 +136,90 @@ class ShujaaSDK:
 
 # Example Usage (for testing)
 if __name__ == "__main__":
-    BASE_URL = "http://localhost:8000" # Replace with your API base URL
-    sdk = ShujaaSDK(BASE_URL)
+    import os
 
-    print("--- Health Check ---")
-    try:
-        health_response = sdk.get_health()
-        print(f"Health Check: {health_response}")
-    except Exception as e:
-        print(f"Health Check Failed: {e}")
+    BASE_URL = os.getenv("SHUJAA_BASE_URL", "http://localhost:8000")
+    SDK_TEST_USERNAME = os.getenv("SDK_TEST_USERNAME")
+    SDK_TEST_PASSWORD = os.getenv("SDK_TEST_PASSWORD")
 
-    print("\n--- User Registration ---")
-    try:
-        register_response = sdk.register_user("sdk_test_user", "sdk@example.com", "password123")
-        print(f"Register User: {register_response}")
-    except Exception as e:
-        print(f"Register User Failed: {e}")
-
-    print("\n--- Get Token ---")
-    try:
-        token_response = sdk.get_token("sdk_test_user", "password123")
-        print(f"Get Token: {token_response}")
-        # Update SDK with the new token for subsequent requests
-        sdk.api_key = token_response["access_token"]
-        sdk.headers["Authorization"] = f"Bearer {sdk.api_key}"
-    except Exception as e:
-        print(f"Get Token Failed: {e}")
-
-    if sdk.api_key:
-        print("\n--- Get User Profile ---")
-        try:
-            profile_response = sdk.get_user_profile()
-            print(f"User Profile: {profile_response}")
-        except Exception as e:
-            print(f"Get User Profile Failed: {e}")
-
-        print("\n--- Get User Plan ---")
-        try:
-            plan_response = sdk.get_user_plan()
-            print(f"User Plan: {plan_response}")
-        except Exception as e:
-            print(f"Get User Plan Failed: {e}")
-
-        print("\n--- Get User Usage ---")
-        try:
-            usage_response = sdk.get_user_usage()
-            print(f"User Usage: {usage_response}")
-        except Exception as e:
-            print(f"Get User Usage Failed: {e}")
-
-        print("\n--- Generate Video (Example) ---")
-        try:
-            video_request = {"prompt": "A beautiful Kenyan landscape"}
-            video_response = sdk.generate_video(**video_request)
-            print(f"Generate Video: {video_response}")
-        except Exception as e:
-            print(f"Generate Video Failed: {e}")
-
-        print("\n--- Feature Status Check (Example) ---")
-        try:
-            feature_status = sdk.get_feature_status("new_ui")
-            print(f"Feature 'new_ui' status: {feature_status}")
-        except Exception as e:
-            print(f"Feature Status Check Failed: {e}")
-
-        print("\n--- Export User Data ---")
-        try:
-            export_response = sdk.export_user_data()
-            print(f"Export User Data: {export_response}")
-        except Exception as e:
-            print(f"Export User Data Failed: {e}")
-
-        print("\n--- Delete User Data (Caution: This will deactivate the user) ---")
-        # try:
-        #     delete_response = sdk.delete_user_data()
-        #     print(f"Delete User Data: {delete_response}")
-        # except Exception as e:
-        #     print(f"Delete User Data Failed: {e}")
+    if not all([SDK_TEST_USERNAME, SDK_TEST_PASSWORD]):
+        print("Please set SDK_TEST_USERNAME and SDK_TEST_PASSWORD environment variables to run the SDK tests.")
     else:
-        print("Skipping authenticated SDK calls as token was not obtained.")
+        sdk = ShujaaSDK(BASE_URL)
+
+        print("--- Health Check ---")
+        try:
+            health_response = sdk.get_health()
+            print(f"Health Check: {health_response}")
+        except Exception as e:
+            print(f"Health Check Failed: {e}")
+
+        print("\n--- User Registration ---")
+        try:
+            register_response = sdk.register_user(SDK_TEST_USERNAME, "sdk@example.com", SDK_TEST_PASSWORD)
+            print(f"Register User: {register_response}")
+        except Exception as e:
+            print(f"Register User Failed: {e}")
+
+        print("\n--- Get Token ---")
+        try:
+            token_response = sdk.get_token(SDK_TEST_USERNAME, SDK_TEST_PASSWORD)
+            print(f"Get Token: {token_response}")
+            # Update SDK with the new token for subsequent requests
+            sdk.api_key = token_response["access_token"]
+            sdk.headers["Authorization"] = f"Bearer {sdk.api_key}"
+        except Exception as e:
+            print(f"Get Token Failed: {e}")
+
+        if sdk.api_key:
+            print("\n--- Get User Profile ---")
+            try:
+                profile_response = sdk.get_user_profile()
+                print(f"User Profile: {profile_response}")
+            except Exception as e:
+                print(f"Get User Profile Failed: {e}")
+
+            print("\n--- Get User Plan ---")
+            try:
+                plan_response = sdk.get_user_plan()
+                print(f"User Plan: {plan_response}")
+            except Exception as e:
+                print(f"Get User Plan Failed: {e}")
+
+            print("\n--- Get User Usage ---")
+            try:
+                usage_response = sdk.get_user_usage()
+                print(f"User Usage: {usage_response}")
+            except Exception as e:
+                print(f"Get User Usage Failed: {e}")
+
+            print("\n--- Generate Video (Example) ---")
+            try:
+                video_request = {"prompt": "A beautiful Kenyan landscape"}
+                video_response = sdk.generate_video(**video_request)
+                print(f"Generate Video: {video_response}")
+            except Exception as e:
+                print(f"Generate Video Failed: {e}")
+
+            print("\n--- Feature Status Check (Example) ---")
+            try:
+                feature_status = sdk.get_feature_status("new_ui")
+                print(f"Feature 'new_ui' status: {feature_status}")
+            except Exception as e:
+                print(f"Feature Status Check Failed: {e}")
+
+            print("\n--- Export User Data ---")
+            try:
+                export_response = sdk.export_user_data()
+                print(f"Export User Data: {export_response}")
+            except Exception as e:
+                print(f"Export User Data Failed: {e}")
+
+            print("\n--- Delete User Data (Caution: This will deactivate the user) ---")
+            # try:
+            #     delete_response = sdk.delete_user_data()
+            #     print(f"Delete User Data: {delete_response}")
+            # except Exception as e:
+            #     print(f"Delete User Data Failed: {e}")
+        else:
+            print("Skipping authenticated SDK calls as token was not obtained.")

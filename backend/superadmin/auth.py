@@ -20,14 +20,17 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/superadmin/token")
 
 async def create_superadmin_users(db: Session):
     """
-    Ensures the default superadmin users exist.
+    Ensures the default superadmin users exist by reading from the config.
     """
-    super_admins_data = [
-        {"username": "peter", "email": "peter@shujaa.studio", "password": "aluru742!!", "role": Role.ADMIN},
-        {"username": "apollo", "email": "apollo@shujaa.studio", "password": "aluru742!!", "role": Role.ADMIN},
-    ]
+    # [SNIPPET]: thinkwithai + kenyafirst + enterprise-secure
+    # [CONTEXT]: Seeding superadmin users from a secure configuration source instead of hardcoded values.
+    # [GOAL]: Eliminate hardcoded credentials and improve security posture.
+    # [TASK]: Replace hardcoded list with a loop over config.auth.super_admins.
+    if not config.auth.super_admins:
+        logger.warning("No super admins defined in the configuration. Skipping super admin seeding.")
+        return
 
-    for admin_data in super_admins_data:
+    for admin_data in config.auth.super_admins:
         existing_user = db.query(User).filter_by(username=admin_data["username"]).first()
         if not existing_user:
             logger.info(f"Seeding super admin user: {admin_data['username']}")
