@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, status
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
@@ -336,6 +337,16 @@ async def get_status():
             "kenya_first_experience": True
         }
     }
+
+# Simple health and favicon endpoints for uptime checks and to avoid noisy 404s
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    # Return 204 No Content to silence browser favicon requests in dev
+    return Response(status_code=204)
 
 # Background processing functions
 async def process_video_generation(job_id: str, request: VideoGenerationRequest):

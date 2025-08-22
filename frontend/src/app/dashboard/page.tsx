@@ -6,7 +6,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePlanGuard } from '@/context/PlanGuardContext';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import type { PlanStatus } from '@/widgets/PlanGuardWidget/types';
+import { apiClient, Project } from '@/lib/api'; // New imports
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean
 // [CONTEXT]: Dashboard page component for Shujaa Studio users.
@@ -24,6 +25,31 @@ import type { PlanStatus } from '@/widgets/PlanGuardWidget/types';
 export default function DashboardPage() {
   const { planStatus, loading: planLoading, error: planError } = usePlanGuard();
   const { user, isLoading: authLoading } = useAuth();
+
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setProjectsLoading(true);
+      setProjectsError(null);
+      try {
+        const response = await apiClient.getProjects(1, 3); // Fetch first 3 projects
+        if (response.data) {
+          setProjects(response.data.projects);
+        } else if (response.error) {
+          setProjectsError(response.error);
+        }
+      } catch (err: any) {
+        setProjectsError(err.message || 'Failed to fetch projects.');
+      } finally {
+        setProjectsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   const getPlanStateVariant = (state: PlanStatus['state']) => {
     switch (state) {
@@ -96,21 +122,16 @@ export default function DashboardPage() {
         )}
       </section>
 
-      {/* Recent Projects (Placeholder) */}
+      {/* Recent Projects */}
       <section className="bg-white shadow-lg rounded-lg p-6 mb-8">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
           <FaVideo className="mr-3 text-blue-600" /> Your Recent Projects
         </h2>
-        <p className="text-gray-600 mb-4">
-          This section will display your recently generated videos and projects.
-          <br />
-          <Link href="/projects" className="text-blue-600 hover:underline mt-2 inline-block">
-            View All Projects
-          </Link>
-        </p>
-        {/* TODO: Implement fetching and displaying actual recent projects */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Placeholder for project cards */}
+        {projectsLoading ? (
+          <p className="text-gray-600">Loading recent projects...</p>
+        ) : projectsError ? (
+          <p className="text-red-600">Error loading projects: {projectsError}</p>
+        ) : projects.length === 0 ? (
           <div className="border border-gray-200 rounded-lg p-4 text-center">
             <FaVideo className="text-5xl text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500">No recent projects yet.</p>
@@ -118,6 +139,25 @@ export default function DashboardPage() {
               Start Creating Now!
             </Link>
           </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {projects.map((project) => (
+              <div key={project.id} className="border border-gray-200 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-800 mb-2">{project.name}</h3>
+                <p className="text-sm text-gray-600 mb-2">Type: {project.type}</p>
+                <p className="text-sm text-gray-600 mb-2">Status: {project.status}</p>
+                <p className="text-xs text-gray-500">Created: {new Date(project.created_at).toLocaleDateString()}</p>
+                <Link href={`/projects/${project.id}`} className="text-blue-600 hover:underline mt-2 inline-block">
+                  View Project
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="text-right mt-4">
+          <Link href="/projects" className="text-blue-600 hover:underline inline-block">
+            View All Projects
+          </Link>
         </div>
       </section>
 

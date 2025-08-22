@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Card from '@/components/Card';
-import { FaCheck, FaCrown, FaFlag, FaMountain, FaRocket } from 'react-icons/fa6';
+import { FaCheck, FaCrown, FaFlag, FaMountain, FaRocket, FaCreditCard } from 'react-icons/fa6';
 import GraceCountdownOverlay from '@/components/GraceCountdownOverlay';
 import { useWidgetLoader } from '@/utils/widgetLoader';
 import { usePlanGuard } from '@/context/PlanGuardContext'; // New import
 import { paymentUtils, usePaystack } from '@/lib/paystack'; // Correct import for paymentUtils and usePaystack
+import { Button } from '@/components/ui/button'; // New import
+import Link from 'next/link'; // New import
 
 // Local types for plan and payment method to satisfy TS when using require()
 type Plan = {
@@ -28,6 +30,40 @@ type Plan = {
   grace_period_hours?: number; // New field
 };
 type PaymentMethod = { id: string; name: string; description: string; icon: any };
+
+interface UsageProgressBarProps {
+  label: string;
+  used: number;
+  limit: number;
+}
+
+const UsageProgressBar: React.FC<UsageProgressBarProps> = ({ label, used, limit }) => {
+  const percentage = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
+  const displayUsed = used === -1 ? '∞' : used;
+  const displayLimit = limit === -1 ? '∞' : limit;
+
+  let barColor = 'bg-blue-500';
+  if (percentage > 80) {
+    barColor = 'bg-red-500';
+  } else if (percentage > 50) {
+    barColor = 'bg-yellow-500';
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between text-sm text-gray-700 mb-1">
+        <span>{label}</span>
+        <span>{displayUsed} / {displayLimit}</span>
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-2">
+        <div
+          className={`${barColor} h-2 rounded-full transition-all duration-500 ease-out`}
+          style={{ width: `${percentage}%` }}
+        ></div>
+      </div>
+    </div>
+  );
+};
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent + augmentsearch
 // [CONTEXT]: Pricing page with Paystack integration and Kenya-first design
@@ -243,6 +279,46 @@ export default function PricingPage() {
         </div>
       </Card>
 
+      {/* Current Subscription and Usage */}
+      {planStatus && (
+        <Card className="p-6">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+            <FaRocket className="mr-3 text-blue-600" /> Your Current Plan: {planStatus.planName}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-gray-700 text-lg mb-2">
+                Status: <span className="font-bold">{planStatus.state}</span>
+              </p>
+              <p className="text-gray-600 mb-2">
+                Expires: <span className="font-medium">{planStatus.expiresAt ? new Date(planStatus.expiresAt).toLocaleDateString() : 'N/A'}</span>
+              </p>
+              {planStatus.state === 'grace' && planStatus.graceExpiresAt && (
+                <p className="text-sm text-yellow-700">
+                  Grace period ends: {new Date(planStatus.graceExpiresAt).toLocaleString()}
+                </p>
+              )}
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-gray-800">Usage Overview</h3>
+              <div className="space-y-2">
+                <UsageProgressBar label="Video Minutes" used={planStatus.usage.videoMins} limit={planStatus.quota.videoMins} />
+                <UsageProgressBar label="Audio Minutes" used={planStatus.usage.audioMins} limit={planStatus.quota.audioMins} />
+                <UsageProgressBar label="API Tokens" used={planStatus.usage.tokens} limit={planStatus.quota.tokens} />
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 text-center">
+            <p className="text-gray-600 mb-2">Need more? Upgrade your plan for higher limits and exclusive features.</p>
+            <Button asChild>
+              <Link href="#pricing-plans">
+                View All Plans
+              </Link>
+            </Button>
+          </div>
+        </Card>
+      )}
+
       {/* Pricing Plans */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {plans.map((plan: Plan) => (
@@ -384,6 +460,19 @@ export default function PricingPage() {
           </Card>
         ))}
       </div>
+
+      {/* Billing History (Placeholder) */}
+      <Card className="p-6">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+          <FaCreditCard className="mr-3 text-purple-600" /> Billing History
+        </h2>
+        <p className="text-gray-600 mb-4">
+          This section will display your past invoices and payment history.
+        </p>
+        <div className="text-center">
+          <p className="text-gray-500">No billing history available yet.</p>
+        </div>
+      </Card>
 
       {/* Payment Methods */}
       <Card className="p-6">
