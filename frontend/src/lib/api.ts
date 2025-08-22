@@ -196,81 +196,16 @@ export interface UserData {
 }
 
 export interface Tenant {
-  id: string;
+  id: number;
   name: string;
-  // Add other tenant-specific properties as needed
+  is_active: boolean;
+  plan: string;
 }
 
-export interface CreateUserData extends Omit<UserData, 'id'> {
-  password: string;
-}
-
-export interface Asset {
-  id: string;
+export interface CreateTenantData {
   name: string;
-  type: 'image' | 'audio' | 'model';
-  url: string;
-  thumbnail_url?: string;
-  size: number;
-  uploaded_at: string;
-  usage_count: number;
-}
-
-export interface LocalModel {
-  id: string;
-  name: string;
-  type: 'llm' | 'image_gen' | 'tts' | 'stt';
-  version: string;
-  size_gb: number;
-  status: 'installed' | 'downloading' | 'available';
-  download_progress?: number;
-}
-
-export interface StorageInfo {
-  total_space_gb: number;
-  used_space_gb: number;
-  free_space_gb: number;
-  cache_size_gb: number;
-  project_data_size_gb: number;
-  log_data_size_gb: number;
-}
-
-export interface UserProfileData {
-  username: string;
-  email: string;
-  full_name?: string;
-  bio?: string;
-}
-
-export interface SecuritySettings {
-  two_factor_enabled: boolean;
-}
-
-export interface LoginSession {
-  id: string;
-  device: string;
-  location: string;
-  ip_address: string;
-  last_activity: string;
-  current: boolean;
-}
-
-export interface NotificationPreferences {
-  email_notifications: boolean;
-  in_app_notifications: boolean;
-  sms_notifications: boolean;
-  push_notifications: boolean;
-}
-
-export interface TenantBrandingData {
-  id: string;
-  tenant_id: string;
-  name: string;
-  logo_url: string;
-  primary_color: string;
-  secondary_color: string;
-  custom_domain: string;
-  tls_status: 'pending' | 'active' | 'failed';
+  is_active?: boolean;
+  plan?: string;
 }
 
 class ApiClient {
@@ -755,6 +690,26 @@ class ApiClient {
 
   async getSuperAdminTenants(): Promise<ApiResponse<Tenant[]>> { // Define a proper type for TenantData later
     return this.request('/api/superadmin/tenants');
+  }
+
+  async createTenant(data: CreateTenantData): Promise<ApiResponse<Tenant>> {
+    return this.request('/api/superadmin/tenants', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTenant(id: number, data: Partial<Tenant>): Promise<ApiResponse<Tenant>> {
+    return this.request(`/api/superadmin/tenants/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteTenant(id: number): Promise<ApiResponse<{ success: boolean }>> {
+    return this.request(`/api/superadmin/tenants/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   // Tenant Branding
