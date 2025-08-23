@@ -1,5 +1,10 @@
 'use client';
 
+// [SNIPPET]: thinkwithai + kenyafirst + refactorclean + taskchain
+// [CONTEXT]: Enterprise-grade DataTable with Kenya-first design system integration
+// [GOAL]: Enhance existing DataTable with design tokens and cultural authenticity
+// [TASK]: Phase 2.1a - Advanced Data Components with mobile-first responsive design
+
 import React, { useState, useMemo } from 'react';
 import {
   Table,
@@ -9,8 +14,10 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
+import { Button, Input } from '@/components/ui/design-system';
+import { colors, spacing, typography } from '@/config/designTokens';
+import { cn } from '@/lib/utils';
+import { FaSortUp, FaSortDown, FaSort, FaSearch, FaFilter } from 'react-icons/fa';
 
 interface ColumnDef<T> {
   accessorKey: keyof T;
@@ -23,9 +30,21 @@ interface DataTableProps<T> {
   columns: ColumnDef<T>[];
   data: T[];
   pageSize?: number;
+  variant?: 'default' | 'kenya' | 'cultural' | 'elite';
+  searchPlaceholder?: string;
+  emptyStateMessage?: string;
+  className?: string;
 }
 
-export function DataTable<T>({ columns, data, pageSize = 10 }: DataTableProps<T>) {
+export function DataTable<T>({
+  columns,
+  data,
+  pageSize = 10,
+  variant = 'default',
+  searchPlaceholder = 'Tafuta...',
+  emptyStateMessage = 'Hakuna matokeo.',
+  className
+}: DataTableProps<T>) {
   const [sortBy, setSortBy] = useState<keyof T | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -99,29 +118,57 @@ export function DataTable<T>({ columns, data, pageSize = 10 }: DataTableProps<T>
     );
   };
 
+  const variantClasses = {
+    default: 'border-gray-200',
+    kenya: `border-[${colors.kenya.green}] border-opacity-20`,
+    cultural: `border-[${colors.cultural.gold}] border-opacity-30`,
+    elite: 'border-purple-200'
+  };
+
   return (
-    <div className="space-y-4">
-      <input
-        type="text"
-        placeholder="Search..."
-        value={searchTerm}
-        onChange={(e) => {
-          setSearchTerm(e.target.value);
-          setCurrentPage(1); // Reset page on search
-        }}
-        className="p-2 border rounded-md w-full"
-      />
-      <div className="rounded-md border">
-        <Table>
+    <div className={cn('space-y-4', className)}>
+      {/* Enhanced Search with Kenya-first design */}
+      <div className="relative">
+        <FaSearch className={cn(
+          'absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400',
+          variant === 'kenya' && `text-[${colors.kenya.green}]`,
+          variant === 'cultural' && `text-[${colors.cultural.gold}]`
+        )} />
+        <input
+          type="text"
+          placeholder={searchPlaceholder}
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
+          className={cn(
+            'w-full pl-10 pr-4 py-3 border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1',
+            variant === 'kenya' ? `border-gray-300 focus:border-[${colors.kenya.green}] focus:ring-green-500` :
+            variant === 'cultural' ? `border-gray-300 focus:border-[${colors.cultural.gold}] focus:ring-yellow-500` :
+            'border-gray-300 focus:border-blue-500 focus:ring-blue-500',
+            'bg-white placeholder:text-gray-400'
+          )}
+        />
+      </div>
+      {/* Enhanced Table with cultural design */}
+      <div className={cn(
+        'rounded-lg border overflow-hidden shadow-sm',
+        variantClasses[variant],
+        'mobile-responsive-table'
+      )}>
+        <div className="overflow-x-auto">
+          <Table className="min-w-full">
           <TableHeader>
             <TableRow>
               {columns.map((column) => (
                 <TableHead key={String(column.accessorKey)}>
                   {column.enableSorting ? (
                     <Button
-                      variant="ghost"
+                      variant={variant === 'kenya' ? 'kenya' : variant === 'cultural' ? 'cultural' : 'secondary'}
+                      size="sm"
                       onClick={() => handleSort(column.accessorKey)}
-                      className="flex items-center"
+                      className="flex items-center hover:scale-105 transition-transform"
                     >
                       {column.header}
                       {getSortIcon(column.accessorKey)}
@@ -145,34 +192,63 @@ export function DataTable<T>({ columns, data, pageSize = 10 }: DataTableProps<T>
             ))}
             {paginatedData.length === 0 && (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
+                <TableCell colSpan={columns.length} className="h-32 text-center">
+                  <div className="flex flex-col items-center space-y-2">
+                    <FaFilter className={cn(
+                      'text-4xl text-gray-300',
+                      variant === 'kenya' && `text-[${colors.kenya.green}] opacity-30`,
+                      variant === 'cultural' && `text-[${colors.cultural.gold}] opacity-30`
+                    )} />
+                    <p className={cn(
+                      'text-gray-500',
+                      `text-[${typography.fontSizes.sm}]`
+                    )}>
+                      {emptyStateMessage}
+                    </p>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-          disabled={currentPage === 1}
-        >
-          Previous
-        </Button>
-        <span className="text-sm text-gray-700">
-          Page {currentPage} of {totalPages}
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-          disabled={currentPage === totalPages}
-        >
-          Next
-        </Button>
+      {/* Enhanced Pagination with Kenya-first design */}
+      <div className="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0 sm:space-x-2 py-4">
+        <div className={cn(
+          'text-gray-600',
+          `text-[${typography.fontSizes.sm}]`
+        )}>
+          Onyesha {Math.min((currentPage - 1) * pageSize + 1, filteredData.length)} - {Math.min(currentPage * pageSize, filteredData.length)} ya {filteredData.length}
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant={variant === 'kenya' ? 'kenya' : variant === 'cultural' ? 'cultural' : 'secondary'}
+            size="sm"
+            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+            className="min-w-[80px]"
+          >
+            Nyuma
+          </Button>
+          <span className={cn(
+            'px-3 py-1 rounded-md bg-gray-100 text-gray-700 font-medium',
+            `text-[${typography.fontSizes.sm}]`,
+            variant === 'kenya' && 'bg-green-50 text-green-700',
+            variant === 'cultural' && 'bg-yellow-50 text-yellow-700'
+          )}>
+            {currentPage} / {totalPages}
+          </span>
+          <Button
+            variant={variant === 'kenya' ? 'kenya' : variant === 'cultural' ? 'cultural' : 'secondary'}
+            size="sm"
+            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+            className="min-w-[80px]"
+          >
+            Mbele
+          </Button>
+        </div>
       </div>
     </div>
   );
