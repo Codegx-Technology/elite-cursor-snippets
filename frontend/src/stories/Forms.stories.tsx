@@ -3,8 +3,8 @@
 // [GOAL]: Comprehensive documentation of form workflows with Kenya-first examples
 
 import type { Meta, StoryObj } from '@storybook/react';
-import { VideoCreationForm, ProjectSetupForm } from '@/components/forms/MultiStepForm';
-import { FormWizard, TextInputStep, SelectStep } from '@/components/forms/FormWizard';
+import { VideoCreationForm, ProjectSetupForm } from '../components/forms/MultiStepForm';
+import { FormWizard, TextInputStep, SelectStep } from '../components/forms/FormWizard';
 
 // Video Creation Form Stories
 const VideoCreationMeta: Meta<typeof VideoCreationForm> = {

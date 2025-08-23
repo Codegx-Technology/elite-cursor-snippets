@@ -14,9 +14,13 @@ import { FaVideo, FaCreditCard, FaCog, FaChartLine, FaImage, FaMusic } from 'rea
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card'; // New import
+import { Card } from '@/components/ui/card';
 import type { PlanStatus } from '@/widgets/PlanGuardWidget/types';
-import { apiClient, Project } from '@/lib/api'; // New imports
+import { apiClient, Project } from '@/lib/api';
+// Phase 2 Enterprise Components
+import LoadingStates from '@/components/ui/LoadingStates';
+import ErrorStates from '@/components/ui/ErrorStates';
+import { BarChart, LineChart } from '@/components/charts/Chart';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean
 // [CONTEXT]: Dashboard page component for Shujaa Studio users.
@@ -70,7 +74,7 @@ export default function DashboardPage() {
   if (planLoading || authLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen-content">
-        <p className="text-gray-600">Loading dashboard data...</p>
+        <LoadingStates.PageLoading message="Loading dashboard data... 🦒" />
       </div>
     );
   }
@@ -78,51 +82,111 @@ export default function DashboardPage() {
   if (planError) {
     return (
       <div className="flex justify-center items-center min-h-screen-content">
-        <p className="text-red-600">Error loading plan information: {planError}</p>
+        <ErrorStates.ErrorPage 
+          type="server-error"
+          customTitle="Plan Error"
+          customMessage={`Failed to load plan information: ${planError}`}
+          onRetry={() => window.location.reload()}
+        />
       </div>
     );
   }
 
+  // Sample analytics data for charts
+  const usageData = [
+    { label: 'Video', value: planStatus?.usage.videoMins || 0, color: '#00A651' },
+    { label: 'Miradi', value: projects.length, color: '#3B82F6' },
+    { label: 'Matumizi', value: Math.round((planStatus?.usage.videoMins || 0) / (planStatus?.quota.videoMins || 100) * 100), color: '#8B5CF6' }
+  ];
+
+  const monthlyData = [
+    { label: 'Jan', value: 12 },
+    { label: 'Feb', value: 19 },
+    { label: 'Mar', value: 15 },
+    { label: 'Apr', value: 22 },
+    { label: 'May', value: 18 },
+    { label: 'Jun', value: 25 }
+  ];
+
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">
-        Welcome, {user?.username || 'Shujaa'}!
-      </h1>
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">
+          Welcome, {user?.username || 'Shujaa'}! 🇰🇪
+        </h1>
+        <p className="text-lg text-gray-600">Your Shujaa Studio Dashboard</p>
+      </div>
 
-      {/* PlanGuard Overview */}
-      <section className="bg-white shadow-lg rounded-lg p-6 mb-8">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-          <FaCreditCard className="mr-3 text-green-600" /> Your Plan Overview
-        </h2>
-        {planStatus ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Enterprise Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card className="p-6 bg-gradient-to-br from-kenya-green/10 to-cultural-gold/10 border-kenya-green/20">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-700 text-lg">
-                Current Plan: <span className="font-bold text-green-700">{planStatus.planName}</span>
-              </p>
-              <p className="text-gray-600">
-                Status: <Badge variant={getPlanStateVariant(planStatus.state)}>{planStatus.state}</Badge>
-              </p>
-              <p className="text-gray-600">
-                Expires: <span className="font-medium">{planStatus.expiresAt ? new Date(planStatus.expiresAt).toLocaleDateString() : 'N/A'}</span>
-              </p>
+              <p className="text-sm font-medium text-gray-600">Your Plan</p>
+              <p className="text-2xl font-bold text-gray-900">{planStatus?.planName || 'None'}</p>
+              <p className="text-xs text-gray-500">Status: {planStatus?.state || 'Unknown'}</p>
             </div>
-            <div>
-              <p className="text-gray-700 text-lg mb-2">
-                Video Minutes Used: <span className="font-bold">{planStatus.usage.videoMins} / {planStatus.quota.videoMins}</span>
-              </p>
-              <Progress value={(planStatus.usage.videoMins / planStatus.quota.videoMins) * 100} className="h-2 mb-4" />
-              <Button asChild className="mt-2">
-                <Link href="/pricing">
-                  Upgrade Your Plan
-                </Link>
-              </Button>
-            </div>
+            <FaCreditCard className="text-3xl text-kenya-green" />
           </div>
-        ) : (
-          <p className="text-gray-600">No plan information available. Please check your subscription.</p>
-        )}
-      </section>
+        </Card>
+        
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Video Minutes</p>
+              <p className="text-2xl font-bold text-gray-900">{planStatus?.usage.videoMins || 0}/{planStatus?.quota.videoMins || 0}</p>
+              <p className="text-xs text-gray-500">{Math.round(((planStatus?.usage.videoMins || 0) / (planStatus?.quota.videoMins || 1)) * 100)}% used</p>
+            </div>
+            <FaVideo className="text-3xl text-blue-600" />
+          </div>
+        </Card>
+        
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Projects</p>
+              <p className="text-2xl font-bold text-gray-900">{projects.length}</p>
+              <p className="text-xs text-gray-500">Recent projects</p>
+            </div>
+            <FaChartLine className="text-3xl text-purple-600" />
+          </div>
+        </Card>
+        
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Account Status</p>
+              <p className="text-2xl font-bold text-gray-900">{planStatus?.state === 'healthy' ? 'Healthy' : 'Check Required'}</p>
+              <p className="text-xs text-gray-500">{planStatus?.expiresAt ? `Expires: ${new Date(planStatus.expiresAt).toLocaleDateString()}` : 'No expiry date'}</p>
+            </div>
+            <FaCog className="text-3xl text-teal-600" />
+          </div>
+        </Card>
+      </div>
+
+      {/* Analytics Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <FaChartLine className="mr-2 text-kenya-green" /> Resource Usage 🦁
+          </h3>
+          <BarChart 
+            data={usageData}
+            className="h-64"
+            variant="kenya"
+          />
+        </Card>
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <FaVideo className="mr-2 text-blue-600" /> Monthly Growth 🏃‍♂️
+          </h3>
+          <LineChart 
+            data={monthlyData}
+            className="h-64"
+            variant="kenya"
+          />
+        </Card>
+      </div>
 
       {/* Recent Projects */}
       <section className="bg-white shadow-lg rounded-lg p-6 mb-8">
@@ -130,17 +194,23 @@ export default function DashboardPage() {
           <FaVideo className="mr-3 text-blue-600" /> Your Recent Projects
         </h2>
         {projectsLoading ? (
-          <p className="text-gray-600">Loading recent projects...</p>
+          <LoadingStates.LoadingCard />
         ) : projectsError ? (
-          <p className="text-red-600">Error loading projects: {projectsError}</p>
+          <ErrorStates.Alert 
+            title="Projects Error"
+            message={`Failed to load projects: ${projectsError}`}
+            variant="default"
+          />
         ) : projects.length === 0 ? (
-          <div className="border border-gray-200 rounded-lg p-4 text-center">
-            <FaVideo className="text-5xl text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">No recent projects yet.</p>
-            <Link href="/video-generate" className="text-green-600 hover:underline mt-2 inline-block">
-              Start Creating Now!
-            </Link>
-          </div>
+          <ErrorStates.EmptyState 
+            title="No Projects Yet"
+            message="You haven't created any projects yet. 🎬"
+            action={{
+              label: "Start Creating Now!",
+              onClick: () => window.location.href = '/video-generate'
+            }}
+            icon={<FaVideo className="text-5xl text-gray-300" />}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((project) => (

@@ -50,6 +50,12 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       description: 'Overview & Stats'
     },
     {
+      href: '/analytics',
+      icon: FaChartLine,
+      label: 'Analytics',
+      description: 'Usage insights & reports 📊'
+    },
+    {
       href: '/admin/reporting',
       icon: FaShieldAlt,
       label: 'Reporting',

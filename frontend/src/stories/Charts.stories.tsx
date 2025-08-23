@@ -3,7 +3,7 @@
 // [GOAL]: Comprehensive documentation of chart components with cultural data
 
 import type { Meta, StoryObj } from '@storybook/react';
-import { BarChart, LineChart, DonutChart } from '@/components/charts/Chart';
+import { BarChart, LineChart, DonutChart } from '../components/charts/Chart';
 
 // Sample Kenya-first data
 const kenyaVideoData = [
@@ -229,6 +229,6 @@ export const DashboardShowcase: StoryObj = {
   },
 };
 
-// Export Line and Donut chart stories
-export { LineChartDefault as LineChart, LineChartKenya };
-export { DonutChartDefault as DonutChart, DonutChartKenya };
+// Additional exports for organization
+export { LineChartDefault as LineChartStory };
+export { DonutChartDefault as DonutChartStory };

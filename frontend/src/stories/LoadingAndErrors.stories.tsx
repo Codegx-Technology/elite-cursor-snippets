@@ -12,7 +12,7 @@ import {
   SkeletonTable, 
   PageLoading, 
   LoadingButton 
-} from '@/components/ui/LoadingStates';
+} from '../components/ui/LoadingStates';
 import { 
   Alert, 
   ErrorPage, 
@@ -20,7 +20,7 @@ import {
   EmptyState, 
   Toast, 
   NetworkStatus 
-} from '@/components/ui/ErrorStates';
+} from '../components/ui/ErrorStates';
 import { useState } from 'react';
 
 // Loading Spinner Stories
