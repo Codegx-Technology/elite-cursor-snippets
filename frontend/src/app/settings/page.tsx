@@ -3,13 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import FormInput from '@/components/FormInput';
 import Card from '@/components/Card';
+import LoadingStates from '@/components/ui/LoadingStates';
+import ErrorStates from '@/components/ui/ErrorStates';
 import { apiClient, ApiKey, Integration, NotificationPreferences, SecuritySettings, LoginSession, StorageInfo, LocalModel } from '@/lib/api';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress'; // New import
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/use-toast';
-import BrandingSettingsPage from './branding/page'; // New import
+import BrandingSettingsPage from './branding/page';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');

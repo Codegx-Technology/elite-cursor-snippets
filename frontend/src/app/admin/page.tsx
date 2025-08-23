@@ -1,5 +1,8 @@
 import React from 'react';
 import DependencyWatcher from '@/admin/components/DependencyWatcher';
+import LoadingStates from '@/components/ui/LoadingStates';
+import ErrorStates from '@/components/ui/ErrorStates';
+import Card from '@/components/Card';
 
 const AdminDashboard: React.FC = () => {
   return (

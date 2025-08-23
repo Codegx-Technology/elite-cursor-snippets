@@ -1,7 +1,10 @@
 'use client';
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useRouter } from 'next/navigation'; // Use next/navigation for App Router
+import { useRouter } from 'next/navigation';
+import LoadingStates from '@/components/ui/LoadingStates';
+import ErrorStates from '@/components/ui/ErrorStates';
+import Card from '@/components/Card';
 
 interface VideoGenerationResult {
   status: string;
