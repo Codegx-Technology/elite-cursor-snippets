@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Card from '@/components/Card';
 import Pagination from '@/components/Pagination';
+import LoadingStates from '@/components/ui/LoadingStates';
+import ErrorStates from '@/components/ui/ErrorStates';
 import { FaPlus, FaVideo, FaImages, FaMusic, FaEdit, FaTrash, FaEye, FaFlag, FaMountain, FaFolder, FaClock, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
 import { useProjects, Project } from '@/hooks/useProjects';
 import CreateProjectModal from '@/components/Project/CreateProjectModal';
@@ -65,13 +67,18 @@ export default function ProjectsPage() {
   };
 
   if (isLoading) {
+    return <LoadingStates.PageLoading message="Loading your Kenya-first projects... 🦒" />;
+  }
+
+  if (error) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <FaSpinner className="w-8 h-8 text-green-600 animate-spin mx-auto mb-4" aria-label="Loading" />
-          <span className="text-gray-600 font-medium">Loading projects...</span>
-        </div>
-      </div>
+      <ErrorStates.ErrorPage
+        type="network-error"
+        variant="kenya"
+        customTitle="Projects Unavailable 🦁"
+        customMessage="Unable to load your projects. Please check your connection and try again."
+        onRetry={() => loadProjects()}
+      />
     );
   }
 

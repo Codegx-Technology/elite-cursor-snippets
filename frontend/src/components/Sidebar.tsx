@@ -200,14 +200,23 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
             <Link
               key={`${item.href}-${idx}`}
               href={item.href}
+              prefetch={true}
               className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 group ${
                 active
                   ? 'bg-gradient-to-r from-green-600 to-blue-600 text-white shadow-lg'
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
               }`}
               aria-current={active ? 'page' : undefined}
-              onClick={() => {
-                // Close sidebar immediately on mobile; Next.js handles route transitions
+              onClick={(e) => {
+                // Immediate visual feedback
+                e.currentTarget.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                  if (e.currentTarget) {
+                    e.currentTarget.style.transform = '';
+                  }
+                }, 100);
+                
+                // Close sidebar immediately on mobile
                 setSidebarOpen(false);
               }}
             >
