@@ -70,3 +70,15 @@ Based on the current state and the broad definition of "enterprise-grade SaaS qu
 * **Performance Audits:** Added `frontend/lighthouserc.json` and `perf:audit` script (uses Lighthouse headless).
 * **Dependency Watcher:** Added `ShujaaStudio/watchers/dep_watcher.py` to monitor Python + Node deps, prefer patch updates, and scan last 5 commits for recovery. Coordinates with `model_watcher.py`.
 * **Next Steps:** Install Node deps, run tests and Storybook, and integrate CI for lint/test/a11y/perf.
+
+## Node Dependency Deprecation Warnings
+
+* **Observed (transitive) warnings during install:**
+  - `inflight@1.0.6` (legacy, memory leak note) — appears via older `glob` chain in `package-lock.json`.
+  - `glob@7.x`, `rimraf@2/3` — pulled by upstream tooling; not declared directly in `frontend/package.json`.
+* **Direct fix applied:** Migrated `@storybook/testing-library` → `@storybook/test` to eliminate one Storybook deprecation.
+* **Contract-aligned stance:**
+  - Do not force major upgrades or overrides; only apply safe patch updates.
+  - Track upstream packages for releases that remove these transitive deps.
+  - `dep_watcher.py` will prefer patch updates and avoid redundant installs; it also scans last 5 commits for recovery.
+* **Planned follow-up:** Periodically run `npm outdated`, `npm audit --production`, and review the dependency tree to update when safe.
