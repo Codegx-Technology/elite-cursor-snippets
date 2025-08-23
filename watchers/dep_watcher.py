@@ -28,7 +28,8 @@ MODEL_WATCHER = ROOT / 'watchers' / 'model_watcher.py'
 
 
 def run(cmd: List[str], cwd: Path | None = None) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, cwd=str(cwd) if cwd else None, capture_output=True, text=True, check=False)
+    # Pass the current environment variables, including PATH, to the subprocess
+    return subprocess.run(cmd, cwd=str(cwd) if cwd else None, capture_output=True, text=True, check=False, env=os.environ)
 
 
 def ensure_paths(frontend: Path, req_file: Path) -> None:
@@ -39,7 +40,7 @@ def ensure_paths(frontend: Path, req_file: Path) -> None:
 
 
 def parse_outdated_npm(frontend: Path) -> Dict[str, Any]:
-    outdated = run(["npm", "outdated", "--json"], cwd=frontend)
+    outdated = run(["C:\\nvm4w\\nodejs\\npm.cmd", "outdated", "--json"], cwd=frontend)
     if outdated.returncode not in (0, 1):
         return {}
     try:
@@ -49,7 +50,7 @@ def parse_outdated_npm(frontend: Path) -> Dict[str, Any]:
 
 
 def parse_installed_npm(frontend: Path) -> Dict[str, Any]:
-    ls = run(["npm", "ls", "--json", "--depth=0"], cwd=frontend)
+    ls = run(["C:\\nvm4w\\nodejs\\npm.cmd", "ls", "--json", "--depth=0"], cwd=frontend)
     try:
         data = json.loads(ls.stdout or '{}')
         return data.get('dependencies', {})
