@@ -4,17 +4,10 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-TableCell,
-} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
+import { DataTable, ColumnDef } from '@/components/data-table/DataTable'; // Import DataTable and ColumnDef
 
 interface UserData {
   id: string;
@@ -106,6 +99,65 @@ export default function AdminUsersPage() {
     return null; // Should have been redirected by useEffect
   }
 
+  const columns: ColumnDef<UserData>[] = [
+    {
+      accessorKey: 'id',
+      header: 'ID',
+      enableSorting: true,
+    },
+    {
+      accessorKey: 'username',
+      header: 'Username',
+      enableSorting: true,
+    },
+    {
+      accessorKey: 'email',
+      header: 'Email',
+      enableSorting: true,
+    },
+    {
+      accessorKey: 'role',
+      header: 'Role',
+      enableSorting: true,
+    },
+    {
+      accessorKey: 'tenant_name',
+      header: 'Tenant',
+      enableSorting: true,
+    },
+    {
+      accessorKey: 'is_active',
+      header: 'Active',
+      enableSorting: true,
+      cell: (row) => (row.is_active ? 'Yes' : 'No'),
+    },
+    {
+      accessorKey: 'id', // Using ID as accessor for actions
+      header: 'Actions',
+      enableSorting: false,
+      cell: (row) => (
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push(`/admin/users/${row.id}`)}
+            title="Edit User"
+          >
+            <FaEdit />
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => handleDeleteUser(row.id)}
+            title="Delete User"
+          >
+            <FaTrash />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
@@ -124,51 +176,7 @@ export default function AdminUsersPage() {
         <div className="text-center py-8 text-red-500">{error}</div>
       ) : (
         <div className="overflow-x-auto rounded-lg shadow-md">
-          <Table className="min-w-full bg-white">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</TableHead>
-                <TableHead className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</TableHead>
-                <TableHead className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</TableHead>
-                <TableHead className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</TableHead>
-                <TableHead className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tenant</TableHead>
-                <TableHead className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active</TableHead>
-                <TableHead className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((u) => (
-                <TableRow key={u.id} className="border-b border-gray-200 hover:bg-gray-50">
-                  <TableCell className="py-4 px-4 whitespace-nowrap text-sm font-medium text-gray-900">{u.id}</TableCell>
-                  <TableCell className="py-4 px-4 whitespace-nowrap text-sm text-gray-700">{u.username}</TableCell>
-                  <TableCell className="py-4 px-4 whitespace-nowrap text-sm text-gray-700">{u.email}</TableCell>
-                  <TableCell className="py-4 px-4 whitespace-nowrap text-sm text-gray-700">{u.role}</TableCell>
-                  <TableCell className="py-4 px-4 whitespace-nowrap text-sm text-gray-700">{u.tenant_name}</TableCell>
-                  <TableCell className="py-4 px-4 whitespace-nowrap text-sm text-gray-700">{u.is_active ? 'Yes' : 'No'}</TableCell>
-                  <TableCell className="py-4 px-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.push(`/admin/users/${u.id}`)}
-                        title="Edit User"
-                      >
-                        <FaEdit />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteUser(u.id)}
-                        title="Delete User"
-                      >
-                        <FaTrash />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable columns={columns} data={users} />
         </div>
       )}
     </div>
