@@ -30,7 +30,7 @@ export default function DeleteProjectModal({ isOpen, onClose, onDelete, project 
           </button>
         </div>
         <form onSubmit={handleSubmit}>
-          <p>Are you sure you want to delete the project "{project?.name}"?</p>
+          <p>Are you sure you want to delete the project &quot;{project?.name}&quot;?</p>
           <div className="flex justify-end space-x-4 mt-6">
             <button type="button" onClick={onClose} className="btn-secondary">
               Cancel

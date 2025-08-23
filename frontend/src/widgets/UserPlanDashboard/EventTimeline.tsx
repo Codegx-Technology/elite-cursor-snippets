@@ -6,7 +6,7 @@ import React from 'react';
 // It will likely fetch its own data from a backend API (e.g., /api/user/plan-events)
 
 interface EventTimelineProps {
-  // No props needed for now, as it will fetch its own data
+  className?: string;
 }
 
 const EventTimeline: React.FC<EventTimelineProps> = () => {

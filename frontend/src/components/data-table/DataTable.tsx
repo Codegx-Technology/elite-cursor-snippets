@@ -57,13 +57,27 @@ export function DataTable<T>({ columns, data, pageSize = 10 }: DataTableProps<T>
     });
   }, [data, sortBy, sortDirection]);
 
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredData = useMemo(() => {
+    if (!searchTerm) return sortedData;
+
+    const lowercasedSearchTerm = searchTerm.toLowerCase();
+    return sortedData.filter(row =>
+      columns.some(column => {
+        const value = row[column.accessorKey];
+        return String(value).toLowerCase().includes(lowercasedSearchTerm);
+      })
+    );
+  }, [sortedData, searchTerm, columns]);
+
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
-    return sortedData.slice(startIndex, endIndex);
-  }, [sortedData, currentPage, pageSize]);
+    return filteredData.slice(startIndex, endIndex); // Use filteredData here
+  }, [filteredData, currentPage, pageSize]);
 
-  const totalPages = Math.ceil(sortedData.length / pageSize);
+  const totalPages = Math.ceil(filteredData.length / pageSize); // totalPages should be based on filteredData
 
   const handleSort = (accessorKey: keyof T) => {
     if (sortBy === accessorKey) {
@@ -87,6 +101,16 @@ export function DataTable<T>({ columns, data, pageSize = 10 }: DataTableProps<T>
 
   return (
     <div className="space-y-4">
+      <input
+        type="text"
+        placeholder="Search..."
+        value={searchTerm}
+        onChange={(e) => {
+          setSearchTerm(e.target.value);
+          setCurrentPage(1); // Reset page on search
+        }}
+        className="p-2 border rounded-md w-full"
+      />
       <div className="rounded-md border">
         <Table>
           <TableHeader>

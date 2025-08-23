@@ -1,12 +1,13 @@
 'use client';
 
 import React from 'react';
+import { Project } from '@/hooks/useProjects';
 
 interface EditProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: (id: string, project: Partial<any>) => Promise<void>;
-  project: any | null;
+  onUpdate: (id: string, project: Partial<Project>) => Promise<void>;
+  project: Project | null;
 }
 
 const EditProjectModal: React.FC<EditProjectModalProps> = ({ isOpen, onClose, onUpdate, project }) => {

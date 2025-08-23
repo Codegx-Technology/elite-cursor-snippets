@@ -20,7 +20,7 @@ const UpgradeCTA: React.FC<UpgradeCTAProps> = ({ planInfo }) => {
   if (!isUpgradeRelevant) {
     return (
       <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4" role="alert">
-        <p className="font-bold">You're on the top tier!</p>
+        <p className="font-bold">You&apos;re on the top tier!</p>
         <p className="text-sm">Enjoy all the features your Enterprise plan offers.</p>
       </div>
     );

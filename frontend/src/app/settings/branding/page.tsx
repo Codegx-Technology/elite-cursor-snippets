@@ -129,3 +129,133 @@ export default function BrandingSettingsPage() {
       setIsSaving(false);
     }
   };
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen-content">
+        <FaSpinner className="animate-spin text-4xl text-green-600" />
+        <p className="ml-4 text-gray-600">Loading branding settings...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen-content">
+        <p className="text-red-600">Error: {error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6 flex items-center">
+        <FaPalette className="mr-3 text-purple-600" /> Branding Settings
+      </h1>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+            <FaImage className="mr-2 text-blue-600" /> Logo & Colors
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormInput
+              id="logo_url"
+              label="Logo URL"
+              type="text"
+              value={brandingData.logo_url || ''}
+              onChange={handleInputChange}
+              placeholder="https://yourdomain.com/logo.png"
+              helperText="URL to your brand logo (e.g., for email templates, custom dashboards)."
+            />
+            <FormInput
+              id="primary_color"
+              label="Primary Color"
+              type="color"
+              value={brandingData.primary_color || '#00A651'}
+              onChange={handleInputChange}
+              helperText="Main brand color (e.g., for buttons, highlights)."
+            />
+            <FormInput
+              id="secondary_color"
+              label="Secondary Color"
+              type="color"
+              value={brandingData.secondary_color || '#FF6B35'}
+              onChange={handleInputChange}
+              helperText="Secondary brand color (e.g., for accents, secondary elements)."
+            />
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+            <FaCss3Alt className="mr-2 text-orange-600" /> Custom CSS
+          </h2>
+          <FormInput
+            id="custom_css"
+            label="Custom CSS"
+            type="textarea"
+            value={brandingData.custom_css || ''}
+            onChange={handleInputChange}
+            placeholder="body { font-family: 'Inter', sans-serif; }"
+            helperText="Apply custom CSS rules to your branded pages. Use with caution."
+            rows={8}
+          />
+        </Card>
+
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+            <FaGlobe className="mr-2 text-green-600" /> Custom Domain
+          </h2>
+          <FormInput
+            id="custom_domain"
+            label="Custom Domain"
+            type="text"
+            value={brandingData.custom_domain || ''}
+            onChange={handleInputChange}
+            placeholder="app.yourdomain.com"
+            helperText="Point your custom domain to Shujaa Studio. Requires DNS configuration."
+          />
+          <div className="mt-4 flex items-center space-x-4">
+            <button
+              type="button"
+              onClick={handleApplyTLS}
+              disabled={isSaving || !brandingData.custom_domain}
+              className="btn-primary flex items-center space-x-2"
+            >
+              {isSaving ? <FaSpinner className="animate-spin" /> : <FaSave />}
+              <span>Apply TLS Certificate</span>
+            </button>
+            {brandingData.tls_status && (
+              <span className={`text-sm font-medium ${brandingData.tls_status === 'active' ? 'text-green-600' : 'text-red-600'}`}>
+                TLS Status: {brandingData.tls_status}
+              </span>
+            )}
+            {brandingData.custom_domain && (
+              <button
+                type="button"
+                onClick={handleRemoveCustomDomain}
+                disabled={isSaving}
+                className="btn-secondary flex items-center space-x-2"
+              >
+                {isSaving ? <FaSpinner className="animate-spin" /> : null}
+                <span>Remove Custom Domain</span>
+              </button>
+            )}
+          </div>
+        </Card>
+
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="btn-primary flex items-center space-x-2"
+          >
+            {isSaving ? <FaSpinner className="animate-spin" /> : <FaSave />}
+            <span>{isSaving ? 'Saving...' : 'Save Branding Settings'}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}

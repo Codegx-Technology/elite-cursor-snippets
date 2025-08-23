@@ -34,7 +34,7 @@ export default function Welcome() {
   const showcaseSlides = [
     {
       title: "Mount Kenya Adventure",
-      description: "Cinematic journey through Kenya's highest peak",
+      description: "Cinematic journey through Kenya&apos;s highest peak",
       thumbnail: "🏔️",
       category: "Tourism"
     },
@@ -116,7 +116,7 @@ export default function Welcome() {
             Karibu Shujaa Studio! 🇰🇪
           </h1>
           <p className="text-xl mb-2 text-green-100">
-            Kenya's Premier AI-Powered Video Generation Platform
+            Kenya&apos;s Premier AI-Powered Video Generation Platform
           </p>
           <p className="text-lg mb-8 text-yellow-100">
             Empowering African storytellers with cutting-edge AI technology
