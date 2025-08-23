@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   FaSearch,
   FaBell,
@@ -9,8 +11,11 @@ import {
   FaPlus,
   FaGlobe,
   FaFlag,
-  FaChevronDown
+  FaChevronDown,
+  FaSignOutAlt
 } from 'react-icons/fa';
+import LoadingStates from '@/components/ui/LoadingStates';
+import ErrorStates from '@/components/ui/ErrorStates';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean + refactorintent
 // [CONTEXT]: Enterprise header with Kenya-first design and mobile-first responsiveness
@@ -26,6 +31,27 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    // Check authentication status
+    const token = localStorage.getItem('jwt_token');
+    if (token) {
+      setIsLoggedIn(true);
+      // Mock user data - in real app, fetch from API
+      setUser({ name: 'John Kamau', email: 'john@example.com' });
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('jwt_token');
+    setIsLoggedIn(false);
+    setUser(null);
+    setShowUserMenu(false);
+    router.push('/login');
+  };
 
   const notifications = [
     {
@@ -97,17 +123,19 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="hidden lg:flex items-center space-x-2">
-            <button className="btn-primary px-4 py-2 text-sm flex items-center space-x-2">
-              <FaPlus />
-              <span>New Video</span>
-            </button>
-            <button className="btn-elite px-4 py-2 text-sm flex items-center space-x-2 text-white">
-              <FaVideo />
-              <span>Quick Generate</span>
-            </button>
-          </div>
+          {/* Quick Actions - Only show if logged in */}
+          {isLoggedIn && (
+            <div className="hidden lg:flex items-center space-x-2">
+              <Link href="/generate" className="btn-primary px-4 py-2 text-sm flex items-center space-x-2 hover:no-underline">
+                <FaPlus />
+                <span>New Video</span>
+              </Link>
+              <Link href="/video-generate" className="btn-elite px-4 py-2 text-sm flex items-center space-x-2 text-white hover:no-underline">
+                <FaVideo />
+                <span>Quick Generate</span>
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Center Section - Search */}
@@ -134,91 +162,114 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
             <span>EN/SW</span>
           </div>
 
-          {/* Notifications - Improved touch target */}
-          <div className="relative">
-            <button
-              className="p-3 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 relative transition-colors duration-200"
-              onClick={() => setShowNotifications(!showNotifications)}
-              aria-label="Notifications"
-            >
-              <FaBell className="text-gray-600" size={18} />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                  {unreadCount}
-                </span>
+          {/* Notifications - Only show if logged in */}
+          {isLoggedIn && (
+            <div className="relative">
+              <button
+                className="p-3 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 relative transition-colors duration-200"
+                onClick={() => setShowNotifications(!showNotifications)}
+                aria-label="Notifications"
+              >
+                <FaBell className="text-gray-600" size={18} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notifications Dropdown - Mobile responsive */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-w-[calc(100vw-2rem)]">
+                  <div className="p-4 border-b border-gray-200">
+                    <h3 className="font-semibold text-gray-800">Notifications 🇰🇪</h3>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {notifications.map((notification) => (
+                      <div key={notification.id} className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${notification.unread ? 'bg-blue-50' : ''}`}>
+                        <p className="text-sm text-gray-800 leading-relaxed">{notification.message}</p>
+                        <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="p-3 text-center border-t border-gray-200">
+                    <button className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors duration-200">
+                      View all notifications
+                    </button>
+                  </div>
+                </div>
               )}
-            </button>
+            </div>
+          )}
 
-            {/* Notifications Dropdown - Mobile responsive */}
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-w-[calc(100vw-2rem)]">
-                <div className="p-4 border-b border-gray-200">
-                  <h3 className="font-semibold text-gray-800">Notifications</h3>
-                </div>
-                <div className="max-h-64 overflow-y-auto">
-                  {notifications.map((notification) => (
-                    <div key={notification.id} className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${notification.unread ? 'bg-blue-50' : ''}`}>
-                      <p className="text-sm text-gray-800 leading-relaxed">{notification.message}</p>
-                      <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="p-3 text-center border-t border-gray-200">
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors duration-200">
-                    View all notifications
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Authentication Section */}
+          {isLoggedIn ? (
+            /* User Menu - Mobile optimized */
+            <div className="relative">
+              <button
+                className="flex items-center space-x-1 sm:space-x-2 p-2 sm:p-3 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                aria-label="User menu"
+              >
+                <FaUserCircle className="text-gray-600" size={20} />
+                <FaChevronDown className="text-gray-400 text-xs hidden sm:block" />
+              </button>
 
-          {/* User Menu - Mobile optimized */}
+              {/* User Dropdown - Mobile responsive */}
+              {showUserMenu && (
+                <div className="absolute right-0 mt-2 w-48 sm:w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                  <div className="p-4 border-b border-gray-200">
+                    <p className="font-semibold text-gray-800">{user?.name || 'User'}</p>
+                    <p className="text-sm text-gray-500 truncate">{user?.email || 'user@example.com'}</p>
+                  </div>
+                  <div className="py-2">
+                    <Link href="/profile" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">Profile</Link>
+                    <Link href="/settings" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">Settings</Link>
+                    <Link href="/pricing" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">Billing</Link>
+                    <hr className="my-2" />
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200 flex items-center space-x-2"
+                    >
+                      <FaSignOutAlt className="text-gray-500" />
+                      <span>Sign out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Login/Register buttons when logged out */
+            <div className="flex items-center space-x-2">
+              <Link href="/login" className="btn-primary px-4 py-2 text-sm hover:no-underline">
+                Login 🇰🇪
+              </Link>
+              <Link href="/register" className="btn-elite px-4 py-2 text-sm text-white hover:no-underline hidden sm:block">
+                Register
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile Search - Only show if logged in */}
+      {isLoggedIn && (
+        <div className="md:hidden mt-3 sm:mt-4">
           <div className="relative">
-            <button
-              className="flex items-center space-x-1 sm:space-x-2 p-2 sm:p-3 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              aria-label="User menu"
-            >
-              <FaUserCircle className="text-gray-600" size={20} />
-              <FaChevronDown className="text-gray-400 text-xs hidden sm:block" />
-            </button>
-
-            {/* User Dropdown - Mobile responsive */}
-            {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 sm:w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                <div className="p-4 border-b border-gray-200">
-                  <p className="font-semibold text-gray-800">John Kamau</p>
-                  <p className="text-sm text-gray-500 truncate">john@example.com</p>
-                </div>
-                <div className="py-2">
-                  <a href="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">Profile</a>
-                  <a href="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">Settings</a>
-                  <a href="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">Billing</a>
-                  <hr className="my-2" />
-                  <a href="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">Sign out</a>
-                </div>
-              </div>
-            )}
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FaSearch className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              className="form-input w-full pl-10 pr-4 py-3 text-base"
+              placeholder="Search projects, videos..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ fontSize: '16px' }} // Prevents zoom on iOS
+            />
           </div>
         </div>
-      </div>
-
-      {/* Mobile Search - Improved */}
-      <div className="md:hidden mt-3 sm:mt-4">
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <FaSearch className="text-gray-400" />
-          </div>
-          <input
-            type="text"
-            className="form-input w-full pl-10 pr-4 py-3 text-base"
-            placeholder="Search projects, videos..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ fontSize: '16px' }} // Prevents zoom on iOS
-          />
-        </div>
-      </div>
+      )}
     </header>
   );
 }

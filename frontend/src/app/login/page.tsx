@@ -1,6 +1,9 @@
 "use client";
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation'; // Use next/navigation for App Router
+import { useRouter } from 'next/navigation';
+import LoadingStates from '@/components/ui/LoadingStates';
+import ErrorStates from '@/components/ui/ErrorStates';
+import Card from '@/components/Card';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -69,47 +72,86 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="elite-card p-8 max-w-md mx-auto my-10 rounded-xl shadow-lg">
-      <h2 className="section-title text-center mb-6">Login to Shujaa Studio</h2>
-      <form onSubmit={handleSubmit}>
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-        <div className="mb-4">
-          <label htmlFor="username" className="block text-soft-text text-sm font-medium mb-2">Username</label>
-          <input
-            type="text"
-            id="username"
-            className="form-input w-full p-3 rounded-lg"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-yellow-50 px-4 py-8">
+      <Card className="w-full max-w-md">
+        <div className="p-8">
+          {/* Kenya-first header */}
+          <div className="text-center mb-8">
+            <div className="flex justify-center items-center space-x-2 mb-4">
+              <span className="text-3xl">🇰🇪</span>
+              <h1 className="text-2xl font-bold text-gray-800">Shujaa Studio</h1>
+            </div>
+            <p className="text-gray-600">Welcome back to Kenya's AI Video Platform</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <ErrorStates.Alert
+                type="error"
+                title="Login Failed"
+                message={error}
+                className="mb-4"
+              />
+            )}
+            
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+                Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                className="form-input w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Enter your username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                className="form-input w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            
+            <button
+              type="submit"
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <LoadingStates.LoadingSpinner size="sm" className="mr-2" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign In 🇰🇪'
+              )}
+            </button>
+          </form>
+          
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              Don't have an account?{' '}
+              <a href="/register" className="text-green-600 hover:text-green-800 font-medium transition-colors duration-200">
+                Register here
+              </a>
+            </p>
+          </div>
         </div>
-        <div className="mb-6">
-          <label htmlFor="password" className="block text-soft-text text-sm font-medium mb-2">Password</label>
-          <input
-            type="password"
-            id="password"
-            className="form-input w-full p-3 rounded-lg"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          className="btn-primary w-full py-3 rounded-lg text-white font-semibold flex items-center justify-center"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <div className="loading-spinner mr-2"></div> // Conceptual spinner
-          ) : (
-            'Login'
-          )}
-        </button>
-      </form>
-      <p className="text-center text-soft-text text-sm mt-4">
-        Don&apos;t have an account? <a href="/register" className="text-primary-gradient-start font-medium">Register here</a>
-      </p>
+      </Card>
     </div>
   );
 };

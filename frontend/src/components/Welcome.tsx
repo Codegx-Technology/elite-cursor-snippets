@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Card from './Card';
+import LoadingStates from '@/components/ui/LoadingStates';
+import ErrorStates from '@/components/ui/ErrorStates';
 import {
   FaVideo,
   FaImages,
@@ -24,11 +26,18 @@ import {
 
 export default function Welcome() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [stats, setStats] = useState({
     videosGenerated: 0,
     happyCreators: 0,
     countriesServed: 0
   });
+
+  useEffect(() => {
+    // Check authentication status
+    const token = localStorage.getItem('jwt_token');
+    setIsLoggedIn(!!token);
+  }, []);
 
   // Kenya-first showcase slides
   const showcaseSlides = [
@@ -199,19 +208,39 @@ export default function Welcome() {
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
-            <Link href="/video-generate">
-              <button className="bg-white text-green-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition-all duration-300 flex items-center space-x-2 shadow-lg">
-                <FaPlay />
-                <span>Start Creating</span>
-                <FaArrowRight />
-              </button>
-            </Link>
-            <Link href="/dashboard">
-              <button className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-white hover:text-green-600 transition-all duration-300 flex items-center space-x-2">
-                <FaChartLine />
-                <span>View Dashboard</span>
-              </button>
-            </Link>
+            {isLoggedIn ? (
+              <>
+                <Link href="/video-generate" className="hover:no-underline">
+                  <button className="bg-white text-green-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition-all duration-300 flex items-center space-x-2 shadow-lg">
+                    <FaPlay />
+                    <span>Start Creating</span>
+                    <FaArrowRight />
+                  </button>
+                </Link>
+                <Link href="/dashboard" className="hover:no-underline">
+                  <button className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-white hover:text-green-600 transition-all duration-300 flex items-center space-x-2">
+                    <FaChartLine />
+                    <span>View Dashboard</span>
+                  </button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="hover:no-underline">
+                  <button className="bg-white text-green-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition-all duration-300 flex items-center space-x-2 shadow-lg">
+                    <FaPlay />
+                    <span>Get Started</span>
+                    <FaArrowRight />
+                  </button>
+                </Link>
+                <Link href="/demo" className="hover:no-underline">
+                  <button className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-white hover:text-green-600 transition-all duration-300 flex items-center space-x-2">
+                    <FaVideo />
+                    <span>View Demo</span>
+                  </button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

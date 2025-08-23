@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -20,7 +21,10 @@ import {
   FaDownload,
   FaBox,
   FaKey,
-  FaPlug
+  FaPlug,
+  FaChartBar,
+  FaFolder,
+  FaSignInAlt
 } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean
@@ -35,6 +39,13 @@ interface SidebarProps {
 
 export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps) {
   const pathname = usePathname();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Check authentication status
+    const token = localStorage.getItem('jwt_token');
+    setIsLoggedIn(!!token);
+  }, []);
 
   // Debug logging (guarded to avoid noisy prod consoles)
   if (process.env.NODE_ENV !== 'production') {
@@ -42,54 +53,25 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
     console.log('Current pathname:', pathname);
   }
 
-  const navigationItems = [
+  // Navigation items based on authentication status
+  const navigationItems = isLoggedIn ? [
     {
       href: '/dashboard',
       icon: FaHome,
       label: 'Dashboard',
-      description: 'Overview & Stats'
-    },
-    {
-      href: '/analytics',
-      icon: FaChartLine,
-      label: 'Analytics',
-      description: 'Usage insights & reports 📊'
-    },
-    {
-      href: '/admin/reporting',
-      icon: FaShieldAlt,
-      label: 'Reporting',
-      description: 'Super Admin Health'
-    },
-    {
-      href: '/admin/users',
-      icon: FaUsers,
-      label: 'User Management',
-      description: 'Manage users'
-    },
-    {
-      href: '/admin/roles',
-      icon: FaKey,
-      label: 'Role Management',
-      description: 'Manage user roles'
+      description: 'Overview & Analytics 📊'
     },
     {
       href: '/video-generate',
       icon: FaVideo,
       label: 'Generate Video',
-      description: 'Create Kenya-first content'
-    },
-    {
-      href: '/news-generate',
-      icon: FaNewspaper,
-      label: 'News Videos',
-      description: 'Transform news into videos'
+      description: 'AI-Powered Creation 🎬'
     },
     {
       href: '/projects',
-      icon: FaProjectDiagram,
+      icon: FaFolder,
       label: 'Projects',
-      description: 'Manage your creations'
+      description: 'Manage Your Work 📁'
     },
     {
       href: '/gallery',
@@ -144,6 +126,31 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       icon: FaUsers,
       label: 'Profile',
       description: 'Manage your profile'
+    }
+  ] : [
+    {
+      href: '/',
+      icon: FaHome,
+      label: 'Home',
+      description: 'Welcome to Shujaa 🏠'
+    },
+    {
+      href: '/demo',
+      icon: FaVideo,
+      label: 'Demo',
+      description: 'See Platform in Action 🎬'
+    },
+    {
+      href: '/pricing',
+      icon: FaChartBar,
+      label: 'Pricing',
+      description: 'Plans & Features 💰'
+    },
+    {
+      href: '/login',
+      icon: FaSignInAlt,
+      label: 'Login',
+      description: 'Access Your Account 🇰🇪'
     }
   ];
 
