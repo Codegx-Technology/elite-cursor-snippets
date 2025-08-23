@@ -26,10 +26,10 @@ Based on the current state and the broad definition of "enterprise-grade SaaS qu
 
 1.  **Core UI Components & Design System (Currently ~40% complete)**:
     *   **Current Status**: Basic components (`button`, `card`, `badge`, etc.) are present and well-structured. Some admin UI is robust.
-    *   **Remaining (60%)**:
-        *   **Expansion**: Develop a wider range of complex, reusable components (e.g., advanced tables with sorting/filtering, complex forms, data visualization components, rich text editors, media players).
-        *   **Consistency & Documentation**: Formalize design tokens, create comprehensive documentation (Storybook/Style Guide) for all components, ensuring consistent usage and accessibility guidelines.
-        *   **Theming**: Implement a robust theming solution if multiple themes are required (e.g., light/dark mode, custom branding).
+    *   **Expansion**: Develop a wider range of complex, reusable components (e.g., advanced tables with sorting/filtering, complex forms, data visualization components, rich text editors, media players).
+    *   **Enhancement:** Enhanced `DataTable` component (`frontend/src/components/data-table/DataTable.tsx`) with global search filtering capabilities.
+    *   **Consistency & Documentation**: Formalize design tokens, create comprehensive documentation (Storybook/Style Guide) for all components, ensuring consistent usage and accessibility guidelines.
+    *   **Theming**: Implement a robust theming solution if multiple themes are required (e.g., light/dark mode, custom branding).
 
 2.  **Overall Application UI/UX Refinement (Currently ~30% complete)**:
     *   **Current Status**: Basic layouts and navigation exist. Admin dashboards have some functionality.
@@ -82,3 +82,11 @@ Based on the current state and the broad definition of "enterprise-grade SaaS qu
   - Track upstream packages for releases that remove these transitive deps.
   - `dep_watcher.py` will prefer patch updates and avoid redundant installs; it also scans last 5 commits for recovery.
 * **Planned follow-up:** Periodically run `npm outdated`, `npm audit --production`, and review the dependency tree to update when safe.
+
+### Recent Activity
+- **Date:** Saturday 23 August 2025
+- **Description:** Performed a general commit and push of various updates and improvements across multiple modules.
+- **Commit Message:** "feat: General updates and improvements across various modules"
+- **Date:** Saturday 23 August 2025
+- **Description:** Enhanced `DataTable` component with global search filtering capabilities.
+- **Commit Message:** "feat: Enhance DataTable with global search filtering"
