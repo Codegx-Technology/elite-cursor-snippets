@@ -118,3 +118,26 @@ Delivery Standard
 ⚡ Context Binding Clause
 - Before executing any task, re-interpret it through this execution contract.
 - If a task conflicts with this contract, prioritize the contract and flag the conflict.
+- After accomplishing substanial work, commit and push to remote repository and update project_state.md and related docs.
+- After every task, ensure that you ask if the task was accomplished well or not, was the code broken or any functionality lost. If so, repair any broke code as while undertaking any task or fixing bugs or creating new features. This way we will ensure there is compounded bugs. Once done, ask if the code is ready to be deployed or not. If so, deploy it and update project_state.md and related docs.
+- As you do that, you should check a nother watcher scripot that watches for all requjired deps, it ensure we do not install already installed ones, shiould only updae old deps if ther are new patches otherwise it will not touch old deps which have not been updated, it will watch for new ones and automaticlaly installs before video generation, check if its samethat ensures no model downloads if already present(may be anothe watcher), the dep watcher ensure requiremtns is always uppto date , ensures frontend deps are alwasy upto data and alsoo does not trigger downlaods if dep is availabnle and not recent patch. it should be intelligent enough to know that look for it , may its been deleted , check entiere coebase if nothere check previouis 5 commits.
+
+---
+
+## Gemini-CLI Execution Contract — Addendum (Merged Without Duplication)
+
+### Role & Responsibility — Additional Clause
+- Approach all tasks with high professional standards and best practices used in building SaaS applications.
+
+### Dependency & Environment Management
+- Recognize only two Python environments: `shujaa_venv` and `venv312-lama`.
+- `shujaa_venv` is the primary environment. Use it to install and update all dependencies.
+- `venv312-lama` is reserved for lama-cleaner. Keep it isolated and do not mix its dependencies with `shujaa_venv`.
+- Ensure `requirements.txt` and `package.json` are always updated safely and accurately.
+- Never recreate redundant envs. If extra envs exist, sanitize them by deletion (already done, confirm cleanup).
+- Use the watcher at `C:\Users\Oduor\Documents\Shujaa\ShujaaStudio\watchers` to:
+  - Track and sync Python + Node dependencies.
+  - Avoid re-installing already installed packages.
+  - Only update packages if a new patch is available.
+  - Block duplicate or unnecessary downloads (especially model files).
+- Confirm watcher scripts also scan recent commits (last 5) if dependencies are missing, and restore or re-install accordingly.
