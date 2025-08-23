@@ -18,10 +18,11 @@ jest.mock('@/hooks/useVideoGenerator', () => ({
 
 // Mock the PromptSuggester component as it's a child component
 jest.mock('@/components/Video/PromptSuggester', () => {
-  return function MockPromptSuggester({ value, onChange, placeholder }: any) {
+  return function MockPromptSuggester({ value, onChange, placeholder, id }: any) {
     return (
       <input
         data-testid="prompt-suggester-mock"
+        id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}

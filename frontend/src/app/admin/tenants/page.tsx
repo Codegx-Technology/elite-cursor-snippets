@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import {
@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
-import { useTenantManagement, TenantData } from '@/hooks/useTenantManagement';
+import { useTenantManagement } from '@/hooks/useTenantManagement';
 
 export default function AdminTenantsPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -40,11 +40,12 @@ export default function AdminTenantsPage() {
         description: "Tenant deleted successfully.",
         type: "success"
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to delete tenant:', err);
+      const message = err instanceof Error ? err.message : 'Failed to delete tenant.';
       addToast({
         title: "Error",
-        description: err.message || 'Failed to delete tenant.',
+        description: message,
         type: "error",
       });
     }

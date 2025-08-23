@@ -32,8 +32,8 @@ const RegisterPage: React.FC = () => { // Renamed to RegisterPage
 
       router.push('/login?registered=true'); // Redirect to login with success message
 
-    } catch (err: any) {
-      const message = err?.message || 'An unexpected error occurred during registration. Please try again.';
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred during registration. Please try again.';
       setError(message);
       console.error('Registration error:', err);
     } finally {

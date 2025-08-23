@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation'; // Use next/navigation for App Router
 
@@ -54,8 +54,8 @@ const GenerateVideoPage: React.FC = () => { // Renamed to GenerateVideoPage
         setResult({ status: 'queued', message: `Video generation job ${response.data.video_id} queued.` });
       }
 
-    } catch (err: any) {
-      if (err.response && err.response.data && err.response.data.detail) {
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response?.data?.detail) {
         setError(err.response.data.detail);
       } else {
         setError('An unexpected error occurred during video generation. Please try again.');

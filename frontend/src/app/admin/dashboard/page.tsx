@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react'; // Added useEffect, useState
+import React, { useEffect, useState, useCallback } from 'react'; // Added useEffect, useState
 import SuperAdminDashboard from '@/widgets/SuperAdminDashboard';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -18,6 +18,38 @@ interface PendingModelUpdate {
 export default function AdminDashboardPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const [pendingUpdates, setPendingUpdates] = useState<PendingModelUpdate[]>([]);
+  const [loadingUpdates, setLoadingUpdates] = useState(true);
+  const [errorUpdates, setErrorUpdates] = useState<string | null>(null);
+
+  const fetchPendingUpdates = useCallback(async () => {
+    setLoadingUpdates(true);
+    setErrorUpdates(null);
+    try {
+      const token = localStorage.getItem('jwt_token'); // Assuming JWT token is stored in localStorage
+      const response = await fetch('http://localhost:8000/superadmin/model-updates', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setPendingUpdates(data);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch pending updates.';
+      setErrorUpdates(message);
+    } finally {
+      setLoadingUpdates(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && user?.role === 'admin') {
+      fetchPendingUpdates();
+    }
+  }, [isAuthenticated, user, fetchPendingUpdates]);
 
   if (isLoading) {
     return (
@@ -36,38 +68,6 @@ export default function AdminDashboardPage() {
     return null;
   }
 
-  const [pendingUpdates, setPendingUpdates] = useState<PendingModelUpdate[]>([]);
-  const [loadingUpdates, setLoadingUpdates] = useState(true);
-  const [errorUpdates, setErrorUpdates] = useState<string | null>(null);
-
-  const fetchPendingUpdates = async () => {
-    setLoadingUpdates(true);
-    setErrorUpdates(null);
-    try {
-      const token = localStorage.getItem('jwt_token'); // Assuming JWT token is stored in localStorage
-      const response = await fetch('http://localhost:8000/superadmin/model-updates', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setPendingUpdates(data);
-    } catch (error: any) {
-      setErrorUpdates(error.message || 'Failed to fetch pending updates.');
-    } finally {
-      setLoadingUpdates(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isAuthenticated && user?.role === 'admin') {
-      fetchPendingUpdates();
-    }
-  }, [isAuthenticated, user]);
-
   const handleApprove = async (key: string) => {
     try {
       const token = localStorage.getItem('jwt_token');
@@ -82,9 +82,10 @@ export default function AdminDashboardPage() {
       }
       // Refetch pending updates after successful approval
       fetchPendingUpdates();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to approve update.';
       console.error(`Failed to approve update ${key}:`, error);
-      setErrorUpdates(error.message || 'Failed to approve update.');
+      setErrorUpdates(message);
     }
   };
 
@@ -102,16 +103,17 @@ export default function AdminDashboardPage() {
       }
       // Refetch pending updates after successful rejection
       fetchPendingUpdates();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to reject update.';
       console.error(`Failed to reject update ${key}:`, error);
-      setErrorUpdates(error.message || 'Failed to reject update.');
+      setErrorUpdates(message);
     }
   };
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900">Super Admin Dashboard</h1>
-      <SuperAdminDashboard userRole={user.role} />
+      {user && <SuperAdminDashboard userRole={user.role} />}
 
       <div className="mt-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Pending Model Updates</h2>

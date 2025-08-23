@@ -1,12 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-// TODO: Fix Next.js API route typing bug
+interface ErrorResponse {
+  error?: string;
+  detail?: string;
+}
+
 export async function GET(
-  _request: any,
-  context: any
+  _request: Request,
+  context: { params: { id: string } }
 ) {
   const baseUrl = process.env.BACKEND_URL || 'http://localhost:8000'
-  const target = `${baseUrl.replace(/\\$/, '')}/api/videos/${encodeURIComponent(context.params.id)}`
+  const target = `${baseUrl.replace(/\/$/, '')}/api/videos/${encodeURIComponent(context.params.id)}`
 
   try {
     const res = await fetch(target, {
@@ -15,7 +19,7 @@ export async function GET(
       cache: 'no-store',
     })
 
-    let data: any = null
+    let data: unknown = null
     try {
       data = await res.json()
     } catch {
@@ -23,12 +27,20 @@ export async function GET(
     }
 
     if (!res.ok) {
-      const message = (data && (data.error || data.detail)) || 'Video not found'
+      let message = 'Video not found';
+      if (data && typeof data === 'object') {
+        const errorResponse = data as ErrorResponse;
+        if (errorResponse.error) {
+          message = errorResponse.error;
+        } else if (errorResponse.detail) {
+          message = errorResponse.detail;
+        }
+      }
       return NextResponse.json({ error: message }, { status: res.status })
     }
 
     return NextResponse.json(data, { status: res.status })
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { error: 'Backend unreachable' },
       { status: 502 }

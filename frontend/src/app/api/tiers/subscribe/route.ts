@@ -17,7 +17,8 @@ export async function POST(req: NextRequest) {
     console.log('[tiers/subscribe] intent', { tierId, billingCycle });
 
     return NextResponse.json({ ok: true, tierId, billingCycle }, { status: 200 });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e?.message || 'invalid request' }, { status: 400 });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'invalid request';
+    return NextResponse.json({ ok: false, error: message }, { status: 400 });
   }
 }

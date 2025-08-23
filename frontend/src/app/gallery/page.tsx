@@ -138,7 +138,7 @@ export default function GalleryPage() {
           ].map(({ key, label, icon: Icon }) => (
             <button
               key={key}
-              onClick={() => setFilter(key as any)}
+              onClick={() => setFilter(key as 'all' | 'video' | 'image' | 'audio')}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 ${
                 filter === key
                   ? 'bg-green-600 text-white'

@@ -4,8 +4,8 @@ import { useState } from 'react';
 import Card from '@/components/Card';
 import FormInput from '@/components/FormInput';
 import FormSelect from '@/components/FormSelect';
-import { FaNewspaper, FaPlay, FaStop, FaDownload, FaEye, FaFlag, FaMountain, FaGlobe, FaUpload, FaSearch, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
-import { apiClient, handleApiResponse } from '@/lib/api';
+import { FaNewspaper, FaPlay, FaStop, FaEye, FaFlag, FaMountain, FaGlobe, FaUpload, FaSearch, FaExclamationTriangle } from 'react-icons/fa';
+import { apiClient, handleApiResponse, NewsVideoGenerationRequest } from '@/lib/api';
 import { useJobStatusPolling } from '@/hooks/useJobStatusPolling';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent + augmentsearch
@@ -24,13 +24,6 @@ interface NewsGenerationForm {
   uploadToYoutube: boolean;
 }
 
-interface GenerationProgress {
-  stage: string;
-  progress: number;
-  message: string;
-  isGenerating: boolean;
-}
-
 export default function NewsGeneratePage() {
   const [formData, setFormData] = useState<NewsGenerationForm>({
     newsUrl: '',
@@ -45,7 +38,7 @@ export default function NewsGeneratePage() {
 
   const [newsUrlError, setNewsUrlError] = useState<string | null>(null);
   const [newsQueryError, setNewsQueryError] = useState<string | null>(null);
-  const { progress, generatedUrl, jobError, friendlyFallback, startPolling, stopPolling, setJobError, setFriendlyFallback } = useJobStatusPolling();
+  const { progress, startPolling, stopPolling, setJobError } = useJobStatusPolling();
   const [inputMode, setInputMode] = useState<'url' | 'query' | 'script'>('query');
   const [error, setError] = useState<string | null>(null);
 
@@ -77,7 +70,7 @@ export default function NewsGeneratePage() {
     { value: '6', label: '6 scenes (Comprehensive)' }
   ];
 
-  const handleInputChange = (field: keyof NewsGenerationForm, value: any) => {
+  const handleInputChange = (field: keyof NewsGenerationForm, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -113,7 +106,7 @@ export default function NewsGeneratePage() {
     setError(null);
 
     try {
-      let requestData: any = {
+      const requestData: Partial<NewsVideoGenerationRequest> = {
         lang: formData.language,
         scenes: parseInt(formData.scenes),
         duration: parseInt(formData.duration),
@@ -151,8 +144,9 @@ export default function NewsGeneratePage() {
           setJobError(error);
         }
       );
-    } catch (err: any) {
-      setJobError(err.message || 'Failed to start news video generation');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to start news video generation';
+      setJobError(message);
     }
   };
 

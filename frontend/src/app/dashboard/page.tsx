@@ -42,8 +42,9 @@ export default function DashboardPage() {
         } else if (response.error) {
           setProjectsError(response.error);
         }
-      } catch (err: any) {
-        setProjectsError(err.message || 'Failed to fetch projects.');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Failed to fetch projects.';
+        setProjectsError(message);
       } finally {
         setProjectsLoading(false);
       }

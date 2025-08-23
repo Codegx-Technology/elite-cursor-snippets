@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area'; // Assuming this component exists
@@ -15,7 +15,7 @@ const JobLogPanel: React.FC<JobLogPanelProps> = ({ jobId }) => {
   const logEndRef = useRef<HTMLDivElement>(null);
   const { addToast } = useToast();
 
-  const connectWebSocket = () => {
+  const connectWebSocket = useCallback(() => {
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${wsProtocol}//${window.location.host}/ws/jobs/${jobId}/logs`; // Assuming a job log WebSocket endpoint
     wsRef.current = new WebSocket(wsUrl);
@@ -58,7 +58,7 @@ const JobLogPanel: React.FC<JobLogPanelProps> = ({ jobId }) => {
         type: "destructive",
       });
     };
-  };
+  }, [jobId, addToast, jobStatus]);
 
   useEffect(() => {
     connectWebSocket();
@@ -66,7 +66,7 @@ const JobLogPanel: React.FC<JobLogPanelProps> = ({ jobId }) => {
     return () => {
       wsRef.current?.close();
     };
-  }, [jobId]);
+  }, [connectWebSocket]);
 
   useEffect(() => {
     if (logEndRef.current) {

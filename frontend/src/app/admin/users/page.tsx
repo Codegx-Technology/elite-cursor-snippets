@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
@@ -33,7 +33,7 @@ export default function AdminUsersPage() {
   const [error, setError] = useState<string | null>(null);
   const { addToast } = useToast();
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoadingUsers(true);
     setError(null);
     try {
@@ -43,18 +43,19 @@ export default function AdminUsersPage() {
         },
       });
       setUsers(response.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch users:', err);
-      setError(err.response?.data?.detail || 'Failed to fetch users.');
+      const message = axios.isAxiosError(err) && err.response?.data?.detail ? err.response.data.detail : 'Failed to fetch users.';
+      setError(message);
       addToast({
         title: "Error",
-        description: err.response?.data?.detail || 'Failed to fetch users.',
+        description: message,
         type: "error",
       });
     } finally {
       setLoadingUsers(false);
     }
-  };
+  }, [token, addToast]);
 
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || user?.role !== 'admin')) {
@@ -62,7 +63,7 @@ export default function AdminUsersPage() {
     } else if (isAuthenticated && user?.role === 'admin' && token) {
       fetchUsers();
     }
-  }, [isLoading, isAuthenticated, user, router, token]);
+  }, [isLoading, isAuthenticated, user, router, token, fetchUsers]);
 
   const handleDeleteUser = async (userId: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
@@ -79,11 +80,12 @@ export default function AdminUsersPage() {
         type: "success",
       });
       fetchUsers(); // Refresh the list
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to delete user:', err);
+      const message = axios.isAxiosError(err) && err.response?.data?.detail ? err.response.data.detail : 'Failed to delete user.';
       addToast({
         title: "Error",
-        description: err.response?.data?.detail || 'Failed to delete user.',
+        description: message,
         type: "error",
       });
     }

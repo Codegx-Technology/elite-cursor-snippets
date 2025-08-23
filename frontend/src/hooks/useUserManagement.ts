@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiClient, handleApiResponse, CreateUserData } from '@/lib/api';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
@@ -22,7 +22,7 @@ export function useUserManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -32,14 +32,15 @@ export function useUserManagement() {
         (data) => setUsers(data),
         (error) => setError(error)
       );
-    } catch (e: any) {
-      setError(e?.message || 'Failed to load users');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to load users';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const getUser = async (id: number) => {
+  const getUser = useCallback(async (id: number) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -49,14 +50,15 @@ export function useUserManagement() {
         (data) => setUser(data),
         (error) => setError(error)
       );
-    } catch (e: any) {
-      setError(e?.message || 'Failed to load user');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to load user';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const createUser = async (data: CreateUserData) => {
+  const createUser = useCallback(async (data: CreateUserData) => {
     try {
       const response = await apiClient.createUser(data);
       handleApiResponse(
@@ -66,12 +68,13 @@ export function useUserManagement() {
         },
         (error) => setError(error)
       );
-    } catch (e: any) {
-      setError(e?.message || 'Failed to create user');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to create user';
+      setError(message);
     }
-  };
+  }, [loadUsers]);
 
-  const updateUser = async (id: number, data: Partial<UserData>) => {
+  const updateUser = useCallback(async (id: number, data: Partial<UserData>) => {
     try {
       const response = await apiClient.updateUser(id, data);
       handleApiResponse(
@@ -81,12 +84,13 @@ export function useUserManagement() {
         },
         (error) => setError(error)
       );
-    } catch (e: any) {
-      setError(e?.message || 'Failed to update user');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to update user';
+      setError(message);
     }
-  };
+  }, [loadUsers]);
 
-  const deleteUser = async (id: number) => {
+  const deleteUser = useCallback(async (id: number) => {
     try {
       const response = await apiClient.deleteUser(id);
       handleApiResponse(
@@ -96,16 +100,15 @@ export function useUserManagement() {
         },
         (error) => setError(error)
       );
-    } catch (e: any) {
-      setError(e?.message || 'Failed to delete user');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to delete user';
+      setError(message);
     }
-  };
+  }, [loadUsers]);
 
-  // Ensure we load users when the hook mounts so UI doesn't get stuck in loading
   useEffect(() => {
     loadUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadUsers]);
 
   return {
     users,

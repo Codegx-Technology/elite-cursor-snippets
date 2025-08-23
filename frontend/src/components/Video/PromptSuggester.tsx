@@ -11,9 +11,10 @@ interface PromptSuggesterProps {
   value: string;
   onChange: (newValue: string) => void;
   placeholder?: string;
+  id?: string;
 }
 
-const PromptSuggester: React.FC<PromptSuggesterProps> = ({ value, onChange, placeholder }) => {
+const PromptSuggester: React.FC<PromptSuggesterProps> = ({ value, onChange, placeholder, id }) => {
   const { suggestions, isLoading } = usePromptSuggester(value);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -36,6 +37,7 @@ const PromptSuggester: React.FC<PromptSuggesterProps> = ({ value, onChange, plac
   return (
     <div className="relative">
       <textarea
+        id={id}
         ref={inputRef}
         className="form-input w-full p-3 rounded-lg h-24"
         placeholder={placeholder}

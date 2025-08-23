@@ -146,18 +146,22 @@ const DependencyWatcher: React.FC = () => {
       }]);
       const planId = planResponse.data.id;
 
-      const dryRunResponse = await axios.post(`/api/depwatcher/dry-run/${planId}`);
+      await axios.post(`/api/depwatcher/dry-run/${planId}`);
       addToast({
         title: "Dry Run Initiated",
         description: `Dry run for ${dep.name} simulated. Plan ID: ${planId}. Check backend logs for details.`,
         type: "info",
       });
       // Optionally, show a modal with dryRunResponse.data
-    } catch (err: any) {
-      console.error('Dry Run failed:', err.response?.data || err);
+    } catch (err: unknown) {
+      console.error('Dry Run failed:', err);
+      let description = "Failed to initiate dry run.";
+      if (axios.isAxiosError(err) && err.response?.data?.detail) {
+          description = err.response.data.detail;
+      }
       addToast({
         title: "Dry Run Failed",
-        description: err.response?.data?.detail || "Failed to initiate dry run.",
+        description,
         type: "destructive",
       });
     }
@@ -181,11 +185,15 @@ const DependencyWatcher: React.FC = () => {
         description: `Approval for ${dep.name} (Plan ID: ${planId}) sent.`,
         type: "info",
       });
-    } catch (err: any) {
-      console.error('Approval failed:', err.response?.data || err);
+    } catch (err: unknown) {
+      console.error('Approval failed:', err);
+      let description = "Failed to approve plan.";
+      if (axios.isAxiosError(err) && err.response?.data?.detail) {
+          description = err.response.data.detail;
+      }
       addToast({
         title: "Approval Failed",
-        description: err.response?.data?.detail || "Failed to approve plan.",
+        description,
         type: "destructive",
       });
     }
@@ -212,11 +220,15 @@ const DependencyWatcher: React.FC = () => {
       });
       setCurrentJobId(jobId);
       setShowJobLogPanel(true);
-    } catch (err: any) {
-      console.error('Apply failed:', err.response?.data || err);
+    } catch (err: unknown) {
+      console.error('Apply failed:', err);
+      let description = "Failed to apply patch.";
+      if (axios.isAxiosError(err) && err.response?.data?.detail) {
+          description = err.response.data.detail;
+      }
       addToast({
         title: "Apply Failed",
-        description: err.response?.data?.detail || "Failed to apply patch.",
+        description,
         type: "destructive",
       });
     }

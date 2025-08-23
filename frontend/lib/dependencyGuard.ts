@@ -48,11 +48,12 @@ export async function checkWidgetDependencies(userId: string, widgetName: string
       planStatus: data.planStatus, // Assuming backend sends this
     };
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error checking dependencies for widget ${widgetName}:`, error);
+    const message = error instanceof Error ? error.message : String(error);
     return {
       allowed: false,
-      message: `Network error or unexpected response: ${error.message || error}`,
+      message: `Network error or unexpected response: ${message}`,
       mode: "locked", // Default to locked on network error
     };
   }

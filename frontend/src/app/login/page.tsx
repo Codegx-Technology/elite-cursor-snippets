@@ -59,8 +59,8 @@ const LoginPage: React.FC = () => {
         router.push('/dashboard'); // Redirect to regular dashboard
       }
 
-    } catch (err: any) {
-      const message = err?.message || 'An unexpected error occurred. Please try again.';
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.';
       setError(message);
       console.error('Login error:', err);
     } finally {
@@ -108,7 +108,7 @@ const LoginPage: React.FC = () => {
         </button>
       </form>
       <p className="text-center text-soft-text text-sm mt-4">
-        Don't have an account? <a href="/register" className="text-primary-gradient-start font-medium">Register here</a>
+        Don&apos;t have an account? <a href="/register" className="text-primary-gradient-start font-medium">Register here</a>
       </p>
     </div>
   );

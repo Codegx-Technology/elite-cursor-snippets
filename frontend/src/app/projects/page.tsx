@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Card from '@/components/Card';
 import Pagination from '@/components/Pagination';
-import { FaPlus, FaVideo, FaImages, FaMusic, FaEllipsisV, FaEdit, FaTrash, FaEye, FaFlag, FaMountain, FaFolder, FaClock, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
+import { FaPlus, FaVideo, FaImages, FaMusic, FaEdit, FaTrash, FaEye, FaFlag, FaMountain, FaFolder, FaClock, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
 import { useProjects, Project } from '@/hooks/useProjects';
 import CreateProjectModal from '@/components/Project/CreateProjectModal';
 import EditProjectModal from '@/components/Project/EditProjectModal';

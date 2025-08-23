@@ -1,7 +1,7 @@
 'use client';
 
 import Card from '@/components/Card';
-import { FaChartLine, FaUsers, FaVideo, FaExclamationTriangle } from 'react-icons/fa';
+import { FaChartLine, FaVideo, FaExclamationTriangle } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + uxfix
 // [CONTEXT]: Admin reporting overview page

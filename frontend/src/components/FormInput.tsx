@@ -15,8 +15,8 @@ interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: React.ReactNode;
   helperText?: string;
   variant?: 'default' | 'cultural' | 'elite';
-  name: string; // Added name prop for react-hook-form registration
-  register: UseFormRegister<FieldValues>; // Added register prop from react-hook-form
+  name?: string; // Optional: for react-hook-form registration
+  register?: UseFormRegister<FieldValues>; // Optional: react-hook-form register
 }
 
 export default function FormInput({
@@ -58,7 +58,7 @@ export default function FormInput({
   return (
     <div className="mb-6">
       {label && (
-        <label htmlFor={props.id || name} className={labelClasses}> {/* Use name as fallback for htmlFor */}
+        <label htmlFor={(props.id as string) || (name as string)} className={labelClasses}> {/* Use name as fallback for htmlFor */}
           {label}
           {props.required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -78,7 +78,7 @@ export default function FormInput({
           className={inputClasses}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          {...register(name, { shouldUnregister: true })} // Register input with react-hook-form
+          {...(register && name ? register(name, { shouldUnregister: true }) : {})} // Conditionally register
           {...props}
         />
 

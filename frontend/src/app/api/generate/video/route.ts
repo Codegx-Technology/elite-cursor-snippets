@@ -92,9 +92,10 @@ export async function POST(request: Request) {
       },
       { status: 202 }
     )
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Failed to start generation';
     return NextResponse.json(
-      { error: e?.message || 'Failed to start generation', status: 'error' },
+      { error: message, status: 'error' },
       { status: 500 }
     )
   }

@@ -5,15 +5,38 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic'; // no static caching
 
+interface BackendPlan {
+  name: string;
+  price: number;
+  currency: string;
+  features_enabled: string[];
+  quotas: {
+    monthly: {
+      videoMins: number;
+      tokens: number;
+      audioSecs: number;
+    };
+  };
+  popular?: boolean;
+  model_policy: {
+    allowed_models: string[];
+    default_pinned_model: string;
+    tts_voices: string[];
+  };
+  max_requests_per_month: number;
+  priority_level: number;
+  rollback_window_days: number;
+}
+
 export async function GET() {
   try {
     const response = await fetch('http://localhost:8000/api/plans', { cache: 'no-store' });
     if (!response.ok) {
       throw new Error(`Failed to fetch plans from backend: ${response.statusText}`);
     }
-    const backendPlans = await response.json();
+    const backendPlans: BackendPlan[] = await response.json();
 
-    const tiers = backendPlans.map((plan: any) => ({
+    const tiers = backendPlans.map((plan) => ({
       id: plan.name.toLowerCase().replace(/ /g, '_'), // Generate ID from name
       name: plan.name,
       priceKesMonthly: plan.price, // Use 'price' from backend

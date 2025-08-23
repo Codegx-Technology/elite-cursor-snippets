@@ -20,7 +20,7 @@ export default function EditUserPage() {
 
   useEffect(() => {
     getUser(id);
-  }, [id]);
+  }, [id, getUser]);
 
   useEffect(() => {
     if (user) {

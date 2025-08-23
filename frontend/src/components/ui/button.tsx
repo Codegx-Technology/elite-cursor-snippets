@@ -34,7 +34,7 @@ const buttonVariants = cva(
   }
 );
 
-import { LoadingSpinner } from '@/components/LoadingSpinner'; // Import LoadingSpinner
+import LoadingSpinner from '@/components/LoadingSpinner'; // Use default export
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,

@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Card from '@/components/Card';
 import { FaCheck, FaCrown, FaFlag, FaMountain, FaRocket, FaCreditCard } from 'react-icons/fa6';
 import GraceCountdownOverlay from '@/components/GraceCountdownOverlay';
-import { useWidgetLoader } from '@/utils/widgetLoader';
 import { usePlanGuard } from '@/context/PlanGuardContext'; // New import
 import { paymentUtils, usePaystack } from '@/lib/paystack'; // Correct import for paymentUtils and usePaystack
 import { Button } from '@/components/ui/button'; // New import
@@ -32,7 +31,7 @@ type Plan = {
   rollbackWindowDays?: number;
   grace_period_hours?: number; // New field
 };
-type PaymentMethod = { id: string; name: string; description: string; icon: any };
+type PaymentMethod = { id: string; name: string; description: string; icon: React.ReactNode };
 
 interface UsageProgressBarProps {
   label: string;
@@ -79,15 +78,11 @@ export default function PricingPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const { initializePayment, isLoading, error } = usePaystack();
 
-  const { planStatus, loading: planStatusLoading, error: planStatusError } = usePlanGuard(); // Use usePlanGuard hook
+  const { planStatus } = usePlanGuard(); // Use usePlanGuard hook
 
   const [billingHistory, setBillingHistory] = useState<BillingRecord[]>([]);
   const [billingHistoryLoading, setBillingHistoryLoading] = useState(true);
   const [billingHistoryError, setBillingHistoryError] = useState<string | null>(null);
-
-  // Load PlanGuardWidget using the loader
-  const { component: PlanGuardWidgetComponent, allowed: planGuardWidgetAllowed, message: planGuardWidgetMessage } = useWidgetLoader("PlanGuardWidget", "test_user_id");
-  const { component: PlanGuardDashboardWidgetComponent, allowed: planGuardDashboardWidgetAllowed, message: planGuardDashboardWidgetMessage } = useWidgetLoader("PlanGuardDashboardWidget", "test_user_id");
 
   // Load plans from API with graceful fallback to static tiers
   useEffect(() => {
@@ -98,15 +93,15 @@ export default function PricingPage() {
         if (!res.ok) throw new Error(`status ${res.status}`);
         const data = await res.json();
         // Expecting API shape: [{ id, name, priceKesMonthly, perks:[], quotas:{ videos, images, audio } }]
-        const mapped: Plan[] = (data?.tiers || data || []).map((t: any) => ({
+        const mapped: Plan[] = (data?.tiers || data || []).map((t: Plan) => ({
           id: t.id,
           name: t.name,
-          price: Number(t.priceKesMonthly ?? t.price ?? 0),
+          price: Number(t.price ?? 0),
           currency: 'KES',
-          features: Array.isArray(t.perks) ? t.perks : [],
-          video_credits: t?.quotas?.videos ?? undefined,
-          image_credits: t?.quotas?.images ?? undefined,
-          audio_credits: t?.quotas?.audio ?? undefined,
+          features: Array.isArray(t.features) ? t.features : [],
+          video_credits: t?.video_credits ?? undefined,
+          image_credits: t?.image_credits ?? undefined,
+          audio_credits: t?.audio_credits ?? undefined,
           popular: t?.popular ?? false,
           grace_period_hours: t?.grace_period_hours ?? undefined, // New field
         }));
@@ -214,8 +209,9 @@ export default function PricingPage() {
         } else if (response.error) {
           setBillingHistoryError(response.error);
         }
-      } catch (err: any) {
-        setBillingHistoryError(err.message || 'Failed to fetch billing history.');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Failed to fetch billing history.';
+        setBillingHistoryError(message);
       } finally {
         setBillingHistoryLoading(false);
       }
@@ -227,7 +223,7 @@ export default function PricingPage() {
   const handleSubscribe = async (planId: string) => {
     setSelectedPlan(planId);
     
-    const plan = plans.find((p: any) => p.id === planId);
+    const plan = plans.find((p) => p.id === planId);
     if (!plan) return;
 
     try {

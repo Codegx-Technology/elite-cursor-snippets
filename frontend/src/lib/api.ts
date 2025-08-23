@@ -11,6 +11,13 @@ export interface ApiResponse<T> {
   status: number;
 }
 
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pages: number;
+}
+
 export interface DashboardStats {
   videosGenerated: number;
   imagesCreated: number;

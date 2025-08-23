@@ -109,7 +109,7 @@ export default function AudioStudioPage() {
           ].map(({ key, label, icon: Icon }) => (
             <button
               key={key}
-              onClick={() => setActiveTab(key as any)}
+              onClick={() => setActiveTab(key as 'voice' | 'music' | 'effects')}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 ${
                 activeTab === key
                   ? 'bg-green-600 text-white'
