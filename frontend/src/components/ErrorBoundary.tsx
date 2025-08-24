@@ -134,7 +134,7 @@ function DefaultErrorFallback({ error, retry }: { error: Error; retry: () => voi
         <div className="mb-8">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Oops! Something went wrong</h2>
           <p className="text-gray-600 mb-4">
-            We encountered an unexpected error. Don't worry, our team has been notified and we're working to fix it.
+            We encountered an unexpected error. Don&apos;t worry, our team has been notified and we&apos;re working to fix it.
           </p>
           
           {process.env.NODE_ENV === 'development' && (
@@ -178,7 +178,7 @@ function DefaultErrorFallback({ error, retry }: { error: Error; retry: () => voi
         {/* Cultural Footer */}
         <div className="bg-gradient-to-r from-green-600 via-red-600 to-black p-4 rounded-lg text-white text-center">
           <p className="text-sm">
-            🇰🇪 Asante for your patience • We'll be back stronger • Harambee!
+            🇰🇪 Asante for your patience • We&apos;ll be back stronger • Harambee!
           </p>
         </div>
       </div>

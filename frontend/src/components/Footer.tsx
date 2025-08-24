@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from 'next/link';
 import PolicyModal from "./PolicyModal";
 import { FaShieldAlt, FaCookie, FaFileContract } from 'react-icons/fa';
 
@@ -14,9 +15,9 @@ export default function Footer() {
           <div className="grid grid-cols-3 items-center text-xs text-gray-500">
             {/* Left - Copyright */}
             <div className="flex items-center gap-1">
-              <a href="/" className="hover:text-gray-700 transition-colors cursor-pointer">
+              <Link href="/" className="hover:text-gray-700 transition-colors cursor-pointer">
                 © {new Date().getFullYear()} Shujaa Studio
-              </a>
+              </Link>
             </div>
 
             {/* Center - Developer credit */}

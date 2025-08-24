@@ -57,8 +57,8 @@ export default function SettingsPage() {
         } else if (response.error) {
           setApiKeysError(response.error);
         }
-      } catch (err: any) {
-        setApiKeysError(err.message || 'Failed to fetch API keys.');
+      } catch (err: unknown) {
+        setApiKeysError((err as Error).message || 'Failed to fetch API keys.');
       } finally {
         setApiKeysLoading(false);
       }
@@ -74,8 +74,8 @@ export default function SettingsPage() {
         } else if (response.error) {
           setIntegrationsError(response.error);
         }
-      } catch (err: any) {
-        setIntegrationsError(err.message || 'Failed to fetch integrations.');
+      } catch (err: unknown) {
+        setIntegrationsError((err as Error).message || 'Failed to fetch integrations.');
       } finally {
         setIntegrationsLoading(false);
       }
@@ -91,8 +91,8 @@ export default function SettingsPage() {
         } else if (response.error) {
           setPreferencesError(response.error);
         }
-      } catch (err: any) {
-        setPreferencesError(err.message || 'Failed to fetch notification preferences.');
+      } catch (err: unknown) {
+        setPreferencesError((err as Error).message || 'Failed to fetch notification preferences.');
       } finally {
         setPreferencesLoading(false);
       }
@@ -108,8 +108,8 @@ export default function SettingsPage() {
         } else if (response.error) {
           setSecuritySettingsError(response.error);
         }
-      } catch (err: any) {
-        setSecuritySettingsError(err.message || 'Failed to fetch security settings.');
+      } catch (err: unknown) {
+        setSecuritySettingsError((err as Error).message || 'Failed to fetch security settings.');
       } finally {
         setSecuritySettingsLoading(false);
       }
@@ -125,8 +125,8 @@ export default function SettingsPage() {
         } else if (response.error) {
           setSessionsError(response.error);
         }
-      } catch (err: any) {
-        setSessionsError(err.message || 'Failed to fetch login sessions.');
+      } catch (err: unknown) {
+        setSessionsError((err as Error).message || 'Failed to fetch login sessions.');
       } finally {
         setSessionsLoading(false);
       }
@@ -142,8 +142,8 @@ export default function SettingsPage() {
         } else if (response.error) {
           setStorageError(response.error);
         }
-      } catch (err: any) {
-        setStorageError(err.message || 'Failed to fetch storage information.');
+      } catch (err: unknown) {
+        setStorageError((err as Error).message || 'Failed to fetch storage information.');
       } finally {
         setStorageLoading(false);
       }
@@ -159,8 +159,8 @@ export default function SettingsPage() {
         } else if (response.error) {
           setLocalModelsError(response.error);
         }
-      } catch (err: any) {
-        setLocalModelsError(err.message || 'Failed to fetch local models.');
+      } catch (err: unknown) {
+        setLocalModelsError((err as Error).message || 'Failed to fetch local models.');
       } finally {
         setLocalModelsLoading(false);
       }
@@ -184,8 +184,8 @@ export default function SettingsPage() {
       } else if (response.error) {
         addToast({ title: "API Key Generation Failed", description: response.error, type: "destructive" });
       }
-    } catch (err: any) {
-      addToast({ title: "API Key Generation Failed", description: err.message || "An unexpected error occurred.", type: "destructive" });
+    } catch (err: unknown) {
+      addToast({ title: "API Key Generation Failed", description: (err as Error).message || "An unexpected error occurred.", type: "destructive" });
     }
   };
 
@@ -199,8 +199,8 @@ export default function SettingsPage() {
       } else if (response.error) {
         addToast({ title: "API Key Revocation Failed", description: response.error, type: "destructive" });
       }
-    } catch (err: any) {
-      addToast({ title: "API Key Revocation Failed", description: err.message || "An unexpected error occurred.", type: "destructive" });
+    } catch (err: unknown) {
+      addToast({ title: "API Key Revocation Failed", description: (err as Error).message || "An unexpected error occurred.", type: "destructive" });
     }
   };
 
@@ -213,8 +213,8 @@ export default function SettingsPage() {
       } else if (response.error) {
         addToast({ title: "Integration Update Failed", description: response.error, type: "destructive" });
       }
-    } catch (err: any) {
-      addToast({ title: "Integration Update Failed", description: err.message || "An unexpected error occurred.", type: "destructive" });
+    } catch (err: unknown) {
+      addToast({ title: "Integration Update Failed", description: (err as Error).message || "An unexpected error occurred.", type: "destructive" });
     }
   };
 
@@ -237,8 +237,8 @@ export default function SettingsPage() {
       } else if (response.error) {
         addToast({ title: "Save Failed", description: response.error, type: "destructive" });
       }
-    } catch (err: any) {
-      addToast({ title: "Save Failed", description: err.message || "An unexpected error occurred.", type: "destructive" });
+    } catch (err: unknown) {
+      addToast({ title: "Save Failed", description: (err as Error).message || "An unexpected error occurred.", type: "destructive" });
     }
   };
 
@@ -262,8 +262,8 @@ export default function SettingsPage() {
       } else if (response.error) {
         addToast({ title: "2FA Update Failed", description: response.error, type: "destructive" });
       }
-    } catch (err: any) {
-      addToast({ title: "2FA Update Failed", description: err.message || "An unexpected error occurred.", type: "destructive" });
+    } catch (err: unknown) {
+      addToast({ title: "2FA Update Failed", description: (err as Error).message || "An unexpected error occurred.", type: "destructive" });
     }
   };
 
@@ -277,8 +277,8 @@ export default function SettingsPage() {
       } else if (response.error) {
         addToast({ title: "Session Revocation Failed", description: response.error, type: "destructive" });
       }
-    } catch (err: any) {
-      addToast({ title: "Session Revocation Failed", description: err.message || "An unexpected error occurred.", type: "destructive" });
+    } catch (err: unknown) {
+      addToast({ title: "Session Revocation Failed", description: (err as Error).message || "An unexpected error occurred.", type: "destructive" });
     }
   };
 
@@ -293,8 +293,8 @@ export default function SettingsPage() {
       } else if (response.error) {
         addToast({ title: "Cache Clear Failed", description: response.error, type: "destructive" });
       }
-    } catch (err: any) {
-      addToast({ title: "Cache Clear Failed", description: err.message || "An unexpected error occurred.", type: "destructive" });
+    } catch (err: unknown) {
+      addToast({ title: "Cache Clear Failed", description: (err as Error).message || "An unexpected error occurred.", type: "destructive" });
     }
   };
 
@@ -308,8 +308,8 @@ export default function SettingsPage() {
       } else if (response.error) {
         addToast({ title: "Model Download Failed", description: response.error, type: "destructive" });
       }
-    } catch (err: any) {
-      addToast({ title: "Model Download Failed", description: err.message || "An unexpected error occurred.", type: "destructive" });
+    } catch (err: unknown) {
+      addToast({ title: "Model Download Failed", description: (err as Error).message || "An unexpected error occurred.", type: "destructive" });
     }
   };
 
@@ -323,8 +323,8 @@ export default function SettingsPage() {
       } else if (response.error) {
         addToast({ title: "Model Deletion Failed", description: response.error, type: "destructive" });
       }
-    } catch (err: any) {
-      addToast({ title: "Model Deletion Failed", description: err.message || "An unexpected error occurred.", type: "destructive" });
+    } catch (err: unknown) {
+      addToast({ title: "Model Deletion Failed", description: (err as Error).message || "An unexpected error occurred.", type: "destructive" });
     }
   };
 

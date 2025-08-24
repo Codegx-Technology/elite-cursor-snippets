@@ -11,8 +11,18 @@ import { Button } from '@/components/ui/design-system';
 import { colors } from '@/config/designTokens';
 import { FaUser, FaVideo, FaCog, FaCheck } from 'react-icons/fa';
 
+interface VideoFormData {
+  videoType: string;
+  title: string;
+  description: string;
+  language: string;
+  duration: string;
+  targetAudience?: string;
+}
+
+
 // Video Creation Form Steps
-const VideoCreationStep: React.FC<any> = ({ data, updateData, variant }) => {
+const VideoCreationStep: React.FC<WizardStepProps<VideoFormData>> = ({ data, updateData, variant }) => {
   const videoTypes = [
     { value: 'tourism', label: 'Utalii (Tourism)' },
     { value: 'cultural', label: 'Utamaduni (Cultural)' },
@@ -60,7 +70,7 @@ const VideoCreationStep: React.FC<any> = ({ data, updateData, variant }) => {
   );
 };
 
-const PersonalizationStep: React.FC<any> = ({ data, updateData, variant }) => {
+const PersonalizationStep: React.FC<WizardStepProps<VideoFormData>> = ({ data, updateData, variant }) => {
   const languages = [
     { value: 'swahili', label: 'Kiswahili' },
     { value: 'english', label: 'English' },
@@ -122,7 +132,7 @@ const PersonalizationStep: React.FC<any> = ({ data, updateData, variant }) => {
   );
 };
 
-const ReviewStep: React.FC<any> = ({ data, variant }) => {
+const ReviewStep: React.FC<WizardStepProps<VideoFormData>> = ({ data, variant }) => {
   const getVideoTypeLabel = (type: string) => {
     const types: Record<string, string> = {
       tourism: 'Utalii (Tourism)',
@@ -199,9 +209,9 @@ const ReviewStep: React.FC<any> = ({ data, variant }) => {
 };
 
 // Main Multi-Step Form Component
-export interface MultiStepFormProps {
+export interface MultiStepFormProps<TFormData extends Record<string, any> = Record<string, any>> {
   variant?: 'default' | 'kenya' | 'cultural' | 'elite';
-  onComplete?: (data: any) => void;
+  onComplete?: (data: TFormData) => void;
   onCancel?: () => void;
   className?: string;
 }
@@ -214,40 +224,9 @@ export const VideoCreationForm: React.FC<MultiStepFormProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const steps: WizardStep[] = [
-    {
-      id: 'video-details',
-      title: 'Maelezo ya Video',
-      subtitle: 'Tuambie kuhusu video unayotaka kuunda',
-      component: VideoCreationStep,
-      validation: (data) => {
-        if (!data.videoType) return 'Chagua aina ya video';
-        if (!data.title?.trim()) return 'Ingiza kichwa cha video';
-        if (!data.description?.trim()) return 'Ingiza maelezo ya video';
-        return true;
-      }
-    },
-    {
-      id: 'personalization',
-      title: 'Upangaji',
-      subtitle: 'Panga video yako kulingana na mahitaji yako',
-      component: PersonalizationStep,
-      validation: (data) => {
-        if (!data.language) return 'Chagua lugha ya video';
-        if (!data.duration) return 'Chagua muda wa video';
-        return true;
-      }
-    },
-    {
-      id: 'review',
-      title: 'Kagua na Thibitisha',
-      subtitle: 'Kagua maelezo yako kabla ya kuanza uundaji',
-      component: ReviewStep,
-      validation: () => true
-    }
-  ];
+  const steps: WizardStep<VideoFormData>[] = [
 
-  const handleComplete = async (data: any) => {
+  const handleComplete = async (data: VideoFormData) => {
     setIsSubmitting(true);
     try {
       // Simulate API call

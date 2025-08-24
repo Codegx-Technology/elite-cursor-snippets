@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 const RegisterForm: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -91,7 +92,7 @@ const RegisterForm: React.FC = () => {
         </button>
       </form>
       <p className="text-center text-soft-text text-sm mt-4">
-        Already have an account? <a href="/login" className="text-primary-gradient-start font-medium">Login here</a>
+        Already have an account? <Link href="/login" className="text-primary-gradient-start font-medium">Login here</Link>
       </p>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation'; // Use next/navigation for App Router
+import Link from 'next/link';
 
 const RegisterPage: React.FC = () => { // Renamed to RegisterPage
   const [username, setUsername] = useState('');
@@ -92,7 +93,7 @@ const RegisterPage: React.FC = () => { // Renamed to RegisterPage
         </button>
       </form>
       <p className="text-center text-soft-text text-sm mt-4">
-        Already have an account? <a href="/login" className="text-primary-gradient-start font-medium">Login here</a>
+        Already have an account? <Link href="/login" className="text-primary-gradient-start font-medium">Login here</Link>
       </p>
     </div>
   );

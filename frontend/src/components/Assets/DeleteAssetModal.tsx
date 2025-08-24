@@ -30,7 +30,7 @@ export default function DeleteAssetModal({ isOpen, onClose, onDelete, asset }: D
           </button>
         </div>
         <form onSubmit={handleSubmit}>
-          <p>Are you sure you want to delete the asset "{asset?.name}"?</p>
+          <p>Are you sure you want to delete the asset &quot;{asset?.name}&quot;?</p>
           <div className="flex justify-end space-x-4 mt-6">
             <button type="button" onClick={onClose} className="btn-secondary">
               Cancel

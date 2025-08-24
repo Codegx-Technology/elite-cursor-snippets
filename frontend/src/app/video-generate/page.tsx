@@ -361,7 +361,7 @@ export default function VideoGeneratePage() {
                     </h3>
 
                     <p className="text-gray-600 mb-4">
-                      Harambee! We're working hard to bring you amazing content.
+                      Harambee! We&apos;re working hard to bring you amazing content.
                     </p>
 
                     {/* Retry Options */}
@@ -405,7 +405,7 @@ export default function VideoGeneratePage() {
                     <FaVideo className="text-green-600" aria-label="Video Icon" />
                   </div>
                   <p className="text-sm text-green-700 mb-3">
-                    Your Kenya-first video "{generatedVideo}" is ready for download.
+                    Your Kenya-first video &quot;{generatedVideo}&quot; is ready for download.
                   </p>
                   <div className="flex space-x-2">
                     <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm flex items-center space-x-1">
@@ -424,8 +424,8 @@ export default function VideoGeneratePage() {
               <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
                 <h3 className="font-medium text-yellow-800 mb-2">🇰🇪 Cultural Tips</h3>
                 <ul className="text-sm text-yellow-700 space-y-1">
-                  <li>• Use "Karibu" (Welcome) for greetings</li>
-                  <li>• Include "Harambee" spirit for community themes</li>
+                  <li>• Use &quot;Karibu&quot; (Welcome) for greetings</li>
+                  <li>• Include &quot;Harambee&quot; spirit for community themes</li>
                   <li>• Reference local landmarks like Mount Kenya, Maasai Mara</li>
                   <li>• Mix English and Swahili naturally</li>
                 </ul>

@@ -3,16 +3,11 @@ import { Inter } from "next/font/google";
 import "../globals.css";
 import Layout from "@/components/Layout";
 import ClientBoot from "@/components/ClientBoot";
-import { PlanGuardProvider } from "@/context/PlanGuardContext"; // New import
-import { AuthProvider } from "@/context/AuthContext"; // New import for AuthProvider
-import { ErrorProvider } from "@/context/ErrorContext"; // Re-added ErrorProvider
-import ErrorNotification from "@/components/ErrorNotification"; // Re-added ErrorNotification
-import { ToastProvider } from "@/components/ui/use-toast"; // New import
-
-// [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
-// [CONTEXT]: Root layout with Kenya-first design system and enterprise styling
-// [GOAL]: Proper CSS loading and layout wrapper for entire application
-// [TASK]: Import global styles and wrap with Layout component
+import { PlanGuardProvider } from "@/context/PlanGuardContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { ErrorProvider } from "@/context/ErrorContext";
+import ErrorNotification from "@/components/ErrorNotification";
+import { ToastProvider } from "@/components/ui/use-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -86,7 +81,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default function LocaleLayout({
   children,
   params: {lang}
 }: Readonly<{
@@ -94,34 +89,16 @@ export default function RootLayout({
   params: {lang: string};
 }>) {
   return (
-    <html lang={lang} suppressHydrationWarning>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
-        <meta name="theme-color" content="#00A651" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Shujaa Studio" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="msapplication-TileColor" content="#00A651" />
-        <meta name="msapplication-config" content="/browserconfig.xml" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-        <link rel="dns-prefetch" href="//fonts.gstatic.com" />
-      </head>
-      <body className={inter.className} suppressHydrationWarning={true}>
-        <ToastProvider> {/* Wrap with ToastProvider */}
-          <ErrorProvider> {/* Wrap with ErrorProvider */}
-            <AuthProvider> {/* Wrap with AuthProvider */}
-              <PlanGuardProvider> {/* Wrap with PlanGuardProvider */}
-                <Layout>{children}</Layout>
-              </PlanGuardProvider>
-            </AuthProvider>
-            <ClientBoot />
-            <ErrorNotification /> {/* Render ErrorNotification */}
-          </ErrorProvider>
-        </ToastProvider>
-      </body>
-    </html>
+    <ToastProvider>
+      <ErrorProvider>
+        <AuthProvider>
+          <PlanGuardProvider>
+            <Layout>{children}</Layout>
+          </PlanGuardProvider>
+        </AuthProvider>
+        <ClientBoot />
+        <ErrorNotification />
+      </ErrorProvider>
+    </ToastProvider>
   );
 }
