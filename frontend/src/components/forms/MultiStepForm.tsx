@@ -20,6 +20,13 @@ interface VideoFormData {
   targetAudience?: string;
 }
 
+interface ProjectFormData {
+  projectName: string;
+  description: string;
+  teamSize: number;
+  budget?: number;
+}
+
 
 // Video Creation Form Steps
 const VideoCreationStep: React.FC<WizardStepProps<VideoFormData>> = ({ data, updateData, variant }) => {
@@ -216,7 +223,7 @@ export interface MultiStepFormProps<TFormData extends Record<string, any> = Reco
   className?: string;
 }
 
-export const VideoCreationForm: React.FC<MultiStepFormProps> = ({
+export const VideoCreationForm: React.FC<MultiStepFormProps<VideoFormData>> = ({
   variant = 'kenya',
   onComplete,
   onCancel,
@@ -225,6 +232,37 @@ export const VideoCreationForm: React.FC<MultiStepFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const steps: WizardStep<VideoFormData>[] = [
+    {
+      id: 'video-details',
+      title: 'Maelezo ya Video',
+      subtitle: 'Tuambie kuhusu video unayotaka kuunda',
+      component: VideoCreationStep,
+      validation: (data) => {
+        if (!data.videoType) return 'Chagua aina ya video';
+        if (!data.title?.trim()) return 'Ingiza kichwa cha video';
+        if (!data.description?.trim()) return 'Ingiza maelezo ya video';
+        return true;
+      }
+    },
+    {
+      id: 'personalization',
+      title: 'Upangaji',
+      subtitle: 'Panga video yako kulingana na mahitaji yako',
+      component: PersonalizationStep,
+      validation: (data) => {
+        if (!data.language) return 'Chagua lugha ya video';
+        if (!data.duration) return 'Chagua muda wa video';
+        return true;
+      }
+    },
+    {
+      id: 'review',
+      title: 'Kagua na Thibitisha',
+      subtitle: 'Kagua maelezo yako kabla ya kuanza uundaji',
+      component: ReviewStep,
+      validation: () => true
+    }
+  ];
 
   const handleComplete = async (data: VideoFormData) => {
     setIsSubmitting(true);
@@ -263,13 +301,13 @@ export const VideoCreationForm: React.FC<MultiStepFormProps> = ({
 };
 
 // Project Setup Form
-export const ProjectSetupForm: React.FC<MultiStepFormProps> = ({
+export const ProjectSetupForm: React.FC<MultiStepFormProps<ProjectFormData>> = ({
   variant = 'cultural',
   onComplete,
   onCancel,
   className
 }) => {
-  const ProjectDetailsStep: React.FC<any> = ({ data, updateData, variant }) => (
+  const ProjectDetailsStep: React.FC<WizardStepProps<ProjectFormData>> = ({ data, updateData, variant }) => (
     <TextInputStep
       data={data}
       updateData={updateData}
@@ -292,7 +330,7 @@ export const ProjectSetupForm: React.FC<MultiStepFormProps> = ({
     />
   );
 
-  const TeamSetupStep: React.FC<any> = ({ data, updateData, variant }) => (
+  const TeamSetupStep: React.FC<WizardStepProps<ProjectFormData>> = ({ data, updateData, variant }) => (
     <div className="space-y-6">
       <TextInputStep
         data={data}
@@ -319,29 +357,7 @@ export const ProjectSetupForm: React.FC<MultiStepFormProps> = ({
     </div>
   );
 
-  const steps: WizardStep[] = [
-    {
-      id: 'project-details',
-      title: 'Maelezo ya Mradi',
-      subtitle: 'Anza kwa kutueleza kuhusu mradi wako',
-      component: ProjectDetailsStep,
-      validation: (data) => {
-        if (!data.projectName?.trim()) return 'Ingiza jina la mradi';
-        if (!data.description?.trim()) return 'Ingiza maelezo ya mradi';
-        return true;
-      }
-    },
-    {
-      id: 'team-setup',
-      title: 'Mpangilio wa Timu',
-      subtitle: 'Panga timu yako na rasilimali',
-      component: TeamSetupStep,
-      validation: (data) => {
-        if (!data.teamSize || data.teamSize < 1) return 'Ingiza idadi sahihi ya timu';
-        return true;
-      }
-    }
-  ];
+  const steps: WizardStep<ProjectFormData>[] = [
 
   return (
     <FormWizard

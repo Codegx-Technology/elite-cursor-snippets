@@ -19,6 +19,12 @@ interface AISuggestionsPanelProps {
   onApplySuggestion?: (suggestion: ContentSuggestion) => void;
 }
 
+interface KenyaAnalysis {
+  score: number;
+  culturalElements: string[];
+  improvements: string[];
+}
+
 const AISuggestionsPanel: React.FC<AISuggestionsPanelProps> = ({
   content = '',
   category,
@@ -27,7 +33,7 @@ const AISuggestionsPanel: React.FC<AISuggestionsPanelProps> = ({
   const { createAriaLabel } = useAriaUtils();
   const [suggestions, setSuggestions] = useState<ContentSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
-  const [kenyaAnalysis, setKenyaAnalysis] = useState<any>(null);
+  const [kenyaAnalysis, setKenyaAnalysis] = useState<KenyaAnalysis | null>(null);
   const [trendingTopics, setTrendingTopics] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<keyof typeof KENYA_CONTENT_CATEGORIES | undefined>(category);
 
@@ -46,7 +52,7 @@ const AISuggestionsPanel: React.FC<AISuggestionsPanelProps> = ({
     try {
       const topics = await aiSuggestionEngine.getTrendingTopics();
       setTrendingTopics(topics);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('🇰🇪 Failed to load trending topics:', error);
     }
   };
@@ -57,7 +63,7 @@ const AISuggestionsPanel: React.FC<AISuggestionsPanelProps> = ({
     try {
       const analysis = await aiSuggestionEngine.analyzeKenyaRelevance(content);
       setKenyaAnalysis(analysis);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('🇰🇪 Content analysis failed:', error);
     }
   };
@@ -72,7 +78,7 @@ const AISuggestionsPanel: React.FC<AISuggestionsPanelProps> = ({
         purpose: 'educational'
       });
       setSuggestions(newSuggestions);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('🇰🇪 Suggestion generation failed:', error);
     } finally {
       setLoading(false);

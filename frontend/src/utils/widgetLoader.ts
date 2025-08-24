@@ -6,7 +6,7 @@ import { checkWidgetDependencies as checkDependenciesFromGuard } from '@/lib/dep
 import { getDenyMessage } from '@/ui/planMessages'; // New import
 
 interface WidgetLoadResult {
-  component: React.ComponentType<any> | null;
+  component: React.ComponentType<unknown> | null;
   allowed: boolean;
   message: string;
   planStatus: PlanStatus | null;
@@ -77,12 +77,12 @@ export function useWidgetLoader(widgetName: string, userId?: string) {
               planStatus: null,
             });
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error(`Failed to load widget '${widgetName}':`, error);
           setResult({
             component: null,
             allowed: false,
-            message: `Failed to load widget '${widgetName}': ${error.message || error}`, 
+            message: `Failed to load widget '${widgetName}': ${(error as Error).message || error}`, 
             planStatus: null,
           });
         }

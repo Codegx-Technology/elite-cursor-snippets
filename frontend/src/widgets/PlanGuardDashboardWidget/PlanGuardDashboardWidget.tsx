@@ -23,9 +23,9 @@ export default function PlanGuardDashboardWidget({ userId }: Props) {
       try {
         const fetchedData = await fetchPlanDashboardData(userId);
         setData(fetchedData);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Failed to fetch plan dashboard data:", err);
-        setError(err.message || "An unknown error occurred");
+        setError((err as Error).message || "An unknown error occurred");
       } finally {
         setLoading(false);
       }

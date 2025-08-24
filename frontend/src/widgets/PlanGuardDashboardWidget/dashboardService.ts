@@ -14,7 +14,7 @@ export async function fetchPlanDashboardData(userId?: string): Promise<PlanDashb
 }
 
 // Optional: WebSocket for real-time updates
-export function subscribeUserPlanEvents(userId: string | undefined, onEvent: (ev: any) => void): WebSocket | null {
+export function subscribeUserPlanEvents(userId: string | undefined, onEvent: (ev: EnforcementEvent) => void): WebSocket | null {
   try {
     const base = process.env.NEXT_PUBLIC_WS_BASE || (typeof window !== "undefined" ? window.location.origin.replace(/^http/, "ws") : "ws://localhost:3000");
     const url = new URL(`${base}/ws/user-plan-events`);

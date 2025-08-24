@@ -336,7 +336,7 @@ export class I18n {
   // Get nested translation
   private getNestedTranslation(key: string, language: Language): string | null {
     const keys = key.split('.');
-    let current: any = TRANSLATIONS[language];
+    let current: Translation | string | null | undefined = TRANSLATIONS[language];
 
     for (const k of keys) {
       if (current && typeof current === 'object' && k in current) {
