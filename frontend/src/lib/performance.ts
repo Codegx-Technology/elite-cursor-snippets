@@ -15,7 +15,9 @@ export class AdvancedCache {
   set(key: string, data: any, ttl: number = 300000) { // 5 minutes default
     if (this.cache.size >= this.maxSize) {
       const firstKey = this.cache.keys().next().value;
-      this.cache.delete(firstKey);
+      if (firstKey !== undefined) {
+        this.cache.delete(firstKey);
+      }
     }
     
     this.cache.set(key, {
@@ -118,8 +120,8 @@ export class PerformanceMonitor {
     return report;
   }
 
-  private getRecommendations() {
-    const recommendations = [];
+  private getRecommendations(): string[] {
+    const recommendations: string[] = [];
     
     Object.entries(this.metrics).forEach(([key, value]) => {
       if (key.endsWith('_start')) return;
@@ -152,7 +154,8 @@ export const loadComponent = async (componentPath: string) => {
   perfMonitor.startTiming(`load_${componentPath}`);
   
   try {
-    const component = await import(componentPath);
+    // Use static imports for known component paths to avoid dynamic import warnings
+    const component = await import(/* webpackChunkName: "[request]" */ componentPath);
     perfMonitor.endTiming(`load_${componentPath}`);
     return component;
   } catch (error) {
