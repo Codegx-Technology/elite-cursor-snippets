@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Card from '@/components/Card';
-import { FaCheck, FaCrown, FaFlag, FaMountain, FaRocket, FaCreditCard } from 'react-icons/fa6';
+import { Card } from '@/components/ui/card';
+import { FaCheck, FaCrown, FaFlag, FaMountain, FaRocket, FaCreditCard } from 'react-icons/fa';
 import GraceCountdownOverlay from '@/components/GraceCountdownOverlay';
 import { usePlanGuard } from '@/context/PlanGuardContext'; // New import
 import { paymentUtils, usePaystack } from '@/lib/paystack'; // Correct import for paymentUtils and usePaystack
@@ -614,13 +614,15 @@ export default function PricingPage() {
       )}
 
       {planStatus?.state === 'grace' && planStatus?.graceExpiresAt && (
-        <GraceCountdownOverlay
-          graceExpiresAt={planStatus.graceExpiresAt}
-          onUpgradeClick={() => {
-            // Handle upgrade click, e.g., scroll to pricing plans or open a modal
-            console.log("Upgrade button clicked from grace overlay");
-          }}
-        />
+        <div>
+          <GraceCountdownOverlay
+            graceExpiresAt={planStatus.graceExpiresAt}
+            onUpgradeClick={() => {
+              // Handle upgrade click, e.g., scroll to pricing plans or open a modal
+              console.log("Upgrade button clicked from grace overlay");
+            }}
+          />
+        </div>
       )}
     </div>
   );

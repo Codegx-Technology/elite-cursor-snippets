@@ -105,7 +105,7 @@ export default function DemoPage() {
                       value={formData.title}
                       onChange={(e) => setFormData({...formData, title: e.target.value})}
                       placeholder="Ingiza kichwa cha video yako..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                     />
                   </div>
                   <div>
@@ -115,7 +115,7 @@ export default function DemoPage() {
                     <select
                       value={formData.videoType}
                       onChange={(e) => setFormData({...formData, videoType: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900 cursor-pointer"
                     >
                       <option value="">Chagua aina...</option>
                       <option value="tourism">Utalii (Tourism)</option>
@@ -135,7 +135,7 @@ export default function DemoPage() {
                     <select
                       value={formData.language}
                       onChange={(e) => setFormData({...formData, language: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900 cursor-pointer"
                     >
                       <option value="">Chagua lugha...</option>
                       <option value="swahili">Kiswahili</option>

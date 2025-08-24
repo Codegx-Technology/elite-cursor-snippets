@@ -29,6 +29,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  // Users/roles that must be force-logged-out for security
+  const FORCE_LOGOUT_USERNAMES = new Set(['peter', 'apollo']);
+  const FORCE_LOGOUT_ROLES = new Set(['super_admin']);
+
+  const shouldForceLogout = (u: User | null) => {
+    if (!u) return false;
+    const uname = (u.username || '').toLowerCase();
+    const role = (u.role || '').toLowerCase();
+    return FORCE_LOGOUT_USERNAMES.has(uname) || FORCE_LOGOUT_ROLES.has(role);
+  };
+
   const fetchUser = async () => {
     setIsLoading(true);
     const storedToken = localStorage.getItem('jwt_token');
@@ -44,6 +55,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const userData = await response.json();
           setUser(userData);
           setToken(storedToken);
+          // Security guard: auto-logout restricted users/roles
+          if (shouldForceLogout(userData)) {
+            logout();
+            return;
+          }
         } else {
           localStorage.removeItem('jwt_token');
           setUser(null);
@@ -70,6 +86,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('jwt_token', newToken);
     setToken(newToken);
     setUser(newUser);
+    // Security guard: auto-logout restricted users/roles
+    if (shouldForceLogout(newUser)) {
+      logout();
+      return;
+    }
   };
 
   const logout = () => {

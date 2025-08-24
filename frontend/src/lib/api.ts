@@ -360,6 +360,11 @@ class ApiClient {
     return this.request<{ success: boolean }>(`/api/local-models/${modelId}`, { method: 'DELETE' });
   }
 
+  // Billing
+  async getBillingHistory() {
+    return this.request<BillingRecord[]>('/api/billing/history');
+  }
+
   // Auth
   async login(username: string, password: string): Promise<ApiResponse<{ access_token: string; token_type: string }>> {
     const body = new URLSearchParams({ username, password });

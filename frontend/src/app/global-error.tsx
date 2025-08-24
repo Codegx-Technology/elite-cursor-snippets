@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FaTriangleExclamation } from 'react-icons/fa6';
+import { FaExclamationTriangle } from 'react-icons/fa';
 
 // Next.js app router GLOBAL error boundary
 // This is used to catch errors during initial rendering on the client for the entire app.
@@ -12,7 +12,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-6">
           <div className="max-w-md w-full elite-card p-8 text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FaTriangleExclamation className="text-3xl text-red-600" />
+              <FaExclamationTriangle className="text-3xl text-red-600" />
             </div>
             <h1 className="section-title mb-2">Unexpected application error</h1>
             <p className="section-subtitle mb-6">Please try again or return to the homepage.</p>

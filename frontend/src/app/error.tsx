@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { FaTriangleExclamation } from 'react-icons/fa6';
+import { FaExclamationTriangle } from 'react-icons/fa';
 
 // Next.js app router route-level error boundary
 // This component is rendered when an error is thrown in a route segment.
@@ -15,7 +15,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-6">
       <div className="max-w-md w-full elite-card p-8 text-center">
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <FaTriangleExclamation className="text-3xl text-red-600" />
+          <FaExclamationTriangle className="text-3xl text-red-600" />
         </div>
         <h1 className="section-title mb-2">Something went wrong</h1>
         <p className="section-subtitle mb-6">An unexpected error occurred. Please try again.</p>

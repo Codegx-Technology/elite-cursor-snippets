@@ -16,6 +16,7 @@ import {
 } from 'react-icons/fa';
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
+import { useAuth } from '@/context/AuthContext';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean + refactorintent
 // [CONTEXT]: Enterprise header with Kenya-first design and mobile-first responsiveness
@@ -28,6 +29,7 @@ interface HeaderProps {
 }
 
 export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
+  const { logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,11 +48,8 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('jwt_token');
-    setIsLoggedIn(false);
-    setUser(null);
     setShowUserMenu(false);
-    router.push('/login');
+    logout();
   };
 
   const notifications = [

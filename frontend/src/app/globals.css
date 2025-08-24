@@ -53,6 +53,17 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-color-primary);
 }
 
+/* Opt-in high-contrast wrapper to ensure titles are not greyed */
+.contrast-boost h1,
+.contrast-boost h2,
+.contrast-boost h3,
+.contrast-boost h4,
+.contrast-boost h5,
+.contrast-boost h6 {
+  color: #111827 !important; /* gray-900 */
+  opacity: 1 !important;
+}
+
 /* Ensure consistent heading sizes and spacing (fixes “sectioned h1 with no font-size/margin”) */
 @layer base {
   h1 { @apply text-3xl md:text-4xl font-bold; margin: 0 0 0.75rem 0; }

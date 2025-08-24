@@ -15,7 +15,9 @@ export class AdvancedCache {
   set(key: string, data: any, ttl: number = 300000) { // 5 minutes default
     if (this.cache.size >= this.maxSize) {
       const firstKey = this.cache.keys().next().value;
-      this.cache.delete(firstKey);
+      if (firstKey !== undefined) {
+        this.cache.delete(firstKey);
+      }
     }
     
     this.cache.set(key, {
@@ -118,8 +120,8 @@ export class PerformanceMonitor {
     return report;
   }
 
-  private getRecommendations() {
-    const recommendations = [];
+  private getRecommendations(): string[] {
+    const recommendations: string[] = [];
     
     Object.entries(this.metrics).forEach(([key, value]) => {
       if (key.endsWith('_start')) return;
@@ -150,9 +152,26 @@ export const optimizeKenyaImage = (src: string, width?: number, height?: number)
 export const loadComponent = async (componentPath: string) => {
   const perfMonitor = new PerformanceMonitor();
   perfMonitor.startTiming(`load_${componentPath}`);
-  
+
+  // Whitelist known components to avoid fully dynamic expressions (prevents webpack critical dependency warning)
+  const registry: Record<string, () => Promise<any>> = {
+    // Example entries (add real ones as needed):
+    // 'components/Chart': () => import('../components/Chart'),
+    // 'components/DataTable': () => import('../components/DataTable'),
+  };
+
   try {
-    const component = await import(componentPath);
+    const loader = registry[componentPath];
+    if (!loader) {
+      console.warn(
+        `🇰🇪 loadComponent: '${componentPath}' not in registry. Add it to the whitelist to enable code-splitting without warnings.`
+      );
+      perfMonitor.endTiming(`load_${componentPath}`);
+      // Fallback: return empty module shape to avoid runtime crashes while keeping dev clean
+      return { default: () => null };
+    }
+
+    const component = await loader();
     perfMonitor.endTiming(`load_${componentPath}`);
     return component;
   } catch (error) {
