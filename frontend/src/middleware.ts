@@ -1,14 +1,14 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import createMiddleware from 'next-intl/middleware';
 
-// surgicalfix + uxfix: Force a single dev origin to avoid Next dev overlay fallback/MIME issues.
-// In development, redirect 127.0.0.1 -> localhost preserving path, query, and protocol.
-export function middleware(request: NextRequest) {
-  // Temporarily disabled to debug _next 404s
-  return NextResponse.next();
-}
+export default createMiddleware({
+  // A list of all locales that are supported
+  locales: ['en', 'sw'],
+
+  // Used when no locale matches
+  defaultLocale: 'en'
+});
 
 export const config = {
-  // Disable middleware during debugging
-  matcher: [],
+  // Match only internationalized pathnames
+  matcher: ['/', '/(sw|en)/:path*']
 };

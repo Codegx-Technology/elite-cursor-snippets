@@ -24,7 +24,7 @@ import {
 // [GOAL]: Create engaging landing experience showcasing platform capabilities
 // [TASK]: Implement welcome page with cultural elements, feature highlights, and clear CTAs
 
-export default function Welcome() {
+export default function Welcome({ title }: { title: string }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [stats, setStats] = useState({
@@ -198,7 +198,7 @@ export default function Welcome() {
           </div>
 
           <h1 className="text-5xl font-bold mb-4">
-            Karibu Shujaa Studio! 🇰🇪
+            {title} 🇰🇪
           </h1>
           <p className="text-xl mb-2 text-green-100">
             Kenya&apos;s Premier AI-Powered Video Generation Platform
