@@ -3,6 +3,8 @@
 import React from 'react';
 import { FaFlag, FaMountain } from 'react-icons/fa';
 import { FaTriangleExclamation, FaRotateRight } from 'react-icons/fa6';
+import { perfMonitor } from '@/lib/performance';
+import { useAriaUtils } from '@/hooks/useAccessibility';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent
 // [CONTEXT]: Error boundary component with Kenya-first design for production readiness
@@ -43,15 +45,46 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       errorInfo,
     });
 
-    // Log error to monitoring service in production
+    // Performance monitoring for errors
+    perfMonitor.startTiming('error_recovery');
+    
+    // Log error with Kenya-first context
+    console.error('🇰🇪 Error caught by boundary:', error, errorInfo);
+    
+    // Enhanced error reporting for production
     if (process.env.NODE_ENV === 'production') {
-      console.error('Error caught by boundary:', error, errorInfo);
-      // Here you would typically send to error monitoring service
-      // e.g., Sentry, LogRocket, etc.
+      const errorReport = {
+        message: error.message,
+        stack: error.stack,
+        componentStack: errorInfo.componentStack,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        kenyaFirstContext: 'Enterprise SaaS Platform'
+      };
+      
+      // Send to monitoring service (implement your preferred service)
+      this.reportError(errorReport);
     }
   }
 
+  private reportError = (errorReport: any) => {
+    // Implement error reporting to your monitoring service
+    // e.g., Sentry, LogRocket, custom endpoint
+    fetch('/api/errors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(errorReport)
+    }).catch(() => {
+      // Fallback: store in localStorage for later retry
+      const errors = JSON.parse(localStorage.getItem('pending_errors') || '[]');
+      errors.push(errorReport);
+      localStorage.setItem('pending_errors', JSON.stringify(errors));
+    });
+  };
+
   handleRetry = () => {
+    perfMonitor.endTiming('error_recovery');
     this.setState({
       hasError: false,
       error: null,
