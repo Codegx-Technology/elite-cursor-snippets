@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Card from '@/components/Card';
+import Card from '@/components/ui/Card';
 import { FaCheck, FaCrown, FaFlag, FaMountain, FaRocket, FaCreditCard } from 'react-icons/fa6';
 import GraceCountdownOverlay from '@/components/GraceCountdownOverlay';
 import { usePlanGuard } from '@/context/PlanGuardContext'; // New import
