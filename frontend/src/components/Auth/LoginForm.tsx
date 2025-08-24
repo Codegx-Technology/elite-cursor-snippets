@@ -28,7 +28,7 @@ const LoginForm: React.FC = () => {
         localStorage.setItem('access_token', response.data.access_token);
         router.push('/dashboard');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError('An unexpected error occurred. Please try again.');
       console.error('Login error:', err);
     } finally {

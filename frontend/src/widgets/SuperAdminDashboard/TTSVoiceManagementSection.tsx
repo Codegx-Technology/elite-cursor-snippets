@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 interface VoiceVersion {
   version: string;
   registered_at: string;
-  metadata?: any;
+  metadata?: unknown;
 }
 
 interface VoiceStatus {
@@ -36,8 +36,8 @@ const TTSVoiceManagementSection: React.FC = () => {
       }
       const data = await response.json();
       setVoiceStatus(data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch voice status.');
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Failed to fetch voice status.');
     } finally {
       setLoading(false);
     }

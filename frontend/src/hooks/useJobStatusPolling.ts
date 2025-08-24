@@ -137,14 +137,14 @@ export function useJobStatusPolling() {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           }
         );
-      } catch (err: any) {
+      } catch (err: unknown) {
         setProgress({
           stage: 'Error',
           progress: 0,
           message: 'Network error during polling',
           isGenerating: false
         });
-        setJobError(err.message || 'Network error during polling.');
+        setJobError((err as Error).message || 'Network error during polling.');
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
       }
     };
