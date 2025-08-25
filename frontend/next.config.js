@@ -8,6 +8,7 @@ const nextConfig = {
   // Performance optimizations
   experimental: {
     optimizeCss: true,
+    allowedDevOrigins: ['http://192.168.56.1:3000'],
   },
 
   // Image optimization with Kenya-first considerations
@@ -33,6 +34,17 @@ const nextConfig = {
         })
       );
     }
+
+    // Fix react-icons vendor chunk issue
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'react-icons': require.resolve('react-icons'),
+      'react-icons/fa': require.resolve('react-icons/fa'),
+      'react-icons/fa6': require.resolve('react-icons/fa6'),
+      'react-icons/md': require.resolve('react-icons/md'),
+      'react-icons/hi': require.resolve('react-icons/hi'),
+      'react-icons/ai': require.resolve('react-icons/ai')
+    };
 
     return config;
   },

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from 'next/link';
 import PolicyModal from "./PolicyModal";
-import { FaShieldAlt, FaCookie, FaFileContract } from 'react-icons/fa';
+import { FaShieldAlt, FaCookie, FaFileContract } from 'react-icons/fa6';
 
 export default function Footer() {
   const [open, setOpen] = useState<null | "terms" | "privacy" | "cookies">(null);

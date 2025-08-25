@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Card } from '@/components/ui/card';
-import { FaChartLine, FaVideo, FaUsers, FaClock, FaDownload } from 'react-icons/fa';
+import { FaChartLine, FaVideo, FaUsers, FaClock, FaDownload } from 'react-icons/fa6';
 // Phase 2 Enterprise Components
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';

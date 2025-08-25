@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash } from 'react-icons/fa6';
 import { UseFormRegister, FieldValues } from 'react-hook-form';
 import { colors, spacing, typography, borderRadius } from '@/config/designTokens';
 import { cn } from '@/lib/utils';

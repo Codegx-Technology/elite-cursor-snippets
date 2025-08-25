@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa6';
 import { DataTable, ColumnDef } from '@/components/data-table/DataTable'; // Import DataTable and ColumnDef
 
 interface UserData {

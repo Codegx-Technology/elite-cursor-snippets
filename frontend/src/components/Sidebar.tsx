@@ -25,7 +25,7 @@ import {
   FaChartBar,
   FaFolder,
   FaSignInAlt
-} from 'react-icons/fa';
+} from 'react-icons/fa6';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean
 // [CONTEXT]: Enterprise sidebar with Kenya-first design and cultural elements

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FaFlag, FaMountain, FaExclamationTriangle, FaRedoAlt } from 'react-icons/fa';
+import { FaFlag, FaMountain, FaExclamationTriangle, FaRedoAlt } from 'react-icons/fa6';
 import { perfMonitor } from '@/lib/performance';
 import { useAriaUtils } from '@/hooks/useAccessibility';
 

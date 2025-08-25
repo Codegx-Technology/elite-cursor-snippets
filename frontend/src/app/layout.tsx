@@ -112,7 +112,7 @@ export default async function RootLayout({
         <link rel="dns-prefetch" href="//fonts.googleapis.com" />
         <link rel="dns-prefetch" href="//fonts.gstatic.com" />
       </head>
-      <body className={`${inter.className} contrast-boost`} suppressHydrationWarning={true}>
+      <body className={inter.className} suppressHydrationWarning={true}>
         <ToastProvider>
           <ErrorProvider>
             <AuthProvider>

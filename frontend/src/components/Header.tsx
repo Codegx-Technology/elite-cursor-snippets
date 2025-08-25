@@ -13,7 +13,7 @@ import {
   FaFlag,
   FaChevronDown,
   FaSignOutAlt
-} from 'react-icons/fa';
+} from 'react-icons/fa6';
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
 import { useAuth } from '@/context/AuthContext';

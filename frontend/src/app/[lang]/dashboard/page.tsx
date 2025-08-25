@@ -10,7 +10,7 @@ import React, { useEffect, useState } from 'react';
 import { usePlanGuard } from '@/context/PlanGuardContext';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
-import { FaVideo, FaCreditCard, FaCog, FaChartLine, FaImage, FaMusic } from 'react-icons/fa6';
+import { FaVideo, FaCreditCard, FaCog, FaChartLine, FaImage, FaMusic } from 'react-icons/fa';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';

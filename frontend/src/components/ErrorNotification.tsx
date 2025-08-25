@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { FaTimesCircle } from 'react-icons/fa';
+import { FaTimesCircle } from 'react-icons/fa6';
 import { useError } from '@/context/ErrorContext';
 
 const ErrorNotification: React.FC = () => {
