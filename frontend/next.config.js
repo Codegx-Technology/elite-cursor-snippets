@@ -8,15 +8,6 @@ const nextConfig = {
   // Performance optimizations
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: ['@/components/ui', '@/lib'],
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
   },
 
   // Image optimization with Kenya-first considerations
@@ -32,69 +23,9 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   
-  // Bundle analyzer for performance monitoring
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Optimize bundle splitting
-    if (!dev && !isServer) {
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          default: false,
-          vendors: false,
-          // Kenya-first UI components bundle
-          kenyaUI: {
-            name: 'kenya-ui',
-            chunks: 'all',
-            test: /[\\/]src[\\/]components[\\/]ui[\\/]/,
-            priority: 40,
-            enforce: true,
-          },
-          // Performance utilities bundle
-          performance: {
-            name: 'performance',
-            chunks: 'all',
-            test: /[\\/]src[\\/]lib[\\/]performance/,
-            priority: 35,
-            enforce: true,
-          },
-          // Accessibility hooks bundle
-          accessibility: {
-            name: 'accessibility',
-            chunks: 'all',
-            test: /[\\/]src[\\/]hooks[\\/]useAccessibility/,
-            priority: 30,
-            enforce: true,
-          },
-          // React vendor bundle
-          react: {
-            name: 'react',
-            chunks: 'all',
-            test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
-            priority: 25,
-            enforce: true,
-          },
-          // Common vendor bundle
-          vendor: {
-            name: 'vendor',
-            chunks: 'all',
-            test: /[\\/]node_modules[\\/]/,
-            priority: 20,
-            enforce: true,
-          },
-          // Common components bundle
-          common: {
-            name: 'common',
-            chunks: 'all',
-            minChunks: 2,
-            priority: 10,
-            reuseExistingChunk: true,
-            enforce: true,
-          },
-        },
-      };
-    }
-
-    // Add performance monitoring in development
+  // Simplified webpack configuration
+  webpack: (config, { dev, webpack }) => {
+    // Add performance monitoring in development only
     if (dev) {
       config.plugins.push(
         new webpack.DefinePlugin({
