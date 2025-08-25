@@ -358,6 +358,21 @@ export const ProjectSetupForm: React.FC<MultiStepFormProps<ProjectFormData>> = (
   );
 
   const steps: WizardStep<ProjectFormData>[] = [
+    {
+      id: 'project-details',
+      title: 'Maelezo ya Mradi',
+      description: 'Ingiza maelezo ya kimsingi ya mradi wako',
+      component: ProjectDetailsStep,
+      isValid: (data) => Boolean(data.projectName && data.description)
+    },
+    {
+      id: 'team-setup',
+      title: 'Mpangilio wa Timu',
+      description: 'Weka timu yako na bajeti',
+      component: TeamSetupStep,
+      isValid: (data) => Boolean(data.teamSize)
+    }
+  ];
 
   return (
     <FormWizard

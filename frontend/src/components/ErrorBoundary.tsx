@@ -21,6 +21,16 @@ interface ErrorBoundaryProps {
   fallback?: React.ComponentType<{ error: Error; retry: () => void }>;
 }
 
+interface ErrorReport {
+  message: string;
+  stack?: string;
+  componentStack?: string;
+  timestamp: string;
+  userAgent: string;
+  url: string;
+  kenyaFirstContext: string;
+}
+
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
@@ -52,7 +62,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     
     // Enhanced error reporting for production
     if (process.env.NODE_ENV === 'production') {
-      const errorReport = {
+      const errorReport: ErrorReport = {
         message: error.message,
         stack: error.stack,
         componentStack: errorInfo.componentStack,
@@ -67,7 +77,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     }
   }
 
-  private reportError = (errorReport: any) => {
+  private reportError = (errorReport: ErrorReport) => {
     // Implement error reporting to your monitoring service
     // e.g., Sentry, LogRocket, custom endpoint
     fetch('/api/errors', {

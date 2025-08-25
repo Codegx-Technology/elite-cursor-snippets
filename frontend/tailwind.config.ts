@@ -3,16 +3,7 @@
 // [GOAL]: Fix Tailwind utilities not loading by using correct v4 configuration
 // [TASK]: Create minimal, working Tailwind v4 config that loads utilities properly
 
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    extend: {
-      import { colors, fontFamilies } from './src/config/designTokens'; // Import design tokens
+import { colors, fontFamilies } from './src/config/designTokens';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -38,10 +29,6 @@ export default {
           '50%': { transform: 'translateY(-10px)' }
         }
       }
-    },
-  },
-  plugins: [],
-}
     },
   },
   plugins: [],

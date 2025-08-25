@@ -29,9 +29,9 @@ const RegisterForm: React.FC = () => {
         router.push('/login?registered=true'); // Redirect to login with success message
       }
 
-    } catch (err: any) {
-      if (err.response && err.response.data && err.response.data.detail) {
-        setError(err.response.data.detail);
+    } catch (err: unknown) {
+      if ((err as any).response && (err as any).response.data && (err as any).response.data.detail) {
+        setError((err as any).response.data.detail);
       } else {
         setError('An unexpected error occurred during registration. Please try again.');
       }

@@ -30,7 +30,7 @@ export interface WizardStepProps<TFormData> {
 }
 
 // Main Form Wizard Props
-export interface FormWizardProps<TFormData extends Record<string, any> = Record<string, any>> {
+export interface FormWizardProps<TFormData extends Record<string, unknown> = Record<string, unknown>> {
   steps: WizardStep<TFormData>[];
   onComplete: (data: TFormData) => void;
   onCancel?: () => void;
@@ -41,7 +41,7 @@ export interface FormWizardProps<TFormData extends Record<string, any> = Record<
   allowSkip?: boolean;
 }
 
-export const FormWizard = <TFormData extends Record<string, any>>({
+export const FormWizard = <TFormData extends Record<string, unknown>>({
   steps,
   onComplete,
   onCancel,

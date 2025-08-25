@@ -11,17 +11,17 @@ import { cn } from '@/lib/utils';
 // [GOAL]: Standardize FormInput to use design tokens and maintain cultural authenticity
 // [TASK]: Refactor to use centralized design system tokens
 
-interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface FormInputProps<TFieldValues extends FieldValues = FieldValues> extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: { message?: string }; // Updated error prop to match react-hook-form's FieldError
   icon?: React.ReactNode;
   helperText?: string;
   variant?: 'default' | 'kenya' | 'cultural' | 'elite';
   name?: string; // Optional: for react-hook-form registration
-  register?: UseFormRegister<FieldValues>; // Optional: react-hook-form register
+  register?: UseFormRegister<TFieldValues>; // Optional: react-hook-form register
 }
 
-export default function FormInput({
+export default function FormInput<TFieldValues extends FieldValues = FieldValues>({
   label,
   className = '',
   type = 'text',
