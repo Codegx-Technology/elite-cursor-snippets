@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserManagement, UserData } from '@/hooks/useUserManagement';
-import { FaSpinner, FaTrash, FaEdit, FaPlus } from 'react-icons/fa6';
+import { FaSpinner, FaTrash, FaEdit, FaPlus } from 'react-icons/fa';
 import Card from '@/components/Card';
 import DeleteUserModal from '@/components/Admin/DeleteUserModal';
 
@@ -124,3 +124,4 @@ export default function UserManagement() {
     </div>
   );
 }
+

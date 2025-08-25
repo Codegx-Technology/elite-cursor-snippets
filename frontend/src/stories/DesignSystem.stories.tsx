@@ -4,7 +4,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react';
 import { Button, Card, Input, Typography } from '@/components/ui/design-system';
-import { FaHeart, FaUser, FaVideo } from 'react-icons/fa6';
+import { FaHeart, FaUser, FaVideo } from 'react-icons/fa';
 
 // Button Stories
 const ButtonMeta: Meta<typeof Button> = {
@@ -331,3 +331,4 @@ export const DesignSystemShowcase: StoryObj = {
 export { CardDefault as Card };
 export { InputDefault as Input };
 export { TypographyHeadings as Typography };
+

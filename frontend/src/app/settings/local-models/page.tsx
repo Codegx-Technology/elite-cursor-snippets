@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocalModels } from '@/hooks/useLocalModels';
-import { FaSpinner, FaDownload, FaTrash } from 'react-icons/fa6';
+import { FaSpinner, FaDownload, FaTrash } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Reusable local models component
@@ -91,3 +91,4 @@ export default function LocalModels() {
     </div>
   );
 }
+

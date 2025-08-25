@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FaFlag, FaMountain } from 'react-icons/fa6';
+import { FaFlag, FaMountain } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Enterprise-grade loading spinner with Kenya-first design
@@ -157,3 +157,4 @@ export const LoadingOverlay = ({
     </div>
   );
 };
+

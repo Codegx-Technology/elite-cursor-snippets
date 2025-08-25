@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Card from '@/components/Card';
 import FormSelect from '@/components/FormSelect';
-import { FaVideo, FaPlay, FaStop, FaDownload, FaEye, FaFlag, FaMountain, FaMicrophone, FaExclamationTriangle } from 'react-icons/fa6';
+import { FaVideo, FaPlay, FaStop, FaDownload, FaEye, FaFlag, FaMountain, FaMicrophone, FaExclamationTriangle } from 'react-icons/fa';
 import { useVideoGenerator } from '@/hooks/useVideoGenerator';
 import PromptSuggester from '@/components/Video/PromptSuggester';
 import SimpleMode from '@/components/Video/SimpleMode';
@@ -437,3 +437,4 @@ export default function VideoGeneratePage() {
     </div>
   );
 }
+

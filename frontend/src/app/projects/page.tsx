@@ -5,7 +5,7 @@ import Card from '@/components/Card';
 import Pagination from '@/components/Pagination';
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
-import { FaPlus, FaVideo, FaImages, FaMusic, FaEdit, FaTrash, FaEye, FaFlag, FaMountain, FaFolder, FaClock, FaExclamationTriangle, FaSpinner } from 'react-icons/fa6';
+import { FaPlus, FaVideo, FaImages, FaMusic, FaEdit, FaTrash, FaEye, FaFlag, FaMountain, FaFolder, FaClock, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
 import { useProjects, Project } from '@/hooks/useProjects';
 import CreateProjectModal from '@/components/Project/CreateProjectModal';
 import EditProjectModal from '@/components/Project/EditProjectModal';
@@ -238,3 +238,4 @@ export default function ProjectsPage() {
     </div>
   );
 }
+

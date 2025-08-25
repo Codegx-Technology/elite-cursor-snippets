@@ -1,6 +1,6 @@
 'use client';
 
-import { FaFlag, FaMountain, FaSpinner } from 'react-icons/fa6';
+import { FaFlag, FaMountain, FaSpinner } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent
 // [CONTEXT]: Loading page component with Kenya-first design for better UX
@@ -109,3 +109,4 @@ export function ListItemSkeleton() {
     </div>
   );
 }
+

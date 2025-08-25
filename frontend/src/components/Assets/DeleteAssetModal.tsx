@@ -1,5 +1,5 @@
 
-import { FaTrash, FaTimes } from 'react-icons/fa6';
+import { FaTrash, FaTimes } from 'react-icons/fa';
 import { Asset } from '@/hooks/useAssetLibrary';
 
 interface DeleteAssetModalProps {
@@ -45,3 +45,4 @@ export default function DeleteAssetModal({ isOpen, onClose, onDelete, asset }: D
     </div>
   );
 }
+

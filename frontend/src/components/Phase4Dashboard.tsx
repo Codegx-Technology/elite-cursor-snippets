@@ -19,7 +19,7 @@ import AISuggestionsPanel from '@/components/AISuggestionsPanel';
 import { 
   FaRocket, FaUsers, FaBrain, FaVideo, FaLanguage, 
   FaChartLine, FaCog, FaGlobe, FaLightbulb, FaFlag 
-} from 'react-icons/fa6';
+} from 'react-icons/fa';
 
 const Phase4Dashboard: React.FC = () => {
   const { t, language, setLanguage, supportedLanguages, formatNumber } = useI18n();
@@ -362,3 +362,4 @@ const LanguagePanel: React.FC = () => {
 };
 
 export default Phase4Dashboard;
+

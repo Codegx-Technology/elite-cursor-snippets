@@ -11,7 +11,7 @@ import { useAriaUtils } from '@/hooks/useAccessibility';
 import Card from '@/components/ui/Card';
 import AccessibleButton from '@/components/AccessibleButton';
 import LoadingStates from '@/components/ui/LoadingStates';
-import { FaBrain, FaLightbulb, FaFlag, FaStar, FaClock, FaTools } from 'react-icons/fa6';
+import { FaBrain, FaLightbulb, FaFlag, FaStar, FaClock, FaTools } from 'react-icons/fa';
 
 interface AISuggestionsPanelProps {
   content?: string;
@@ -339,3 +339,4 @@ const AISuggestionsPanel: React.FC<AISuggestionsPanelProps> = ({
 };
 
 export default AISuggestionsPanel;
+

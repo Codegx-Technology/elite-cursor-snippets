@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FaHeartbeat, FaShieldAlt, FaPlay, FaPause, FaVolumeUp, FaVolumeMute, FaCog, FaExclamationTriangle, FaCheckCircle, FaSpinner } from 'react-icons/fa6';
+import { FaHeartbeat, FaShieldAlt, FaPlay, FaPause, FaVolumeUp, FaVolumeMute, FaCog, FaExclamationTriangle, FaCheckCircle, FaSpinner } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent + augmentsearch
 // [CONTEXT]: Health scanner UI component with Kenya-first design and real-time monitoring
@@ -347,3 +347,4 @@ export default function HealthScanner() {
     </div>
   );
 }
+

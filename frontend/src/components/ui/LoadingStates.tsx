@@ -8,7 +8,7 @@
 import React from 'react';
 import { colors, spacing, typography } from '@/config/designTokens';
 import { cn } from '@/lib/utils';
-import { FaSpinner, FaVideo, FaUpload, FaCog } from 'react-icons/fa6';
+import { FaSpinner, FaVideo, FaUpload, FaCog } from 'react-icons/fa';
 
 // Loading Spinner Component
 export interface LoadingSpinnerProps {
@@ -402,3 +402,4 @@ export default {
   PageLoading,
   LoadingButton
 };
+

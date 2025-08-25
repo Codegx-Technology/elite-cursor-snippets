@@ -8,7 +8,6 @@ const nextConfig = {
   // Performance optimizations
   experimental: {
     optimizeCss: true,
-    allowedDevOrigins: ['http://192.168.56.1:3000'],
   },
 
   // Image optimization with Kenya-first considerations

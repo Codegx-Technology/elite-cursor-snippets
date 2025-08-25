@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRBAC } from '@/hooks/useRBAC';
-import { FaSpinner } from 'react-icons/fa6';
+import { FaSpinner } from 'react-icons/fa';
 import Card from '@/components/Card';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
@@ -97,3 +97,4 @@ export default function RoleManagement() {
     </div>
   );
 }
+

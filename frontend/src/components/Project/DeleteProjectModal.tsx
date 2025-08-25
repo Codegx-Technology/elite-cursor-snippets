@@ -1,5 +1,5 @@
 
-import { FaTrash, FaTimes } from 'react-icons/fa6';
+import { FaTrash, FaTimes } from 'react-icons/fa';
 import { Project } from '@/hooks/useProjects';
 
 interface DeleteProjectModalProps {
@@ -45,3 +45,4 @@ export default function DeleteProjectModal({ isOpen, onClose, onDelete, project 
     </div>
   );
 }
+

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Card from '@/components/Card';
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
-import { FaUsers, FaUserPlus, FaCog, FaEnvelope, FaPhone, FaFlag, FaMountain, FaUserCircle, FaEdit, FaTrash, FaEye } from 'react-icons/fa6';
+import { FaUsers, FaUserPlus, FaCog, FaEnvelope, FaPhone, FaFlag, FaMountain, FaUserCircle, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent
 // [CONTEXT]: Team collaboration page with Kenya-first design and mobile-first approach
@@ -315,3 +315,4 @@ export default function TeamPage() {
     </div>
   );
 }
+

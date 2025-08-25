@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
-import { FaSpinner } from 'react-icons/fa6';
+import { FaSpinner } from 'react-icons/fa';
 
 const LoginForm: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -83,3 +83,4 @@ const LoginForm: React.FC = () => {
 };
 
 export default LoginForm;
+
