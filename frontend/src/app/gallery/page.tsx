@@ -32,63 +32,40 @@ export default function GalleryPage() {
 
   useEffect(() => {
     loadGalleryItems();
-  }, []);
+  }, [filter]);
 
   const loadGalleryItems = async () => {
     setIsLoading(true);
     setError(null);
-
-    const response = await apiClient.getGalleryItems();
-    handleApiResponse(
-      response,
-      (data) => {
-        // data is expected to be a paginated object: { items: any[]; total: number; page: number; pages: number }
-        const arr: GalleryItem[] = Array.isArray((data as { items: GalleryItem[] }).items)
-          ? (data as { items: GalleryItem[] }).items
-          : Array.isArray(data)
-          ? (data as GalleryItem[])
-          : [];
-        if (arr.length === 0) {
-          // Show sample Kenya-first content when no real data is available
-          setItems([
-            {
-              id: '1',
-              type: 'video',
-              title: 'Mount Kenya Sunrise',
-              thumbnail: '/api/placeholder/400/300',
-              createdAt: '2024-01-15',
-              duration: '2:30',
-              size: '45 MB',
-              tags: ['Kenya', 'Nature', 'Tourism']
-            },
-            {
-              id: '2',
-              type: 'image',
-              title: 'Maasai Mara Wildlife',
-              thumbnail: '/api/placeholder/400/300',
-              createdAt: '2024-01-14',
-              size: '2.1 MB',
-              tags: ['Wildlife', 'Safari', 'Kenya']
-            },
-            {
-              id: '3',
-              type: 'audio',
-              title: 'Swahili Narration',
-              thumbnail: '/api/placeholder/400/300',
-              createdAt: '2024-01-13',
-              duration: '1:45',
-              size: '8.5 MB',
-              tags: ['Swahili', 'Voice', 'Culture']
-            }
-          ]);
-        } else {
-          setItems(arr);
+    try {
+      const response = await apiClient.getGalleryItems(1, 12, filter);
+      handleApiResponse(
+        response,
+        (data) => {
+          const mappedItems = data.assets.map((asset: any) => ({
+            id: asset.id,
+            title: asset.name,
+            type: asset.type,
+            thumbnail: asset.thumbnail_url || asset.url,
+            createdAt: new Date(asset.uploaded_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+            size: `${(asset.size / 1024).toFixed(2)} KB`,
+            duration: 'N/A',
+            tags: ['ShujaaContent'],
+          }));
+          setItems(mappedItems);
+        },
+        (error) => {
+          setError(error);
+          setItems([]); // Clear items on error
         }
-      },
-      (error) => setError(error)
-    );
-
-    setIsLoading(false);
+      );
+    } catch (err) {
+      const error = err instanceof Error ? err.message : 'An unknown error occurred.';
+      setError(error);
+      setItems([]); // Clear items on error
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const filteredItems = items.filter(item => 

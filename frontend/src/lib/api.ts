@@ -333,6 +333,16 @@ class ApiClient {
     const search = new URLSearchParams({ page: String(page), limit: String(limit) });
     return this.request<{ projects: Project[]; total: number; page: number; pages: number }>(`/api/projects?${search}`);
   }
+
+  // Gallery
+  async getGalleryItems(page = 1, limit = 12, filter = 'all') {
+    const search = new URLSearchParams({ 
+      page: String(page), 
+      limit: String(limit),
+      type: filter 
+    });
+    return this.request<PaginatedResponse<GalleryItem>>(`/api/assets?${search}`);
+  }
   async createProject(project: Partial<Project>) {
     return this.request<Project>('/api/projects', {
       method: 'POST',
