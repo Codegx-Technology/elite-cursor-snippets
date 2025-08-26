@@ -745,37 +745,75 @@ async def get_reconciliation_report(month: str, current_user: User = Depends(get
     return report
 
 
-@app.get("/api/analytics")
-async def get_analytics_data(timeRange: str = "30d"):
-    # TODO: Replace with real data from a database or analytics service
-    return {
-        "overview": {
-            "total_videos": 1250,
-            "total_images": 8345,
-            "total_audio": 3210,
-            "total_views": 1200000,
-            "total_downloads": 780
-        },
-        "usage_trends": [
-            {"date": "2025-08-01", "videos": 20, "images": 150, "audio": 50},
-            {"date": "2025-08-02", "videos": 25, "images": 160, "audio": 55},
-            {"date": "2025-08-03", "videos": 30, "images": 170, "audio": 60},
-            {"date": "2025-08-04", "videos": 28, "images": 180, "audio": 65},
-            {"date": "2025-08-05", "videos": 35, "images": 190, "audio": 70},
-            {"date": "2025-08-06", "videos": 40, "images": 200, "audio": 75},
-            {"date": "2025-08-07", "videos": 45, "images": 210, "audio": 80},
-        ],
-        "popular_content": [
+@app.get("/api/analytics", response_model=AnalyticsData)
+async def get_analytics_data(db: Session = Depends(get_db), timeRange: str = "7d"):
+    """
+    Provides real-time analytics data for the Shujaa Studio dashboard.
+    """
+    try:
+        # --- Overview Metrics ---
+        total_users = db.query(func.count(User.id)).scalar()
+        total_videos = db.query(func.count(AuditLog.id)).filter(
+            AuditLog.event_type == AuditEventType.API_ACCESS,
+            AuditLog.message.like('%/generate_video%')
+        ).scalar()
+        total_audio = db.query(func.count(AuditLog.id)).filter(
+            AuditLog.event_type == AuditEventType.API_ACCESS,
+            AuditLog.message.like('%/generate_tts%')
+        ).scalar()
+        # Placeholder for images, as there's no distinct log event
+        total_images = total_videos * 5 
+
+        overview = {
+            "total_users": total_users,
+            "total_videos": total_videos,
+            "total_images": total_images,
+            "total_audio": total_audio,
+        }
+
+        # --- Usage Trends ---
+        days = 7 if timeRange == "7d" else 30
+        start_date = datetime.utcnow() - timedelta(days=days)
+        
+        usage_trends_query = db.query(
+            func.date(AuditLog.timestamp).label('date'),
+            func.count(AuditLog.id).filter(AuditLog.message.like('%/generate_video%')).label('videos'),
+            func.count(AuditLog.id).filter(AuditLog.message.like('%/generate_tts%')).label('audio')
+        ).filter(AuditLog.timestamp >= start_date).group_by(func.date(AuditLog.timestamp)).order_by(func.date(AuditLog.timestamp)).all()
+
+        usage_trends = [
+            {
+                "date": row.date.isoformat(),
+                "videos": row.videos,
+                "images": row.videos * 5, # Correlated placeholder
+                "audio": row.audio
+            } for row in usage_trends_query
+        ]
+
+        # --- Popular Content (remains mock data for now) ---
+        popular_content = [
             {"id": "1", "title": "Kenya Wildlife", "type": "video", "views": 1500, "downloads": 300},
             {"id": "2", "title": "Nairobi Skyline", "type": "image", "views": 2500, "downloads": 500},
             {"id": "3", "title": "Maasai Mara Beat", "type": "audio", "views": 3500, "downloads": 700},
-        ],
-        "performance_metrics": {
-            "avg_generation_time": 45,
-            "success_rate": 0.95,
-            "user_satisfaction": 4.8
+        ]
+
+        # --- Performance Metrics ---
+        performance_metrics = {
+            "cpu_usage_percent": psutil.cpu_percent(),
+            "memory_usage_percent": psutil.virtual_memory().percent,
+            "success_rate": 98.5,  # Placeholder until failure events are logged distinctly
+            "avg_generation_time": 42, # Placeholder
         }
-    }
+
+        return {
+            "overview": overview,
+            "usage_trends": usage_trends,
+            "popular_content": popular_content,
+            "performance_metrics": performance_metrics,
+        }
+    except Exception as e:
+        logger.error(f"Error fetching analytics data: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to fetch analytics data.")
 
 
 @app.get("/api/keys", response_model=List[ApiKey])

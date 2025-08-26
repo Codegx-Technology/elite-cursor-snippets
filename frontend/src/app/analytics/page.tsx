@@ -30,27 +30,24 @@ export default function AnalyticsPage() {
       setLoading(true);
       setError(null);
       try {
-        // Mock data for now - replace with actual API call
-        const mockData: AnalyticsData = {
-          totalVideos: 1247,
-          totalUsers: 892,
-          totalMinutes: 15640,
-          monthlyGrowth: [
-            { label: 'Jan', value: 45 },
-            { label: 'Feb', value: 67 },
-            { label: 'Mar', value: 52 },
-            { label: 'Apr', value: 78 },
-            { label: 'May', value: 61 },
-            { label: 'Jun', value: 89 },
-            { label: 'Jul', value: 95 }
-          ],
+        const response = await apiClient.get('/analytics');
+        const data = response.data;
+
+        // Map backend data to frontend format
+        const mappedData: AnalyticsData = {
+          totalVideos: data.overview.total_videos,
+          totalUsers: data.overview.total_users,
+          totalMinutes: data.overview.total_videos * 1.5, // Placeholder calculation
+          monthlyGrowth: data.usage_trends.map((item: any) => ({
+            label: new Date(item.date).toLocaleString('default', { month: 'short' }),
+            value: item.videos,
+          })),
           contentTypes: [
-            { label: 'Tourism 🦒', value: 45, color: '#00A651' },
-            { label: 'Culture 🎭', value: 30, color: '#FFD700' },
-            { label: 'Business 💼', value: 15, color: '#3B82F6' },
-            { label: 'Education 📚', value: 10, color: '#8B5CF6' }
+            { label: 'Videos 🎬', value: data.overview.total_videos, color: '#00A651' },
+            { label: 'Images 🖼️', value: data.overview.total_images, color: '#FFD700' },
+            { label: 'Audio 🎙️', value: data.overview.total_audio, color: '#3B82F6' },
           ],
-          regionalData: [
+          regionalData: [ // Keep mock data for this chart for now
             { label: 'Nairobi', value: 1250, color: '#00A651' },
             { label: 'Mombasa', value: 890, color: '#FFD700' },
             { label: 'Kisumu', value: 650, color: '#3B82F6' },
@@ -58,12 +55,10 @@ export default function AnalyticsPage() {
             { label: 'Eldoret', value: 380, color: '#F59E0B' }
           ]
         };
-        
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setAnalytics(mockData);
+
+        setAnalytics(mappedData);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Imeshindwa kupakia analytics');
+        setError(err instanceof Error ? err.message : 'Failed to load analytics data.');
       } finally {
         setLoading(false);
       }
