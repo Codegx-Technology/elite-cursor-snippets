@@ -59,6 +59,34 @@ async def update_existing_user(user_id: str, user_data: Dict[str, Any], db: Sess
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to update user: {e}")
 
+
+@router.get("/tenants/{tenant_id}/branding", response_model=Dict[str, Any])
+async def get_tenant_branding(tenant_id: str, db: Session = Depends(get_db), current_superadmin: User = Depends(get_current_superadmin_user)):
+    # TODO: Fetch real tenant branding data from database
+    # For now, return mock data
+    return {
+        "tenant_id": tenant_id,
+        "logo_url": "https://example.com/default_logo.png",
+        "primary_color": "#00A651",
+        "secondary_color": "#FFD700",
+        "custom_domain": f"tenant-{tenant_id}.shujaastudio.com",
+        "tls_status": "active",
+        "name": "Default Tenant"
+    }
+
+# --- Tenant Management ---
+@router.get("/audit-logs", response_model=List[Dict[str, Any]])
+async def get_all_audit_logs(db: Session = Depends(get_db), current_superadmin: User = Depends(get_current_superadmin_user)):
+    logs = db.query(AuditLog).order_by(AuditLog.timestamp.desc()).limit(100).all()
+    return [{
+        "id": str(log.id),
+        "timestamp": log.timestamp.isoformat(),
+        "event_type": log.event_type,
+        "message": log.message,
+        "user_id": str(log.user_id) if log.user_id else None,
+    } for log in logs]
+
+
 # --- Tenant Management ---
 @router.get("/tenants", response_model=List[Dict[str, Any]])
 async def get_all_tenants(db: Session = Depends(get_db), current_superadmin: User = Depends(get_current_superadmin_user)):

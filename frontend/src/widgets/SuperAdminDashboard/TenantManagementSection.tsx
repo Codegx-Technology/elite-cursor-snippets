@@ -1,10 +1,9 @@
-// frontend/src/widgets/SuperAdminDashboard/TenantManagementSection.tsx
-
 import React, { useState, useEffect } from 'react';
 import FormInput from '@/components/FormInput';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { apiClient, Tenant, TenantBrandingData } from '@/lib/api'; // Import Tenant type
+import { FaBuilding, FaSpinner, FaExclamationTriangle } from 'react-icons/fa'; // Added icons
 
 const TenantManagementSection: React.FC = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -12,6 +11,9 @@ const TenantManagementSection: React.FC = () => {
   const [currentTenant, setCurrentTenant] = useState<TenantBrandingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [brandingLoading, setBrandingLoading] = useState(false); // Added for branding loading
+  const [brandingError, setBrandingError] = useState<string | null>(null); // Added for branding error
+
 
   useEffect(() => {
     const fetchTenants = async () => {
@@ -22,7 +24,7 @@ const TenantManagementSection: React.FC = () => {
         if (response.data) {
           setTenants(response.data);
           if (response.data.length > 0) {
-            setSelectedTenantId(response.data[0].id);
+            setSelectedTenantId(String(response.data[0].id)); // Ensure ID is string
           }
         } else if (response.error) {
           setError(response.error);
@@ -41,19 +43,19 @@ const TenantManagementSection: React.FC = () => {
     if (!selectedTenantId) return;
 
     const fetchBranding = async () => {
-      setLoading(true);
-      setError(null);
+      setBrandingLoading(true); // Use branding specific loading
+      setBrandingError(null); // Use branding specific error
       try {
         const response = await apiClient.getTenantBranding(selectedTenantId);
         if (response.data) {
           setCurrentTenant(response.data);
         } else if (response.error) {
-          setError(response.error);
+          setBrandingError(response.error);
         }
       } catch (err: unknown) {
-        setError((err as Error).message || 'Failed to fetch tenant branding.');
+        setBrandingError((err as Error).message || 'Failed to fetch tenant branding.');
       } finally {
-        setLoading(false);
+        setBrandingLoading(false); // Use branding specific loading
       }
     };
 
@@ -66,14 +68,11 @@ const TenantManagementSection: React.FC = () => {
   };
 
   const handleSaveBranding = async () => {
-    // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix
-    // [CONTEXT]: Saving tenant branding settings in Super Admin dashboard.
-    // [GOAL]: Implement API call to update tenant branding.
-    // [TASK]: Call apiClient.updateTenantBranding and handle response.
-    if (!currentTenant) return;
+    if (!currentTenant || !selectedTenantId) return;
 
     try {
-      const response = await apiClient.updateTenantBranding(currentTenant.id, currentTenant);
+      // Assuming updateTenantBranding takes tenantId and data
+      const response = await apiClient.updateTenantBranding(selectedTenantId, currentTenant);
       if (response.data) {
         alert('Tenant branding saved successfully!');
       } else if (response.error) {
@@ -100,35 +99,58 @@ const TenantManagementSection: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-gray-50 p-4 rounded-lg text-center">
-        <p className="text-gray-600">Loading tenant branding settings...</p>
-      </div>
+      <Card className="p-4 flex items-center justify-center">
+        <FaSpinner className="animate-spin mr-2" /> Loading tenants...
+      </Card>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 p-4 rounded-lg text-center text-red-600">
-        <p>Error: {error}</p>
-      </div>
-    );
-  }
-
-  if (!currentTenant) {
-    return (
-      <div className="bg-yellow-50 p-4 rounded-lg text-center text-yellow-700">
-        <p>No tenant branding data found.</p>
-      </div>
+      <Card className="p-4 text-red-600 flex items-center">
+        <FaExclamationTriangle className="mr-2" /> Error: {error}
+      </Card>
     );
   }
 
   return (
-    <div className="bg-gray-50 p-4 rounded-lg">
-      <h4 className="text-lg font-semibold mb-2">Manage Tenants</h4>
+    <Card className="p-4">
+      <h4 className="text-lg font-semibold mb-4 flex items-center"><FaBuilding className="mr-2" /> Manage Tenants</h4>
       <p className="text-gray-600 mb-4">List, create, edit, and manage tenant plans.</p>
 
+      {/* Tenant Listing Table */}
+      <div className="mb-6 overflow-x-auto">
+        <h5 className="text-md font-medium text-gray-800 mb-2">All Tenants</h5>
+        <table className="min-w-full bg-white">
+          <thead>
+            <tr>
+              <th className="py-2 px-4 border-b text-left">ID</th>
+              <th className="py-2 px-4 border-b text-left">Name</th>
+              <th className="py-2 px-4 border-b text-left">Plan</th>
+              <th className="py-2 px-4 border-b text-left">Active</th>
+              <th className="py-2 px-4 border-b text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tenants.map(tenant => (
+              <tr key={tenant.id}>
+                <td className="py-2 px-4 border-b text-sm">{tenant.id}</td>
+                <td className="py-2 px-4 border-b text-sm">{tenant.name}</td>
+                <td className="py-2 px-4 border-b text-sm">{tenant.plan}</td>
+                <td className="py-2 px-4 border-b text-sm">{tenant.is_active ? 'Yes' : 'No'}</td>
+                <td className="py-2 px-4 border-b text-sm">
+                  <button className="text-blue-600 hover:underline mr-2">Edit</button>
+                  <button className="text-red-600 hover:underline">Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Tenant Selection Dropdown */}
       <div className="mb-6">
-        <label htmlFor="tenant-select" className="block text-sm font-medium text-gray-700 mb-2">Select Tenant:</label>
+        <label htmlFor="tenant-select" className="block text-sm font-medium text-gray-700 mb-2">Select Tenant for Branding:</label>
         <select
           id="tenant-select"
           className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
@@ -161,7 +183,7 @@ const TenantManagementSection: React.FC = () => {
             type="text"
             id="name"
             name="name"
-            value={currentTenant.name}
+            value={currentTenant.name || ''} // Added default empty string
             onChange={handleInputChange}
           />
           <FormInput
@@ -169,7 +191,7 @@ const TenantManagementSection: React.FC = () => {
             type="text"
             id="logo_url"
             name="logo_url"
-            value={currentTenant.logo_url}
+            value={currentTenant.logo_url || ''} // Added default empty string
             onChange={handleInputChange}
           />
           <FormInput
@@ -177,7 +199,7 @@ const TenantManagementSection: React.FC = () => {
             type="color"
             id="primary_color"
             name="primary_color"
-            value={currentTenant.primary_color}
+            value={currentTenant.primary_color || '#000000'} // Added default color
             onChange={handleInputChange}
           />
           <FormInput
@@ -185,7 +207,7 @@ const TenantManagementSection: React.FC = () => {
             type="color"
             id="secondary_color"
             name="secondary_color"
-            value={currentTenant.secondary_color}
+            value={currentTenant.secondary_color || '#000000'} // Added default color
             onChange={handleInputChange}
           />
           <FormInput
@@ -193,7 +215,7 @@ const TenantManagementSection: React.FC = () => {
             type="text"
             id="custom_domain"
             name="custom_domain"
-            value={currentTenant.custom_domain}
+            value={currentTenant.custom_domain || ''} // Added default empty string
             onChange={handleInputChange}
           />
           <div>
@@ -205,9 +227,7 @@ const TenantManagementSection: React.FC = () => {
           </Button>
         </div>
       )}
-
-      {/* TODO: Implement tenant listing, search, and actions */}
-    </div>
+    </Card>
   );
 };
 

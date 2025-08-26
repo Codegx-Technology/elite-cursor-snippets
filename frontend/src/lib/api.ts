@@ -206,6 +206,14 @@ export interface Tenant {
   plan: string;
 }
 
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  event_type: string;
+  message: string;
+  user_id?: string;
+}
+
 export interface CreateTenantData {
   name: string;
   is_active?: boolean;
@@ -373,6 +381,24 @@ class ApiClient {
   // Billing
   async getBillingHistory() {
     return this.request<BillingRecord[]>('/api/billing/history');
+  }
+
+  // SuperAdmin
+  async getSuperAdminUsers() {
+    return this.request<UserData[]>('/superadmin/users');
+  }
+
+  async getSuperAdminTenants() {
+    return this.request<Tenant[]>('/superadmin/tenants');
+  }
+
+  async getSuperAdminAuditLogs() {
+    return this.request<AuditLogEntry[]>('/superadmin/audit-logs');
+  }
+
+  // Tenant Branding
+  async getTenantBranding(tenantId: string) {
+    return this.request<TenantBrandingData>(`/superadmin/tenants/${tenantId}/branding`);
   }
 
   // Auth

@@ -1,4 +1,7 @@
 import React from 'react';
+import UserManagementSection from '../SuperAdminDashboard/UserManagementSection';
+import TenantManagementSection from '../SuperAdminDashboard/TenantManagementSection';
+import AuditLogSection from '../SuperAdminDashboard/AuditLogSection';
 
 interface Props {
   userId?: string;
@@ -11,20 +14,9 @@ export default function SuperAdminDashboardWidget({ userId }: Props) {
       <p className="text-gray-600">Welcome, Super Admin! User ID: {userId}</p>
 
       <div className="mt-6 space-y-4">
-        <h3 className="text-xl font-semibold">User Management</h3>
-        <ul className="list-disc list-inside ml-4">
-          <li>Create / Edit / Suspend / Delete any tenant admin or user (TODO)</li>
-          <li>Reset passwords (TODO)</li>
-          <li>Assign roles (Tenant Admin, Regular User, Developer, etc.) (TODO)</li>
-        </ul>
+        <UserManagementSection />
 
-        <h3 className="text-xl font-semibold">Tenant Management</h3>
-        <ul className="list-disc list-inside ml-4">
-          <li>Create tenants (organizations) (TODO)</li>
-          <li>View all tenants with plan info (Free, Pro, Enterprise) (TODO)</li>
-          <li>Assign / revoke tenant admins (TODO)</li>
-          <li>Manage subscription plans & billing states (TODO)</li>
-        </ul>
+        <TenantManagementSection />
 
         <h3 className="text-xl font-semibold">PlanGuard Control</h3>
         <ul className="list-disc list-inside ml-4">
@@ -57,12 +49,7 @@ export default function SuperAdminDashboardWidget({ userId }: Props) {
           <li>Backup & restore configs (TODO)</li>
         </ul>
 
-        <h3 className="text-xl font-semibold">Audit & Logs</h3>
-        <ul className="list-disc list-inside ml-4">
-          <li>View all system events (logins, plan changes, widget installs) (TODO)</li>
-          <li>Export audit logs (CSV, JSON) (TODO)</li>
-          <li>Filter logs per tenant (TODO)</li>
-        </ul>
+        <AuditLogSection />
 
         <h3 className="text-xl font-semibold">Security</h3>
         <ul className="list-disc list-inside ml-4">
