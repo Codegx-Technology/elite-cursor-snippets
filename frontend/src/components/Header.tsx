@@ -3,17 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  FaSearch,
-  FaBell,
-  FaUserCircle,
-  FaVideo,
-  FaPlus,
-  FaGlobe,
-  FaFlag,
-  FaChevronDown,
-  FaSignOutAlt
-} from 'react-icons/fa';
+// Icons replaced with inline SVGs to avoid react-icons dependency issues
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
 import { useAuth } from '@/context/AuthContext';
@@ -90,19 +80,17 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
             onClick={() => setSidebarOpen(!isSidebarOpen)}
             aria-label={isSidebarOpen ? 'Close menu' : 'Open menu'}
           >
-            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {isSidebarOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              )}
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
             </svg>
           </button>
 
           {/* Kenya Flag & Title - Mobile optimized */}
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="flex items-center space-x-1">
-              <FaFlag className="text-green-600 text-lg sm:text-xl" />
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+              </svg>
               <span className="text-red-600 text-sm">•</span>
               <span className="text-black text-sm">•</span>
             </div>
@@ -126,11 +114,15 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
           {isLoggedIn && (
             <div className="hidden lg:flex items-center space-x-2">
               <Link href="/generate" className="btn-primary px-4 py-2 text-sm flex items-center space-x-2 hover:no-underline">
-                <FaPlus />
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 01-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
                 <span>New Video</span>
               </Link>
               <Link href="/video-generate" className="btn-elite px-4 py-2 text-sm flex items-center space-x-2 text-white hover:no-underline">
-                <FaVideo />
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 0010 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                </svg>
                 <span>Quick Generate</span>
               </Link>
             </div>
@@ -141,7 +133,9 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
         <div className="hidden md:flex flex-1 max-w-md mx-8">
           <div className="relative w-full">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaSearch className="text-gray-400" />
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+              </svg>
             </div>
             <input
               type="text"
@@ -157,7 +151,9 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
         <div className="flex items-center space-x-2 sm:space-x-4">
           {/* Language Selector */}
           <div className="hidden lg:flex items-center space-x-1 text-sm" style={{ color: 'var(--soft-text)' }}>
-            <FaGlobe />
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5 3a2 2 0 00-2 2v10a2 2 0 110 4h2a2 2 0 110-4V5a2 2 0 012-2zm8 0a2 2 0 110 4h2a2 2 0 110-4V5a2 2 0 012-2zm-1 11h.01" clipRule="evenodd" />
+            </svg>
             <span>EN/SW</span>
           </div>
 
@@ -169,7 +165,9 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
                 onClick={() => setShowNotifications(!showNotifications)}
                 aria-label="Notifications"
               >
-                <FaBell className="text-gray-600" size={18} />
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                </svg>
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
                     {unreadCount}
@@ -210,8 +208,12 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 aria-label="User menu"
               >
-                <FaUserCircle className="text-gray-600" size={20} />
-                <FaChevronDown className="text-gray-400 text-xs hidden sm:block" />
+                <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
+                </svg>
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
               </button>
 
               {/* User Dropdown - Mobile responsive */}
@@ -230,7 +232,9 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200 flex items-center space-x-2"
                     >
-                      <FaSignOutAlt className="text-gray-500" />
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+                      </svg>
                       <span>Sign out</span>
                     </button>
                   </div>
@@ -256,7 +260,9 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
         <div className="md:hidden mt-3 sm:mt-4">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaSearch className="text-gray-400" />
+              <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+              </svg>
             </div>
             <input
               type="text"
@@ -272,3 +278,4 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
     </header>
   );
 }
+

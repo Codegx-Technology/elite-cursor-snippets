@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
 import Card from '@/components/Card';
@@ -81,7 +82,7 @@ const LoginPage: React.FC = () => {
               <span className="text-3xl">🇰🇪</span>
               <h1 className="text-2xl font-bold text-gray-800">Shujaa Studio</h1>
             </div>
-            <p className="text-gray-600">Welcome back to Kenya's AI Video Platform</p>
+            <p className="text-gray-600">Welcome back to Kenya&apos;s AI Video Platform</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -144,10 +145,10 @@ const LoginPage: React.FC = () => {
           
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <a href="/register" className="text-green-600 hover:text-green-800 font-medium transition-colors duration-200">
+              Don&apos;t have an account?{' '}
+              <Link href="/register" className="text-green-600 hover:text-green-800 font-medium transition-colors duration-200">
                 Register here
-              </a>
+              </Link>
             </p>
           </div>
         </div>

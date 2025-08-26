@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/check-fa6-imports.js && next build",
     "start": "next start",
     "lint": "next lint",
+    "check-fa6": "node scripts/check-fa6-imports.js",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

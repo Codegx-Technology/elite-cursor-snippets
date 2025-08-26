@@ -401,7 +401,7 @@ export class VideoProcessingEngine {
     }));
   }
 
-  private notifyCompletion(jobId: string, output: any): void {
+  private notifyCompletion(jobId: string, output: unknown): void {
     window.dispatchEvent(new CustomEvent('videoProcessingComplete', {
       detail: { jobId, output }
     }));

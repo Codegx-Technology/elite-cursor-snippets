@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 const RegisterForm: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -28,9 +29,9 @@ const RegisterForm: React.FC = () => {
         router.push('/login?registered=true'); // Redirect to login with success message
       }
 
-    } catch (err: any) {
-      if (err.response && err.response.data && err.response.data.detail) {
-        setError(err.response.data.detail);
+    } catch (err: unknown) {
+      if ((err as any).response && (err as any).response.data && (err as any).response.data.detail) {
+        setError((err as any).response.data.detail);
       } else {
         setError('An unexpected error occurred during registration. Please try again.');
       }
@@ -91,7 +92,7 @@ const RegisterForm: React.FC = () => {
         </button>
       </form>
       <p className="text-center text-soft-text text-sm mt-4">
-        Already have an account? <a href="/login" className="text-primary-gradient-start font-medium">Login here</a>
+        Already have an account? <Link href="/login" className="text-primary-gradient-start font-medium">Login here</Link>
       </p>
     </div>
   );

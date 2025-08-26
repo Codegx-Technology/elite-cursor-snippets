@@ -33,8 +33,8 @@ export function useTenantManagement() {
         (data) => setTenants(data),
         (error) => setError(error)
       );
-    } catch (e: any) {
-      setError(e?.message || 'Failed to load tenants');
+    } catch (e: unknown) {
+      setError((e as Error)?.message || 'Failed to load tenants');
     } finally {
       setIsLoading(false);
     }
@@ -50,8 +50,8 @@ export function useTenantManagement() {
         (data) => setTenant(data),
         (error) => setError(error)
       );
-    } catch (e: any) {
-      setError(e?.message || 'Failed to load tenant');
+    } catch (e: unknown) {
+      setError((e as Error)?.message || 'Failed to load tenant');
     } finally {
       setIsLoading(false);
     }
@@ -67,8 +67,8 @@ export function useTenantManagement() {
         },
         (error) => setError(error)
       );
-    } catch (e: any) {
-      setError(e?.message || 'Failed to create tenant');
+    } catch (e: unknown) {
+      setError((e as Error)?.message || 'Failed to create tenant');
     }
   };
 
@@ -82,8 +82,8 @@ export function useTenantManagement() {
         },
         (error) => setError(error)
       );
-    } catch (e: any) {
-      setError(e?.message || 'Failed to update tenant');
+    } catch (e: unknown) {
+      setError((e as Error)?.message || 'Failed to update tenant');
     }
   };
 
@@ -97,8 +97,8 @@ export function useTenantManagement() {
         },
         (error) => setError(error)
       );
-    } catch (e: any) {
-      setError(e?.message || 'Failed to delete tenant');
+    } catch (e: unknown) {
+      setError((e as Error)?.message || 'Failed to delete tenant');
     }
   };
 

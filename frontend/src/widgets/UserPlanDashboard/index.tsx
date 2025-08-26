@@ -12,7 +12,7 @@ import { PlanMessages } from '@/ui/planMessages';
 
 export default function UserPlanDashboardWidget() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [planInfo, setPlanInfo] = useState<any>(null);
+  const [planInfo, setPlanInfo] = useState<PlanStatus | null>(null);
   const [loadingPlan, setLoadingPlan] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,9 +24,9 @@ export default function UserPlanDashboardWidget() {
         try {
           const currentPlan = await getCurrentPlan({ userId: user.id, userRole: user.role });
           setPlanInfo(currentPlan);
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error("Failed to fetch user plan:", err);
-          setError(err.message || "Failed to load plan information.");
+          setError((err as Error).message || "Failed to load plan information.");
         } finally {
           setLoadingPlan(false);
         }

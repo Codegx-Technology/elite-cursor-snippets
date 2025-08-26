@@ -310,8 +310,8 @@ class ApiClient {
         return { status, error: (data && (data.detail || data.error)) || res.statusText };
       }
       return { status, data } as ApiResponse<T>;
-    } catch (e: any) {
-      return { status: 0, error: e?.message || 'Network error' };
+    } catch (e: unknown) {
+      return { status: 0, error: (e as Error)?.message || 'Network error' };
     }
   }
 
@@ -381,8 +381,8 @@ class ApiClient {
         return { status, error: (data && (data.detail || data.error)) || res.statusText } as ApiResponse<{ access_token: string; token_type: string }>;
       }
       return { status, data } as ApiResponse<{ access_token: string; token_type: string }>;
-    } catch (e: any) {
-      return { status: 0, error: e?.message || 'Network error' } as ApiResponse<{ access_token: string; token_type: string }>;
+    } catch (e: unknown) {
+      return { status: 0, error: (e as Error)?.message || 'Network error' } as ApiResponse<{ access_token: string; token_type: string }>;
     }
   }
 }

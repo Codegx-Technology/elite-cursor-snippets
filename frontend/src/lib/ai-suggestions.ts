@@ -7,7 +7,20 @@
 
 import { globalCache, perfMonitor } from './performance';
 
+export interface KenyaContext {
+  culturalContext: string;
+  targetMarket: string;
+  culturalSensitivity: string;
+  languageConsiderations: string[];
+  regionalFocus: string[];
+  culturalElements: string[];
+  keywords: string[];
+  values: string[];
+}
+
 // AI suggestion types
+
+
 export interface ContentSuggestion {
   id: string;
   type: 'video_topic' | 'script_enhancement' | 'visual_element' | 'cultural_context' | 'music_recommendation';
@@ -105,8 +118,8 @@ export class AISuggestionEngine {
     }
   }
 
-  // Build Kenya-first context for AI
-  private buildKenyaContext(input: any): any {
+  
+  private buildKenyaContext(input: Parameters<AISuggestionEngine['generateSuggestions']>[0]): KenyaContext {
     const category = input.category ? KENYA_CONTENT_CATEGORIES[input.category] : null;
     
     return {
@@ -122,7 +135,7 @@ export class AISuggestionEngine {
   }
 
   // Mock AI suggestions (replace with actual AI service)
-  private async generateMockSuggestions(input: any, context: any): Promise<ContentSuggestion[]> {
+  private async generateMockSuggestions(input: Parameters<AISuggestionEngine['generateSuggestions']>[0], context: KenyaContext): Promise<ContentSuggestion[]> {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -222,7 +235,7 @@ export class AISuggestionEngine {
   }
 
   // Fallback suggestions when AI fails
-  private getFallbackSuggestions(input: any): ContentSuggestion[] {
+  private getFallbackSuggestions(input: Parameters<AISuggestionEngine['generateSuggestions']>[0]): ContentSuggestion[] {
     return [
       {
         id: 'fallback_1',
@@ -279,7 +292,7 @@ export class AISuggestionEngine {
   }
 
   // Perform content analysis
-  private performContentAnalysis(content: string): any {
+  private performContentAnalysis(content: string): CulturalAnalysis {
     const kenyaKeywords = [
       'kenya', 'nairobi', 'mombasa', 'kisumu', 'harambee', 'safari', 'maasai',
       'swahili', 'sheng', 'ugali', 'nyama choma', 'matatu', 'm-pesa'

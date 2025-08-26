@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { FaFlag, FaMountain, FaExclamationTriangle, FaRedoAlt } from 'react-icons/fa';
 import { perfMonitor } from '@/lib/performance';
 import { useAriaUtils } from '@/hooks/useAccessibility';
 
@@ -19,6 +18,16 @@ interface ErrorBoundaryState {
 interface ErrorBoundaryProps {
   children: React.ReactNode;
   fallback?: React.ComponentType<{ error: Error; retry: () => void }>;
+}
+
+interface ErrorReport {
+  message: string;
+  stack?: string;
+  componentStack?: string;
+  timestamp: string;
+  userAgent: string;
+  url: string;
+  kenyaFirstContext: string;
 }
 
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -52,7 +61,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     
     // Enhanced error reporting for production
     if (process.env.NODE_ENV === 'production') {
-      const errorReport = {
+      const errorReport: ErrorReport = {
         message: error.message,
         stack: error.stack,
         componentStack: errorInfo.componentStack,
@@ -67,7 +76,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     }
   }
 
-  private reportError = (errorReport: any) => {
+  private reportError = (errorReport: ErrorReport) => {
     // Implement error reporting to your monitoring service
     // e.g., Sentry, LogRocket, custom endpoint
     fetch('/api/errors', {
@@ -114,8 +123,12 @@ function DefaultErrorFallback({ error, retry }: { error: Error; retry: () => voi
         <div className="mb-8">
           <div className="flex items-center justify-center space-x-3 mb-4">
             <div className="flex items-center space-x-1">
-              <FaFlag className="text-3xl text-green-600" />
-              <FaMountain className="text-3xl text-yellow-500" />
+              <svg className="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+              </svg>
+              <svg className="w-8 h-8 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+              </svg>
             </div>
           </div>
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Shujaa Studio</h1>
@@ -125,7 +138,9 @@ function DefaultErrorFallback({ error, retry }: { error: Error; retry: () => voi
         {/* Error Icon */}
         <div className="mb-6">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FaExclamationTriangle className="text-3xl text-red-600" />
+            <svg className="w-8 h-8 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
           </div>
         </div>
 
@@ -133,7 +148,7 @@ function DefaultErrorFallback({ error, retry }: { error: Error; retry: () => voi
         <div className="mb-8">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Oops! Something went wrong</h2>
           <p className="text-gray-600 mb-4">
-            We encountered an unexpected error. Don't worry, our team has been notified and we're working to fix it.
+            We encountered an unexpected error. Don&apos;t worry, our team has been notified and we&apos;re working to fix it.
           </p>
           
           {process.env.NODE_ENV === 'development' && (
@@ -155,7 +170,9 @@ function DefaultErrorFallback({ error, retry }: { error: Error; retry: () => voi
             onClick={retry}
             className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
           >
-            <FaRedoAlt />
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+            </svg>
             <span>Try Again</span>
           </button>
           
@@ -177,7 +194,7 @@ function DefaultErrorFallback({ error, retry }: { error: Error; retry: () => voi
         {/* Cultural Footer */}
         <div className="bg-gradient-to-r from-green-600 via-red-600 to-black p-4 rounded-lg text-white text-center">
           <p className="text-sm">
-            🇰🇪 Asante for your patience • We'll be back stronger • Harambee!
+            🇰🇪 Asante for your patience • We&apos;ll be back stronger • Harambee!
           </p>
         </div>
       </div>
@@ -209,7 +226,9 @@ export function SimpleErrorFallback({
 }) {
   return (
     <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-      <FaExclamationTriangle className="text-red-600 text-2xl mx-auto mb-2" />
+      <svg className="w-6 h-6 text-red-600 mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+      </svg>
       <p className="text-red-800 font-medium mb-2">{message}</p>
       <button
         onClick={retry}

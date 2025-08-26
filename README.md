@@ -144,6 +144,7 @@ User Request → Enhanced Router → Analysis → Method Selection → Generatio
 - **Next.js 15.4.6**: React framework with App Router
 - **TypeScript**: Type-safe development
 - **Tailwind CSS**: Utility-first styling with Kenya-first design
+- **Inline SVG Icons**: Zero external dependencies for bulletproof UI stability
 - **PWA Support**: Offline capability and mobile optimization
 
 #### **Backend**
@@ -232,6 +233,7 @@ cd backend && python api.py
 - **Accessibility**: WCAG 2.1 AA compliance
 - **Security**: Payment integration security validated
 - **UX**: Kenya-first cultural authenticity verified
+- **UI Stability**: Zero external icon dependencies with inline SVGs
 
 ## 🎬 Usage Examples
 

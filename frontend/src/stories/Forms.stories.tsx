@@ -109,8 +109,13 @@ const CustomWizardMeta: Meta<typeof FormWizard> = {
   },
 };
 
+interface BusinessFormData {
+  businessName: string;
+  registrationNumber: string;
+}
+
 // Custom Business Registration Form
-const BusinessInfoStep: React.FC<any> = ({ data, updateData, variant }) => (
+const BusinessInfoStep: React.FC<WizardStepProps<BusinessFormData>> = ({ data, updateData, variant }) => (
   <div className="space-y-6">
     <TextInputStep
       data={data}
@@ -135,7 +140,13 @@ const BusinessInfoStep: React.FC<any> = ({ data, updateData, variant }) => (
   </div>
 );
 
-const LocationStep: React.FC<any> = ({ data, updateData, variant }) => {
+interface LocationFormData {
+  county: string;
+  town: string;
+  address?: string;
+}
+
+const LocationStep: React.FC<WizardStepProps<LocationFormData>> = ({ data, updateData, variant }) => {
   const counties = [
     { value: 'nairobi', label: 'Nairobi' },
     { value: 'mombasa', label: 'Mombasa' },
@@ -232,7 +243,14 @@ export const BusinessRegistration: StoryObj<typeof FormWizard> = {
 };
 
 // Tourism Package Creation Form
-const PackageDetailsStep: React.FC<any> = ({ data, updateData, variant }) => {
+interface PackageFormData {
+  packageType: string;
+  packageName: string;
+  duration: number;
+  price: number;
+}
+
+const PackageDetailsStep: React.FC<WizardStepProps<PackageFormData>> = ({ data, updateData, variant }) => {
   const packageTypes = [
     { value: 'safari', label: 'Safari ya Wanyamapori' },
     { value: 'cultural', label: 'Ziara za Kitamaduni' },

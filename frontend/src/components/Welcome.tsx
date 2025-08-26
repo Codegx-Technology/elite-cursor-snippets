@@ -353,3 +353,4 @@ export default function Welcome({ title }: { title: string }) {
     </div>
   );
 }
+

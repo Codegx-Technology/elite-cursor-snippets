@@ -204,8 +204,15 @@ const Phase4Dashboard: React.FC = () => {
   );
 };
 
+interface DashboardStats {
+  collaborationSessions: number;
+  videosProcessed: number;
+  aiSuggestions: number;
+  languagesSwitched: number;
+}
+
 // Overview Panel Component
-const OverviewPanel: React.FC<{ stats: any }> = ({ stats }) => {
+const OverviewPanel: React.FC<{ stats: DashboardStats }> = ({ stats }) => {
   const { t } = useI18n();
 
   const achievements = [
@@ -355,3 +362,4 @@ const LanguagePanel: React.FC = () => {
 };
 
 export default Phase4Dashboard;
+

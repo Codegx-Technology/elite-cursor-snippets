@@ -92,7 +92,7 @@ export const storage = {
 };
 
 // Debounce utility for performance
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
@@ -104,7 +104,7 @@ export function debounce<T extends (...args: any[]) => any>(
 }
 
 // Throttle utility for performance
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
   limit: number
 ): (...args: Parameters<T>) => void {
@@ -184,7 +184,7 @@ export const validators = {
     }
   },
 
-  required: (value: any): boolean => {
+  required: (value: unknown): boolean => {
     if (typeof value === 'string') return value.trim().length > 0;
     if (Array.isArray(value)) return value.length > 0;
     return value !== null && value !== undefined;
@@ -227,7 +227,7 @@ export const device = {
 };
 
 // Error reporting utility
-export function reportError(error: Error, context?: Record<string, any>): void {
+export function reportError(error: Error, context?: Record<string, unknown>): void {
   if (process.env.NODE_ENV === 'development') {
     console.error('Error reported:', error, context);
   } else {
@@ -246,7 +246,7 @@ export function isFeatureEnabled(feature: string): boolean {
 
 // Analytics utility
 export const analytics = {
-  track: (event: string, properties?: Record<string, any>): void => {
+  track: (event: string, properties?: Record<string, unknown>): void => {
     if (process.env.NODE_ENV === 'development') {
       console.log('📊 Analytics:', event, properties);
     } else {
@@ -255,11 +255,11 @@ export const analytics = {
     }
   },
 
-  page: (page: string, properties?: Record<string, any>): void => {
+  page: (page: string, properties?: Record<string, unknown>): void => {
     analytics.track('page_view', { page, ...properties });
   },
 
-  user: (userId: string, properties?: Record<string, any>): void => {
+  user: (userId: string, properties?: Record<string, unknown>): void => {
     analytics.track('user_identify', { userId, ...properties });
   }
 };

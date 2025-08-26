@@ -60,9 +60,9 @@ const Dashboard: React.FC = () => {
         const usageResponse = await axios.get('http://localhost:8000/users/me/usage', { headers });
         setUserUsage(usageResponse.data);
 
-      } catch (err: any) {
-        if (err.response && err.response.data && err.response.data.detail) {
-          setError(err.response.data.detail);
+      } catch (err: unknown) {
+        if ((err as any).response && (err as any).response.data && (err as any).response.data.detail) {
+          setError((err as any).response.data.detail);
         } else {
           setError('Failed to load dashboard data. Please try again.');
         }

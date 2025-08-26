@@ -588,7 +588,7 @@ export default function PricingPage() {
           <div>
             <h4 className="font-medium text-gray-900 mb-1">Do you offer refunds?</h4>
             <p className="text-sm text-gray-600">
-              We offer a 30-day money-back guarantee if you're not satisfied with our service.
+              We offer a 30-day money-back guarantee if you&apos;re not satisfied with our service.
             </p>
           </div>
         </div>

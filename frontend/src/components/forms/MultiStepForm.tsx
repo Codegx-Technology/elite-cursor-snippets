@@ -11,8 +11,25 @@ import { Button } from '@/components/ui/design-system';
 import { colors } from '@/config/designTokens';
 import { FaUser, FaVideo, FaCog, FaCheck } from 'react-icons/fa';
 
+interface VideoFormData {
+  videoType: string;
+  title: string;
+  description: string;
+  language: string;
+  duration: string;
+  targetAudience?: string;
+}
+
+interface ProjectFormData {
+  projectName: string;
+  description: string;
+  teamSize: number;
+  budget?: number;
+}
+
+
 // Video Creation Form Steps
-const VideoCreationStep: React.FC<any> = ({ data, updateData, variant }) => {
+const VideoCreationStep: React.FC<WizardStepProps<VideoFormData>> = ({ data, updateData, variant }) => {
   const videoTypes = [
     { value: 'tourism', label: 'Utalii (Tourism)' },
     { value: 'cultural', label: 'Utamaduni (Cultural)' },
@@ -60,7 +77,7 @@ const VideoCreationStep: React.FC<any> = ({ data, updateData, variant }) => {
   );
 };
 
-const PersonalizationStep: React.FC<any> = ({ data, updateData, variant }) => {
+const PersonalizationStep: React.FC<WizardStepProps<VideoFormData>> = ({ data, updateData, variant }) => {
   const languages = [
     { value: 'swahili', label: 'Kiswahili' },
     { value: 'english', label: 'English' },
@@ -122,7 +139,7 @@ const PersonalizationStep: React.FC<any> = ({ data, updateData, variant }) => {
   );
 };
 
-const ReviewStep: React.FC<any> = ({ data, variant }) => {
+const ReviewStep: React.FC<WizardStepProps<VideoFormData>> = ({ data, variant }) => {
   const getVideoTypeLabel = (type: string) => {
     const types: Record<string, string> = {
       tourism: 'Utalii (Tourism)',
@@ -199,14 +216,14 @@ const ReviewStep: React.FC<any> = ({ data, variant }) => {
 };
 
 // Main Multi-Step Form Component
-export interface MultiStepFormProps {
+export interface MultiStepFormProps<TFormData extends Record<string, any> = Record<string, any>> {
   variant?: 'default' | 'kenya' | 'cultural' | 'elite';
-  onComplete?: (data: any) => void;
+  onComplete?: (data: TFormData) => void;
   onCancel?: () => void;
   className?: string;
 }
 
-export const VideoCreationForm: React.FC<MultiStepFormProps> = ({
+export const VideoCreationForm: React.FC<MultiStepFormProps<VideoFormData>> = ({
   variant = 'kenya',
   onComplete,
   onCancel,
@@ -214,7 +231,7 @@ export const VideoCreationForm: React.FC<MultiStepFormProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const steps: WizardStep[] = [
+  const steps: WizardStep<VideoFormData>[] = [
     {
       id: 'video-details',
       title: 'Maelezo ya Video',
@@ -247,7 +264,7 @@ export const VideoCreationForm: React.FC<MultiStepFormProps> = ({
     }
   ];
 
-  const handleComplete = async (data: any) => {
+  const handleComplete = async (data: VideoFormData) => {
     setIsSubmitting(true);
     try {
       // Simulate API call
@@ -284,13 +301,13 @@ export const VideoCreationForm: React.FC<MultiStepFormProps> = ({
 };
 
 // Project Setup Form
-export const ProjectSetupForm: React.FC<MultiStepFormProps> = ({
+export const ProjectSetupForm: React.FC<MultiStepFormProps<ProjectFormData>> = ({
   variant = 'cultural',
   onComplete,
   onCancel,
   className
 }) => {
-  const ProjectDetailsStep: React.FC<any> = ({ data, updateData, variant }) => (
+  const ProjectDetailsStep: React.FC<WizardStepProps<ProjectFormData>> = ({ data, updateData, variant }) => (
     <TextInputStep
       data={data}
       updateData={updateData}
@@ -313,7 +330,7 @@ export const ProjectSetupForm: React.FC<MultiStepFormProps> = ({
     />
   );
 
-  const TeamSetupStep: React.FC<any> = ({ data, updateData, variant }) => (
+  const TeamSetupStep: React.FC<WizardStepProps<ProjectFormData>> = ({ data, updateData, variant }) => (
     <div className="space-y-6">
       <TextInputStep
         data={data}
@@ -340,27 +357,20 @@ export const ProjectSetupForm: React.FC<MultiStepFormProps> = ({
     </div>
   );
 
-  const steps: WizardStep[] = [
+  const steps: WizardStep<ProjectFormData>[] = [
     {
       id: 'project-details',
       title: 'Maelezo ya Mradi',
-      subtitle: 'Anza kwa kutueleza kuhusu mradi wako',
+      description: 'Ingiza maelezo ya kimsingi ya mradi wako',
       component: ProjectDetailsStep,
-      validation: (data) => {
-        if (!data.projectName?.trim()) return 'Ingiza jina la mradi';
-        if (!data.description?.trim()) return 'Ingiza maelezo ya mradi';
-        return true;
-      }
+      isValid: (data) => Boolean(data.projectName && data.description)
     },
     {
       id: 'team-setup',
       title: 'Mpangilio wa Timu',
-      subtitle: 'Panga timu yako na rasilimali',
+      description: 'Weka timu yako na bajeti',
       component: TeamSetupStep,
-      validation: (data) => {
-        if (!data.teamSize || data.teamSize < 1) return 'Ingiza idadi sahihi ya timu';
-        return true;
-      }
+      isValid: (data) => Boolean(data.teamSize)
     }
   ];
 
@@ -378,3 +388,4 @@ export const ProjectSetupForm: React.FC<MultiStepFormProps> = ({
 };
 
 export default VideoCreationForm;
+

@@ -9,6 +9,8 @@ import { ErrorProvider } from "@/context/ErrorContext"; // Re-added ErrorProvide
 import ErrorNotification from "@/components/ErrorNotification"; // Re-added ErrorNotification
 import { ToastProvider } from "@/components/ui/use-toast"; // New import
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Root layout with Kenya-first design system and enterprise styling
@@ -87,11 +89,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const messages = await getMessages();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -108,16 +112,18 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="//fonts.googleapis.com" />
         <link rel="dns-prefetch" href="//fonts.gstatic.com" />
       </head>
-      <body className={`${inter.className} contrast-boost`} suppressHydrationWarning={true}>
-        <ToastProvider> {/* Wrap with ToastProvider */}
-          <ErrorProvider> {/* Wrap with ErrorProvider */}
-            <AuthProvider> {/* Wrap with AuthProvider */}
-              <PlanGuardProvider> {/* Wrap with PlanGuardProvider */}
-                <Layout>{children}</Layout>
+      <body className={inter.className} suppressHydrationWarning={true}>
+        <ToastProvider>
+          <ErrorProvider>
+            <AuthProvider>
+              <PlanGuardProvider>
+                <NextIntlClientProvider messages={messages}>
+                  {children}
+                </NextIntlClientProvider>
               </PlanGuardProvider>
             </AuthProvider>
             <ClientBoot />
-            <ErrorNotification /> 
+            <ErrorNotification />
           </ErrorProvider>
         </ToastProvider>
         <ServiceWorkerRegistrar />

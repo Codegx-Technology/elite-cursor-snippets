@@ -71,3 +71,4 @@ const PromptSuggester: React.FC<PromptSuggesterProps> = ({ value, onChange, plac
 };
 
 export default PromptSuggester;
+

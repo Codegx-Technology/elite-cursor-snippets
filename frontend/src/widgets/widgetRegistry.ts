@@ -2,7 +2,7 @@ import React from 'react';
 
 // Define a type for a widget entry in the registry
 export interface WidgetRegistryEntry {
-  component: React.ComponentType<any>;
+  component: React.ComponentType<unknown>;
   dependencies: string[]; // List of conceptual dependencies (e.g., "core_ai", "analytics_plus")
   description: string;
   // Add other metadata as needed (e.g., version, author, category)

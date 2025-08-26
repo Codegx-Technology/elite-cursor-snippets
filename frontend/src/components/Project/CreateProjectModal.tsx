@@ -80,3 +80,4 @@ export default function CreateProjectModal({ isOpen, onClose, onCreate }: Create
     </div>
   );
 }
+

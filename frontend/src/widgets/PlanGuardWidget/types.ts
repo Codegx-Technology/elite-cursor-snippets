@@ -26,5 +26,5 @@ export interface PlanEvent {
   ts: string;
   type: "slowdown" | "lock" | "view_only" | "quota_warning" | "status_change" | "other";
   message: string;
-  payload?: any;
+  payload?: unknown;
 }

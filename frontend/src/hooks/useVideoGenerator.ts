@@ -162,9 +162,9 @@ export function useVideoGenerator() {
           });
         }
       );
-    } catch (err: any) {
-      setError(err.message || 'Failed to start video generation');
-      setGlobalError(err.message || 'Failed to start video generation');
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Failed to start video generation');
+      setGlobalError((err as Error).message || 'Failed to start video generation');
     }
   };
 

@@ -245,7 +245,7 @@ export const useColorContrast = () => {
   };
 
   const validateKenyaColors = useCallback(() => {
-    const results: { [key: string]: any } = {};
+    const results: { [key: string]: unknown } = {};
     
     Object.entries(kenyaColorCombinations).forEach(([name, colors]) => {
       results[name] = checkContrast(colors.foreground, colors.background);

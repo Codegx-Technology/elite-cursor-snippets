@@ -201,3 +201,4 @@ export default function SimpleMode() {
     </div>
   );
 }
+

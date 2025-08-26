@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { FaSpinner } from 'react-icons/fa';
 
@@ -27,7 +28,7 @@ const LoginForm: React.FC = () => {
         localStorage.setItem('access_token', response.data.access_token);
         router.push('/dashboard');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError('An unexpected error occurred. Please try again.');
       console.error('Login error:', err);
     } finally {
@@ -75,10 +76,11 @@ const LoginForm: React.FC = () => {
         </button>
       </form>
       <p className="text-center text-soft-text text-sm mt-4">
-        Don't have an account? <a href="/register" className="text-primary-gradient-start font-medium">Register here</a>
+        Don&apos;t have an account? <Link href="/register" className="text-primary-gradient-start font-medium">Register here</Link>
       </p>
     </div>
   );
 };
 
 export default LoginForm;
+

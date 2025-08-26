@@ -3,14 +3,14 @@ import SuperAdminCard from "./SuperAdminCard";
 import UserManagementSection from './UserManagementSection';
 import TenantManagementSection from './TenantManagementSection';
 import TTSVoiceManagementSection from './TTSVoiceManagementSection';
-import { apiClient } from '@/lib/api'; // Import apiClient
+import { apiClient, SuperAdminMetrics } from '@/lib/api'; // Import apiClient and SuperAdminMetrics
 
 interface SuperAdminDashboardProps {
   userRole: string;
 }
 
 const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userRole }) => {
-  const [metrics, setMetrics] = useState<any>(null);
+  const [metrics, setMetrics] = useState<SuperAdminMetrics | null>(null);
 
   useEffect(() => {
     if (userRole === "superadmin") {

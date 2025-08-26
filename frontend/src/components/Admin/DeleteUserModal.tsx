@@ -31,7 +31,7 @@ export default function DeleteUserModal({ isOpen, onClose, onDelete, user }: Del
           </button>
         </div>
         <form onSubmit={handleSubmit}>
-          <p>Are you sure you want to delete the user "{user?.username}"?</p>
+          <p>Are you sure you want to delete the user &quot;{user?.username}&quot;?</p>
           <div className="flex justify-end space-x-4 mt-6">
             <button type="button" onClick={onClose} className="btn-secondary">
               Cancel
@@ -46,3 +46,4 @@ export default function DeleteUserModal({ isOpen, onClose, onDelete, user }: Del
     </div>
   );
 }
+

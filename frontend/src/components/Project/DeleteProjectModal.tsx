@@ -45,3 +45,4 @@ export default function DeleteProjectModal({ isOpen, onClose, onDelete, project 
     </div>
   );
 }
+

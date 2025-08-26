@@ -23,6 +23,17 @@ interface CollaborationPanelProps {
   };
 }
 
+interface Comment {
+  userName: string;
+  timestamp: string;
+  kenyaContext?: {
+    region: string;
+  };
+  data: {
+    content: string;
+  };
+}
+
 const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
   roomId,
   userId,
@@ -32,7 +43,7 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
   const { createAriaLabel } = useAriaUtils();
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
 
   const {
     collaborators,
@@ -50,7 +61,7 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
 
   useEffect(() => {
     if (manager) {
-      manager.on('event', (event: any) => {
+      manager.on('event', (event: Comment) => {
         if (event.type === 'comment') {
           setComments(prev => [...prev, event]);
         }
@@ -294,3 +305,4 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
 };
 
 export default CollaborationPanel;
+

@@ -4,8 +4,10 @@ import React from 'react';
 import { Button } from '@/components/ui/button'; // Assuming you have a Button component
 import { PlanMessages } from '@/ui/planMessages';
 
+import { PlanStatus } from '@/widgets/PlanGuardWidget/types';
+
 interface UpgradeCTAProps {
-  planInfo: { tier: string; entitlements: any[] }; // Simplified type for now
+  planInfo: PlanStatus;
 }
 
 const UpgradeCTA: React.FC<UpgradeCTAProps> = ({ planInfo }) => {

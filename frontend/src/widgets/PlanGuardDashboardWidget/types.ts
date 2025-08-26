@@ -10,7 +10,7 @@ export interface EnforcementEvent {
   timestamp: string; // ISO string
   type: "slowdown" | "lock" | "view_only" | "quota_warning" | "other";
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 export interface PlanDashboardData {

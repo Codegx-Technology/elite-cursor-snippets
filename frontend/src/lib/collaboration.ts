@@ -14,7 +14,7 @@ export interface CollaborationEvent {
   userId: string;
   userName: string;
   timestamp: number;
-  data: any;
+  data: unknown;
   kenyaContext?: {
     region?: string;
     language?: 'en' | 'sw';
@@ -44,7 +44,7 @@ export class CollaborationManager {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
   private heartbeatInterval: NodeJS.Timeout | null = null;
-  private eventListeners: Map<string, Function[]> = new Map();
+  private eventListeners: Map<string, ((data: unknown) => void)[]> = new Map();
   private currentUser: UserPresence | null = null;
   private collaborators: Map<string, UserPresence> = new Map();
 
@@ -118,7 +118,7 @@ export class CollaborationManager {
   }
 
   // Handle incoming messages
-  private handleMessage(data: any): void {
+  private handleMessage(data: { type: string; event?: unknown; user?: UserPresence; userId?: string }): void {
     switch (data.type) {
       case 'collaboration_event':
         this.emit('event', data.event);
@@ -192,7 +192,7 @@ export class CollaborationManager {
   }
 
   // Text editing collaboration
-  sendTextEdit(elementId: string, operation: any): void {
+  sendTextEdit(elementId: string, operation: unknown): void {
     this.sendEvent({
       type: 'text_edit',
       data: { elementId, operation }
@@ -200,7 +200,7 @@ export class CollaborationManager {
   }
 
   // Video editing collaboration
-  sendVideoEdit(videoId: string, operation: any): void {
+  sendVideoEdit(videoId: string, operation: unknown): void {
     this.sendEvent({
       type: 'video_edit',
       data: { videoId, operation }
@@ -216,14 +216,14 @@ export class CollaborationManager {
   }
 
   // Event system
-  on(event: string, callback: Function): void {
+  on(event: string, callback: (data: unknown) => void): void {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, []);
     }
     this.eventListeners.get(event)!.push(callback);
   }
 
-  off(event: string, callback: Function): void {
+  off(event: string, callback: (data: unknown) => void): void {
     const listeners = this.eventListeners.get(event);
     if (listeners) {
       const index = listeners.indexOf(callback);
@@ -233,7 +233,7 @@ export class CollaborationManager {
     }
   }
 
-  private emit(event: string, data: any): void {
+  private emit(event: string, data: unknown): void {
     const listeners = this.eventListeners.get(event);
     if (listeners) {
       listeners.forEach(callback => callback(data));

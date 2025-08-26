@@ -12,47 +12,47 @@ import { cn } from '../../lib/utils';
 import { FaCheck, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 // Form Wizard Step Interface
-export interface WizardStep {
+export interface WizardStep<TFormData> {
   id: string;
   title: string;
   subtitle?: string;
-  component: React.ComponentType<WizardStepProps>;
-  validation?: (data: any) => boolean | string;
+  component: React.ComponentType<WizardStepProps<TFormData>>;
+  validation?: (data: TFormData) => boolean | string;
   optional?: boolean;
 }
 
 // Step Component Props
-export interface WizardStepProps {
-  data: any;
-  updateData: (data: any) => void;
+export interface WizardStepProps<TFormData> {
+  data: TFormData;
+  updateData: (data: Partial<TFormData>) => void;
   errors: Record<string, string>;
   variant?: 'default' | 'kenya' | 'cultural' | 'elite';
 }
 
 // Main Form Wizard Props
-export interface FormWizardProps {
-  steps: WizardStep[];
-  onComplete: (data: any) => void;
+export interface FormWizardProps<TFormData extends Record<string, unknown> = Record<string, unknown>> {
+  steps: WizardStep<TFormData>[];
+  onComplete: (data: TFormData) => void;
   onCancel?: () => void;
   variant?: 'default' | 'kenya' | 'cultural' | 'elite';
   className?: string;
-  initialData?: any;
+  initialData?: TFormData;
   showProgress?: boolean;
   allowSkip?: boolean;
 }
 
-export const FormWizard: React.FC<FormWizardProps> = ({
+export const FormWizard = <TFormData extends Record<string, unknown>>({
   steps,
   onComplete,
   onCancel,
   variant = 'default',
   className,
-  initialData = {},
+  initialData = {} as TFormData,
   showProgress = true,
   allowSkip = false
-}) => {
+}: FormWizardProps<TFormData>) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState(initialData);
+  const [formData, setFormData] = useState<TFormData>(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
 
@@ -70,7 +70,7 @@ export const FormWizard: React.FC<FormWizardProps> = ({
     elite: 'bg-purple-500'
   };
 
-  const updateData = useCallback((newData: any) => {
+  const updateData = useCallback((newData: Partial<TFormData>) => {
     setFormData(prev => ({ ...prev, ...newData }));
     setErrors({});
   }, []);
@@ -274,15 +274,15 @@ export const FormWizard: React.FC<FormWizardProps> = ({
 };
 
 // Pre-built Step Components
-export const TextInputStep: React.FC<WizardStepProps & {
+export const TextInputStep = <TFormData,>({ data, updateData, fields, variant }: WizardStepProps<TFormData> & {
   fields: Array<{
-    name: string;
+    name: keyof TFormData;
     label: string;
     placeholder?: string;
     required?: boolean;
     type?: string;
   }>;
-}> = ({ data, updateData, fields, variant }) => {
+}) => {
   return (
     <div className="space-y-6">
       {fields.map((field) => (
@@ -313,14 +313,14 @@ export const TextInputStep: React.FC<WizardStepProps & {
   );
 };
 
-export const SelectStep: React.FC<WizardStepProps & {
+export const SelectStep = <TFormData,>({ data, updateData, field, variant }: WizardStepProps<TFormData> & {
   field: {
-    name: string;
+    name: keyof TFormData;
     label: string;
     options: Array<{ value: string; label: string }>;
     required?: boolean;
   };
-}> = ({ data, updateData, field, variant }) => {
+}) => {
   return (
     <div>
       <label className={cn(
@@ -351,3 +351,4 @@ export const SelectStep: React.FC<WizardStepProps & {
     </div>
   );
 };
+

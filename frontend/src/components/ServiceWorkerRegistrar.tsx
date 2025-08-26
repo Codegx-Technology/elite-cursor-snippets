@@ -2,6 +2,13 @@
 
 import { useEffect } from "react";
 
+declare global {
+  interface Window {
+    requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => IdleCallbackHandle;
+    cancelIdleCallback?: (handle: IdleCallbackHandle) => void;
+  }
+}
+
 export default function ServiceWorkerRegistrar() {
   useEffect(() => {
     if (typeof window === "undefined") return;

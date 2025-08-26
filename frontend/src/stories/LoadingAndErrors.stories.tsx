@@ -159,32 +159,35 @@ const LoadingButtonMeta: Meta<typeof LoadingButton> = {
 
 export const LoadingButtonExample: StoryObj = {
   render: () => {
-    const [loading, setLoading] = useState(false);
-    
-    const handleClick = () => {
-      setLoading(true);
-      setTimeout(() => setLoading(false), 3000);
-    };
+    const InteractiveLoadingButtonExample = () => {
+      const [loading, setLoading] = useState(false);
+      
+      const handleClick = () => {
+        setLoading(true);
+        setTimeout(() => setLoading(false), 3000);
+      };
 
-    return (
-      <div className="space-y-4">
-        <LoadingButton
-          loading={loading}
-          variant="kenya"
-          onClick={handleClick}
-        >
-          {loading ? 'Inaunda Video...' : 'Unda Video'}
-        </LoadingButton>
-        
-        <LoadingButton
-          loading={false}
-          variant="cultural"
-          size="lg"
-        >
-          Anza Mradi
-        </LoadingButton>
-      </div>
-    );
+      return (
+        <div className="space-y-4">
+          <LoadingButton
+            loading={loading}
+            variant="kenya"
+            onClick={handleClick}
+          >
+            {loading ? 'Inaunda Video...' : 'Unda Video'}
+          </LoadingButton>
+          
+          <LoadingButton
+            loading={false}
+            variant="cultural"
+            size="lg"
+          >
+            Anza Mradi
+          </LoadingButton>
+        </div>
+      );
+    };
+    return <InteractiveLoadingButtonExample />;
   },
 };
 

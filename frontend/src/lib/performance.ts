@@ -9,10 +9,10 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 
 // Advanced caching strategies
 export class AdvancedCache {
-  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+  private cache = new Map<string, { data: unknown; timestamp: number; ttl: number }>();
   private maxSize = 100;
 
-  set(key: string, data: any, ttl: number = 300000) { // 5 minutes default
+  set(key: string, data: unknown, ttl: number = 300000) { // 5 minutes default
     if (this.cache.size >= this.maxSize) {
       const firstKey = this.cache.keys().next().value;
       if (firstKey !== undefined) {
@@ -154,7 +154,7 @@ export const loadComponent = async (componentPath: string) => {
   perfMonitor.startTiming(`load_${componentPath}`);
 
   // Whitelist known components to avoid fully dynamic expressions (prevents webpack critical dependency warning)
-  const registry: Record<string, () => Promise<any>> = {
+  const registry: Record<string, () => Promise<unknown>> = {
     // Example entries (add real ones as needed):
     // 'components/Chart': () => import('../components/Chart'),
     // 'components/DataTable': () => import('../components/DataTable'),

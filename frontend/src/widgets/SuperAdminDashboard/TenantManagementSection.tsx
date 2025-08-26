@@ -27,8 +27,8 @@ const TenantManagementSection: React.FC = () => {
         } else if (response.error) {
           setError(response.error);
         }
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch tenants.');
+      } catch (err: unknown) {
+        setError((err as Error).message || 'Failed to fetch tenants.');
       } finally {
         setLoading(false);
       }
@@ -50,8 +50,8 @@ const TenantManagementSection: React.FC = () => {
         } else if (response.error) {
           setError(response.error);
         }
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch tenant branding.');
+      } catch (err: unknown) {
+        setError((err as Error).message || 'Failed to fetch tenant branding.');
       } finally {
         setLoading(false);
       }
@@ -79,7 +79,7 @@ const TenantManagementSection: React.FC = () => {
       } else if (response.error) {
         alert(`Failed to save tenant branding: ${response.error}`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to save tenant branding:', error);
       alert('Failed to save tenant branding.');
     }

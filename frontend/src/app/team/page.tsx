@@ -276,7 +276,7 @@ export default function TeamPage() {
                 </label>
                 <select
                   value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as any)}
+                  onChange={(e) => setInviteRole(e.target.value as 'admin' | 'editor' | 'viewer')}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 >
                   <option value="viewer">Viewer</option>
@@ -315,3 +315,4 @@ export default function TeamPage() {
     </div>
   );
 }
+

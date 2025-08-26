@@ -26,7 +26,7 @@ export interface PaystackTransaction {
   callback_url?: string;
   plan?: string;
   invoice_limit?: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   channels?: string[];
   split_code?: string;
   subaccount?: string;
@@ -37,7 +37,7 @@ export interface PaystackTransaction {
 export interface PaystackResponse {
   status: boolean;
   message: string;
-  data?: any;
+  data?: unknown;
 }
 
 export interface PaystackVerificationResponse {
@@ -172,7 +172,7 @@ class PaystackService {
       return {
         status: false,
         message: 'Failed to verify payment',
-        data: {} as any,
+        data: {},
       };
     }
   }
@@ -498,7 +498,17 @@ export function usePaystack() {
 declare global {
   interface Window {
     PaystackPop: {
-      setup: (config: any) => {
+      setup: (config: {
+        key: string;
+        email: string;
+        amount: number;
+        ref?: string;
+        callback?: (response: any) => void; // This callback response can be complex, keeping as any for now
+        onClose?: () => void;
+        channels?: string[];
+        currency?: string;
+        metadata?: Record<string, unknown>;
+      }) => {
         openIframe: () => void;
       };
     };

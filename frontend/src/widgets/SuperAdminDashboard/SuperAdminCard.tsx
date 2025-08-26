@@ -1,7 +1,9 @@
 import React from "react";
 
+import { SuperAdminMetrics } from '@/lib/api';
+
 interface SuperAdminCardProps {
-  metrics: any;
+  metrics: SuperAdminMetrics;
 }
 
 const SuperAdminCard: React.FC<SuperAdminCardProps> = ({ metrics }) => {

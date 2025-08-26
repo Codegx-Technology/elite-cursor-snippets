@@ -1,6 +1,6 @@
 # Development Guide
 
-This guide provides instructions for developers working on the Shujaa Studio project. It covers the project setup, development workflow, and coding conventions.
+This guide provides instructions for developers working on the Shujaa Studio project. It covers the project setup, development workflow, coding conventions, and UI best practices.
 
 ## 1. Project Setup
 
@@ -34,7 +34,37 @@ This guide provides instructions for developers working on the Shujaa Studio pro
 
     Download the required models and place them in the corresponding directories.
 
-## 2. Development Workflow
+## 2. Frontend Development
+
+### **UI Icon Best Practices**
+
+For maximum stability and zero external dependencies, use **inline SVGs** instead of icon libraries:
+
+```tsx
+// ✅ RECOMMENDED: Inline SVG (bulletproof)
+const HomeIcon = () => (
+  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+  </svg>
+);
+
+// ❌ AVOID: External icon libraries (dependency risk)
+import { FaHome } from 'react-icons/fa';
+```
+
+### **Icon Implementation Guidelines**
+- Use `className="w-5 h-5"` for consistent sizing
+- Use `fill="currentColor"` to inherit text color
+- Maintain Kenya-first design with appropriate colors
+- Test icons across all breakpoints for mobile responsiveness
+
+### **Preventive Measures**
+Run the fa6 import checker before builds:
+```bash
+npm run check-fa6  # Detects any react-icons/fa6 imports
+```
+
+## 3. Development Workflow
 
 1.  **Run the application:**
 
