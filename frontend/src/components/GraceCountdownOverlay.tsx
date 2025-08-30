@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaClock, FaExclamationTriangle } from 'react-icons/fa';
+import { FaClock, FaExclamationTriangle } from 'react-icons/fa6';
 
 interface GraceCountdownOverlayProps {
   graceExpiresAt: string; // ISO string from API

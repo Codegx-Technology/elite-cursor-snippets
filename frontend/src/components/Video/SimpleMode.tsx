@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { FaArrowRight, FaArrowLeft, FaVideo, FaMusic, FaFlag, FaMountain, FaPlay, FaSpinner } from 'react-icons/fa';
+import { FaArrowRight, FaArrowLeft, FaVideo, FaMusic, FaFlag, FaMountain, FaPlay, FaSpinner } from 'react-icons/fa6';
 import { useVideoGenerator } from '@/hooks/useVideoGenerator';
 import PromptSuggester from '@/components/Video/PromptSuggester';
 import Card from '@/components/Card'; // Import Card component

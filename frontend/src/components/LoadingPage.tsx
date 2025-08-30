@@ -1,6 +1,6 @@
 'use client';
 
-import { FaFlag, FaMountain, FaSpinner } from 'react-icons/fa';
+import { FaFlag, FaMountain, FaSpinner } from 'react-icons/fa6';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent
 // [CONTEXT]: Loading page component with Kenya-first design for better UX
