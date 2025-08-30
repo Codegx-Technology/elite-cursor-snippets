@@ -7,7 +7,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import Card from '@/components/Card';
 import FormInput from '@/components/FormInput';
-import { FaSave, FaSpinner, FaPalette, FaGlobe, FaCss3Alt, FaImage } from 'react-icons/fa';
+import { FaSave, FaSpinner, FaPalette, FaGlobe, FaCss3Alt, FaImage } from 'react-icons/fa6';
 
 interface TenantBrandingData {
   logo_url?: string;

@@ -5,7 +5,7 @@ import Card from '@/components/Card';
 import LazyImage from '@/components/LazyImage';
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
-import { FaImages, FaVideo, FaMusic, FaDownload, FaPlay, FaEye, FaHeart, FaFlag, FaMountain } from 'react-icons/fa';
+import { FaImages, FaVideo, FaMusic, FaDownload, FaPlay, FaEye, FaHeart, FaFlag, FaMountain } from 'react-icons/fa6';
 import { apiClient, handleApiResponse } from '@/lib/api';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent

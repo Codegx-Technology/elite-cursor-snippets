@@ -1,7 +1,7 @@
 'use client';
 
 import { useUsageAnalytics } from '@/hooks/useUsageAnalytics';
-import { FaSpinner } from 'react-icons/fa';
+import { FaSpinner } from 'react-icons/fa6';
 import Card from '@/components/Card';
 import {
   BarChart,

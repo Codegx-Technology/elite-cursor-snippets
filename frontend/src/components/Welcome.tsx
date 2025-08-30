@@ -17,7 +17,7 @@ import {
   FaStar,
   FaUsers,
   FaChartLine
-} from 'react-icons/fa';
+} from 'react-icons/fa6';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean
 // [CONTEXT]: Enterprise welcome page with Kenya-first design and cultural authenticity

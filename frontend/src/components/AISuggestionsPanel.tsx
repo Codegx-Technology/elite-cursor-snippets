@@ -11,7 +11,7 @@ import { useAriaUtils } from '@/hooks/useAccessibility';
 import Card from '@/components/ui/Card';
 import AccessibleButton from '@/components/AccessibleButton';
 import LoadingStates from '@/components/ui/LoadingStates';
-import { FaBrain, FaLightbulb, FaFlag, FaStar, FaClock, FaTools } from 'react-icons/fa';
+import { FaBrain, FaLightbulb, FaFlag, FaStar, FaClock, FaTools } from 'react-icons/fa6';
 
 interface AISuggestionsPanelProps {
   content?: string;

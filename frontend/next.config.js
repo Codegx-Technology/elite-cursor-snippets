@@ -38,7 +38,6 @@ const nextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       'react-icons': require.resolve('react-icons'),
-      'react-icons/fa': require.resolve('react-icons/fa'),
       'react-icons/fa6': require.resolve('react-icons/fa6'),
       'react-icons/md': require.resolve('react-icons/md'),
       'react-icons/hi': require.resolve('react-icons/hi'),

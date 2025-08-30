@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * Preventive check script to detect react-icons/fa6 imports
- * This script fails the build if any fa6 imports are found
- * Usage: node scripts/check-fa6-imports.js
+ * Preventive check script to detect react-icons/fa imports
+ * This script fails the build if any fa imports are found
+ * Usage: node scripts/check-fa-imports.js
  */
 
 const fs = require('fs');
@@ -40,7 +40,7 @@ function checkFile(filePath) {
   const violations = [];
   
   lines.forEach((line, index) => {
-    if (line.includes('react-icons/fa6')) {
+    if (line.includes('react-icons/fa') && !line.includes('react-icons/fa6')) {
       violations.push({
         file: filePath,
         line: index + 1,
@@ -53,7 +53,7 @@ function checkFile(filePath) {
 }
 
 function main() {
-  console.log('🔍 Checking for react-icons/fa6 imports...');
+  console.log('🔍 Checking for react-icons/fa imports...');
   
   const files = findFiles(srcDir, extensions);
   let allViolations = [];
@@ -64,7 +64,7 @@ function main() {
   }
   
   if (allViolations.length > 0) {
-    console.error('❌ Found react-icons/fa6 imports (should be react-icons/fa):');
+    console.error('❌ Found react-icons/fa imports (should be react-icons/fa6):');
     console.error('');
     
     allViolations.forEach(violation => {
@@ -74,10 +74,10 @@ function main() {
       console.error('');
     });
     
-    console.error('💡 Fix: Replace "react-icons/fa6" with "react-icons/fa"');
+    console.error('💡 Fix: Replace "react-icons/fa" with "react-icons/fa6"');
     process.exit(1);
   } else {
-    console.log('✅ No react-icons/fa6 imports found');
+    console.log('✅ No react-icons/fa imports found');
   }
 }
 
