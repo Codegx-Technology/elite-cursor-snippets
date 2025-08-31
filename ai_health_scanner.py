@@ -157,12 +157,21 @@ class AIHealthScanner:
         self.notifier = KenyaFriendlyNotifier()
         
         # Setup logging
+        # Force stdout to use UTF-8 encoding to handle emojis on Windows
+        if sys.stdout.encoding != 'utf-8':
+            try:
+                sys.stdout.reconfigure(encoding='utf-8')
+            except TypeError:
+                # Fallback for environments where reconfigure might not be available
+                import codecs
+                sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer)
+
         logging.basicConfig(
             level=getattr(logging, self.config.log_level),
             format='%(asctime)s - 🇰🇪 Shujaa Scanner - %(levelname)s - %(message)s',
             handlers=[
-                logging.FileHandler('shujaa_health_scanner.log'),
-                logging.StreamHandler()
+                logging.FileHandler('shujaa_health_scanner.log', encoding='utf-8'),
+                logging.StreamHandler(sys.stdout) # sys.stdout is now UTF-8 aware
             ]
         )
         

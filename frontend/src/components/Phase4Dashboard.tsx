@@ -6,7 +6,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useI18n } from '@/lib/i18n';
+import { useI18n, type Language } from '@/lib/i18n';
 import { useCollaboration } from '@/lib/collaboration';
 import { videoProcessingEngine } from '@/lib/video-processing';
 import { aiSuggestionEngine } from '@/lib/ai-suggestions';
@@ -116,7 +116,7 @@ const Phase4Dashboard: React.FC = () => {
             <FaLanguage className="text-gray-500" />
             <select
               value={language}
-              onChange={(e) => setLanguage(e.target.value as any)}
+              onChange={(e) => setLanguage(e.target.value as Language)}
               className="px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               {supportedLanguages.map((lang) => (

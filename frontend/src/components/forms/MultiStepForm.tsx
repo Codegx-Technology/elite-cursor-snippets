@@ -216,7 +216,7 @@ const ReviewStep: React.FC<WizardStepProps<VideoFormData>> = ({ data, variant })
 };
 
 // Main Multi-Step Form Component
-export interface MultiStepFormProps<TFormData extends Record<string, any> = Record<string, any>> {
+export interface MultiStepFormProps<TFormData extends Record<string, unknown> = Record<string, unknown>> {
   variant?: 'default' | 'kenya' | 'cultural' | 'elite';
   onComplete?: (data: TFormData) => void;
   onCancel?: () => void;

@@ -56,7 +56,7 @@ export interface PaystackVerificationResponse {
     channel: string;
     currency: string;
     ip_address: string;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
     fees: number;
     customer: {
       id: number;
@@ -93,7 +93,7 @@ class PaystackService {
   // Load Paystack inline script in browser (no-op on server)
   static async loadScript(): Promise<void> {
     if (typeof window === 'undefined') return; // SSR guard
-    if ((window as any).PaystackPop) return;
+    if (window.PaystackPop) return;
     await new Promise<void>((resolve, reject) => {
       const script = document.createElement('script');
       script.src = 'https://js.paystack.co/v1/inline.js';
@@ -495,6 +495,13 @@ export function usePaystack() {
 }
 
 // TypeScript declarations for Paystack
+export interface PaystackCallbackResponse {
+  transaction: number | string;
+  trxref: string;
+  status: string;
+  reference: string;
+}
+
 declare global {
   interface Window {
     PaystackPop: {
@@ -503,7 +510,7 @@ declare global {
         email: string;
         amount: number;
         ref?: string;
-        callback?: (response: any) => void; // This callback response can be complex, keeping as any for now
+        callback?: (response: PaystackCallbackResponse) => void;
         onClose?: () => void;
         channels?: string[];
         currency?: string;

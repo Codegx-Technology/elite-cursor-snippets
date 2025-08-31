@@ -15,18 +15,15 @@ const GraceCountdownOverlay: React.FC<GraceCountdownOverlayProps> = ({
     const expirationDate = new Date(graceExpiresAt);
     const difference = expirationDate.getTime() - now.getTime();
 
-    let timeLeft = {};
-
     if (difference > 0) {
-      timeLeft = {
+      return {
         hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
         minutes: Math.floor((difference / 1000 / 60) % 60),
         seconds: Math.floor((difference / 1000) % 60),
       };
-    } else {
-      timeLeft = { hours: 0, minutes: 0, seconds: 0 };
     }
-    return timeLeft;
+
+    return { hours: 0, minutes: 0, seconds: 0 };
   };
 
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
@@ -39,7 +36,7 @@ const GraceCountdownOverlay: React.FC<GraceCountdownOverlayProps> = ({
     return () => clearTimeout(timer);
   });
 
-  const { hours, minutes, seconds } = timeLeft as any;
+  const { hours, minutes, seconds } = timeLeft;
   const totalHours = hours + minutes / 60 + seconds / 3600;
 
   let bannerColorClass = 'bg-green-500'; // Default green

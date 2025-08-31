@@ -38,7 +38,7 @@ export default function AnalyticsPage() {
           totalVideos: data.overview.total_videos,
           totalUsers: data.overview.total_users,
           totalMinutes: data.overview.total_videos * 1.5, // Placeholder calculation
-          monthlyGrowth: data.usage_trends.map((item: any) => ({
+          monthlyGrowth: data.usage_trends.map((item: { date: string | number; videos: number }) => ({
             label: new Date(item.date).toLocaleString('default', { month: 'short' }),
             value: item.videos,
           })),

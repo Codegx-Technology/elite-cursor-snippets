@@ -42,7 +42,7 @@ export default function GalleryPage() {
       handleApiResponse(
         response,
         (data) => {
-          const mappedItems = data.assets.map((asset: any) => ({
+          const mappedItems = data.assets.map((asset: { id: string; name: string; type: 'video' | 'image' | 'audio'; thumbnail_url?: string; url: string; uploaded_at: string | number; size: number; }) => ({
             id: asset.id,
             title: asset.name,
             type: asset.type,

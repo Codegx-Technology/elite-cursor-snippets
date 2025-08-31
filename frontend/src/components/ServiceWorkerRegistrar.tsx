@@ -35,8 +35,8 @@ export default function ServiceWorkerRegistrar() {
     };
 
     // Defer to idle to avoid blocking hydration
-    if ((window as any).requestIdleCallback) {
-      (window as any).requestIdleCallback(manageSW);
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(manageSW);
     } else {
       setTimeout(manageSW, 0);
     }

@@ -21,7 +21,7 @@ export async function fetchAllTenants(): Promise<Tenant[]> {
       response,
       (data) => {
         // Map Tenant data to include 'plan' field, which is not directly from backend for now
-        const mappedTenants: Tenant[] = data.map((tenant: any) => ({
+        const mappedTenants: Tenant[] = data.map((tenant: Tenant) => ({
           id: tenant.id,
           name: tenant.name,
           is_active: tenant.is_active,

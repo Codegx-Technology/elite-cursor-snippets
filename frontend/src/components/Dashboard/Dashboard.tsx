@@ -61,11 +61,11 @@ const Dashboard: React.FC = () => {
         setUserUsage(usageResponse.data);
 
       } catch (err: unknown) {
-        if ((err as any).response && (err as any).response.data && (err as any).response.data.detail) {
-          setError((err as any).response.data.detail);
-        } else {
-          setError('Failed to load dashboard data. Please try again.');
+        let message = 'Failed to load dashboard data. Please try again.';
+        if (axios.isAxiosError(err) && typeof err.response?.data?.detail === 'string') {
+            message = err.response.data.detail;
         }
+        setError(message);
         console.error('Dashboard data fetch error:', err);
       } finally {
         setIsLoading(false);

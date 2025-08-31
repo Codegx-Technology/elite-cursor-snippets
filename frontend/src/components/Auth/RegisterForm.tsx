@@ -30,11 +30,11 @@ const RegisterForm: React.FC = () => {
       }
 
     } catch (err: unknown) {
-      if ((err as any).response && (err as any).response.data && (err as any).response.data.detail) {
-        setError((err as any).response.data.detail);
-      } else {
-        setError('An unexpected error occurred during registration. Please try again.');
+      let message = 'An unexpected error occurred during registration. Please try again.';
+      if (axios.isAxiosError(err) && typeof err.response?.data?.detail === 'string') {
+        message = err.response.data.detail;
       }
+      setError(message);
       console.error('Registration error:', err);
     } finally {
       setIsLoading(false);
