@@ -289,6 +289,20 @@ export interface LocalModel {
   progress?: number;
 }
 
+export interface CreateUserData {
+  username: string;
+  email: string;
+  password?: string;
+  role?: string;
+  tenant_name?: string;
+  is_active?: boolean;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+}
+
 class ApiClient {
   private getAuthHeaders(): HeadersInit {
     try {
@@ -317,7 +331,7 @@ class ApiClient {
       if (!res.ok) {
         return { status, error: (data && (data.detail || data.error)) || res.statusText };
       }
-      return { status, data } as ApiResponse<T>;
+      return { status, data: data as T };
     } catch (e: unknown) {
       return { status: 0, error: (e as Error)?.message || 'Network error' };
     }
@@ -402,7 +416,7 @@ class ApiClient {
   }
 
   // Auth
-  async login(username: string, password: string): Promise<ApiResponse<{ access_token: string; token_type: string }>> {
+  async login(username: string, password: string): Promise<ApiResponse<LoginResponse>> {
     const body = new URLSearchParams({ username, password });
     // OAuth2PasswordRequestForm expects x-www-form-urlencoded
     try {
@@ -414,12 +428,75 @@ class ApiClient {
       const status = res.status;
       const data = await res.json().catch(() => undefined);
       if (!res.ok) {
-        return { status, error: (data && (data.detail || data.error)) || res.statusText } as ApiResponse<{ access_token: string; token_type: string }>;
+        return { status, error: (data && (data.detail || data.error)) || res.statusText };
       }
-      return { status, data } as ApiResponse<{ access_token: string; token_type: string }>;
+      return { status, data };
     } catch (e: unknown) {
-      return { status: 0, error: (e as Error)?.message || 'Network error' } as ApiResponse<{ access_token: string; token_type: string }>;
+      return { status: 0, error: (e as Error)?.message || 'Network error' };
     }
+  }
+
+  // User Management
+  async getUsers() {
+    return this.request<UserData[]>('/admin/users');
+  }
+
+  async getUser(id: number) {
+    return this.request<UserData>(`/admin/users/${id}`);
+  }
+
+  async createUser(data: CreateUserData) {
+    return this.request<UserData>('/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateUser(id: number, data: Partial<UserData>) {
+    return this.request<UserData>(`/admin/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteUser(id: number) {
+    return this.request<{ success: boolean }>(`/admin/users/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Tenant Management
+  async getTenants() {
+    return this.request<Tenant[]>('/admin/tenants');
+  }
+
+  async getTenant(id: number) {
+    return this.request<Tenant>(`/admin/tenants/${id}`);
+  }
+
+  async createTenant(data: CreateTenantData) {
+    return this.request<Tenant>('/admin/tenants', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTenant(id: number, data: Partial<Tenant>) {
+    return this.request<Tenant>(`/admin/tenants/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteTenant(id: number) {
+    return this.request<{ success: boolean }>(`/admin/tenants/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Audit Log Management
+  async getAuditLogs() {
+    return this.request<AuditLogEntry[]>('/admin/audit-logs');
   }
 }
 

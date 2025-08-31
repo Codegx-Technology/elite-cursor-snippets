@@ -72,3 +72,4 @@ data/
 assets/generated/
 .venv312-lama/
 shujaa_venv/
+shujaa_db.db 
