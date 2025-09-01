@@ -89,20 +89,6 @@ export default function LocaleLayout({
   params: {lang: string};
 }>) {
   return (
-    <html lang={lang}>
-      <body className={inter.className}>
-        <ToastProvider>
-          <ErrorProvider>
-            <AuthProvider>
-              <PlanGuardProvider>
-                <Layout>{children}</Layout>
-              </PlanGuardProvider>
-            </AuthProvider>
-            <ClientBoot />
-            <ErrorNotification />
-          </ErrorProvider>
-        </ToastProvider>
-      </body>
-    </html>
+    <Layout>{children}</Layout>
   );
 }

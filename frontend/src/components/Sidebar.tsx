@@ -209,15 +209,14 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
                 setSidebarOpen(false);
               }}
             >
-              <Icon className={`mr-3 text-lg ${active ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-              </svg>
-              <div className={`font-medium ${active ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
-                {item.label}
-              </div>
-              <div className={`text-xs ${active ? 'text-green-100' : 'text-gray-500 group-hover:text-gray-400'}`}>
-                {item.description}
+              <Icon />
+              <div className="flex flex-col ml-3">
+                <div className={`font-medium ${active ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
+                  {item.label}
+                </div>
+                <div className={`text-xs ${active ? 'text-green-100' : 'text-gray-500 group-hover:text-gray-400'}`}>
+                  {item.description}
+                </div>
               </div>
             </Link>
           );

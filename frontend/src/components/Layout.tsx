@@ -7,6 +7,7 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import ErrorBoundary from './ErrorBoundary';
 import SuperAdminMenu from './SuperAdminMenu'; // New import
+import DevAutoLogin from './DevAutoLogin'; // Development auto-login helper
 
 // Dynamically import ScrollToTop on client only to avoid hydration mismatch
 const ScrollToTop = dynamic(() => import('./ScrollToTop'), { ssr: false });
@@ -95,6 +96,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Tiny modern scroll-to-top arrow */}
       <ScrollToTop />
+
+      {/* Development auto-login helper */}
+      <DevAutoLogin />
     </div>
   );
 }

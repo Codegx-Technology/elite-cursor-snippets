@@ -29,15 +29,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Users/roles that must be force-logged-out for security
-  const FORCE_LOGOUT_USERNAMES = new Set(['peter', 'apollo']);
-  const FORCE_LOGOUT_ROLES = new Set(['super_admin']);
-
+  // Allow super admin users to stay logged in for development supervision
   const shouldForceLogout = (u: User | null) => {
-    if (!u) return false;
-    const uname = (u.username || '').toLowerCase();
-    const role = (u.role || '').toLowerCase();
-    return FORCE_LOGOUT_USERNAMES.has(uname) || FORCE_LOGOUT_ROLES.has(role);
+    // Disabled force logout for super admin users peter and apollo
+    // to allow development supervision as requested
+    return false;
   };
 
   const fetchUser = async () => {
