@@ -256,14 +256,30 @@ async def test_generation():
         )
 
 if __name__ == "__main__":
+    # Fix Windows console encoding for emojis
+    import sys
+    if sys.platform == "win32":
+        try:
+            import codecs
+            sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'replace')
+            sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'replace')
+        except Exception:
+            pass
+
     # Get config values
     host = config.get("api_host", "0.0.0.0")
     port = config.get("api_port", 8000)
-    
-    print(f"🚀 Starting Shujaa Studio API on {host}:{port}")
-    print(f"📖 API Documentation: http://{host}:{port}/docs")
-    print(f"🔧 Health Check: http://{host}:{port}/health")
-    
+
+    try:
+        print(f"🚀 Starting Shujaa Studio API on {host}:{port}")
+        print(f"📖 API Documentation: http://{host}:{port}/docs")
+        print(f"🔧 Health Check: http://{host}:{port}/health")
+    except UnicodeEncodeError:
+        # Fallback without emojis
+        print(f"Starting Shujaa Studio API on {host}:{port}")
+        print(f"API Documentation: http://{host}:{port}/docs")
+        print(f"Health Check: http://{host}:{port}/health")
+
     # Start server
     uvicorn.run(
         "simple_api:app",

@@ -21,7 +21,39 @@ Shujaa Studio is a comprehensive AI video generation platform designed with Keny
 - **Mobile-First**: Optimized for African mobile usage patterns
 - **Friendly Fallbacks**: Cultural messaging instead of technical errors
 
-## 🚀 Quick Start
+## 🚀 Quick Start - Professional Launcher System
+
+### **🎯 Elite Development Workflow (Recommended)**
+
+**Windows:**
+```powershell
+# 1. Health check first
+.\run.ps1 -Check
+
+# 2. Launch full development environment
+.\run.ps1
+
+# 3. Access your applications
+# Frontend: http://localhost:3000
+# Backend:  http://localhost:8000
+# API Docs: http://localhost:8000/docs
+```
+
+**Linux/macOS:**
+```bash
+# 1. Health check first
+./run.sh --check
+
+# 2. Launch full development environment
+./run.sh
+```
+
+**Individual Services:**
+```powershell
+.\run.ps1 -BackendOnly    # Backend only
+.\run.ps1 -FrontendOnly   # Frontend only
+.\run.ps1 -Help           # Show help
+```
 
 ### Prerequisites
 - Node.js 18+ and npm
