@@ -81,13 +81,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function LocaleLayout({
+export default async function LocaleLayout({
   children,
-  params: {lang}
+  params
 }: Readonly<{
   children: React.ReactNode;
-  params: {lang: string};
+  params: Promise<{lang: string}>;
 }>) {
+  const { lang } = await params;
+
   return (
     <Layout>{children}</Layout>
   );
