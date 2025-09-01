@@ -10,7 +10,9 @@ Following elite-cursor-snippets patterns for Kenya-specific requirements
 // [CONTEXT]: Production-ready API for Astella integration
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pipeline_wrapper as pw
 import uvicorn
@@ -18,6 +20,8 @@ import os
 import uuid
 import yaml
 from typing import Optional, Dict, Any
+from datetime import datetime, timedelta
+import jwt
 
 # Load config
 def load_config() -> Dict[str, Any]:
@@ -41,6 +45,26 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Add CORS middleware for frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Allow Next.js dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Authentication setup
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+SECRET_KEY = "shujaa-studio-dev-secret-key-2025"  # In production, use environment variable
+ALGORITHM = "HS256"
+
+# Development users for super admin access
+DEV_USERS = {
+    "peter": {"password": "normal", "role": "admin", "email": "peter@shujaa.studio"},
+    "apollo": {"password": "aluru742!!", "role": "user", "email": "apollo@shujaa.studio"}
+}
+
 # Request/Response models
 class VideoRequest(BaseModel):
     prompt: str
@@ -62,6 +86,76 @@ class BatchResponse(BaseModel):
     status: str
     output_dir: str
     message: str
+
+# Authentication helper functions
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=30)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def authenticate_user(username: str, password: str):
+    user = DEV_USERS.get(username)
+    if user and user["password"] == password:
+        return {"username": username, **user}
+    return None
+
+# Authentication endpoints
+@app.post("/token")
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=30)
+    access_token = create_access_token(
+        data={"sub": user["username"], "role": user["role"]},
+        expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@app.post("/superadmin/token")
+async def superadmin_login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user or user["role"] != "admin":
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect username or password or not an admin",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=30)
+    access_token = create_access_token(
+        data={"sub": user["username"], "role": user["role"]},
+        expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@app.get("/users/me")
+async def read_users_me(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        role: str = payload.get("role")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        user_data = DEV_USERS.get(username)
+        if user_data is None:
+            raise HTTPException(status_code=401, detail="User not found")
+        return {
+            "username": username,
+            "email": user_data["email"],
+            "role": role,
+            "id": username  # Simple ID for development
+        }
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 # Health check
 @app.get("/")
