@@ -1,7 +1,6 @@
-
 import { useState, useRef } from 'react';
 import { usePromptSuggester } from '@/hooks/usePromptSuggester';
-import { FaSpinner } from 'react-icons/fa6';
+import { FaLightbulb, FaRandom, FaFlag, FaMountain, FaSpinner } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Reusable prompt suggester component

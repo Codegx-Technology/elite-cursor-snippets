@@ -5,7 +5,7 @@ import Card from '@/components/Card';
 import LazyImage from '@/components/LazyImage';
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
-import { FaImages, FaVideo, FaMusic, FaDownload, FaPlay, FaEye, FaHeart, FaFlag, FaMountain } from 'react-icons/fa6';
+import { FaImages, FaVideo, FaMusic, FaDownload, FaPlay, FaEye, FaHeart, FaFlag, FaMountain } from 'react-icons/fa';
 import { apiClient, handleApiResponse } from '@/lib/api';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent
@@ -42,7 +42,7 @@ export default function GalleryPage() {
       handleApiResponse(
         response,
         (data) => {
-          const mappedItems = data.assets.map((asset: { id: string; name: string; type: 'video' | 'image' | 'audio'; thumbnail_url?: string; url: string; uploaded_at: string | number; size: number; }) => ({
+          const mappedItems = data.items.map((asset: { id: string; name: string; type: 'video' | 'image' | 'audio'; thumbnail_url?: string; url: string; uploaded_at: string | number; size: number; }) => ({
             id: asset.id,
             title: asset.name,
             type: asset.type,

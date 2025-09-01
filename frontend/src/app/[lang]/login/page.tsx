@@ -6,7 +6,11 @@ import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
 import Card from '@/components/Card';
 
-const LoginPage: React.FC = () => {
+interface LoginPageProps {
+  params?: Promise<{lang: string}>;
+}
+
+const LoginPage: React.FC<LoginPageProps> = ({ params }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);

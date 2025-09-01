@@ -8,7 +8,7 @@
 import React from 'react';
 import { colors, spacing, typography } from '@/config/designTokens';
 import { cn } from '@/lib/utils';
-import { FaExclamationTriangle, FaTimesCircle, FaInfoCircle, FaCheckCircle, FaRedo, FaHome } from 'react-icons/fa6';
+import { FaExclamationTriangle, FaTimesCircle, FaInfoCircle, FaCheckCircle, FaRedo, FaHome } from 'react-icons/fa';
 
 // Alert Component
 export interface AlertProps {

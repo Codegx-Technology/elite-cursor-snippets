@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { FaCheck, FaCrown, FaFlag, FaMountain, FaRocket, FaCreditCard } from 'react-icons/fa6';
+import { FaCheck, FaCrown, FaFlag, FaMountain, FaRocket, FaCreditCard } from 'react-icons/fa';
 import GraceCountdownOverlay from '@/components/GraceCountdownOverlay';
 import { usePlanGuard } from '@/context/PlanGuardContext'; // New import
 import { paymentUtils, usePaystack } from '@/lib/paystack'; // Correct import for paymentUtils and usePaystack
@@ -72,7 +72,11 @@ const UsageProgressBar: React.FC<UsageProgressBarProps> = ({ label, used, limit 
 // [GOAL]: Create comprehensive pricing interface with real payment processing
 // [TASK]: Implement subscription plans with Paystack payment flow and cultural authenticity
 
-export default function PricingPage() {
+interface PricingPageProps {
+  params?: Promise<{lang: string}>;
+}
+
+export default function PricingPage({ params }: PricingPageProps) {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);

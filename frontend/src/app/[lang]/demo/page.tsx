@@ -3,7 +3,11 @@
 import React, { useState } from 'react';
 
 // Simple working demo of the Kenya-first components
-export default function DemoPage() {
+interface DemoPageProps {
+  params?: Promise<{lang: string}>;
+}
+
+export default function DemoPage({ params }: DemoPageProps) {
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({

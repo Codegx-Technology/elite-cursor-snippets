@@ -8,9 +8,9 @@
 import React from 'react';
 import { colors, spacing, typography } from '@/config/designTokens';
 import { cn } from '@/lib/utils';
-import { FaSpinner, FaVideo, FaUpload, FaCog } from 'react-icons/fa6';
+import { FaVideo, FaUpload, FaCog } from 'react-icons/fa';
 
-// Loading Spinner Component
+// Custom Hydration-Safe Loading Spinner Component
 export interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   variant?: 'default' | 'kenya' | 'cultural' | 'elite';
@@ -37,13 +37,15 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   };
 
   return (
-    <FaSpinner
+    <div
       className={cn(
-        'animate-spin',
+        'animate-spin rounded-full border-2 border-current border-t-transparent',
         sizeClasses[size],
         variantClasses[variant],
         className
       )}
+      role="status"
+      aria-label="Loading"
     />
   );
 };
@@ -149,7 +151,7 @@ export const VideoLoading: React.FC<VideoLoadingProps> = ({
     finalizing: {
       title: 'Inamaliza...',
       subtitle: 'Tunamaliza na kuandaa video yako',
-      icon: <FaSpinner className="w-8 h-8 animate-spin" />
+      icon: <LoadingSpinner size="lg" variant="kenya" />
     }
   };
 

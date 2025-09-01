@@ -1,51 +1,30 @@
 'use client';
 
-import { useTranslations } from "next-intl";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default function Home() {
-  const t = useTranslations("Index");
+export default function LocalizedHome() {
+  const router = useRouter();
 
+  useEffect(() => {
+    // Redirect localized routes to dashboard
+    router.push('/dashboard');
+  }, [router]);
+
+  // Show loading state while redirecting
   return (
-    <div style={{ padding: '40px', fontFamily: 'Arial, sans-serif', textAlign: 'center' }}>
-      <h1 style={{ color: '#2c3e50', fontSize: '3em' }}>🇰🇪 {t("title")}</h1>
-      <h2 style={{ color: '#27ae60' }}>✅ i18n WORKING!</h2>
-      <p style={{ fontSize: '1.2em', color: '#7f8c8d' }}>
-        Internationalization is now functional! Time: {new Date().toLocaleString()}
-      </p>
-      <div style={{ marginTop: '30px' }}>
-        <a
-          href="/"
-          style={{
-            background: '#3498db',
-            color: 'white',
-            padding: '15px 30px',
-            textDecoration: 'none',
-            borderRadius: '5px',
-            fontSize: '1.1em',
-            margin: '10px'
-          }}
-        >
-          Back to Main
-        </a>
-        <a
-          href="/sw"
-          style={{
-            background: '#e74c3c',
-            color: 'white',
-            padding: '15px 30px',
-            textDecoration: 'none',
-            borderRadius: '5px',
-            fontSize: '1.1em',
-            margin: '10px'
-          }}
-        >
-          Swahili (sw)
-        </a>
-      </div>
-      <div style={{ marginTop: '40px', background: '#f8f9fa', padding: '20px', borderRadius: '8px' }}>
-        <h3>🌍 Language: {t("title")}</h3>
-        <p>This page uses Next.js i18n with next-intl</p>
-        <p>Current locale: <strong>en</strong></p>
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh',
+      background: 'linear-gradient(135deg, #00A651, #FFD700)',
+      color: 'white',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <div style={{ textAlign: 'center' }}>
+        <h1>🇰🇪 Shujaa Studio</h1>
+        <p>Redirecting to Dashboard...</p>
       </div>
     </div>
   );

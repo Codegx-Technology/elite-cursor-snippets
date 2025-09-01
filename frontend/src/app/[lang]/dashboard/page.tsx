@@ -10,7 +10,7 @@ import React, { useEffect, useState } from 'react';
 import { usePlanGuard } from '@/context/PlanGuardContext';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
-import { FaVideo, FaCreditCard, FaCog, FaChartLine, FaImage, FaMusic } from 'react-icons/fa6';
+import { FaVideo, FaCreditCard, FaCog, FaChartLine, FaImage, FaMusic } from 'react-icons/fa';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,11 @@ import { BarChart, LineChart } from '@/components/charts/Chart';
 // [GOAL]: Display user-specific information like plan status, usage, and quick links.
 // [TASK]: Implement the main dashboard layout and integrate data from contexts.
 
-export default function DashboardPage() {
+interface DashboardPageProps {
+  params?: Promise<{lang: string}>;
+}
+
+export default function DashboardPage({ params }: DashboardPageProps) {
   const { planStatus, loading: planLoading, error: planError } = usePlanGuard();
   const { user, isLoading: authLoading } = useAuth();
 
