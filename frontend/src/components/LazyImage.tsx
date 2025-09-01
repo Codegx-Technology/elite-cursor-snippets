@@ -1,105 +1,44 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { optimizeKenyaImage, perfMonitor } from '@/lib/performance';
-import LoadingStates from '@/components/ui/LoadingStates';
+import Image from 'next/image';
+import React from 'react'; // Import React for React.ReactNode
 
 interface LazyImageProps {
   src: string;
   alt: string;
   placeholder?: React.ReactNode;
   className?: string;
-  width?: number;
-  height?: number;
+  width: number; // Make required for next/image
+  height: number; // Make required for next/image
   priority?: boolean;
 }
 
-const LazyImage: React.FC<LazyImageProps> = ({ 
-  src, 
-  alt, 
-  placeholder, 
-  className, 
-  width, 
-  height, 
-  priority = false 
+const LazyImage: React.FC<LazyImageProps> = ({
+  src,
+  alt,
+  placeholder,
+  className,
+  width,
+  height,
+  priority = false
 }) => {
-  const [inView, setInView] = useState(priority); // Load immediately if priority
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [error, setError] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (priority) return; // Skip observer for priority images
-    
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setInView(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '100px' } // Pre-load images 100px before they enter the viewport
-    );
-
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
-    return () => {
-      if (ref.current) {
-        observer.unobserve(ref.current);
-      }
-    };
-  }, [priority]);
-
-  useEffect(() => {
-    if (inView) {
-      perfMonitor.startTiming(`image_load_${alt}`);
-      
-      const img = new Image();
-      const optimizedSrc = optimizeKenyaImage(src, width, height);
-      img.src = optimizedSrc;
-      
-      img.onload = () => {
-        setIsLoaded(true);
-        perfMonitor.endTiming(`image_load_${alt}`);
-      };
-      
-      img.onerror = () => {
-        setError(true);
-        perfMonitor.endTiming(`image_load_${alt}`);
-        console.error(`🇰🇪 Failed to load image: ${src}`);
-      };
-    }
-  }, [inView, src, alt, width, height]);
-
-  const defaultPlaceholder = (
-    <div className="flex items-center justify-center bg-gray-100 animate-pulse">
-      <LoadingStates.LoadingSpinner size="sm" variant="kenya" />
-    </div>
-  );
-
-  const errorPlaceholder = (
-    <div className="flex items-center justify-center bg-gray-100 text-gray-500">
-      <span className="text-sm">🇰🇪 Image unavailable</span>
-    </div>
-  );
+  // next/image handles lazy loading, error states, and placeholders internally
+  // The custom logic for IntersectionObserver, isLoaded, error states, and perfMonitor
+  // related to image loading is now redundant.
 
   return (
-    <div ref={ref} className={className}>
-      {error ? (
-        errorPlaceholder
-      ) : isLoaded ? (
-        <img 
-          src={optimizeKenyaImage(src, width, height)} 
-          alt={alt} 
-          className="w-full h-full object-cover transition-opacity duration-300" 
-          loading={priority ? 'eager' : 'lazy'}
-        />
-      ) : (
-        placeholder || defaultPlaceholder
-      )}
-    </div>
+    <Image
+      src={src}
+      alt={alt}
+      className={className} // Pass className directly
+      width={width}
+      height={height}
+      priority={priority}
+      // next/image has its own error handling and placeholder mechanisms.
+      // If custom placeholders/error states are needed, they should be implemented
+      // using next/image's onError and onLoadingComplete props, or by wrapping
+      // the Image component with custom logic.
+    />
   );
 };
 

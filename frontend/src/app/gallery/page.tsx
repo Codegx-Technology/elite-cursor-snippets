@@ -169,6 +169,8 @@ export default function GalleryPage() {
                 <LazyImage
                   src={item.thumbnail}
                   alt={item.title}
+                  width={1600} // Arbitrary width for aspect ratio
+                  height={900} // Arbitrary height for aspect ratio (16:9)
                   placeholder={
                     <div className="aspect-video bg-gray-200 flex items-center justify-center">
                       {getTypeIcon(item.type)}
