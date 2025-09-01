@@ -34,15 +34,7 @@ const nextConfig = {
       );
     }
 
-    // Fix react-icons vendor chunk issue
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      'react-icons': require.resolve('react-icons'),
-      'react-icons/fa6': require.resolve('react-icons/fa6'),
-      'react-icons/md': require.resolve('react-icons/md'),
-      'react-icons/hi': require.resolve('react-icons/hi'),
-      'react-icons/ai': require.resolve('react-icons/ai')
-    };
+    
 
     return config;
   },
