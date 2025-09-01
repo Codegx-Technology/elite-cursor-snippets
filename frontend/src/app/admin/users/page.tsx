@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa6';
-import { DataTable, ColumnDef } from '@/components/data-table/DataTable'; // Import DataTable and ColumnDef
+import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
+import { DataTable } from '@/components/data-table/DataTable';
 
 interface UserData {
   id: string;
@@ -16,6 +16,13 @@ interface UserData {
   role: string;
   tenant_name: string;
   is_active: boolean;
+}
+
+interface ColumnDef<T> {
+  accessorKey: keyof T;
+  header: string | React.ReactNode;
+  cell?: (row: T) => React.ReactNode;
+  enableSorting?: boolean;
 }
 
 export default function AdminUsersPage() {
@@ -129,13 +136,13 @@ export default function AdminUsersPage() {
       accessorKey: 'is_active',
       header: 'Active',
       enableSorting: true,
-      cell: (row) => (row.is_active ? 'Yes' : 'No'),
+      cell: (row: UserData) => (row.is_active ? 'Yes' : 'No'),
     },
     {
       accessorKey: 'id', // Using ID as accessor for actions
       header: 'Actions',
       enableSorting: false,
-      cell: (row) => (
+      cell: (row: UserData) => (
         <div className="flex space-x-2">
           <Button
             variant="outline"

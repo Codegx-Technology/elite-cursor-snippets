@@ -10,8 +10,8 @@ import { useI18n, type Language } from '@/lib/i18n';
 import { useCollaboration } from '@/lib/collaboration';
 import { videoProcessingEngine } from '@/lib/video-processing';
 import { aiSuggestionEngine } from '@/lib/ai-suggestions';
-import Card from '@/components/ui/Card';
-import Chart from '@/components/ui/Chart';
+import { Card } from '@/components/ui/card';
+import { BarChart, LineChart } from '@/components/charts/Chart';
 import AccessibleButton from '@/components/AccessibleButton';
 import LoadingStates from '@/components/ui/LoadingStates';
 import CollaborationPanel from '@/components/CollaborationPanel';
@@ -19,7 +19,7 @@ import AISuggestionsPanel from '@/components/AISuggestionsPanel';
 import { 
   FaRocket, FaUsers, FaBrain, FaVideo, FaLanguage, 
   FaChartLine, FaCog, FaGlobe, FaLightbulb, FaFlag 
-} from 'react-icons/fa6';
+} from 'react-icons/fa';
 
 const Phase4Dashboard: React.FC = () => {
   const { t, language, setLanguage, supportedLanguages, formatNumber } = useI18n();

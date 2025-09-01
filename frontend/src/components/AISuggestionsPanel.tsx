@@ -8,10 +8,10 @@
 import React, { useState, useEffect } from 'react';
 import { aiSuggestionEngine, ContentSuggestion, KENYA_CONTENT_CATEGORIES } from '@/lib/ai-suggestions';
 import { useAriaUtils } from '@/hooks/useAccessibility';
-import Card from '@/components/ui/Card';
+import { Card } from '@/components/ui/card';
 import AccessibleButton from '@/components/AccessibleButton';
 import LoadingStates from '@/components/ui/LoadingStates';
-import { FaBrain, FaLightbulb, FaFlag, FaStar, FaClock, FaTools } from 'react-icons/fa6';
+import { FaBrain, FaLightbulb, FaFlag, FaStar, FaClock, FaTools } from 'react-icons/fa';
 
 interface AISuggestionsPanelProps {
   content?: string;

@@ -9,7 +9,7 @@ import React, { useState, useCallback } from 'react';
 import { Button } from '../ui/design-system';
 import { colors, spacing, typography } from '../../config/designTokens';
 import { cn } from '../../lib/utils';
-import { FaCheck, FaChevronLeft, FaChevronRight } from 'react-icons/fa6';
+import { FaCheck, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 // Form Wizard Step Interface
 export interface WizardStep<TFormData> {

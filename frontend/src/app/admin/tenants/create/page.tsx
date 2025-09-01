@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTenantManagement } from '@/hooks/useTenantManagement';
-import { FaPlus, FaSpinner } from 'react-icons/fa6';
+import { FaPlus, FaSpinner } from 'react-icons/fa';
 import Card from '@/components/Card';
 
 export default function CreateTenantPage() {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-// import Layout from "@/components/Layout"; // Temporarily disabled
+// import Layout from "@/components/Layout"; // Handled by [lang]/layout.tsx
 import ClientBoot from "@/components/ClientBoot";
 import { PlanGuardProvider } from "@/context/PlanGuardContext"; // New import
 import { AuthProvider } from "@/context/AuthContext"; // New import for AuthProvider

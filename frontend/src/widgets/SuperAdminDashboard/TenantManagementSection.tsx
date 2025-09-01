@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { apiClient, Tenant, TenantBrandingData } from '@/lib/api'; // Import Tenant type
-import { FaBuilding, FaSpinner, FaExclamationTriangle } from 'react-icons/fa6'; // Added icons
+import { FaBuilding, FaSpinner, FaExclamationTriangle } from 'react-icons/fa'; // Added icons
 
 const TenantManagementSection: React.FC = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useStorageManagement } from '@/hooks/useStorageManagement';
-import { FaSpinner } from 'react-icons/fa6';
+import { FaSpinner } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Reusable storage management component

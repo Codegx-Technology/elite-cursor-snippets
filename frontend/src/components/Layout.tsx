@@ -88,9 +88,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Mobile Overlay with improved touch handling */}
       {isSidebarOpen && isMobile && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden touch-none"
-          onClick={() => setSidebarOpen(false)}
-          onTouchStart={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          style={{ pointerEvents: 'auto' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setSidebarOpen(false);
+          }}
+          onTouchStart={(e) => {
+            e.stopPropagation();
+            setSidebarOpen(false);
+          }}
         />
       )}
 

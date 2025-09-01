@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { FaPlus, FaTimes } from 'react-icons/fa6';
+import { FaPlus, FaTimes } from 'react-icons/fa';
 
 interface CreateProjectModalProps {
   isOpen: boolean;

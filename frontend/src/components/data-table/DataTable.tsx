@@ -17,7 +17,7 @@ import {
 import { Button, Input } from '@/components/ui/design-system';
 import { colors, spacing, typography } from '@/config/designTokens';
 import { cn } from '@/lib/utils';
-import { FaSortUp, FaSortDown, FaSort, FaSearch, FaFilter } from 'react-icons/fa6';
+import { FaSortUp, FaSortDown, FaSort, FaSearch, FaFilter } from 'react-icons/fa';
 
 interface ColumnDef<T> {
   accessorKey: keyof T;

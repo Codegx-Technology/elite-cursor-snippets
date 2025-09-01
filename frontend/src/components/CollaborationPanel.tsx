@@ -8,9 +8,9 @@
 import React, { useState, useEffect } from 'react';
 import { useCollaboration, UserPresence } from '@/lib/collaboration';
 import { useAriaUtils } from '@/hooks/useAccessibility';
-import Card from '@/components/ui/Card';
+import { Card } from '@/components/ui/card';
 import AccessibleButton from '@/components/AccessibleButton';
-import { FaUsers, FaComments, FaCursor, FaVideo, FaEdit } from 'react-icons/fa6';
+import { FaUsers, FaComments, FaMousePointer, FaVideo, FaEdit } from 'react-icons/fa';
 
 interface CollaborationPanelProps {
   roomId: string;
@@ -159,6 +159,7 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
             {collaborators.map((user) => (
               <div key={user.userId} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg">
                 <div className="relative">
+                  <FaMousePointer className="w-3 h-3" />
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
                     {user.userName.charAt(0).toUpperCase()}
                   </div>
@@ -256,7 +257,7 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
             <AccessibleButton
               size="sm"
               variant="outline"
-              icon={<FaCursor />}
+              icon={<FaMousePointer />}
               ariaLabel={createAriaLabel('Show cursors', 'collaboration')}
               culturalContext="Real-time cursor tracking"
             >

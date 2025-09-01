@@ -9,7 +9,7 @@ import React, { useState } from 'react';
 import { FormWizard, WizardStep, TextInputStep, SelectStep } from './FormWizard';
 import { Button } from '@/components/ui/design-system';
 import { colors } from '@/config/designTokens';
-import { FaUser, FaVideo, FaCog, FaCheck } from 'react-icons/fa6';
+import { FaUser, FaVideo, FaCog, FaCheck } from 'react-icons/fa';
 
 interface VideoFormData {
   videoType: string;

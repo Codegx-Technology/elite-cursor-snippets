@@ -190,23 +190,29 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
               key={`${item.href}-${idx}`}
               href={item.href}
               prefetch={true}
-              className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 group ${
+              className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 group cursor-pointer relative ${
                 active
                   ? 'bg-gradient-to-r from-green-600 to-blue-600 text-white shadow-lg'
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
               }`}
+              style={{ pointerEvents: 'auto', zIndex: 1 }}
               aria-current={active ? 'page' : undefined}
               onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
                 // Immediate visual feedback
-                e.currentTarget.style.transform = 'scale(0.98)';
+                const target = e.currentTarget;
+                target.style.transform = 'scale(0.98)';
                 setTimeout(() => {
-                  if (e.currentTarget) {
-                    e.currentTarget.style.transform = '';
-                  }
+                  target.style.transform = '';
                 }, 100);
                 
-                // Close sidebar immediately on mobile
+                // Close sidebar on mobile
                 setSidebarOpen(false);
+                
+                // Navigate programmatically
+                window.location.href = item.href;
               }}
             >
               <Icon />

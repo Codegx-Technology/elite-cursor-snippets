@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUserProfile, UserProfileData } from '@/hooks/useUserProfile';
-import { FaSpinner } from 'react-icons/fa6';
+import { FaSpinner } from 'react-icons/fa';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Reusable user profile component

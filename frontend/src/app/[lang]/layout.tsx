@@ -2,12 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../globals.css";
 import Layout from "@/components/Layout";
-import ClientBoot from "@/components/ClientBoot";
-import { PlanGuardProvider } from "@/context/PlanGuardContext";
-import { AuthProvider } from "@/context/AuthContext";
-import { ErrorProvider } from "@/context/ErrorContext";
-import ErrorNotification from "@/components/ErrorNotification";
-import { ToastProvider } from "@/components/ui/use-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
