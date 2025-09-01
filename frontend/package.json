@@ -13,7 +13,8 @@
     "test:coverage": "jest --coverage",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build",
-    "perf:audit": "lighthouse http://localhost:3000 --config-path=./lighthouserc.json --quiet --chrome-flags=\"--headless\""
+    "perf:audit": "lighthouse http://localhost:3000 --config-path=./lighthouserc.json --quiet --chrome-flags=\"--headless\"",
+    "analyze": "cross-env ANALYZE=true next build"
   },
   "dependencies": {
     "@radix-ui/react-progress": "^1.1.0",
@@ -40,6 +41,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@lhci/cli": "^0.13.0",
+    "@next/bundle-analyzer": "^15.5.2",
     "@storybook/addon-a11y": "^8.3.5",
     "@storybook/addon-essentials": "^8.3.5",
     "@storybook/addon-interactions": "^8.3.5",
@@ -56,6 +58,7 @@
     "@types/uuid": "^9.0.8",
     "axe-core": "^4.10.0",
     "babel-jest": "^29.7.0",
+    "cross-env": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
     "eslint-plugin-jsx-a11y": "^6.10.0",

@@ -25,9 +25,9 @@ const nextConfig: NextConfig = {
   },
 
   // Bundle analyzer (enable when needed)
-  // bundleAnalyzer: {
-  //   enabled: process.env.ANALYZE === 'true',
-  // },
+  bundleAnalyzer: {
+    enabled: process.env.ANALYZE === 'true',
+  },
 
   // In development, proxy API calls to the FastAPI backend to avoid CORS and ensure cookies flow.
   async rewrites() {
