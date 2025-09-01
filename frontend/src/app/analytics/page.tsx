@@ -7,7 +7,9 @@ import { FaChartLine, FaVideo, FaUsers, FaClock, FaDownload } from 'react-icons/
 // Phase 2 Enterprise Components
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
-import { BarChart, LineChart, DonutChart } from '@/components/charts/Chart';
+const BarChart = React.lazy(() => import('@/components/charts/Chart').then(mod => ({ default: mod.BarChart })));
+const LineChart = React.lazy(() => import('@/components/charts/Chart').then(mod => ({ default: mod.LineChart })));
+const DonutChart = React.lazy(() => import('@/components/charts/Chart').then(mod => ({ default: mod.DonutChart })));
 import { apiClient } from '@/lib/api';
 
 interface AnalyticsData {
@@ -159,46 +161,48 @@ export default function AnalyticsPage() {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Monthly Growth */}
-        <Card className="p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <FaChartLine className="mr-2 text-kenya-green" /> Monthly Growth 🏃‍♂️
-          </h3>
-          <LineChart 
-            data={analytics.monthlyGrowth}
-            className="h-80"
-            variant="kenya"
-            title="Monthly Videos"
-          />
-        </Card>
+        <React.Suspense fallback={<div>Loading charts...</div>}>
+          {/* Monthly Growth */}
+          <Card className="p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <FaChartLine className="mr-2 text-kenya-green" /> Monthly Growth 🏃‍♂️
+            </h3>
+            <LineChart 
+              data={analytics.monthlyGrowth}
+              className="h-80"
+              variant="kenya"
+              title="Monthly Videos"
+            />
+          </Card>
 
-        {/* Content Types */}
-        <Card className="p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <FaVideo className="mr-2 text-blue-600" /> Content Types 🎬
-          </h3>
-          <DonutChart 
-            data={analytics.contentTypes}
-            className="h-80"
-            variant="cultural"
-            title="Content Distribution"
-          />
-        </Card>
+          {/* Content Types */}
+          <Card className="p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <FaVideo className="mr-2 text-blue-600" /> Content Types 🎬
+            </h3>
+            <DonutChart 
+              data={analytics.contentTypes}
+              className="h-80"
+              variant="cultural"
+              title="Content Distribution"
+            />
+          </Card>
+
+          {/* Regional Data */}
+          <Card className="p-6 mb-8">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <FaUsers className="mr-2 text-purple-600" /> Regional Data 🗺️
+            </h3>
+            <BarChart 
+              data={analytics.regionalData}
+              className="h-80"
+              variant="kenya"
+              title="Users by Region"
+              showValues={true}
+            />
+          </Card>
+        </React.Suspense>
       </div>
-
-      {/* Regional Data */}
-      <Card className="p-6 mb-8">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-          <FaUsers className="mr-2 text-purple-600" /> Regional Data 🗺️
-        </h3>
-        <BarChart 
-          data={analytics.regionalData}
-          className="h-80"
-          variant="kenya"
-          title="Users by Region"
-          showValues={true}
-        />
-      </Card>
 
       {/* Export Actions */}
       <div className="flex justify-end">
