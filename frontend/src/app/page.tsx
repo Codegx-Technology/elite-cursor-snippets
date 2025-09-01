@@ -1,3 +1,5 @@
+'use client';
+
 export default function RootPage() {
   return (
     <div style={{ padding: '40px', fontFamily: 'Arial, sans-serif', textAlign: 'center' }}>
