@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
-import { FaSpinner } from 'react-icons/fa';
+import { FaSpinner } from 'react-icons/fa6';
 
 const LoginForm: React.FC = () => {
   const [username, setUsername] = useState('');

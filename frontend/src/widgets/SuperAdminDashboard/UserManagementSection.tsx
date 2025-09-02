@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchAllUsers } from './adminService';
 import type { UserData } from '@/lib/api'; // Use type from central API
 import { Card } from '@/components/ui/card';
-import { FaUsers, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
+import { FaUsers, FaSpinner, FaExclamationTriangle } from 'react-icons/fa6';
 
 const UserManagementSection: React.FC = () => {
   const [users, setUsers] = useState<UserData[]>([]);

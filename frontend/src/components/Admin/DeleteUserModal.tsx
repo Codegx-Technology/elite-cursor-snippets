@@ -1,6 +1,6 @@
 'use client';
 
-import { FaTrash, FaTimes } from 'react-icons/fa';
+import { FaTrash, FaTimes } from 'react-icons/fa6';
 import { UserData } from '@/hooks/useUserManagement';
 
 interface DeleteUserModalProps {

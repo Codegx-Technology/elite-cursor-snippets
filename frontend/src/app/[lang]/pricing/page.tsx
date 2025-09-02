@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { FaCheck, FaCrown, FaFlag, FaMountain, FaRocket, FaCreditCard } from 'react-icons/fa';
+import { FaCheck, FaCrown, FaFlag, FaMountain, FaRocket, FaCreditCard } from 'react-icons/fa6';
 import GraceCountdownOverlay from '@/components/GraceCountdownOverlay';
 import { usePlanGuard } from '@/context/PlanGuardContext'; // New import
 import { paymentUtils, usePaystack } from '@/lib/paystack'; // Correct import for paymentUtils and usePaystack

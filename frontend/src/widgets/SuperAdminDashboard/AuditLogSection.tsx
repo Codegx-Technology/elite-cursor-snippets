@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchAuditLogs } from './adminService';
 import type { AuditLogEntry } from '@/lib/api';
 import { Card } from '@/components/ui/card';
-import { FaHistory, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
+import { FaHistory, FaSpinner, FaExclamationTriangle } from 'react-icons/fa6';
 
 const AuditLogSection: React.FC = () => {
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);

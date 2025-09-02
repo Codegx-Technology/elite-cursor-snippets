@@ -10,7 +10,7 @@ import { useCollaboration, UserPresence } from '@/lib/collaboration';
 import { useAriaUtils } from '@/hooks/useAccessibility';
 import { Card } from '@/components/ui/card';
 import AccessibleButton from '@/components/AccessibleButton';
-import { FaUsers, FaComments, FaMousePointer, FaVideo, FaEdit } from 'react-icons/fa';
+import { FaUsers, FaComments, FaMousePointer, FaVideo, FaEdit } from 'react-icons/fa6';
 
 interface CollaborationPanelProps {
   roomId: string;

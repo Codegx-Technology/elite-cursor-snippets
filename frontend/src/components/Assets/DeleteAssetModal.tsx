@@ -1,5 +1,5 @@
 
-import { FaTrash, FaTimes } from 'react-icons/fa';
+import { FaTrash, FaTimes } from 'react-icons/fa6';
 import { Asset } from '@/hooks/useAssetLibrary';
 
 interface DeleteAssetModalProps {

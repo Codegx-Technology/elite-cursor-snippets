@@ -8,7 +8,7 @@
 import React from 'react';
 import { colors, spacing, typography } from '@/config/designTokens';
 import { cn } from '@/lib/utils';
-import { FaVideo, FaUpload, FaCog } from 'react-icons/fa';
+import { FaVideo, FaUpload, FaCog } from 'react-icons/fa6';
 
 // Custom Hydration-Safe Loading Spinner Component
 export interface LoadingSpinnerProps {
