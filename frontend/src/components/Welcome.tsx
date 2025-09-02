@@ -28,6 +28,7 @@ import {
 export default function Welcome({ title }: { title: string }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({
     videosGenerated: 0,
     happyCreators: 0,
@@ -38,6 +39,7 @@ export default function Welcome({ title }: { title: string }) {
     // Check authentication status
     const token = localStorage.getItem('jwt_token');
     setIsLoggedIn(!!token);
+    setIsLoading(false);
   }, []);
 
   // Kenya-first showcase slides
@@ -133,7 +135,12 @@ export default function Welcome({ title }: { title: string }) {
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
-            {isLoggedIn ? (
+            {isLoading ? (
+              <>
+                <div className="bg-gray-300 px-8 py-4 rounded-lg font-bold text-lg flex items-center space-x-2 shadow-lg w-48 h-16 animate-pulse"></div>
+                <div className="border-2 border-gray-300 px-8 py-4 rounded-lg font-bold text-lg flex items-center space-x-2 w-48 h-16 animate-pulse"></div>
+              </>
+            ) : isLoggedIn ? (
               <>
                 <Link href="/video-generate" className="hover:no-underline">
                   <button className="bg-white text-green-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition-all duration-300 flex items-center space-x-2 shadow-lg">

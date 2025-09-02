@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Card from '@/components/Card';
 import FormInput from '@/components/FormInput';
 import FormSelect from '@/components/FormSelect';
-import { FaMusic, FaMicrophone, FaPlay, FaPause, FaStop, FaDownload, FaFlag, FaMountain, FaVolumeUp, FaWaveSquare } from 'react-icons/fa6';
+import { FaDownload, FaFlag, FaMicrophone, FaMountain, FaMusic, FaPause, FaPlay, FaStop, FaVolumeHigh, FaWaveSquare } from 'react-icons/fa6';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent
 // [CONTEXT]: Audio Studio page for voice and music creation with Kenya-first design

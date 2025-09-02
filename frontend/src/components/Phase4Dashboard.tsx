@@ -16,9 +16,9 @@ import AccessibleButton from '@/components/AccessibleButton';
 import LoadingStates from '@/components/ui/LoadingStates';
 import CollaborationPanel from '@/components/CollaborationPanel';
 import AISuggestionsPanel from '@/components/AISuggestionsPanel';
-import { 
-  FaRocket, FaUsers, FaBrain, FaVideo, FaLanguage, 
-  FaChartLine, FaCog, FaGlobe, FaLightbulb, FaFlag 
+import {
+  FaRocket, FaUsers, FaBrain, FaVideo, FaLanguage,
+  FaChartLine, FaCog, FaGlobe, FaLightbulb, FaFlag
 } from 'react-icons/fa6';
 
 const Phase4Dashboard: React.FC = () => {

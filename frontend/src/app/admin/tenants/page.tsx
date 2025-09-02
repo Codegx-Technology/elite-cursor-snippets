@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa6';
+import { FaPencilAlt, FaPlus, FaTrashCan } from 'react-icons/fa6';
 import { useTenantManagement } from '@/hooks/useTenantManagement';
 
 export default function AdminTenantsPage() {

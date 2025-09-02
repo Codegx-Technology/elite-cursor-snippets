@@ -1,5 +1,5 @@
 
-import { FaTrash, FaTimes } from 'react-icons/fa6';
+import { FaTrashCan, FaXmark } from 'react-icons/fa6';
 import { Project } from '@/hooks/useProjects';
 
 interface DeleteProjectModalProps {

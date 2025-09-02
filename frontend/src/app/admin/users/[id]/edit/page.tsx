@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useUserManagement } from '@/hooks/useUserManagement';
-import { FaSave, FaSpinner } from 'react-icons/fa6';
+import { FaFloppyDisk, FaSpinner } from 'react-icons/fa6';
 import Card from '@/components/Card';
 
 export default function EditUserPage() {

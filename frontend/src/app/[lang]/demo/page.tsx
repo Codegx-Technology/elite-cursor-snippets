@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Layout from '@/components/Layout';
 
 // Simple working demo of the Kenya-first components
 interface DemoPageProps {
@@ -24,7 +25,8 @@ export default function DemoPage({ params }: DemoPageProps) {
   const steps = ['Maelezo ya Video', 'Upangaji', 'Kagua'];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <Layout>
+      <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-12">
@@ -282,6 +284,7 @@ export default function DemoPage({ params }: DemoPageProps) {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </Layout>
   );
 }

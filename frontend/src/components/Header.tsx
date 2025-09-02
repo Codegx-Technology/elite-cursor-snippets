@@ -27,15 +27,53 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [isClient, setIsClient] = useState(false);
+  const [showSuperAdminLogin, setShowSuperAdminLogin] = useState(false);
+  const [superAdminCredentials, setSuperAdminCredentials] = useState({ username: '', password: '' });
   const router = useRouter();
 
+  // Superadmin login function
+  const handleSuperAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('http://localhost:8000/superadmin/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          username: superAdminCredentials.username,
+          password: superAdminCredentials.password,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('jwt_token', data.access_token);
+        setShowSuperAdminLogin(false);
+        setSuperAdminCredentials({ username: '', password: '' });
+        router.push('/admin/dashboard');
+      } else {
+        alert('Invalid superadmin credentials');
+      }
+    } catch (error) {
+      console.error('Superadmin login error:', error);
+      alert('Login failed. Please try again.');
+    }
+  };
+
   useEffect(() => {
-    // Check authentication status
-    const token = localStorage.getItem('jwt_token');
-    if (token) {
-      setIsLoggedIn(true);
-      // Mock user data - in real app, fetch from API
-      setUser({ name: 'John Kamau', email: 'john@example.com' });
+    // Set client-side flag to prevent hydration mismatch
+    setIsClient(true);
+
+    // Check authentication status only on client side
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('jwt_token');
+      if (token) {
+        setIsLoggedIn(true);
+        // Mock user data - in real app, fetch from API
+        setUser({ name: 'John Kamau', email: 'john@example.com' });
+      }
     }
   }, []);
 
@@ -141,11 +179,23 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
             </div>
             <input
               type="text"
-              className="form-input w-full pl-10 pr-4 py-2 text-sm"
+              className="form-input w-full pl-10 pr-12 py-2 text-sm"
               placeholder="Search projects, videos, or templates..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {/* Superadmin Gear Icon */}
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+              <button
+                onClick={() => setShowSuperAdminLogin(true)}
+                className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                title="Superadmin Access"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
 
             {/* Dev Mode Icon - Only show in development */}
             {process.env.NODE_ENV === 'development' && (
@@ -227,8 +277,8 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
             </div>
           )}
 
-          {/* Authentication Section */}
-          {isLoggedIn ? (
+          {/* Authentication Section - Only render after client hydration */}
+          {isClient && isLoggedIn ? (
             /* User Menu - Mobile optimized */
             <div className="relative">
               <button
@@ -269,7 +319,7 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
                 </div>
               )}
             </div>
-          ) : (
+          ) : isClient ? (
             /* Login/Register buttons when logged out */
             <div className="flex items-center space-x-2">
               <Link href="/login" className="btn-primary px-4 py-2 text-sm hover:no-underline">
@@ -279,12 +329,18 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
                 Register
               </Link>
             </div>
+          ) : (
+            /* Loading placeholder to prevent hydration mismatch */
+            <div className="flex items-center space-x-2">
+              <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-20 h-8 bg-gray-200 rounded animate-pulse hidden sm:block"></div>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Mobile Search - Only show if logged in */}
-      {isLoggedIn && (
+      {/* Mobile Search - Only show if logged in and client-side */}
+      {isClient && isLoggedIn && (
         <div className="md:hidden mt-3 sm:mt-4">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -300,6 +356,73 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ fontSize: '16px' }} // Prevents zoom on iOS
             />
+          </div>
+        </div>
+      )}
+
+      {/* Superadmin Login Modal */}
+      {showSuperAdminLogin && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">🇰🇪 Superadmin Access</h3>
+              <button
+                onClick={() => {
+                  setShowSuperAdminLogin(false);
+                  setSuperAdminCredentials({ username: '', password: '' });
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleSuperAdminLogin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <input
+                  type="text"
+                  value={superAdminCredentials.username}
+                  onChange={(e) => setSuperAdminCredentials(prev => ({ ...prev, username: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Enter superadmin username"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input
+                  type="password"
+                  value={superAdminCredentials.password}
+                  onChange={(e) => setSuperAdminCredentials(prev => ({ ...prev, password: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Enter superadmin password"
+                  required
+                />
+              </div>
+
+              <div className="flex space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSuperAdminLogin(false);
+                    setSuperAdminCredentials({ username: '', password: '' });
+                  }}
+                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                >
+                  Login
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

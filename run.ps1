@@ -19,6 +19,47 @@ $FrontendPath = Join-Path $ProjectRoot "frontend"
 
 Write-Host "Project Root: $ProjectRoot" -ForegroundColor Cyan
 
+# Function to stop processes on a specific port
+function Stop-ProcessOnPort {
+    param([int]$Port)
+
+    Write-Host "Checking for processes on port $Port..." -ForegroundColor Yellow
+
+    try {
+        $processes = netstat -ano | Select-String ":$Port " | ForEach-Object {
+            $line = $_.Line.Trim()
+            $parts = $line -split '\s+'
+            if ($parts.Length -ge 5) {
+                $processId = $parts[4]
+                if ($processId -match '^\d+$') {
+                    return $processId
+                }
+            }
+        }
+
+        $uniquePids = $processes | Sort-Object -Unique
+
+        foreach ($processId in $uniquePids) {
+            if ($processId) {
+                try {
+                    $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
+                    if ($process) {
+                        Write-Host "Killing process $($process.ProcessName) (PID: $processId) on port $Port" -ForegroundColor Red
+                        Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+                        Start-Sleep 1
+                    }
+                } catch {
+                    # Process might already be gone, continue
+                }
+            }
+        }
+
+        Write-Host "Port $Port is now available" -ForegroundColor Green
+    } catch {
+        Write-Host "No processes found on port $Port" -ForegroundColor Green
+    }
+}
+
 if ($Help) {
     Write-Host "USAGE:" -ForegroundColor Yellow
     Write-Host "  .\run.ps1                 # Launch both servers" -ForegroundColor Cyan
@@ -63,6 +104,20 @@ if ($Check) {
     Write-Host "Shujaa Studio is ready for development!" -ForegroundColor Yellow
     return
 }
+
+# Kill existing processes on required ports
+Write-Host ""
+Write-Host "Preparing ports for clean startup..." -ForegroundColor Yellow
+
+if (-not $FrontendOnly) {
+    Stop-ProcessOnPort -Port 8000
+}
+
+if (-not $BackendOnly -and $NodeFound) {
+    Stop-ProcessOnPort -Port 3000
+}
+
+Write-Host ""
 
 if (-not $FrontendOnly) {
     Write-Host "Starting Backend Server..." -ForegroundColor Green

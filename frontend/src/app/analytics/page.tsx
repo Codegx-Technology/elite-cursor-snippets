@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import Layout from '@/components/Layout';
 import { Card } from '@/components/ui/card';
 import { FaChartLine, FaVideo, FaUsers, FaClock, FaDownload } from 'react-icons/fa6';
 // Phase 2 Enterprise Components
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
-const BarChart = React.lazy(() => import('@/components/charts/Chart').then(mod => ({ default: mod.BarChart })));
-const LineChart = React.lazy(() => import('@/components/charts/Chart').then(mod => ({ default: mod.LineChart })));
-const DonutChart = React.lazy(() => import('@/components/charts/Chart').then(mod => ({ default: mod.DonutChart })));
+// const BarChart = React.lazy(() => import('@/components/charts/Chart').then(mod => ({ default: mod.BarChart })));
+// const LineChart = React.lazy(() => import('@/components/charts/Chart').then(mod => ({ default: mod.LineChart })));
+// const DonutChart = React.lazy(() => import('@/components/charts/Chart').then(mod => ({ default: mod.DonutChart })));
 import { apiClient } from '@/lib/api';
 
 interface AnalyticsData {
@@ -32,8 +33,8 @@ export default function AnalyticsPage() {
       setLoading(true);
       setError(null);
       try {
-        const response = await apiClient.get('/analytics');
-        const data = response.data;
+        const response = await fetch('/api/analytics');
+        const data = await response.json();
 
         // Map backend data to frontend format
         const mappedData: AnalyticsData = {
@@ -103,7 +104,8 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+    <Layout>
+      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-2">
@@ -167,12 +169,9 @@ export default function AnalyticsPage() {
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
               <FaChartLine className="mr-2 text-kenya-green" /> Monthly Growth 🏃‍♂️
             </h3>
-            <LineChart 
-              data={analytics.monthlyGrowth}
-              className="h-80"
-              variant="kenya"
-              title="Monthly Videos"
-            />
+            <div className="h-80 bg-gray-100 rounded-lg flex items-center justify-center">
+              <p className="text-gray-500">Chart component temporarily disabled</p>
+            </div>
           </Card>
 
           {/* Content Types */}
@@ -180,12 +179,9 @@ export default function AnalyticsPage() {
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
               <FaVideo className="mr-2 text-blue-600" /> Content Types 🎬
             </h3>
-            <DonutChart 
-              data={analytics.contentTypes}
-              className="h-80"
-              variant="cultural"
-              title="Content Distribution"
-            />
+            <div className="h-80 bg-gray-100 rounded-lg flex items-center justify-center">
+              <p className="text-gray-500">Chart component temporarily disabled</p>
+            </div>
           </Card>
 
           {/* Regional Data */}
@@ -193,13 +189,9 @@ export default function AnalyticsPage() {
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
               <FaUsers className="mr-2 text-purple-600" /> Regional Data 🗺️
             </h3>
-            <BarChart 
-              data={analytics.regionalData}
-              className="h-80"
-              variant="kenya"
-              title="Users by Region"
-              showValues={true}
-            />
+            <div className="h-80 bg-gray-100 rounded-lg flex items-center justify-center">
+              <p className="text-gray-500">Chart component temporarily disabled</p>
+            </div>
           </Card>
         </React.Suspense>
       </div>
@@ -211,7 +203,8 @@ export default function AnalyticsPage() {
           Export Report 📄
         </button>
       </div>
-    </div>
+      </div>
+    </Layout>
   );
 }
 

@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import Layout from '@/components/Layout';
 import Card from '@/components/Card';
 import Pagination from '@/components/Pagination';
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
-import { FaPlus, FaVideo, FaImages, FaMusic, FaEdit, FaTrash, FaEye, FaFlag, FaMountain, FaFolder, FaClock, FaExclamationTriangle, FaSpinner } from 'react-icons/fa6';
+import { FaPlus, FaVideo, FaImages, FaMusic, FaTrash, FaEye, FaFlag, FaMountain, FaFolder, FaClock, FaSpinner } from 'react-icons/fa6';
+import { FaPencilAlt, FaTriangleExclamation } from 'react-icons/fa6';
 import { useProjects, Project } from '@/hooks/useProjects';
 import CreateProjectModal from '@/components/Project/CreateProjectModal';
 import EditProjectModal from '@/components/Project/EditProjectModal';
@@ -83,7 +85,8 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <Layout>
+      <div className="space-y-6">
       {/* Modals */}
       <CreateProjectModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} onCreate={handleCreateProject} />
       <EditProjectModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} onUpdate={handleUpdateProject} project={selectedProject} />
@@ -235,7 +238,8 @@ export default function ProjectsPage() {
           <FaFolder className="text-lg" aria-label="Folder Icon" />
         </div>
       </div>
-    </div>
+      </div>
+    </Layout>
   );
 }
 

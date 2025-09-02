@@ -1,9 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Layout from '@/components/Layout';
 import Card from '@/components/Card';
 import FormSelect from '@/components/FormSelect';
-import { FaVideo, FaPlay, FaStop, FaDownload, FaEye, FaFlag, FaMountain, FaMicrophone, FaExclamationTriangle } from 'react-icons/fa6';
+import { FaVideo, FaPlay, FaStop, FaDownload, FaEye, FaFlag, FaMountain, FaMicrophone } from 'react-icons/fa6';
+import { FaTriangleExclamation } from 'react-icons/fa6';
 import { useVideoGenerator } from '@/hooks/useVideoGenerator';
 import PromptSuggester from '@/components/Video/PromptSuggester';
 import SimpleMode from '@/components/Video/SimpleMode';
@@ -14,6 +17,7 @@ import SimpleMode from '@/components/Video/SimpleMode';
 // [TASK]: Implement advanced video generation form with live preview, cultural presets, and progress tracking
 
 export default function VideoGeneratePage() {
+  const router = useRouter();
   const {
     formData,
     progress,
@@ -86,7 +90,9 @@ export default function VideoGeneratePage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <Layout>
+      <div className="space-y-6">
+      <div className="space-y-6">
       {/* Kenya-First Header */}
       <div className="bg-gradient-to-r from-green-600 via-red-600 to-black p-6 rounded-xl text-white">
         <div className="flex items-center space-x-4">
@@ -375,8 +381,8 @@ export default function VideoGeneratePage() {
                                 setFriendlyFallback(null);
                                 handleGenerateVideo();
                               } else if (option.includes('Browse')) {
-                                // Navigate to gallery
-                                window.location.href = '/gallery';
+                                // Navigate to gallery using Next.js router
+                                router.push('/gallery');
                               }
                             }}
                             className="block w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200"
@@ -434,7 +440,8 @@ export default function VideoGeneratePage() {
           </Card>
         </div>
       )}
-    </div>
+      </div>
+      </div>
+    </Layout>
   );
 }
-

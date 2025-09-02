@@ -10,7 +10,7 @@ import React, { useEffect, useState } from 'react';
 import { usePlanGuard } from '@/context/PlanGuardContext';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
-import { FaVideo, FaCreditCard, FaCog, FaChartLine, FaImage, FaMusic } from 'react-icons/fa6';
+import { FaVideo, FaCreditCard, FaGear, FaChartLine, FaImage, FaMusic } from 'react-icons/fa6';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ import { apiClient, Project } from '@/lib/api';
 // Phase 2 Enterprise Components
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
-import { BarChart, LineChart } from '@/components/charts/Chart';
+// import { BarChart, LineChart } from '@/components/charts/Chart';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean
 // [CONTEXT]: Dashboard page component for Shujaa Studio users.
@@ -168,27 +168,23 @@ export default function DashboardPage({ params }: DashboardPageProps) {
         </Card>
       </div>
 
-      {/* Analytics Charts */}
+      {/* Analytics Charts - Temporarily disabled for debugging */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <Card className="p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
             <FaChartLine className="mr-2 text-kenya-green" /> Resource Usage 🦁
           </h3>
-          <BarChart 
-            data={usageData}
-            className="h-64"
-            variant="kenya"
-          />
+          <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+            <p className="text-gray-500">Chart component temporarily disabled</p>
+          </div>
         </Card>
         <Card className="p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
             <FaVideo className="mr-2 text-blue-600" /> Monthly Growth 🏃‍♂️
           </h3>
-          <LineChart 
-            data={monthlyData}
-            className="h-64"
-            variant="kenya"
-          />
+          <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+            <p className="text-gray-500">Chart component temporarily disabled</p>
+          </div>
         </Card>
       </div>
 

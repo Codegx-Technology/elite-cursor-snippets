@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { FaUpload, FaTrash, FaDownload, FaImage, FaMusic, FaBox, FaSpinner, FaExclamationTriangle } from 'react-icons/fa6';
+import { FaUpload, FaTrashCan, FaDownload, FaImage, FaMusic, FaBox, FaSpinner, FaTriangleExclamation } from 'react-icons/fa6';
 import { useAssetLibrary, Asset } from '@/hooks/useAssetLibrary';
 import DeleteAssetModal from './DeleteAssetModal';
 import Pagination from '@/components/Pagination';

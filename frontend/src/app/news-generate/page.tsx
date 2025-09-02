@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Card from '@/components/Card';
 import FormInput from '@/components/FormInput';
 import FormSelect from '@/components/FormSelect';
-import { FaNewspaper, FaPlay, FaStop, FaEye, FaFlag, FaMountain, FaGlobe, FaUpload, FaSearch, FaExclamationTriangle } from 'react-icons/fa6';
+import { FaTriangleExclamation, FaEye, FaFlag, FaGlobe, FaMountain, FaNewspaper, FaPlay, FaMagnifyingGlass, FaStop, FaUpload } from 'react-icons/fa6';
 import { apiClient, handleApiResponse, NewsVideoGenerationRequest } from '@/lib/api';
 import { useJobStatusPolling } from '@/hooks/useJobStatusPolling';
 
