@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation'; // Use next/navigation for App Router
 import Link from 'next/link';
+import Layout from '@/components/Layout';
 
 const RegisterPage: React.FC = () => { // Renamed to RegisterPage
   const [username, setUsername] = useState('');
@@ -43,7 +44,8 @@ const RegisterPage: React.FC = () => { // Renamed to RegisterPage
   };
 
   return (
-    <div className="elite-card p-8 max-w-md mx-auto my-10 rounded-xl shadow-lg">
+    <Layout>
+      <div className="elite-card p-8 max-w-md mx-auto my-10 rounded-xl shadow-lg">
       {/* Back to Home Button */}
       <div className="mb-6">
         <Link
@@ -108,7 +110,8 @@ const RegisterPage: React.FC = () => { // Renamed to RegisterPage
       <p className="text-center text-soft-text text-sm mt-4">
         Already have an account? <Link href="/login" className="text-primary-gradient-start font-medium">Login here</Link>
       </p>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

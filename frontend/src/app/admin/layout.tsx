@@ -3,6 +3,7 @@
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import React, { useEffect } from 'react';
+import Layout from '@/components/Layout';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -28,9 +29,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="admin-layout p-6">
-      {/* Admin-specific layout elements can go here, e.g., a different sidebar or header */}
-      {children}
-    </div>
+    <Layout>
+      <div className="admin-content">
+        {/* Admin-specific content wrapper */}
+        {children}
+      </div>
+    </Layout>
   );
 }

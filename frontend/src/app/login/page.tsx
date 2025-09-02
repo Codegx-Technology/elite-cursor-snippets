@@ -5,6 +5,7 @@ import Link from 'next/link';
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
 import Card from '@/components/Card';
+import Layout from '@/components/Layout';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -73,8 +74,9 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-yellow-50 px-4 py-8">
-      <Card className="w-full max-w-md">
+    <Layout>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-yellow-50 px-4 py-8">
+        <Card className="w-full max-w-md">
         <div className="p-8">
           {/* Back to Home Button */}
           <div className="mb-6">
@@ -165,8 +167,9 @@ const LoginPage: React.FC = () => {
             </p>
           </div>
         </div>
-      </Card>
-    </div>
+        </Card>
+      </div>
+    </Layout>
   );
 };
 

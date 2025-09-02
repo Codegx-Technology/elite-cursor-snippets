@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Card from './Card';
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
+import KenyanFlag from './KenyanFlag';
 import KenyanFlag from '@/components/KenyanFlag';
 import {
   FaVideo,
@@ -117,92 +118,13 @@ export default function Welcome({ title }: { title: string }) {
           }}
         >
           <div className="flex justify-center items-center mb-6">
-            <div className="relative">
-              <svg width="80" height="54" viewBox="0 0 80 54" className="shadow-lg rounded animate-pulse">
-                <defs>
-                  <clipPath id="waveClip">
-                    <path d="M0,0 Q20,3 40,0 T80,0 L80,54 Q60,51 40,54 T0,54 Z">
-                      <animateTransform
-                        attributeName="transform"
-                        type="translate"
-                        values="0,0; 2,1; 0,0; -2,-1; 0,0"
-                        dur="3s"
-                        repeatCount="indefinite"
-                      />
-                    </path>
-                  </clipPath>
-                </defs>
-                
-                <g clipPath="url(#waveClip)">
-                  {/* Black stripe */}
-                  <rect x="0" y="0" width="80" height="13.5" fill="#000000">
-                    <animateTransform
-                      attributeName="transform"
-                      type="skewX"
-                      values="0; 2; 0; -2; 0"
-                      dur="2.5s"
-                      repeatCount="indefinite"
-                    />
-                  </rect>
-                  {/* Red stripe */}
-                  <rect x="0" y="13.5" width="80" height="13.5" fill="#CE1126">
-                    <animateTransform
-                      attributeName="transform"
-                      type="skewX"
-                      values="0; -1.5; 0; 1.5; 0"
-                      dur="2.8s"
-                      repeatCount="indefinite"
-                    />
-                  </rect>
-                  {/* Green stripe */}
-                  <rect x="0" y="27" width="80" height="13.5" fill="#007A3D">
-                    <animateTransform
-                      attributeName="transform"
-                      type="skewX"
-                      values="0; 1; 0; -1; 0"
-                      dur="3.2s"
-                      repeatCount="indefinite"
-                    />
-                  </rect>
-                  {/* White stripes */}
-                  <rect x="0" y="10.8" width="80" height="2.7" fill="#FFFFFF"/>
-                  <rect x="0" y="24.3" width="80" height="2.7" fill="#FFFFFF"/>
-                  <rect x="0" y="37.8" width="80" height="2.7" fill="#FFFFFF"/>
-                  
-                  {/* Shield and spears */}
-                  <g transform="translate(40, 27)">
-                    <g>
-                      <animateTransform
-                        attributeName="transform"
-                        type="translate"
-                        values="0,0; 1,0.5; 0,0; -0.5,-0.3; 0,0"
-                        dur="2.7s"
-                        repeatCount="indefinite"
-                      />
-                      {/* Traditional Maasai shield */}
-                      <ellipse cx="0" cy="0" rx="8" ry="12" fill="#8B4513" stroke="#000" strokeWidth="0.5"/>
-                      <ellipse cx="0" cy="0" rx="6" ry="10" fill="#FFFFFF"/>
-                      <ellipse cx="0" cy="0" rx="4" ry="8" fill="#CE1126"/>
-                      {/* Crossed spears */}
-                      <line x1="-12" y1="-8" x2="12" y2="8" stroke="#8B4513" strokeWidth="1.5"/>
-                      <line x1="12" y1="-8" x2="-12" y2="8" stroke="#8B4513" strokeWidth="1.5"/>
-                      {/* Spear tips */}
-                      <polygon points="-12,-8 -10,-6 -14,-6" fill="#C0C0C0"/>
-                      <polygon points="12,8 10,6 14,6" fill="#C0C0C0"/>
-                      <polygon points="12,-8 10,-6 14,-6" fill="#C0C0C0"/>
-                      <polygon points="-12,8 -10,6 -14,6" fill="#C0C0C0"/>
-                    </g>
-                  </g>
-                </g>
-              </svg>
-            </div>
+            <KenyanFlag size="2xl" className="shadow-lg rounded" animated={true} />
           </div>
 
           <div className="flex items-center justify-center space-x-4 mb-4">
             <h1 className="text-5xl font-bold">
               {title}
             </h1>
-            <KenyanFlag size="xl" className="drop-shadow-lg" />
           </div>
           <p className="text-xl mb-2 text-green-100">
             Kenya&apos;s Premier AI-Powered Video Generation Platform
