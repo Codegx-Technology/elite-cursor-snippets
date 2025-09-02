@@ -7,6 +7,7 @@ import Link from 'next/link';
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
 import { useAuth } from '@/context/AuthContext';
+import DevAutoLogin from '@/components/DevAutoLogin';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean + refactorintent
 // [CONTEXT]: Enterprise header with Kenya-first design and mobile-first responsiveness
@@ -22,6 +23,7 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
   const { logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showDevMode, setShowDevMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
@@ -144,6 +146,32 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+
+            {/* Dev Mode Icon - Only show in development */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <div className="relative">
+                  <button
+                    onClick={() => setShowDevMode(!showDevMode)}
+                    className="p-1 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+                    title="Dev Mode - Quick Login"
+                  >
+                    <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+
+                  {/* Dev Mode Popup */}
+                  {showDevMode && (
+                    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                      <div className="p-4">
+                        <DevAutoLogin />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

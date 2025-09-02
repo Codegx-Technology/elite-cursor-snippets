@@ -47,9 +47,9 @@ export default function DevAutoLogin() {
     setError(null);
 
     try {
-      // Determine login endpoint based on username for superadmin
-      const loginEndpoint = (user.username === 'peter' || user.username === 'apollo') 
-        ? 'http://localhost:8000/superadmin/token' 
+      // Use the simple_api.py endpoints which are more likely to be running
+      const loginEndpoint = user.role === 'super_admin'
+        ? 'http://localhost:8000/superadmin/token'
         : 'http://localhost:8000/token';
 
       const response = await fetch(loginEndpoint, {
@@ -57,37 +57,33 @@ export default function DevAutoLogin() {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({ 
-          username: user.username, 
-          password: user.password 
+        body: new URLSearchParams({
+          username: user.username,
+          password: user.password
         }) as unknown as BodyInit,
       });
 
       if (!response.ok) {
         let detail = 'Login failed';
-        try { 
-          const errData = await response.json(); 
-          detail = errData?.detail ?? detail; 
+        try {
+          const errData = await response.json();
+          detail = errData?.detail ?? detail;
         } catch {}
-        throw new Error(detail);
+        throw new Error(`${detail} (${response.status})`);
       }
 
       const data = await response.json();
       const { access_token } = data;
 
-      // Fetch user details to get the role
-      const userResponse = await fetch('http://localhost:8000/users/me', {
-        headers: {
-          'Authorization': `Bearer ${access_token}`,
-        },
-      });
+      // For dev mode, create mock user data since backend might not have full user endpoint
+      const userData = {
+        id: user.username,
+        username: user.username,
+        email: `${user.username}@shujaa.studio`,
+        role: user.role === 'super_admin' ? 'admin' : 'user',
+        tenant_id: 'default'
+      };
 
-      if (!userResponse.ok) {
-        throw new Error('Failed to fetch user details after login.');
-      }
-
-      const userData = await userResponse.json();
-      
       // Use AuthContext login method
       login(access_token, userData);
 
@@ -107,7 +103,7 @@ export default function DevAutoLogin() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 bg-yellow-100 border-2 border-yellow-400 rounded-lg p-4 shadow-lg max-w-sm">
+    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
       <div className="text-xs font-bold text-yellow-800 mb-2">
         🔧 DEV MODE - Quick Login
       </div>

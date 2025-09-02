@@ -44,6 +44,19 @@ const RegisterPage: React.FC = () => { // Renamed to RegisterPage
 
   return (
     <div className="elite-card p-8 max-w-md mx-auto my-10 rounded-xl shadow-lg">
+      {/* Back to Home Button */}
+      <div className="mb-6">
+        <Link
+          href="/"
+          className="inline-flex items-center text-sm text-gray-600 hover:text-green-600 transition-colors duration-200"
+        >
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Home
+        </Link>
+      </div>
+
       <h2 className="section-title text-center mb-6">Register for Shujaa Studio</h2>
       <form onSubmit={handleSubmit}>
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}

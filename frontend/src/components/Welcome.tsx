@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Card from './Card';
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
+import KenyanFlag from '@/components/KenyanFlag';
 import {
   FaVideo,
   FaImages,
@@ -197,9 +198,12 @@ export default function Welcome({ title }: { title: string }) {
             </div>
           </div>
 
-          <h1 className="text-5xl font-bold mb-4">
-            {title} 🇰🇪
-          </h1>
+          <div className="flex items-center justify-center space-x-4 mb-4">
+            <h1 className="text-5xl font-bold">
+              {title}
+            </h1>
+            <KenyanFlag size="xl" className="drop-shadow-lg" />
+          </div>
           <p className="text-xl mb-2 text-green-100">
             Kenya&apos;s Premier AI-Powered Video Generation Platform
           </p>
