@@ -341,7 +341,7 @@ export default function AudioStudioPage() {
         <div className="flex items-center justify-center space-x-2">
           <FaFlag className="text-lg" />
           <span className="font-medium">Preserving Kenyan voices and musical heritage through AI</span>
-          <FaVolumeUp className="text-lg" />
+          <FaVolumeHigh className="text-lg" />
         </div>
       </div>
     </div>

@@ -99,7 +99,7 @@ export default function EditTenantPage() {
               Cancel
             </button>
             <button type="submit" className="btn-primary flex items-center space-x-2" disabled={isSaving}>
-              {isSaving ? <FaSpinner className="animate-spin" /> : <FaSave />}
+              {isSaving ? <FaSpinner className="animate-spin" /> : <FaFloppyDisk />}
               <span>Save Changes</span>
             </button>
           </div>

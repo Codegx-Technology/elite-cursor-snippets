@@ -92,7 +92,7 @@ export default function AssetLibrary() {
       {error ? (
         <Card className="p-8 text-center">
           <div className="text-red-600 mb-4">
-            <FaExclamationTriangle className="text-4xl mx-auto mb-2" aria-label="Error Icon" />
+            <FaTriangleExclamation className="text-4xl mx-auto mb-2" aria-label="Error Icon" />
             <p className="font-medium">Unable to load assets</p>
             <p className="text-sm text-gray-600 mt-2">{error}</p>
           </div>
@@ -129,7 +129,7 @@ export default function AssetLibrary() {
                     </div>
                     <div className="relative">
                       <button onClick={() => openDeleteModal(asset)} className="p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200">
-                        <FaTrash aria-label="Delete Asset" />
+                        <FaTrashCan aria-label="Delete Asset" />
                       </button>
                     </div>
                   </div>

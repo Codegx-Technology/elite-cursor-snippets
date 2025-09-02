@@ -54,7 +54,7 @@ const GraceCountdownOverlay: React.FC<GraceCountdownOverlayProps> = ({
     <div
       className={`fixed bottom-4 right-4 p-4 rounded-lg shadow-lg text-white flex items-center space-x-3 z-50 ${bannerColorClass}`}
     >
-      <FaExclamationTriangle className="text-2xl" />
+      <FaTriangleExclamation className="text-2xl" />
       <div>
         <p className="font-bold text-lg">Plan Expiring: Grace Mode Active</p>
         <p className="text-sm">

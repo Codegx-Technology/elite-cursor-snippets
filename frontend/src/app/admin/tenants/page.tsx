@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { FaPencilAlt, FaPlus, FaTrashCan } from 'react-icons/fa6';
+import { FaPencil, FaPlus, FaTrashCan } from 'react-icons/fa6';
 import { useTenantManagement } from '@/hooks/useTenantManagement';
 
 export default function AdminTenantsPage() {
@@ -109,7 +109,7 @@ export default function AdminTenantsPage() {
                         onClick={() => router.push(`/admin/tenants/${tenant.id}/edit`)}
                         title="Edit Tenant"
                       >
-                        <FaEdit />
+                        <FaPencil />
                       </Button>
                       <Button
                         variant="destructive"
@@ -117,7 +117,7 @@ export default function AdminTenantsPage() {
                         onClick={() => handleDeleteTenant(tenant.id)}
                         title="Delete Tenant"
                       >
-                        <FaTrash />
+                        <FaTrashCan />
                       </Button>
                     </div>
                   </TableCell>

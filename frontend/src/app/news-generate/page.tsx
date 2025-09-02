@@ -190,7 +190,7 @@ export default function NewsGeneratePage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                <FaSearch className="mx-auto mb-1" />
+                <FaMagnifyingGlass className="mx-auto mb-1" />
                 Search News
               </button>
               <button
@@ -328,7 +328,7 @@ export default function NewsGeneratePage() {
           {error && (
             <div className="bg-red-50 border border-red-200 p-4 rounded-lg mt-4">
               <div className="flex items-center space-x-2">
-                <FaExclamationTriangle className="text-red-600" />
+                <FaTriangleExclamation className="text-red-600" />
                 <p className="text-red-800 font-medium">Generation Error</p>
               </div>
               <p className="text-red-700 text-sm mt-1">{error}</p>

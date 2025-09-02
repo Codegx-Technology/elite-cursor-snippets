@@ -150,7 +150,7 @@ export default function AdminUsersPage() {
             onClick={() => router.push(`/admin/users/${row.id}`)}
             title="Edit User"
           >
-            <FaEdit />
+            <FaPencil />
           </Button>
           <Button
             variant="destructive"
@@ -158,7 +158,7 @@ export default function AdminUsersPage() {
             onClick={() => handleDeleteUser(row.id)}
             title="Delete User"
           >
-            <FaTrash />
+            <FaTrashCan />
           </Button>
         </div>
       ),

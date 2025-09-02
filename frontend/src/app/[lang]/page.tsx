@@ -3,5 +3,5 @@
 import Welcome from '@/components/Welcome';
 
 export default function LocalizedHome() {
-  return <Welcome />;
+  return <Welcome title="Shujaa Studio" />;
 }

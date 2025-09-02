@@ -161,7 +161,7 @@ export default function DashboardPage() {
               <p className="text-2xl font-bold text-gray-900">{planStatus?.state === 'healthy' ? 'Healthy' : 'Check Required'}</p>
               <p className="text-xs text-gray-500">{planStatus?.expiresAt ? `Expires: ${new Date(planStatus.expiresAt).toLocaleDateString()}` : 'No expiry date'}</p>
             </div>
-            <FaCog className="text-3xl text-teal-600" />
+            <FaGear className="text-3xl text-teal-600" />
           </div>
         </Card>
       </div>
@@ -240,7 +240,7 @@ export default function DashboardPage() {
       {/* Quick Links */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="p-6 flex flex-col items-center text-center">
-          <FaCog className="text-5xl text-purple-600 mb-4" />
+          <FaGear className="text-5xl text-purple-600 mb-4" />
           <h3 className="text-xl font-semibold text-gray-800 mb-2">Account Settings</h3>
           <p className="text-gray-600 mb-4">Manage your profile, security, and preferences.</p>
           <Link href="/profile" className="btn-primary">

@@ -26,7 +26,7 @@ export default function DeleteProjectModal({ isOpen, onClose, onDelete, project 
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Delete Project</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <FaTimes />
+            <FaXmark />
           </button>
         </div>
         <form onSubmit={handleSubmit}>
@@ -36,7 +36,7 @@ export default function DeleteProjectModal({ isOpen, onClose, onDelete, project 
               Cancel
             </button>
             <button type="submit" className="btn-danger flex items-center space-x-2">
-              <FaTrash />
+              <FaTrashCan />
               <span>Delete</span>
             </button>
           </div>

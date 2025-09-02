@@ -32,22 +32,22 @@ export const Alert: React.FC<AlertProps> = ({
 }) => {
   const typeConfig = {
     success: {
-      icon: <FaCheckCircle className="w-5 h-5" />,
+      icon: <FaCircleCheck className="w-5 h-5" />,
       colors: 'bg-green-50 border-green-200 text-green-800',
       iconColor: 'text-green-600'
     },
     error: {
-      icon: <FaTimesCircle className="w-5 h-5" />,
+      icon: <FaCircleXmark className="w-5 h-5" />,
       colors: 'bg-red-50 border-red-200 text-red-800',
       iconColor: 'text-red-600'
     },
     warning: {
-      icon: <FaExclamationTriangle className="w-5 h-5" />,
+      icon: <FaTriangleExclamation className="w-5 h-5" />,
       colors: 'bg-yellow-50 border-yellow-200 text-yellow-800',
       iconColor: 'text-yellow-600'
     },
     info: {
-      icon: <FaInfoCircle className="w-5 h-5" />,
+      icon: <FaCircleInfo className="w-5 h-5" />,
       colors: 'bg-blue-50 border-blue-200 text-blue-800',
       iconColor: 'text-blue-600'
     }

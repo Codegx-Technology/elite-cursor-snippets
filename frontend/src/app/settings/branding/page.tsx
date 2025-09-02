@@ -223,7 +223,7 @@ export default function BrandingSettingsPage() {
               disabled={isSaving || !brandingData.custom_domain}
               className="btn-primary flex items-center space-x-2"
             >
-              {isSaving ? <FaSpinner className="animate-spin" /> : <FaSave />}
+              {isSaving ? <FaSpinner className="animate-spin" /> : <FaFloppyDisk />}
               <span>Apply TLS Certificate</span>
             </button>
             {brandingData.tls_status && (
@@ -251,7 +251,7 @@ export default function BrandingSettingsPage() {
             disabled={isSaving}
             className="btn-primary flex items-center space-x-2"
           >
-            {isSaving ? <FaSpinner className="animate-spin" /> : <FaSave />}
+            {isSaving ? <FaSpinner className="animate-spin" /> : <FaFloppyDisk />}
             <span>{isSaving ? 'Saving...' : 'Save Branding Settings'}</span>
           </button>
         </div>

@@ -129,7 +129,7 @@ export default function ProjectsPage() {
       {error ? (
         <Card className="p-8 text-center">
           <div className="text-red-600 mb-4">
-            <FaExclamationTriangle className="text-4xl mx-auto mb-2" aria-label="Error Icon" />
+            <FaTriangleExclamation className="text-4xl mx-auto mb-2" aria-label="Error Icon" />
             <p className="font-medium">Unable to load projects</p>
             <p className="text-sm text-gray-600 mt-2">{error}</p>
           </div>
@@ -172,10 +172,10 @@ export default function ProjectsPage() {
                     </div>
                     <div className="relative">
                       <button onClick={() => openDeleteModal(project)} className="p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200">
-                        <FaTrash aria-label="Delete Project" />
+                        <FaTrashCan aria-label="Delete Project" />
                       </button>
                       <button onClick={() => openEditModal(project)} className="p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200">
-                        <FaEdit aria-label="Edit Project" />
+                        <FaPencil aria-label="Edit Project" />
                       </button>
                     </div>
                   </div>
@@ -206,7 +206,7 @@ export default function ProjectsPage() {
                       <span>View</span>
                     </button>
                     <button onClick={() => openEditModal(project)} className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center justify-center space-x-1">
-                      <FaEdit className="text-xs" aria-label="Edit Project" />
+                      <FaPencil className="text-xs" aria-label="Edit Project" />
                       <span>Edit</span>
                     </button>
                   </div>

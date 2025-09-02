@@ -53,7 +53,7 @@ export default function AdminReportingPage() {
         <Card className="p-6">
           <h2 className="section-title mb-3 text-charcoal">System Health</h2>
           <div className="flex items-start space-x-3">
-            <FaExclamationTriangle className="text-yellow-500 mt-1" />
+            <FaTriangleExclamation className="text-yellow-500 mt-1" />
             <p className="text-sm text-soft-text">
               No live data connected yet. Hook this page to your metrics API to populate charts and KPIs.
             </p>
