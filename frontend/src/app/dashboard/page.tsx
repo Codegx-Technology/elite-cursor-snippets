@@ -28,23 +28,6 @@ import { BarChart, LineChart } from '@/components/charts/Chart';
 // [TASK]: Implement the main dashboard layout and integrate data from contexts.
 
 export default function DashboardPage() {
-  // Simple test first - comment out complex logic
-  return (
-    <div style={{ 
-      padding: '40px', 
-      fontFamily: 'Arial, sans-serif', 
-      textAlign: 'center',
-      background: '#f0f0f0',
-      minHeight: '100vh'
-    }}>
-      <h1>🇰🇪 Dashboard Loading...</h1>
-      <p>Testing basic render first</p>
-      <p>Time: {new Date().toLocaleString()}</p>
-    </div>
-  );
-  
-  // Original complex code commented out temporarily
-  /*
   const { planStatus, loading: planLoading, error: planError } = usePlanGuard();
   const { user, isLoading: authLoading } = useAuth();
 
@@ -286,7 +269,6 @@ export default function DashboardPage() {
         </Card>
       </section>
     </div>
+  );
 }
-
-// Test completed - now try accessing /dashboard to see if basic render works
 

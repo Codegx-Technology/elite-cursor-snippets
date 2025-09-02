@@ -32,11 +32,17 @@ venv_site_packages = os.path.join(sys.prefix, "Lib", "site-packages")
 if venv_site_packages not in sys.path:
     site.addsitedir(venv_site_packages)
 
-# Debug: Print environment information
-print(f"🐍 Using Python interpreter: {sys.executable}")
-print(f"🐍 Python version: {sys.version}")
-print(f"🐍 Python prefix: {sys.prefix}")
-print(f"🐍 Site packages: {venv_site_packages}")
+# Debug: Print environment information (Windows-safe)
+try:
+    print(f"Python Using Python interpreter: {sys.executable}")
+    print(f"Python Python version: {sys.version}")
+    print(f"Python Python prefix: {sys.prefix}")
+    print(f"Python Site packages: {venv_site_packages}")
+except UnicodeEncodeError:
+    print("Python interpreter:", sys.executable)
+    print("Python version:", sys.version)
+    print("Python prefix:", sys.prefix)
+    print("Site packages:", venv_site_packages)
 
 # Enhanced Node.js/npm detection
 node_path = shutil.which("node")
@@ -127,7 +133,7 @@ class UniversalServerManager:
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
         
-        logger.info("🇰🇪 Universal Shujaa Studio Server Manager Initialized - Harambee!")
+        logger.info("KE Universal Shujaa Studio Server Manager Initialized - Harambee!")
     
     def _setup_services(self):
         """Configure all services with their startup parameters"""
@@ -366,7 +372,7 @@ class UniversalServerManager:
         
         # Start the service
         try:
-            logger.info(f"🚀 Starting {service.name} on port {service.port}...")
+            logger.info(f"Starting {service.name} on port {service.port}...")
             
             env = os.environ.copy()
             if service.env:
@@ -437,7 +443,7 @@ class UniversalServerManager:
         // [GOAL]: Orchestrated startup with dependency management
         // [SNIPPET]: taskchain + perfcheck + kenyafirst
         """
-        logger.info("🇰🇪 Starting Shujaa Studio Universal Server - Harambee!")
+        logger.info("KE Starting Shujaa Studio Universal Server - Harambee!")
 
         # Pre-flight checks
         if not self.ensure_environment():
@@ -473,7 +479,7 @@ class UniversalServerManager:
     def _print_service_status(self):
         """Print current status of all services"""
         print("\n" + "=" * 80)
-        print("🇰🇪 SHUJAA STUDIO - UNIVERSAL SERVER STATUS")
+        print("KE SHUJAA STUDIO - UNIVERSAL SERVER STATUS")
         print("=" * 80)
 
         for service_name, service in self.services.items():
@@ -496,7 +502,7 @@ class UniversalServerManager:
         print(f"  Gradio UI (Legacy):   http://localhost:7860")
         print("=" * 80)
         print("💡 Press Ctrl+C to stop all services")
-        print("🇰🇪 Harambee! - Together we build amazing AI videos!")
+        print("KE Harambee! - Together we build amazing AI videos!")
         print("=" * 80 + "\n")
 
     async def stop_service(self, service_name: str):
