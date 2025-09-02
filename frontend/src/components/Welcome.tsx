@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Card from './Card';
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
-import KenyanFlag from './KenyanFlag';
 import KenyanFlag from '@/components/KenyanFlag';
 import {
   FaVideo,
