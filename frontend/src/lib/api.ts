@@ -438,65 +438,70 @@ class ApiClient {
 
   // User Management
   async getUsers() {
-    return this.request<UserData[]>('/admin/users');
+    return this.request<UserData[]>('/api/users');
   }
 
   async getUser(id: number) {
-    return this.request<UserData>(`/admin/users/${id}`);
+    return this.request<UserData>(`/api/users/${id}`);
   }
 
   async createUser(data: CreateUserData) {
-    return this.request<UserData>('/admin/users', {
+    return this.request<UserData>('/api/users', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async updateUser(id: number, data: Partial<UserData>) {
-    return this.request<UserData>(`/admin/users/${id}`, {
+    return this.request<UserData>(`/api/users/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
   async deleteUser(id: number) {
-    return this.request<{ success: boolean }>(`/admin/users/${id}`, {
+    return this.request<{ success: boolean }>(`/api/users/${id}`, {
       method: 'DELETE',
     });
   }
 
   // Tenant Management
   async getTenants() {
-    return this.request<Tenant[]>('/admin/tenants');
+    return this.request<Tenant[]>('/api/tenants');
   }
 
   async getTenant(id: number) {
-    return this.request<Tenant>(`/admin/tenants/${id}`);
+    return this.request<Tenant>(`/api/tenants/${id}`);
   }
 
   async createTenant(data: CreateTenantData) {
-    return this.request<Tenant>('/admin/tenants', {
+    return this.request<Tenant>('/api/tenants', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async updateTenant(id: number, data: Partial<Tenant>) {
-    return this.request<Tenant>(`/admin/tenants/${id}`, {
+    return this.request<Tenant>(`/api/tenants/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
   async deleteTenant(id: number) {
-    return this.request<{ success: boolean }>(`/admin/tenants/${id}`, {
+    return this.request<{ success: boolean }>(`/api/tenants/${id}`, {
       method: 'DELETE',
     });
   }
 
   // Audit Log Management
   async getAuditLogs() {
-    return this.request<AuditLogEntry[]>('/admin/audit-logs');
+    return this.request<AuditLogEntry[]>('/api/audit-logs');
+  }
+
+  // Prompt Suggestions
+  async getPromptSuggestions(prompt: string) {
+    return this.request<{ suggestions: string[] }>(`/api/prompt-suggestions?prompt=${encodeURIComponent(prompt)}`);
   }
 }
 
