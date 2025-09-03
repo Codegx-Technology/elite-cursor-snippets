@@ -33,11 +33,6 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
     }
   }, []);
 
-  // Debug logging (guarded to avoid noisy prod consoles)
-  if (process.env.NODE_ENV !== 'production') {
-    // eslint-disable-next-line no-console
-    console.log('Current pathname:', pathname);
-  }
 
   // Navigation items based on authentication status
   const navigationItems = isLoggedIn ? [
