@@ -33,6 +33,13 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
     }
   }, []);
 
+  useEffect(() => {
+    if (isSidebarOpen) {
+      setSidebarOpen(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
 
   // Navigation items based on authentication status
   const navigationItems = isLoggedIn ? [
@@ -215,11 +222,7 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
                 }`}
                 style={{ pointerEvents: 'auto', zIndex: 1 }}
                 aria-current={active ? 'page' : undefined}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setSidebarOpen(false);
-                  router.push(item.href);
-                }}
+                
               >
                 <Icon />
                 <div className="flex flex-col ml-3">

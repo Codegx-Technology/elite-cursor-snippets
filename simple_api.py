@@ -157,6 +157,48 @@ async def read_users_me(token: str = Depends(oauth2_scheme)):
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+# Admin-only endpoint to get all users
+@app.get("/admin/users")
+async def get_all_users(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        role: str = payload.get("role")
+        if role != "admin":
+            raise HTTPException(status_code=403, detail="Not authorized")
+        
+        # Convert DEV_USERS to a list of user objects
+        user_list = [
+            {
+                "id": username,
+                "username": username,
+                "email": userdata["email"],
+                "role": userdata["role"]
+            }
+            for username, userdata in DEV_USERS.items()
+        ]
+        return {"users": user_list}
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+@app.delete("/admin/users/{user_id}")
+async def delete_user(user_id: str, token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        role: str = payload.get("role")
+        if role != "admin":
+            raise HTTPException(status_code=403, detail="Not authorized")
+        
+        if user_id not in DEV_USERS:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # In a real app, you would delete from a database.
+        # Here we just remove from the dictionary.
+        del DEV_USERS[user_id]
+        
+        return {"status": "success", "message": "User deleted successfully"}
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
 # Health check
 @app.get("/")
 async def root():

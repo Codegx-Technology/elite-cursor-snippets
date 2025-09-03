@@ -120,7 +120,14 @@ Delivery Standard
 - If a task conflicts with this contract, prioritize the contract and flag the conflict.
 - After accomplishing substanial work, commit and push to remote repository and update project_state.md and related docs.
 - After every task, ensure that you ask if the task was accomplished well or not, was the code broken or any functionality lost. If so, repair any broke code as while undertaking any task or fixing bugs or creating new features. This way we will ensure there is compounded bugs. Once done, ask if the code is ready to be deployed or not. If so, deploy it and update project_state.md and related docs.
-- As you do that, you should check a nother watcher scripot that watches for all requjired deps, it ensure we do not install already installed ones, shiould only updae old deps if ther are new patches otherwise it will not touch old deps which have not been updated, it will watch for new ones and automaticlaly installs before video generation, check if its samethat ensures no model downloads if already present(may be anothe watcher), the dep watcher ensure requiremtns is always uppto date , ensures frontend deps are alwasy upto data and alsoo does not trigger downlaods if dep is availabnle and not recent patch. it should be intelligent enough to know that look for it , may its been deleted , check entiere coebase if nothere check previouis 5 commits.
+- A watcher script must be used for dependency management. Its responsibilities include:
+  - Preventing re-installation of existing dependencies.
+  - Updating dependencies only when a new patch is available.
+  - Automatically installing new dependencies before video generation.
+  - Preventing re-download of existing models (potentially via a separate watcher).
+  - Keeping `requirements.txt` and frontend dependencies up-to-date.
+  - Avoiding downloads for dependencies that are already present and have no new patch.
+  - Intelligently finding missing dependencies by searching the codebase and the last 5 commits.
 
 ---
 

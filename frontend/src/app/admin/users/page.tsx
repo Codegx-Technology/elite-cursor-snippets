@@ -37,12 +37,12 @@ export default function AdminUsersPage() {
     setLoadingUsers(true);
     setError(null);
     try {
-      const response = await axios.get('http://localhost:8000/api/users', {
+      const response = await axios.get('http://localhost:8000/admin/users', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      setUsers(response.data);
+      setUsers(response.data.users);
     } catch (err: unknown) {
       console.error('Failed to fetch users:', err);
       const message = axios.isAxiosError(err) && err.response?.data?.detail ? err.response.data.detail : 'Failed to fetch users.';
@@ -69,7 +69,7 @@ export default function AdminUsersPage() {
     if (!confirm('Are you sure you want to delete this user?')) return;
 
     try {
-      await axios.delete(`http://localhost:8000/api/users/${userId}`, {
+      await axios.delete(`http://localhost:8000/admin/users/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
