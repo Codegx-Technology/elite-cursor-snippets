@@ -143,6 +143,7 @@ export default function AudioStudioPage() {
 
                   <FormSelect
                     label="Language"
+                    name="language"
                     value={voiceSettings.language}
                     onChange={(e) => setVoiceSettings({...voiceSettings, language: (e.target as HTMLSelectElement).value})}
                     options={languageOptions}
@@ -150,6 +151,7 @@ export default function AudioStudioPage() {
 
                   <FormSelect
                     label="Voice Type"
+                    name="voice"
                     value={voiceSettings.voice}
                     onChange={(e) => setVoiceSettings({...voiceSettings, voice: (e.target as HTMLSelectElement).value})}
                     options={voiceOptions}
@@ -217,6 +219,7 @@ export default function AudioStudioPage() {
                 <div className="space-y-4">
                   <FormSelect
                     label="Genre"
+                    name="genre"
                     value={musicSettings.genre}
                     onChange={(e) => setMusicSettings({...musicSettings, genre: (e.target as HTMLSelectElement).value})}
                     options={genreOptions}
@@ -224,6 +227,7 @@ export default function AudioStudioPage() {
 
                   <FormSelect
                     label="Mood"
+                    name="mood"
                     value={musicSettings.mood}
                     onChange={(e) => setMusicSettings({...musicSettings, mood: (e.target as HTMLSelectElement).value})}
                     options={[
@@ -248,6 +252,7 @@ export default function AudioStudioPage() {
 
                   <FormSelect
                     label="Primary Instruments"
+                    name="instruments"
                     value={musicSettings.instruments}
                     onChange={(e) => setMusicSettings({...musicSettings, instruments: (e.target as HTMLSelectElement).value})}
                     options={[

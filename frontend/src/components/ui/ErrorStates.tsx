@@ -93,7 +93,7 @@ export const Alert: React.FC<AlertProps> = ({
             onClick={onClose}
             className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <FaTimesCircle className="w-4 h-4" />
+            <FaCircleXmark className="w-4 h-4" />
           </button>
         )}
       </div>
@@ -199,7 +199,7 @@ export const ErrorPage: React.FC<ErrorPageProps> = ({
                 'bg-blue-600 hover:bg-blue-700 text-white'
               )}
             >
-              <FaRedo className="w-4 h-4 mr-2" />
+              <FaArrowRotateRight className="w-4 h-4 mr-2" />
               Jaribu Tena
             </button>
           )}
@@ -209,7 +209,7 @@ export const ErrorPage: React.FC<ErrorPageProps> = ({
               onClick={onGoHome}
               className="w-full inline-flex items-center justify-center px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
             >
-              <FaHome className="w-4 h-4 mr-2" />
+              <FaHouse className="w-4 h-4 mr-2" />
               Rudi Nyumbani
             </button>
           )}
@@ -245,7 +245,7 @@ export const FormError: React.FC<FormErrorProps> = ({
       className
     )}>
       <div className="flex items-start space-x-3">
-        <FaTimesCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+        <FaCircleXmark className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
         <div className="flex-1">
           <h3 className={cn(
             'font-semibold text-red-800 mb-2',
@@ -375,22 +375,22 @@ export const Toast: React.FC<ToastProps> = ({
 
   const typeConfig = {
     success: {
-      icon: <FaCheckCircle className="w-5 h-5" />,
+      icon: <FaCircleCheck className="w-5 h-5" />,
       colors: 'bg-green-600 text-white',
       iconColor: 'text-green-200'
     },
     error: {
-      icon: <FaTimesCircle className="w-5 h-5" />,
+      icon: <FaCircleXmark className="w-5 h-5" />,
       colors: 'bg-red-600 text-white',
       iconColor: 'text-red-200'
     },
     warning: {
-      icon: <FaExclamationTriangle className="w-5 h-5" />,
+      icon: <FaTriangleExclamation className="w-5 h-5" />,
       colors: 'bg-yellow-600 text-white',
       iconColor: 'text-yellow-200'
     },
     info: {
-      icon: <FaInfoCircle className="w-5 h-5" />,
+      icon: <FaCircleInfo className="w-5 h-5" />,
       colors: 'bg-blue-600 text-white',
       iconColor: 'text-blue-200'
     }
@@ -430,7 +430,7 @@ export const Toast: React.FC<ToastProps> = ({
             onClick={onClose}
             className="flex-shrink-0 text-white opacity-70 hover:opacity-100 transition-opacity"
           >
-            <FaTimesCircle className="w-4 h-4" />
+            <FaCircleXmark className="w-4 h-4" />
           </button>
         )}
       </div>

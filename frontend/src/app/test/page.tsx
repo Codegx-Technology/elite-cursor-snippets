@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 export default function TestPage() {
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
@@ -14,14 +16,14 @@ export default function TestPage() {
         </ul>
       </div>
       <p>
-        <a href="/en" style={{ color: 'blue', textDecoration: 'underline' }}>
+        <Link href="/en" style={{ color: 'blue', textDecoration: 'underline' }}>
           Go to Main App (with i18n)
-        </a>
+        </Link>
       </p>
       <p>
-        <a href="/" style={{ color: 'blue', textDecoration: 'underline' }}>
+        <Link href="/" style={{ color: 'blue', textDecoration: 'underline' }}>
           Go to Root (should redirect to /en)
-        </a>
+        </Link>
       </p>
     </div>
   );

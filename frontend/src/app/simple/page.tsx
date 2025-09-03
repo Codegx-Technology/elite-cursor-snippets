@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 export default function SimplePage() {
   return (
     <div style={{ 
@@ -41,7 +43,7 @@ export default function SimplePage() {
       }}>
         <h2 style={{ color: '#495057', marginTop: '0' }}>🚀 Quick Actions</h2>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <a 
+          <Link 
             href="/test" 
             style={{ 
               background: '#007bff', 
@@ -53,8 +55,8 @@ export default function SimplePage() {
             }}
           >
             Test Page
-          </a>
-          <a 
+          </Link>
+          <Link 
             href="/en" 
             style={{ 
               background: '#28a745', 
@@ -66,8 +68,8 @@ export default function SimplePage() {
             }}
           >
             Main App (i18n)
-          </a>
-          <a 
+          </Link>
+          <Link 
             href="/" 
             style={{ 
               background: '#ffc107', 
@@ -79,7 +81,7 @@ export default function SimplePage() {
             }}
           >
             Root (Redirect)
-          </a>
+          </Link>
         </div>
       </div>
 

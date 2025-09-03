@@ -141,7 +141,7 @@ export const VideoLoading: React.FC<VideoLoadingProps> = ({
     processing: {
       title: 'Inachakata Video...',
       subtitle: 'Tunachakata na kuhariri video yako',
-      icon: <FaCog className="w-8 h-8 animate-spin" />
+      icon: <FaGear className="w-8 h-8 animate-spin" />
     },
     generating: {
       title: 'Inaunda Video...',

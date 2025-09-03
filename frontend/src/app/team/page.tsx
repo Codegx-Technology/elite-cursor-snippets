@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Card from '@/components/Card';
 import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
-import { FaGear, FaPencilAlt, FaEye, FaFlag, FaMountain, FaTrashCan, FaCircleUser, FaUserPlus, FaUsers } from 'react-icons/fa6';
+import { FaGear, FaEye, FaFlag, FaMountain, FaTrashCan, FaCircleUser, FaUserPlus, FaUsers, FaPencil } from 'react-icons/fa6';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent
 // [CONTEXT]: Team collaboration page with Kenya-first design and mobile-first approach

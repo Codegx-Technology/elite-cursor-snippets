@@ -109,7 +109,7 @@ const TenantManagementSection: React.FC = () => {
   if (error) {
     return (
       <Card className="p-4 text-red-600 flex items-center">
-        <FaExclamationTriangle className="mr-2" /> Error: {error}
+        <FaTriangleExclamation className="mr-2" /> Error: {error}
       </Card>
     );
   }

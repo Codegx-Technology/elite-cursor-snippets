@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function MinimalTest() {
   return (
     <html>
@@ -21,7 +23,7 @@ export default function MinimalTest() {
           <p>✅ Server: http://localhost:3001</p>
         </div>
         <div style={{ marginTop: '30px' }}>
-          <a href="/dashboard" style={{ 
+          <Link href="/dashboard" style={{ 
             background: '#2c3e50', 
             color: 'white', 
             padding: '10px 20px', 
@@ -30,8 +32,8 @@ export default function MinimalTest() {
             marginRight: '10px'
           }}>
             Dashboard
-          </a>
-          <a href="/generate" style={{ 
+          </Link>
+          <Link href="/generate" style={{ 
             background: '#e74c3c', 
             color: 'white', 
             padding: '10px 20px', 
@@ -39,7 +41,7 @@ export default function MinimalTest() {
             borderRadius: '5px'
           }}>
             Generate
-          </a>
+          </Link>
         </div>
       </body>
     </html>

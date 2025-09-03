@@ -13,19 +13,21 @@ import { apiClient, handleApiResponse } from '@/lib/api';
 // [GOAL]: Create responsive gallery with proper loading states and mobile-first approach
 // [TASK]: Implement gallery with real backend integration and cultural authenticity
 
-interface GalleryItem {
-  id: string;
-  type: 'video' | 'image' | 'audio';
-  title: string;
-  thumbnail: string;
-  createdAt: string;
-  duration?: string;
-  size: string;
-  tags: string[];
-}
+// interface GalleryItem {
+//   id: string;
+//   name: string;
+//   type: 'video' | 'image' | 'audio';
+//   title: string;
+//   thumbnail: string;
+//   createdAt: string;
+//   duration?: string;
+//   size: number;
+//   uploaded_at: string | number;
+//   tags: string[];
+// }
 
 export default function GalleryPage() {
-  const [items, setItems] = useState<GalleryItem[]>([]);
+  const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'video' | 'image' | 'audio'>('all');
   const [error, setError] = useState<string | null>(null);
@@ -42,13 +44,13 @@ export default function GalleryPage() {
       handleApiResponse(
         response,
         (data) => {
-          const mappedItems = data.items.map((asset: { id: string; name: string; type: 'video' | 'image' | 'audio'; thumbnail_url?: string; url: string; uploaded_at: string | number; size: number; }) => ({
+                              const mappedItems = data.items.map((asset: { id: string; name: string; type: 'video' | 'image' | 'audio'; thumbnail_url?: string; url: string; uploaded_at: string | number; size: number; }) => ({
             id: asset.id,
             title: asset.name,
             type: asset.type,
             thumbnail: asset.thumbnail_url || asset.url,
             createdAt: new Date(asset.uploaded_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-            size: `${(asset.size / 1024).toFixed(2)} KB`,
+            size: asset.size,
             duration: 'N/A',
             tags: ['ShujaaContent'],
           }));

@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 export default function TestSimple() {
   return (
     <div style={{ 
@@ -32,7 +34,7 @@ export default function TestSimple() {
         <p>✅ API Docs: http://localhost:8000/docs</p>
       </div>
       <div style={{ marginTop: '30px' }}>
-        <a
+        <Link
           href="/dashboard"
           style={{
             background: '#2c3e50',
@@ -46,8 +48,8 @@ export default function TestSimple() {
           }}
         >
           🎬 Go to Dashboard
-        </a>
-        <a
+        </Link>
+        <Link
           href="/generate"
           style={{
             background: '#e74c3c',
@@ -61,7 +63,7 @@ export default function TestSimple() {
           }}
         >
           🎥 Generate Video
-        </a>
+        </Link>
       </div>
     </div>
   );
