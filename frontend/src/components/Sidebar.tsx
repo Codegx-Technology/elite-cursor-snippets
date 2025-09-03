@@ -80,10 +80,22 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       description: 'Usage insights & metrics 📊'
     },
     {
-      href: `/admin`,
+      href: `/admin/dashboard`,
       icon: () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2z" clipRule="evenodd" /><path d="M15 7h1a2 2 0 012 2v5.5a1.5 1.5 0 01-3 0V7z" /></svg>,
-      label: 'Admin',
-      description: 'Admin panel & management'
+      label: 'Admin Dashboard',
+      description: 'SuperAdmin control panel 🔧'
+    },
+    {
+      href: `/admin/users`,
+      icon: () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>,
+      label: 'User Management',
+      description: 'Manage users & roles 👥'
+    },
+    {
+      href: `/admin/tenants`,
+      icon: () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 3v1h12V7H4zm0 3v3h12v-3H4z" clipRule="evenodd" /></svg>,
+      label: 'Tenant Management',
+      description: 'Manage organizations 🏢'
     },
     {
       href: `/team`,

@@ -298,6 +298,17 @@ export interface CreateUserData {
   is_active?: boolean;
 }
 
+export interface SuperAdminMetrics {
+  total_users: number;
+  active_users: number;
+  total_tenants: number;
+  active_tenants: number;
+  total_videos_generated: number;
+  total_storage_used: string;
+  system_health: string;
+  pending_approvals: number;
+}
+
 export interface LoginResponse {
   access_token: string;
   token_type: string;
@@ -486,6 +497,11 @@ class ApiClient {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+  }
+
+  // SuperAdmin Methods
+  async getSuperAdminMetrics() {
+    return this.request<SuperAdminMetrics>('/api/superadmin/metrics');
   }
 
   async deleteTenant(id: number) {

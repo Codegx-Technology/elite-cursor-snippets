@@ -52,6 +52,8 @@ export default function DevAutoLogin() {
         ? 'http://localhost:8000/superadmin/token'
         : 'http://localhost:8000/token';
 
+      console.log(`🔧 DEV LOGIN: Attempting ${user.role} login for ${user.username} at ${loginEndpoint}`);
+
       const response = await fetch(loginEndpoint, {
         method: 'POST',
         headers: {

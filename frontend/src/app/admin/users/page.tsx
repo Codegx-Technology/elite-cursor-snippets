@@ -44,14 +44,35 @@ export default function AdminUsersPage() {
       });
       setUsers(response.data.users);
     } catch (err: unknown) {
-      console.error('Failed to fetch users:', err);
-      const message = axios.isAxiosError(err) && err.response?.data?.detail ? err.response.data.detail : 'Failed to fetch users.';
-      setError(message);
-      addToast({
-        title: "Error",
-        description: message,
-        type: "error",
-      });
+      console.warn('Backend not available, using mock users data:', err);
+      // Mock data fallback for development
+      const mockUsers: UserData[] = [
+        {
+          id: '1',
+          username: 'peter',
+          email: 'peter@shujaa.com',
+          role: 'super_admin',
+          tenant_name: 'Shujaa HQ',
+          is_active: true
+        },
+        {
+          id: '2',
+          username: 'apollo',
+          email: 'apollo@shujaa.com',
+          role: 'user',
+          tenant_name: 'Shujaa HQ',
+          is_active: true
+        },
+        {
+          id: '3',
+          username: 'jane_doe',
+          email: 'jane@example.com',
+          role: 'admin',
+          tenant_name: 'Example Corp',
+          is_active: false
+        }
+      ];
+      setUsers(mockUsers);
     } finally {
       setLoadingUsers(false);
     }

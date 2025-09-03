@@ -6,6 +6,7 @@ import LoadingStates from '@/components/ui/LoadingStates';
 import ErrorStates from '@/components/ui/ErrorStates';
 import Card from '@/components/Card';
 import Layout from '@/components/Layout';
+import DevAutoLogin from '@/components/DevAutoLogin';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -168,6 +169,11 @@ const LoginPage: React.FC = () => {
           </div>
         </div>
         </Card>
+
+        {/* Development Auto-Login Helper */}
+        <div className="mt-4 w-full max-w-md">
+          <DevAutoLogin />
+        </div>
       </div>
     </Layout>
   );

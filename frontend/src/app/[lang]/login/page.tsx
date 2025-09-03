@@ -24,9 +24,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ params }) => {
 
     try {
       // Determine login endpoint based on username for superadmin
-      const loginEndpoint = (username === 'peter' || username === 'apollo') 
-        ? 'http://localhost:8000/superadmin/token' 
-        : 'http://localhost:8000/token';
+      const loginEndpoint = 'http://localhost:8000/token';
 
       const response = await fetch(loginEndpoint, {
         method: 'POST',

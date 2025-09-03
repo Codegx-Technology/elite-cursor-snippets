@@ -65,6 +65,25 @@ DEV_USERS = {
     "apollo": {"password": "aluru742!!", "role": "user", "email": "apollo@shujaa.studio"}
 }
 
+# Development tenants for super admin access
+DEV_TENANTS = {
+    "tenant-1": {"name": "Shujaa Inc.", "plan": "Enterprise", "users": ["peter"]},
+    "tenant-2": {"name": "Apollo Creations", "plan": "Pro", "users": ["apollo"]},
+}
+
+# Development projects
+DEV_PROJECTS = [
+    {"id": "proj-1", "name": "Sheng Dictionary Animation", "description": "An animated video explaining sheng words.", "type": "video", "status": "Completed", "created_at": "2025-08-20T10:00:00Z", "updated_at": "2025-08-21T12:00:00Z", "items_count": 10},
+    {"id": "proj-2", "name": "Nairobi Tech Hub Promo", "description": "Promotional video for a tech hub in Nairobi.", "type": "video", "status": "In Progress", "created_at": "2025-08-22T14:00:00Z", "updated_at": "2025-08-22T14:00:00Z", "items_count": 5},
+]
+
+# Development models
+DEV_MODELS = [
+    {"id": "model-1", "name": "Shujaa-TTS-Sheng", "provider": "Hugging Face", "version": "1.2.0", "status": "available", "latest_version": "1.2.5", "update_status": "pending_approval"},
+    {"id": "model-2", "name": "Gemini-Pro-Vision-Kenya", "provider": "Google", "version": "1.0.0", "status": "available", "latest_version": "1.0.0", "update_status": "up_to_date"},
+    {"id": "model-3", "name": "RunPod-Stable-Diffusion-XL", "provider": "RunPod", "version": "1.0.0", "status": "not_downloaded", "latest_version": "1.1.0", "update_status": "available"},
+]
+
 # Request/Response models
 class VideoRequest(BaseModel):
     prompt: str
@@ -198,6 +217,69 @@ async def delete_user(user_id: str, token: str = Depends(oauth2_scheme)):
         return {"status": "success", "message": "User deleted successfully"}
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+@app.get("/admin/tenants")
+async def get_all_tenants(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        role: str = payload.get("role")
+        if role != "admin":
+            raise HTTPException(status_code=403, detail="Not authorized")
+        
+        tenant_list = [
+            {
+                "id": tenant_id,
+                **tenant_data
+            }
+            for tenant_id, tenant_data in DEV_TENANTS.items()
+        ]
+        return {"tenants": tenant_list}
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+# Project endpoints
+@app.get("/api/projects")
+async def get_projects(token: str = Depends(oauth2_scheme)):
+    # In a real app, you'd have pagination and filtering.
+    # For now, we'll just return all projects.
+    return {"projects": DEV_PROJECTS, "total": len(DEV_PROJECTS), "page": 1, "pages": 1}
+
+class ProjectUpdate(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+@app.put("/api/projects/{project_id}")
+async def update_project(project_id: str, project_update: ProjectUpdate, token: str = Depends(oauth2_scheme)):
+    for proj in DEV_PROJECTS:
+        if proj["id"] == project_id:
+            proj["name"] = project_update.name
+            proj["description"] = project_update.description
+            proj["updated_at"] = datetime.utcnow().isoformat() + "Z"
+            return proj
+    raise HTTPException(status_code=404, detail="Project not found")
+
+# Model Management endpoints
+@app.get("/admin/models")
+async def get_models(token: str = Depends(oauth2_scheme)):
+    return {"models": DEV_MODELS}
+
+@app.post("/admin/models/{model_id}/download")
+async def download_model(model_id: str, token: str = Depends(oauth2_scheme)):
+    for model in DEV_MODELS:
+        if model["id"] == model_id:
+            model["status"] = "downloading"
+            return {"status": "success", "message": f"Downloading model {model_id}"}
+    raise HTTPException(status_code=404, detail="Model not found")
+
+@app.post("/admin/models/{model_id}/approve")
+async def approve_model_update(model_id: str, token: str = Depends(oauth2_scheme)):
+    for model in DEV_MODELS:
+        if model["id"] == model_id:
+            model["update_status"] = "approved"
+            model["version"] = model["latest_version"]
+            return {"status": "success", "message": f"Model update for {model_id} approved"}
+    raise HTTPException(status_code=404, detail="Model not found")
+
 
 # Health check
 @app.get("/")
