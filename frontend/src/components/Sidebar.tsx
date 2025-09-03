@@ -162,7 +162,7 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
     <aside
       className={`fixed inset-y-0 left-0 z-50 w-72 flex flex-col transform transition-transform duration-300 ease-in-out ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } md:translate-x-0 bg-white shadow-xl border-r border-gray-200`}
+      } md:translate-x-0 bg-gray-900 shadow-xl border-r border-gray-700`}
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
@@ -178,8 +178,8 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
               </svg>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Shujaa Studio</h1>
-              <p className="text-xs text-gray-400">Kenya-First AI Video</p>
+              <h2 className="text-xl font-bold text-white">Shujaa Studio</h2>
+              <p className="text-sm text-gray-300">Kenya-First AI Video Platform</p>
             </div>
           </div>
 
@@ -197,51 +197,47 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
         {!isClient ? (
-          /* Loading skeleton to prevent hydration mismatch */
-          Array.from({ length: 6 }).map((_, idx) => (
-            <div key={idx} className="flex items-center px-4 py-3 rounded-lg">
-              <div className="w-5 h-5 bg-gray-600 rounded animate-pulse mr-3"></div>
-              <div className="flex-1">
-                <div className="w-24 h-4 bg-gray-600 rounded animate-pulse mb-1"></div>
-                <div className="w-32 h-3 bg-gray-700 rounded animate-pulse"></div>
-              </div>
-            </div>
-          ))
+          // Loading skeleton to prevent hydration mismatch
+          <div className="space-y-2">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="h-12 bg-gray-700 rounded-lg animate-pulse" />
+            ))}
+          </div>
         ) : (
           navigationItems.map((item, idx) => {
-          const Icon = item.icon;
-          const active = isActive(item.href);
+            const Icon = item.icon;
+            const active = isActive(item.href);
 
-          return (
-            <Link
-              key={`${item.href}-${idx}`}
-              href={item.href}
-              prefetch={true}
-              className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 group cursor-pointer relative ${
-                active
-                  ? 'bg-gradient-to-r from-green-600 to-blue-600 text-white shadow-lg'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              }`}
-              style={{ pointerEvents: 'auto', zIndex: 1 }}
-              aria-current={active ? 'page' : undefined}
-              onClick={(e) => {
-                e.preventDefault();
-                setSidebarOpen(false);
-                router.push(item.href);
-              }}
-            >
-              <Icon />
-              <div className="flex flex-col ml-3">
-                <div className={`font-medium ${active ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
-                  {item.label}
+            return (
+              <Link
+                key={`${item.href}-${idx}`}
+                href={item.href}
+                prefetch={true}
+                className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 group cursor-pointer relative ${
+                  active
+                    ? 'bg-gradient-to-r from-green-600 to-blue-600 text-white shadow-lg'
+                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                }`}
+                style={{ pointerEvents: 'auto', zIndex: 1 }}
+                aria-current={active ? 'page' : undefined}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSidebarOpen(false);
+                  router.push(item.href);
+                }}
+              >
+                <Icon />
+                <div className="flex flex-col ml-3">
+                  <div className={`font-medium ${active ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
+                    {item.label}
+                  </div>
+                  <div className={`text-xs ${active ? 'text-green-100' : 'text-gray-500 group-hover:text-gray-400'}`}>
+                    {item.description}
+                  </div>
                 </div>
-                <div className={`text-xs ${active ? 'text-green-100' : 'text-gray-500 group-hover:text-gray-400'}`}>
-                  {item.description}
-                </div>
-              </div>
-            </Link>
-          );
-        })
+              </Link>
+            );
+          })
         )}
       </nav>
 
