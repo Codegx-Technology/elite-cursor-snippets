@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 // Icons replaced with inline SVGs to avoid react-icons dependency issues
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean
@@ -17,6 +17,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const lang = pathname.split('/')[1] || 'en'; // Default to 'en' if lang is not present
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -161,7 +162,8 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
     <aside
       className={`fixed inset-y-0 left-0 z-50 w-72 flex flex-col transform transition-transform duration-300 ease-in-out ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } md:translate-x-0 bg-gradient-to-b from-neutral-900 to-neutral-800`}
+      } md:translate-x-0 bg-white shadow-xl border-r border-gray-200`}
+      onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
       <div className="p-6 border-b border-gray-700">
@@ -222,9 +224,10 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
               }`}
               style={{ pointerEvents: 'auto', zIndex: 1 }}
               aria-current={active ? 'page' : undefined}
-              onClick={() => {
-                // Close sidebar on mobile
+              onClick={(e) => {
+                e.preventDefault();
                 setSidebarOpen(false);
+                router.push(item.href);
               }}
             >
               <Icon />

@@ -26,26 +26,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       const isMobileDevice = window.innerWidth < 768;
       setIsMobile(isMobileDevice);
 
-      // Auto-close sidebar on desktop, but keep user preference on mobile
-      if (window.innerWidth >= 1024) {
+      // Auto-close sidebar on desktop
+      if (window.innerWidth >= 768) {
         setSidebarOpen(false);
       }
     };
 
     checkMobile();
-
-    // Debounced resize handler for better performance
-    let timeoutId: NodeJS.Timeout;
-    const debouncedResize = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(checkMobile, 150);
-    };
-
-    window.addEventListener('resize', debouncedResize);
-    return () => {
-      window.removeEventListener('resize', debouncedResize);
-      clearTimeout(timeoutId);
-    };
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   return (
