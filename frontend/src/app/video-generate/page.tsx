@@ -90,9 +90,7 @@ export default function VideoGeneratePage() {
   ];
 
   return (
-    <Layout>
-      <div className="space-y-6">
-      <div className="space-y-6">
+    <div className="space-y-6">
       {/* Kenya-First Header */}
       <div className="bg-gradient-to-r from-green-600 via-red-600 to-black p-6 rounded-xl text-white">
         <div className="flex items-center space-x-4">
@@ -440,8 +438,6 @@ export default function VideoGeneratePage() {
           </Card>
         </div>
       )}
-      </div>
-      </div>
-    </Layout>
+    </div>
   );
 }

@@ -9,6 +9,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePlanGuard } from '@/context/PlanGuardContext';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaVideo, FaCreditCard, FaGear, FaChartLine, FaImage, FaMusic } from 'react-icons/fa6';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +35,7 @@ interface DashboardPageProps {
 export default function DashboardPage({ params }: DashboardPageProps) {
   const { planStatus, loading: planLoading, error: planError } = usePlanGuard();
   const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
@@ -207,7 +209,7 @@ export default function DashboardPage({ params }: DashboardPageProps) {
             message="You haven't created any projects yet. 🎬"
             action={{
               label: "Start Creating Now!",
-              onClick: () => window.location.href = '/video-generate'
+              onClick: () => router.push('/video-generate')
             }}
             icon={<FaVideo className="text-5xl text-gray-300" />}
           />
