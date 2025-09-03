@@ -36,6 +36,64 @@ This guide provides instructions for developers working on the Shujaa Studio pro
 
 ## 2. Frontend Development
 
+### **Development Environment Setup**
+
+1. **Install Node.js dependencies:**
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+2. **Start development server:**
+   ```bash
+   npm run dev
+   ```
+
+3. **Access the application:**
+   - Frontend: http://localhost:3000
+   - Storybook: `npm run storybook`
+
+### **API Mock Data System**
+
+The frontend includes a comprehensive mock data system for development without backend dependencies:
+
+#### **Plan Service Mock Data**
+- Automatically provides mock plan status when `API_BASE` is not configured
+- Realistic usage/quota data for testing UI components
+- File: `src/widgets/PlanGuardWidget/planService.ts`
+
+#### **Admin Dashboard Mock Data**
+- **Users**: 3 sample users (admin, active, inactive) with proper TypeScript compliance
+- **Tenants**: 3 sample tenants with different plans (Enterprise, Professional, Free)
+- **Audit Logs**: 4 realistic audit entries with proper timestamps
+- File: `src/widgets/SuperAdminDashboardWidget/adminService.ts`
+
+#### **Error Handling Pattern**
+All API services follow this consistent pattern:
+```typescript
+export async function fetchData(): Promise<DataType[]> {
+  // Use mock data when backend is not available
+  if (!API_BASE || API_BASE === "") {
+    console.warn("No API_BASE configured, using mock data");
+    return Promise.resolve(mockData);
+  }
+
+  try {
+    const response = await apiClient.getData();
+    return handleApiResponse(response);
+  } catch (error) {
+    console.warn("Backend not available, using mock data:", error);
+    return Promise.resolve(mockData);
+  }
+}
+```
+
+### **Console Error Prevention**
+
+- **No Debug Logging**: Avoid console.log statements in production components
+- **Manifest Validation**: Ensure all referenced files exist in public directory
+- **Build Cache**: Clean `.next` directory if experiencing manifest errors
+
 ### **UI Icon Best Practices**
 
 For maximum stability and zero external dependencies, use **inline SVGs** instead of icon libraries:
