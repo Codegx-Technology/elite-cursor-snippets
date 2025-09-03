@@ -116,7 +116,7 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
         <div className="flex items-center space-x-2 sm:space-x-4">
           {/* Mobile Menu Button - Fixed hamburger icon */}
           <button
-            className="md:hidden p-3 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+            className="md:hidden p-3 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 text-gray-700"
             onClick={() => setSidebarOpen(!isSidebarOpen)}
             aria-label={isSidebarOpen ? 'Close menu' : 'Open menu'}
           >
@@ -134,23 +134,23 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
           {/* Kenya Flag & Title - Mobile optimized */}
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="flex items-center space-x-1">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
               </svg>
               <span className="text-red-600 text-sm">•</span>
               <span className="text-black text-sm">•</span>
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--charcoal-text)' }}>
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900">
                 Shujaa Studio
               </h1>
-              <p className="text-xs hidden md:block" style={{ color: 'var(--soft-text)' }}>
+              <p className="text-xs hidden md:block text-gray-600">
                 Kenya-First AI Video Platform
               </p>
             </div>
             {/* Mobile-only compact title */}
             <div className="sm:hidden">
-              <h1 className="text-lg font-bold" style={{ color: 'var(--charcoal-text)' }}>
+              <h1 className="text-lg font-bold text-gray-900">
                 Shujaa
               </h1>
             </div>
@@ -234,7 +234,7 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
         {/* Right Section - Mobile optimized */}
         <div className="flex items-center space-x-2 sm:space-x-4">
           {/* Language Selector */}
-          <div className="hidden lg:flex items-center space-x-1 text-sm" style={{ color: 'var(--soft-text)' }}>
+          <div className="hidden lg:flex items-center space-x-1 text-sm text-gray-600">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M5 3a2 2 0 00-2 2v10a2 2 0 110 4h2a2 2 0 110-4V5a2 2 0 012-2zm8 0a2 2 0 110 4h2a2 2 0 110-4V5a2 2 0 012-2zm-1 11h.01" clipRule="evenodd" />
             </svg>
@@ -245,7 +245,7 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
           {isLoggedIn && (
             <div className="relative">
               <button
-                className="p-3 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 relative transition-colors duration-200"
+                className="p-3 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 relative transition-colors duration-200 text-gray-700"
                 onClick={() => setShowNotifications(!showNotifications)}
                 aria-label="Notifications"
               >
@@ -288,7 +288,7 @@ export default function Header({ isSidebarOpen, setSidebarOpen }: HeaderProps) {
             /* User Menu - Mobile optimized */
             <div className="relative">
               <button
-                className="flex items-center space-x-1 sm:space-x-2 p-2 sm:p-3 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+                className="flex items-center space-x-1 sm:space-x-2 p-2 sm:p-3 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 text-gray-700"
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 aria-label="User menu"
               >
