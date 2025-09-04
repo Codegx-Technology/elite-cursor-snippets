@@ -50,7 +50,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <Header isSidebarOpen={isSidebarOpen} setSidebarOpen={setSidebarOpen} />
 
         {/* Super Admin Menu (conditionally rendered) */}
-        <SuperAdminMenu />
+                <SuperAdminMenu />
 
         {/* Main Content with improved mobile spacing and error boundary */}
         <main className={`min-h-screen pt-4 pb-20 transition-all duration-300 ${
