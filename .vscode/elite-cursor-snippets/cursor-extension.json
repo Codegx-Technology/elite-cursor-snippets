@@ -1,0 +1,174 @@
+{
+  "name": "elite-cursor-automation",
+  "displayName": "Elite Cursor Snippets Automation",
+  "description": "Intelligent automation that triggers Elite snippets based on your prompts",
+  "version": "1.0.0",
+  "publisher": "kenya-first-engineering",
+  "engines": {
+    "vscode": "^1.74.0",
+    "cursor": "^0.1.0"
+  },
+  "categories": [
+    "AI",
+    "Snippets",
+    "Productivity",
+    "Code Quality"
+  ],
+  "keywords": [
+    "ai",
+    "automation",
+    "snippets",
+    "cursor",
+    "kenya-first",
+    "elite-engineering"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:elite.autoTrigger",
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescriptreact",
+    "onLanguage:python",
+    "onLanguage:java"
+  ],
+  "main": "./cursor-automation.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "elite.autoTrigger",
+        "title": "Elite: Auto-Trigger Snippet",
+        "category": "Elite"
+      },
+      {
+        "command": "elite.analyzePrompt",
+        "title": "Elite: Analyze Current Prompt",
+        "category": "Elite"
+      },
+      {
+        "command": "elite.toggleAutomation",
+        "title": "Elite: Toggle Automation",
+        "category": "Elite"
+      },
+      {
+        "command": "elite.showAutomationLog",
+        "title": "Elite: Show Automation Log",
+        "category": "Elite"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "elite.autoTrigger",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "Elite Cursor Automation",
+      "properties": {
+        "elite.automation.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable automatic snippet triggering based on prompts"
+        },
+        "elite.automation.confidence.threshold": {
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0.1,
+          "maximum": 1.0,
+          "description": "Minimum confidence threshold for auto-triggering (0.1-1.0)"
+        },
+        "elite.automation.kenya.first": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Kenya-First engineering principles"
+        },
+        "elite.automation.debug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logging for automation"
+        },
+        "elite.automation.prompt.patterns": {
+          "type": "object",
+          "default": {
+            "bug-fix": ["fix", "bug", "issue", "error", "problem", "broken"],
+            "performance": ["slow", "optimize", "performance", "speed", "faster"],
+            "refactoring": ["refactor", "clean", "improve", "restructure"],
+            "testing": ["test", "testing", "spec", "coverage"],
+            "security": ["security", "vulnerability", "xss", "injection"],
+            "accessibility": ["accessibility", "a11y", "screen reader", "aria"],
+            "kenya": ["kenya", "ksh", "+254", "nairobi", "localization"]
+          },
+          "description": "Custom prompt patterns for automation triggers"
+        }
+      }
+    },
+    "snippets": [
+      {
+        "language": "javascript",
+        "path": "./elite-prompts.code-snippets"
+      },
+      {
+        "language": "typescript",
+        "path": "./elite-prompts.code-snippets"
+      },
+      {
+        "language": "javascriptreact",
+        "path": "./elite-prompts.code-snippets"
+      },
+      {
+        "language": "typescriptreact",
+        "path": "./elite-prompts.code-snippets"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "eliteAutomation",
+          "name": "Elite Automation",
+          "when": "elite.automation.enabled"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "elite-automation",
+          "title": "Elite Automation",
+          "icon": "$(rocket)"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "node cursor-automation.js",
+    "test": "node test/run-tests.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "^18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Codegx-Technology/elite-cursor-snippets.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Codegx-Technology/elite-cursor-snippets/issues"
+  },
+  "homepage": "https://github.com/Codegx-Technology/elite-cursor-snippets#readme",
+  "license": "MIT",
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "badges": [
+    {
+      "url": "https://img.shields.io/badge/Kenya-First-green",
+      "href": "https://github.com/Codegx-Technology/elite-cursor-snippets",
+      "description": "Kenya-First Engineering"
+    }
+  ]
+}
