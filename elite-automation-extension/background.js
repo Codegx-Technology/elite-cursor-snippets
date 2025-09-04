@@ -21,14 +21,21 @@ chrome.runtime.onInstalled.addListener((details) => {
         }
     });
 
-    // Show welcome notification
+    // Show welcome notification (with error handling)
     if (details.reason === 'install') {
-        chrome.notifications.create({
-            type: 'basic',
-            iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE2IDRDOS4zNzI1OCA0IDQgOS4zNzI1OCA0IDE2QzQgMjIuNjI3NCA5LjM3MjU4IDI4IDE2IDI4QzIyLjYyNzQgMjggMjggMjIuNjI3NCAyOCAxNkMyOCA5LjM3MjU4IDIyLjYyNzQgNCAxNiA0WiIgZmlsbD0iIzRGNzlBNCIvPgo8cGF0aCBkPSJNMTIgMTJIMjBWMTZIMTJWMTJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMThIMjBWMjJIMTJWMThaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4=',
-            title: 'Elite Automation Ready!',
-            message: 'AI chat enhancement is now active. Just type naturally in any AI platform!'
-        });
+        try {
+            if (chrome.notifications && chrome.notifications.create) {
+                chrome.notifications.create({
+                    type: 'basic',
+                    title: 'Elite Automation Ready!',
+                    message: 'AI chat enhancement is now active. Just type naturally in any AI platform!'
+                });
+            } else {
+                console.log('🤖 Elite Automation: Extension installed successfully (notifications not available)');
+            }
+        } catch (error) {
+            console.log('🤖 Elite Automation: Extension installed successfully');
+        }
     }
 });
 
@@ -46,12 +53,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 // Notify all content scripts
                 chrome.tabs.query({}, (tabs) => {
                     tabs.forEach(tab => {
-                        chrome.tabs.sendMessage(tab.id, {
-                            action: 'toggleAutomation',
-                            enabled: request.enabled
-                        }).catch(() => {
-                            // Ignore errors for tabs without content script
-                        });
+                        try {
+                            chrome.tabs.sendMessage(tab.id, {
+                                action: 'toggleAutomation',
+                                enabled: request.enabled
+                            }).catch(() => {
+                                // Ignore errors for tabs without content script
+                            });
+                        } catch (error) {
+                            // Ignore errors for invalid tabs
+                        }
                     });
                 });
                 sendResponse({ success: true });
@@ -111,30 +122,37 @@ chrome.action.onClicked.addListener((tab) => {
 
 // Monitor tab updates to inject content script if needed
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'complete' && tab.url) {
-        const url = new URL(tab.url);
-        const supportedDomains = [
-            'cursor.sh',
-            'windsurf.greptile.com',
-            'gemini.google.com',
-            'bard.google.com',
-            'claude.ai',
-            'chat.openai.com',
-            'chatgpt.com',
-            'codeium.com'
-        ];
+    try {
+        if (changeInfo.status === 'complete' && tab.url) {
+            const url = new URL(tab.url);
+            const supportedDomains = [
+                'cursor.sh',
+                'windsurf.greptile.com',
+                'gemini.google.com',
+                'bard.google.com',
+                'claude.ai',
+                'chat.openai.com',
+                'chatgpt.com',
+                'codeium.com'
+            ];
 
-        if (supportedDomains.some(domain => url.hostname.includes(domain)) || 
-            url.hostname === 'localhost') {
-            
-            // Ensure content script is injected
-            chrome.scripting.executeScript({
-                target: { tabId: tabId },
-                files: ['elite-automation-core.js', 'content.js']
-            }).catch(() => {
-                // Content script might already be injected
-            });
+            if (supportedDomains.some(domain => url.hostname.includes(domain)) ||
+                url.hostname === 'localhost') {
+
+                // Ensure content script is injected
+                if (chrome.scripting && chrome.scripting.executeScript) {
+                    chrome.scripting.executeScript({
+                        target: { tabId: tabId },
+                        files: ['elite-automation-core.js', 'content.js']
+                    }).catch(() => {
+                        // Content script might already be injected
+                    });
+                }
+            }
         }
+    } catch (error) {
+        // Ignore errors for invalid URLs or tabs
+        console.log('🤖 Elite Automation: Tab update error (ignored):', error.message);
     }
 });
 
