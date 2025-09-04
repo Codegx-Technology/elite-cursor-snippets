@@ -1,3 +1,4 @@
-[submodule "elite-cursor-snippets"]
-	path = elite-cursor-snippets
+[submodule ".vscode/elite-cursor-snippets"]
+	path = .vscode/elite-cursor-snippets
 	url = https://github.com/Codegx-Technology/elite-cursor-snippets.git
+	branch = elite-automation-system
