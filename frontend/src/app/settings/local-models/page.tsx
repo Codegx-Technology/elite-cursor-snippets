@@ -1,6 +1,7 @@
+'use client';
 
 import { useLocalModels } from '@/hooks/useLocalModels';
-import { FaSpinner, FaDownload, FaTrash } from 'react-icons/fa';
+import { FaSpinner, FaDownload, FaTrash } from 'react-icons/fa6';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Reusable local models component
@@ -43,7 +44,6 @@ export default function LocalModels() {
               <h3 className="section-subtitle mb-1 text-charcoal font-semibold">{model.name}</h3>
               <p className="text-soft-text text-sm">Type: {model.type.toUpperCase()}</p>
               <p className="text-soft-text text-sm">Version: {model.version}</p>
-              <p className="text-soft-text text-sm">Size: {model.size_gb} GB</p>
               <p className="text-soft-text text-sm mb-3">Status: {model.status}</p>
 
               {model.status === 'downloading' && (
@@ -91,3 +91,4 @@ export default function LocalModels() {
     </div>
   );
 }
+

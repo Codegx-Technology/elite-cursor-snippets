@@ -16,6 +16,7 @@ class Tenant(Base):
     primary_color = Column(String, default="#667eea") # Example default color
     logo_url = Column(String, nullable=True)
     custom_domain = Column(String, unique=True, nullable=True)
+    tls_status = Column(String, default="pending") # pending, active, failed
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     users = relationship("User", back_populates="tenant")

@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+import React, { useState } from 'react';
 import axios from 'axios';
-import { useRouter } from 'next/navigation'; // Use next/navigation for App Router
+import { useRouter } from 'next/navigation';
+import LoadingStates from '@/components/ui/LoadingStates';
+import ErrorStates from '@/components/ui/ErrorStates';
+import Card from '@/components/Card';
 
 interface VideoGenerationResult {
   status: string;
@@ -47,9 +51,14 @@ const GenerateVideoPage: React.FC = () => { // Renamed to GenerateVideoPage
       }, { headers });
 
       setResult(response.data);
+      // For now, we'll just display the initial response from the Next.js API route.
+      // Full job polling and progress tracking would be integrated here in a more complete implementation.
+      if (response.data.status === 'queued') {
+        setResult({ status: 'queued', message: `Video generation job ${response.data.video_id} queued.` });
+      }
 
-    } catch (err: any) {
-      if (err.response && err.response.data && err.response.data.detail) {
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response?.data?.detail) {
         setError(err.response.data.detail);
       } else {
         setError('An unexpected error occurred during video generation. Please try again.');

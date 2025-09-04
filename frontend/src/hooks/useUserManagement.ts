@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { apiClient, handleApiResponse } from '@/lib/api';
+import { useState, useEffect, useCallback } from 'react';
+import { apiClient, handleApiResponse, CreateUserData } from '@/lib/api';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Custom hook for managing user management state and logic
@@ -22,62 +22,93 @@ export function useUserManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    const response = await apiClient.getUsers();
-    handleApiResponse(
-      response,
-      (data) => setUsers(data),
-      (error) => setError(error)
-    );
-    setIsLoading(false);
-  };
+    try {
+      const response = await apiClient.getUsers();
+      handleApiResponse(
+        response,
+        (data) => setUsers(data),
+        (error) => setError(error)
+      );
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to load users';
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  const getUser = async (id: number) => {
+  const getUser = useCallback(async (id: number) => {
     setIsLoading(true);
     setError(null);
-    const response = await apiClient.getUser(id);
-    handleApiResponse(
-      response,
-      (data) => setUser(data),
-      (error) => setError(error)
-    );
-    setIsLoading(false);
-  };
+    try {
+      const response = await apiClient.getUser(id);
+      handleApiResponse(
+        response,
+        (data) => setUser(data),
+        (error) => setError(error)
+      );
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to load user';
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  const createUser = async (data: Omit<UserData, 'id'>) => {
-    const response = await apiClient.createUser(data);
-    handleApiResponse(
-      response,
-      () => {
-        loadUsers();
-      },
-      (error) => setError(error)
-    );
-  };
+  const createUser = useCallback(async (data: CreateUserData) => {
+    try {
+      const response = await apiClient.createUser(data);
+      handleApiResponse(
+        response,
+        () => {
+          loadUsers();
+        },
+        (error) => setError(error)
+      );
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to create user';
+      setError(message);
+    }
+  }, [loadUsers]);
 
-  const updateUser = async (id: number, data: Partial<UserData>) => {
-    const response = await apiClient.updateUser(id, data);
-    handleApiResponse(
-      response,
-      () => {
-        loadUsers();
-      },
-      (error) => setError(error)
-    );
-  };
+  const updateUser = useCallback(async (id: number, data: Partial<UserData>) => {
+    try {
+      const response = await apiClient.updateUser(id, data);
+      handleApiResponse(
+        response,
+        () => {
+          loadUsers();
+        },
+        (error) => setError(error)
+      );
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to update user';
+      setError(message);
+    }
+  }, [loadUsers]);
 
-  const deleteUser = async (id: number) => {
-    const response = await apiClient.deleteUser(id);
-    handleApiResponse(
-      response,
-      () => {
-        loadUsers();
-      },
-      (error) => setError(error)
-    );
-  };
+  const deleteUser = useCallback(async (id: number) => {
+    try {
+      const response = await apiClient.deleteUser(id);
+      handleApiResponse(
+        response,
+        () => {
+          loadUsers();
+        },
+        (error) => setError(error)
+      );
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to delete user';
+      setError(message);
+    }
+  }, [loadUsers]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   return {
     users,

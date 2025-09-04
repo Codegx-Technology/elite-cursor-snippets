@@ -10,7 +10,9 @@ Following elite-cursor-snippets patterns for Kenya-specific requirements
 // [CONTEXT]: Production-ready API for Astella integration
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pipeline_wrapper as pw
 import uvicorn
@@ -18,6 +20,8 @@ import os
 import uuid
 import yaml
 from typing import Optional, Dict, Any
+from datetime import datetime, timedelta
+import jwt
 
 # Load config
 def load_config() -> Dict[str, Any]:
@@ -41,6 +45,45 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Add CORS middleware for frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Allow Next.js dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Authentication setup
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+SECRET_KEY = "shujaa-studio-dev-secret-key-2025"  # In production, use environment variable
+ALGORITHM = "HS256"
+
+# Development users for super admin access
+DEV_USERS = {
+    "peter": {"password": "normal", "role": "admin", "email": "peter@shujaa.studio"},
+    "apollo": {"password": "aluru742!!", "role": "user", "email": "apollo@shujaa.studio"}
+}
+
+# Development tenants for super admin access
+DEV_TENANTS = {
+    "tenant-1": {"name": "Shujaa Inc.", "plan": "Enterprise", "users": ["peter"]},
+    "tenant-2": {"name": "Apollo Creations", "plan": "Pro", "users": ["apollo"]},
+}
+
+# Development projects
+DEV_PROJECTS = [
+    {"id": "proj-1", "name": "Sheng Dictionary Animation", "description": "An animated video explaining sheng words.", "type": "video", "status": "Completed", "created_at": "2025-08-20T10:00:00Z", "updated_at": "2025-08-21T12:00:00Z", "items_count": 10},
+    {"id": "proj-2", "name": "Nairobi Tech Hub Promo", "description": "Promotional video for a tech hub in Nairobi.", "type": "video", "status": "In Progress", "created_at": "2025-08-22T14:00:00Z", "updated_at": "2025-08-22T14:00:00Z", "items_count": 5},
+]
+
+# Development models
+DEV_MODELS = [
+    {"id": "model-1", "name": "Shujaa-TTS-Sheng", "provider": "Hugging Face", "version": "1.2.0", "status": "available", "latest_version": "1.2.5", "update_status": "pending_approval"},
+    {"id": "model-2", "name": "Gemini-Pro-Vision-Kenya", "provider": "Google", "version": "1.0.0", "status": "available", "latest_version": "1.0.0", "update_status": "up_to_date"},
+    {"id": "model-3", "name": "RunPod-Stable-Diffusion-XL", "provider": "RunPod", "version": "1.0.0", "status": "not_downloaded", "latest_version": "1.1.0", "update_status": "available"},
+]
+
 # Request/Response models
 class VideoRequest(BaseModel):
     prompt: str
@@ -62,6 +105,181 @@ class BatchResponse(BaseModel):
     status: str
     output_dir: str
     message: str
+
+# Authentication helper functions
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=30)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def authenticate_user(username: str, password: str):
+    user = DEV_USERS.get(username)
+    if user and user["password"] == password:
+        return {"username": username, **user}
+    return None
+
+# Authentication endpoints
+@app.post("/token")
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=30)
+    access_token = create_access_token(
+        data={"sub": user["username"], "role": user["role"]},
+        expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@app.post("/superadmin/token")
+async def superadmin_login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user or user["role"] != "admin":
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect username or password or not an admin",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=30)
+    access_token = create_access_token(
+        data={"sub": user["username"], "role": user["role"]},
+        expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@app.get("/users/me")
+async def read_users_me(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        role: str = payload.get("role")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        user_data = DEV_USERS.get(username)
+        if user_data is None:
+            raise HTTPException(status_code=401, detail="User not found")
+        return {
+            "username": username,
+            "email": user_data["email"],
+            "role": role,
+            "id": username  # Simple ID for development
+        }
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+# Admin-only endpoint to get all users
+@app.get("/admin/users")
+async def get_all_users(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        role: str = payload.get("role")
+        if role != "admin":
+            raise HTTPException(status_code=403, detail="Not authorized")
+        
+        # Convert DEV_USERS to a list of user objects
+        user_list = [
+            {
+                "id": username,
+                "username": username,
+                "email": userdata["email"],
+                "role": userdata["role"]
+            }
+            for username, userdata in DEV_USERS.items()
+        ]
+        return {"users": user_list}
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+@app.delete("/admin/users/{user_id}")
+async def delete_user(user_id: str, token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        role: str = payload.get("role")
+        if role != "admin":
+            raise HTTPException(status_code=403, detail="Not authorized")
+        
+        if user_id not in DEV_USERS:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # In a real app, you would delete from a database.
+        # Here we just remove from the dictionary.
+        del DEV_USERS[user_id]
+        
+        return {"status": "success", "message": "User deleted successfully"}
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+@app.get("/admin/tenants")
+async def get_all_tenants(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        role: str = payload.get("role")
+        if role != "admin":
+            raise HTTPException(status_code=403, detail="Not authorized")
+        
+        tenant_list = [
+            {
+                "id": tenant_id,
+                **tenant_data
+            }
+            for tenant_id, tenant_data in DEV_TENANTS.items()
+        ]
+        return {"tenants": tenant_list}
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+# Project endpoints
+@app.get("/api/projects")
+async def get_projects(token: str = Depends(oauth2_scheme)):
+    # In a real app, you'd have pagination and filtering.
+    # For now, we'll just return all projects.
+    return {"projects": DEV_PROJECTS, "total": len(DEV_PROJECTS), "page": 1, "pages": 1}
+
+class ProjectUpdate(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+@app.put("/api/projects/{project_id}")
+async def update_project(project_id: str, project_update: ProjectUpdate, token: str = Depends(oauth2_scheme)):
+    for proj in DEV_PROJECTS:
+        if proj["id"] == project_id:
+            proj["name"] = project_update.name
+            proj["description"] = project_update.description
+            proj["updated_at"] = datetime.utcnow().isoformat() + "Z"
+            return proj
+    raise HTTPException(status_code=404, detail="Project not found")
+
+# Model Management endpoints
+@app.get("/admin/models")
+async def get_models(token: str = Depends(oauth2_scheme)):
+    return {"models": DEV_MODELS}
+
+@app.post("/admin/models/{model_id}/download")
+async def download_model(model_id: str, token: str = Depends(oauth2_scheme)):
+    for model in DEV_MODELS:
+        if model["id"] == model_id:
+            model["status"] = "downloading"
+            return {"status": "success", "message": f"Downloading model {model_id}"}
+    raise HTTPException(status_code=404, detail="Model not found")
+
+@app.post("/admin/models/{model_id}/approve")
+async def approve_model_update(model_id: str, token: str = Depends(oauth2_scheme)):
+    for model in DEV_MODELS:
+        if model["id"] == model_id:
+            model["update_status"] = "approved"
+            model["version"] = model["latest_version"]
+            return {"status": "success", "message": f"Model update for {model_id} approved"}
+    raise HTTPException(status_code=404, detail="Model not found")
+
 
 # Health check
 @app.get("/")
@@ -256,14 +474,30 @@ async def test_generation():
         )
 
 if __name__ == "__main__":
+    # Fix Windows console encoding for emojis
+    import sys
+    if sys.platform == "win32":
+        try:
+            import codecs
+            sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'replace')
+            sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'replace')
+        except Exception:
+            pass
+
     # Get config values
     host = config.get("api_host", "0.0.0.0")
     port = config.get("api_port", 8000)
-    
-    print(f"🚀 Starting Shujaa Studio API on {host}:{port}")
-    print(f"📖 API Documentation: http://{host}:{port}/docs")
-    print(f"🔧 Health Check: http://{host}:{port}/health")
-    
+
+    try:
+        print(f"🚀 Starting Shujaa Studio API on {host}:{port}")
+        print(f"📖 API Documentation: http://{host}:{port}/docs")
+        print(f"🔧 Health Check: http://{host}:{port}/health")
+    except UnicodeEncodeError:
+        # Fallback without emojis
+        print(f"Starting Shujaa Studio API on {host}:{port}")
+        print(f"API Documentation: http://{host}:{port}/docs")
+        print(f"Health Check: http://{host}:{port}/health")
+
     # Start server
     uvicorn.run(
         "simple_api:app",

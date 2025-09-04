@@ -26,7 +26,7 @@ export interface PaystackTransaction {
   callback_url?: string;
   plan?: string;
   invoice_limit?: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   channels?: string[];
   split_code?: string;
   subaccount?: string;
@@ -37,7 +37,7 @@ export interface PaystackTransaction {
 export interface PaystackResponse {
   status: boolean;
   message: string;
-  data?: any;
+  data?: unknown;
 }
 
 export interface PaystackVerificationResponse {
@@ -56,7 +56,7 @@ export interface PaystackVerificationResponse {
     channel: string;
     currency: string;
     ip_address: string;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
     fees: number;
     customer: {
       id: number;
@@ -93,7 +93,7 @@ class PaystackService {
   // Load Paystack inline script in browser (no-op on server)
   static async loadScript(): Promise<void> {
     if (typeof window === 'undefined') return; // SSR guard
-    if ((window as any).PaystackPop) return;
+    if (window.PaystackPop) return;
     await new Promise<void>((resolve, reject) => {
       const script = document.createElement('script');
       script.src = 'https://js.paystack.co/v1/inline.js';
@@ -172,7 +172,7 @@ class PaystackService {
       return {
         status: false,
         message: 'Failed to verify payment',
-        data: {} as any,
+        data: {},
       };
     }
   }
@@ -495,10 +495,27 @@ export function usePaystack() {
 }
 
 // TypeScript declarations for Paystack
+export interface PaystackCallbackResponse {
+  transaction: number | string;
+  trxref: string;
+  status: string;
+  reference: string;
+}
+
 declare global {
   interface Window {
     PaystackPop: {
-      setup: (config: any) => {
+      setup: (config: {
+        key: string;
+        email: string;
+        amount: number;
+        ref?: string;
+        callback?: (response: PaystackCallbackResponse) => void;
+        onClose?: () => void;
+        channels?: string[];
+        currency?: string;
+        metadata?: Record<string, unknown>;
+      }) => {
         openIframe: () => void;
       };
     };

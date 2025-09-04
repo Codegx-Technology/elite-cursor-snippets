@@ -66,6 +66,18 @@ def setup_logging():
         return
     setup_logging._has_run = True
 
+    # Fix Windows console encoding for emojis
+    import sys
+    if sys.platform == "win32":
+        try:
+            # Try to set console to UTF-8
+            import codecs
+            sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'replace')
+            sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'replace')
+        except Exception:
+            # Fallback: just ignore encoding errors
+            pass
+
     # Create logs directory if it doesn't exist
     logs_dir = os.path.dirname(config.logging.log_file)
     if not os.path.exists(logs_dir):
@@ -77,11 +89,12 @@ def setup_logging():
 
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-    # File handler for general logs
+    # File handler for general logs with UTF-8 encoding
     file_handler = RotatingFileHandler(
         config.logging.log_file,
         maxBytes=config.logging.max_bytes,
-        backupCount=config.logging.backup_count
+        backupCount=config.logging.backup_count,
+        encoding='utf-8'
     )
     file_handler.setFormatter(formatter)
     root_logger.addHandler(file_handler)

@@ -35,25 +35,33 @@ def cleanup_mock_config():
 class TestRouter(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
+        # [SNIPPET]: thinkwithai + kenyafirst + enterprise-secure
+        # [CONTEXT]: Loading mock API keys from environment variables for router tests.
+        # [GOAL]: Eliminate hardcoded credentials in test files.
+        # [TASK]: Replace hardcoded mock keys with environment variable lookups.
+        mock_openai_key = os.getenv("MOCK_OPENAI_KEY", "mock_openai_key_if_not_set")
+        mock_anthropic_key = os.getenv("MOCK_ANTHROPIC_KEY", "mock_anthropic_key_if_not_set")
+        mock_unhealthy_key = os.getenv("MOCK_UNHEALTHY_KEY", "mock_unhealthy_key_if_not_set")
+
         # Ensure clean state before each test
         cleanup_mock_config()
-        self.mock_config_content = """
+        self.mock_config_content = f"""
 health_check_interval: 1
 fallback_retries: 1
 providers:
   mock_openai:
     type: openai
-    api_key: mock_key_openai
+    api_key: {mock_openai_key}
     fail_rate: 0.0
     unhealth_rate: 0.0
   mock_anthropic:
     type: anthropic
-    api_key: mock_key_anthropic
+    api_key: {mock_anthropic_key}
     fail_rate: 0.0
     unhealth_rate: 0.0
   mock_unhealthy:
     type: mock
-    api_key: mock_key_unhealthy
+    api_key: {mock_unhealthy_key}
     fail_rate: 0.0
     unhealth_rate: 1.0 # Always unhealthy
 routing_rules:

@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, status
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
@@ -336,6 +337,16 @@ async def get_status():
             "kenya_first_experience": True
         }
     }
+
+# Simple health and favicon endpoints for uptime checks and to avoid noisy 404s
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    # Return 204 No Content to silence browser favicon requests in dev
+    return Response(status_code=204)
 
 # Background processing functions
 async def process_video_generation(job_id: str, request: VideoGenerationRequest):
@@ -802,6 +813,47 @@ async def get_recent_activity():
         })
 
     return activities
+
+# Prompt Suggestions Endpoint
+@app.get("/api/prompt-suggestions")
+async def get_prompt_suggestions(prompt: str):
+    """Get AI-powered prompt suggestions with Kenya-first focus"""
+
+    # Kenya-first prompt suggestions
+    kenya_suggestions = [
+        "Create a video showcasing Kenya's beautiful landscapes and wildlife",
+        "Generate content about Kenyan culture and traditions",
+        "Make a video about Nairobi's vibrant business district",
+        "Create educational content about Kenya's history",
+        "Showcase traditional Kenyan music and dance",
+        "Generate a video about Kenyan cuisine and local dishes",
+        "Create content about Kenya's tech innovation hub",
+        "Make a video about Maasai culture and traditions",
+        "Generate content about Kenya's conservation efforts",
+        "Create a video about Kenyan entrepreneurs and success stories",
+        "Showcase the beauty of Mount Kenya and its surroundings",
+        "Create content about Kenyan coffee farming traditions",
+        "Generate a video about Swahili language and culture",
+        "Make a video about Kenya's coastal regions and beaches",
+        "Create educational content about Kenya's independence history"
+    ]
+
+    # Filter suggestions based on prompt content
+    prompt_lower = prompt.lower()
+    filtered_suggestions = []
+
+    for suggestion in kenya_suggestions:
+        if (prompt_lower in suggestion.lower() or
+            any(word in suggestion.lower() for word in prompt_lower.split() if len(word) > 2)):
+            filtered_suggestions.append(suggestion)
+
+    # If no matches, return general Kenya-first suggestions
+    if not filtered_suggestions:
+        filtered_suggestions = kenya_suggestions[:5]
+    else:
+        filtered_suggestions = filtered_suggestions[:5]
+
+    return {"suggestions": filtered_suggestions}
 
 if __name__ == "__main__":
     import uvicorn

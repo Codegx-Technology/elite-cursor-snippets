@@ -1,22 +1,27 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash } from 'react-icons/fa6';
+import { UseFormRegister, FieldValues } from 'react-hook-form';
+import { colors, spacing, typography, borderRadius } from '@/config/designTokens';
+import { cn } from '@/lib/utils';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
-// [CONTEXT]: Enterprise-grade form input with Kenya-first design system
-// [GOAL]: Create beautiful, accessible form inputs with cultural authenticity
-// [TASK]: Implement enhanced input with validation, icons, and proper styling
+// [CONTEXT]: Enterprise-grade form input with Kenya-first design system integration
+// [GOAL]: Standardize FormInput to use design tokens and maintain cultural authenticity
+// [TASK]: Refactor to use centralized design system tokens
 
-interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface FormInputProps<TFieldValues extends FieldValues = FieldValues> extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  error?: string;
+  error?: { message?: string }; // Updated error prop to match react-hook-form's FieldError
   icon?: React.ReactNode;
   helperText?: string;
-  variant?: 'default' | 'cultural' | 'elite';
+  variant?: 'default' | 'kenya' | 'cultural' | 'elite';
+  name?: string; // Optional: for react-hook-form registration
+  register?: UseFormRegister<TFieldValues>; // Optional: react-hook-form register
 }
 
-export default function FormInput({
+export default function FormInput<TFieldValues extends FieldValues = FieldValues>({
   label,
   className = '',
   type = 'text',
@@ -24,6 +29,8 @@ export default function FormInput({
   icon,
   helperText,
   variant = 'default',
+  name,
+  register,
   ...props
 }: FormInputProps) {
   const [showPassword, setShowPassword] = useState(false);
@@ -32,28 +39,41 @@ export default function FormInput({
   const isPassword = type === 'password';
   const inputType = isPassword && showPassword ? 'text' : type;
 
+  const baseClasses = 'w-full px-4 py-3 text-base border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 font-medium';
+  
   const variantClasses = {
-    default: 'form-input',
-    cultural: 'form-input border-yellow-300 focus:border-yellow-500 focus:ring-yellow-200',
-    elite: 'form-input border-purple-300 focus:border-purple-500 focus:ring-purple-200'
+    default: 'border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white',
+    kenya: `border-gray-300 focus:border-[${colors.kenya.green}] focus:ring-green-500 bg-white`,
+    cultural: `border-gray-300 focus:border-[${colors.cultural.gold}] focus:ring-yellow-500 bg-white`,
+    elite: 'border-purple-300 focus:border-purple-500 focus:ring-purple-500 bg-white'
   };
 
-  const labelClasses = `block text-sm font-medium mb-2 transition-colors duration-200 ${
+  const labelClasses = cn(
+    'block font-medium mb-2 transition-colors duration-200',
+    `text-[${typography.fontSizes.sm}]`,
+    `font-[${typography.fontWeights.medium}]`,
     error ? 'text-red-600' :
-    isFocused ? 'text-green-600' :
+    isFocused && variant === 'kenya' ? `text-[${colors.kenya.green}]` :
+    isFocused && variant === 'cultural' ? `text-[${colors.cultural.gold}]` :
+    isFocused ? 'text-blue-600' :
     'text-gray-700'
-  }`;
+  );
 
-  const inputClasses = `${variantClasses[variant]} w-full ${
-    error ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''
-  } ${props.disabled ? 'bg-gray-50 cursor-not-allowed' : ''} ${
-    icon ? 'pl-10' : ''
-  } ${isPassword ? 'pr-10' : ''} ${className}`;
+  const inputClasses = cn(
+    baseClasses,
+    variantClasses[variant],
+    error ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : '',
+    props.disabled ? 'bg-gray-50 cursor-not-allowed opacity-60' : '',
+    icon ? 'pl-10' : '',
+    isPassword ? 'pr-10' : '',
+    'placeholder:text-gray-400',
+    className
+  );
 
   return (
     <div className="mb-6">
       {label && (
-        <label htmlFor={props.id} className={labelClasses}>
+        <label htmlFor={(props.id as string) || (name as string)} className={labelClasses}>
           {label}
           {props.required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -62,7 +82,12 @@ export default function FormInput({
       <div className="relative">
         {icon && (
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <div className={`text-gray-400 ${isFocused ? 'text-green-500' : ''} transition-colors duration-200`}>
+            <div className={cn(
+            'text-gray-400 transition-colors duration-200',
+            isFocused && variant === 'kenya' ? `text-[${colors.kenya.green}]` :
+            isFocused && variant === 'cultural' ? `text-[${colors.cultural.gold}]` :
+            isFocused ? 'text-blue-500' : ''
+          )}>
               {icon}
             </div>
           </div>
@@ -71,9 +96,16 @@ export default function FormInput({
         <input
           type={inputType}
           className={inputClasses}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          {...(register && name ? register(name, { shouldUnregister: true }) : {})}
           {...props}
+          onFocus={(e) => {
+            setIsFocused(true);
+            props.onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setIsFocused(false);
+            props.onBlur?.(e);
+          }}
         />
 
         {isPassword && (
@@ -91,16 +123,16 @@ export default function FormInput({
         )}
       </div>
 
-      {error && (
-        <p className="mt-2 text-sm text-red-600 flex items-center">
+      {error?.message && (
+        <p className={cn('mt-2 text-red-600 flex items-center', `text-[${typography.fontSizes.sm}]`)}>
           <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
-          {error}
+          {error.message}
         </p>
       )}
 
-      {helperText && !error && (
+      {helperText && !error?.message && ( // Only show helper text if no error
         <p className="mt-2 text-sm text-gray-500">
           {helperText}
         </p>
@@ -108,3 +140,4 @@ export default function FormInput({
     </div>
   );
 }
+

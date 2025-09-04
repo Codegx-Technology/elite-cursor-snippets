@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserManagement } from '@/hooks/useUserManagement';
-import { FaPlus, FaSpinner } from 'react-icons/fa';
+import { FaPlus, FaSpinner } from 'react-icons/fa6';
 import Card from '@/components/Card';
 
 export default function CreateUserPage() {
@@ -119,3 +119,4 @@ export default function CreateUserPage() {
     </div>
   );
 }
+

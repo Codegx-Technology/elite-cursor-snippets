@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { apiClient, handleApiResponse } from '@/lib/api';
+import { useError } from '@/context/ErrorContext';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Custom hook for managing enterprise-grade video generation state and logic
@@ -49,6 +50,7 @@ export function useVideoGenerator() {
 
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [scriptError, setScriptError] = useState<string | null>(null);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [friendlyFallback, setFriendlyFallback] = useState<{
     message: string;
@@ -56,16 +58,31 @@ export function useVideoGenerator() {
     spinnerType: string;
   } | null>(null);
 
+  // Global error reporter from ErrorContext
+  const { setGlobalError } = useError();
+
   const handleInputChange = (field: keyof VideoGenerationForm, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+
+    if (field === 'script') {
+      if (typeof value === 'string' && value.trim().length < 10) {
+        setScriptError('Script must be at least 10 characters long.');
+      } else {
+        setScriptError(null);
+      }
+    }
   };
 
   const handleGenerateVideo = async () => {
     if (!formData.script.trim()) {
-      alert('Please enter a video script to continue.');
+      setScriptError('Please enter a video script to continue.');
+      return;
+    }
+    if (scriptError) {
+      alert('Please fix the script errors before generating.');
       return;
     }
 
@@ -145,14 +162,9 @@ export function useVideoGenerator() {
           });
         }
       );
-    } catch (err) {
-      setError('Failed to start video generation');
-      setProgress({
-        stage: 'Error',
-        progress: 0,
-        message: 'Network error occurred',
-        isGenerating: false
-      });
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Failed to start video generation');
+      setGlobalError((err as Error).message || 'Failed to start video generation');
     }
   };
 
@@ -161,11 +173,11 @@ export function useVideoGenerator() {
     let attempts = 0;
 
     const stages = [
-      { stage: 'Script Analysis', progress: 30, message: 'Understanding your Kenya-first narrative...' },
-      { stage: 'Generating Visuals', progress: 50, message: 'Creating authentic African imagery...' },
-      { stage: 'Adding Voice', progress: 70, message: 'Recording Kenyan voice narration...' },
-      { stage: 'Cultural Enhancement', progress: 85, message: 'Infusing cultural elements and music...' },
-      { stage: 'Final Processing', progress: 95, message: 'Polishing your masterpiece...' }
+      { stage: 'Script Analysis', progress: 30, message: 'Analyzing your script and understanding the narrative.' },
+      { stage: 'Generating Visuals', progress: 50, message: 'Creating stunning visuals based on your script.' },
+      { stage: 'Adding Voice', progress: 70, message: 'Generating authentic voiceovers for your video.' },
+      { stage: 'Cultural Enhancement', progress: 85, message: 'Infusing unique cultural elements and background music.' },
+      { stage: 'Final Processing', progress: 95, message: 'Assembling and polishing your high-quality video.' }
     ];
 
     const poll = async () => {
@@ -204,7 +216,7 @@ export function useVideoGenerator() {
                 message: 'Video generation failed',
                 isGenerating: false
               });
-              setError(job.error_message || 'Video generation failed');
+              setGlobalError(job.error_message || 'Video generation failed');
               setCurrentJobId(null);
             } else {
               const stageIndex = Math.min(Math.floor(job.progress / 20), stages.length - 1);
@@ -227,19 +239,19 @@ export function useVideoGenerator() {
                   message: 'Video generation timed out',
                   isGenerating: false
                 });
-                setError('Video generation timed out. Please try again.');
+                setGlobalError('Video generation timed out. Please try again.');
                 setCurrentJobId(null);
               }
             }
           },
           (error) => {
+            setError(error);
             setProgress({
               stage: 'Error',
               progress: 0,
               message: 'Failed to check generation status',
               isGenerating: false
             });
-            setError(error);
             setCurrentJobId(null);
           }
         );
@@ -250,7 +262,7 @@ export function useVideoGenerator() {
           message: 'Network error during generation',
           isGenerating: false
         });
-        setError('Network error during generation');
+        setGlobalError('Network error during generation');
         setCurrentJobId(null);
       }
     };
@@ -272,6 +284,8 @@ export function useVideoGenerator() {
     progress,
     generatedVideo,
     error,
+    setError,
+    scriptError,
     friendlyFallback,
     handleInputChange,
     handleGenerateVideo,

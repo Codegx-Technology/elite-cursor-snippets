@@ -1,32 +1,49 @@
-import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
+import { NextResponse } from 'next/server';
 
-// Streams the generated mp4 from project /output folder by job id (timestamp)
-export async function GET(_request: Request, { params }: { params: { id: string } }) {
-  const jobId = params.id
+interface ErrorResponse {
+  error?: string;
+  detail?: string;
+}
+
+export async function GET(
+  _request: Request,
+  context: { params: { id: string } }
+) {
+  const baseUrl = process.env.BACKEND_URL || 'http://localhost:8000'
+  const target = `${baseUrl.replace(/\/$/, '')}/api/videos/${encodeURIComponent(context.params.id)}`
+
   try {
-    const projectRoot = path.resolve(process.cwd(), '..')
-    const out1 = path.join(projectRoot, 'output', `kenya_patriotic_60s_${jobId}_audio.mp4`)
-    const out2 = path.join(projectRoot, 'output', `kenya_patriotic_60s_${jobId}.mp4`)
-    const filePath = fs.existsSync(out1) ? out1 : fs.existsSync(out2) ? out2 : null
+    const res = await fetch(target, {
+      headers: { Accept: 'application/json' },
+      // Ensure fresh status when polling
+      cache: 'no-store',
+    })
 
-    if (!filePath) {
-      return NextResponse.json({ error: 'Video not found' }, { status: 404 })
+    let data: unknown = null
+    try {
+      data = await res.json()
+    } catch {
+      data = null
     }
 
-    const stat = fs.statSync(filePath)
-    const file = fs.createReadStream(filePath)
+    if (!res.ok) {
+      let message = 'Video not found';
+      if (data && typeof data === 'object') {
+        const errorResponse = data as ErrorResponse;
+        if (errorResponse.error) {
+          message = errorResponse.error;
+        } else if (errorResponse.detail) {
+          message = errorResponse.detail;
+        }
+      }
+      return NextResponse.json({ error: message }, { status: res.status })
+    }
 
-    return new NextResponse(file as any, {
-      status: 200,
-      headers: new Headers({
-        'Content-Type': 'video/mp4',
-        'Content-Length': stat.size.toString(),
-        'Content-Disposition': `inline; filename=${path.basename(filePath)}`,
-      }),
-    })
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Failed to read video' }, { status: 500 })
+    return NextResponse.json(data, { status: res.status })
+  } catch {
+    return NextResponse.json(
+      { error: 'Backend unreachable' },
+      { status: 502 }
+    )
   }
 }

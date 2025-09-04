@@ -11,6 +11,13 @@ export interface ApiResponse<T> {
   status: number;
 }
 
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pages: number;
+}
+
 export interface DashboardStats {
   videosGenerated: number;
   imagesCreated: number;
@@ -101,6 +108,16 @@ export interface UserSubscription {
   audio_credits_remaining: number;
 }
 
+export interface BillingRecord {
+  id: string;
+  date: string;
+  amount: number;
+  currency: string;
+  description: string;
+  status: 'paid' | 'failed' | 'pending';
+  invoice_url?: string;
+}
+
 export interface AnalyticsData {
   overview: {
     total_videos: number;
@@ -182,363 +199,338 @@ export interface UserData {
   is_active: boolean;
 }
 
-export interface Asset {
+export interface Tenant {
+  id: number;
+  name: string;
+  is_active: boolean;
+  plan: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  event_type: string;
+  message: string;
+  user_id?: string;
+}
+
+export interface CreateTenantData {
+  name: string;
+  is_active?: boolean;
+  plan?: string;
+}
+
+export interface TenantBrandingData {
+  logo_url?: string;
+  primary_color?: string;
+  secondary_color?: string;
+  custom_css?: string;
+  custom_domain?: string;
+  tenant_id?: string;
+  tls_status?: string;
+  name?: string;
+  // Add other branding fields as needed
+}
+
+export interface UserProfileData {
+  id: string;
+  username: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  phone_number?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  postal_code?: string;
+  profile_picture_url?: string;
+  bio?: string;
+  website?: string;
+  social_links?: Record<string, string>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotificationPreferences {
+  email_notifications: boolean;
+  sms_notifications: boolean;
+  push_notifications: boolean;
+  // Add other notification preferences as needed
+}
+
+export interface SecuritySettings {
+  two_factor_enabled: boolean;
+  last_password_change?: string;
+  last_login_ip?: string;
+  login_attempts_failed: number;
+}
+
+export interface LoginSession {
+  id: string;
+  ip_address: string;
+  device_info: string;
+  login_at: string;
+  last_activity_at: string;
+  is_current: boolean;
+}
+
+export interface StorageInfo {
+  total_storage_gb: number;
+  used_storage_gb: number;
+  asset_count: number;
+}
+
+export interface LocalModel {
   id: string;
   name: string;
-  type: 'image' | 'audio' | 'model';
-  url: string;
-  thumbnail_url?: string;
-  size: number;
-  uploaded_at: string;
-  usage_count: number;
+  version: string;
+  size_gb: number;
+  status: 'downloaded' | 'downloading' | 'pending' | 'error';
+  progress?: number;
+}
+
+export interface CreateUserData {
+  username: string;
+  email: string;
+  password?: string;
+  role?: string;
+  tenant_name?: string;
+  is_active?: boolean;
+}
+
+export interface SuperAdminMetrics {
+  total_users: number;
+  active_users: number;
+  total_tenants: number;
+  active_tenants: number;
+  total_videos_generated: number;
+  total_storage_used: string;
+  system_health: string;
+  pending_approvals: number;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
 }
 
 class ApiClient {
-  private baseUrl: string;
-  private authToken: string | null = null;
-
-  constructor(baseUrl: string = API_BASE_URL) {
-    this.baseUrl = baseUrl;
-  }
-
-  setAuthToken(token: string) {
-    this.authToken = token;
-  }
-
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
+  private getAuthHeaders(): HeadersInit {
     try {
-      const url = `${this.baseUrl}${endpoint}`;
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...(options.headers as Record<string, string> | undefined),
-      };
-
-      if (this.authToken) {
-        headers.Authorization = `Bearer ${this.authToken}`;
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
+        if (token) return { Authorization: `Bearer ${token}` };
       }
+    } catch (_) {}
+    return {};
+  }
 
-      const response = await fetch(url, {
-        ...options,
-        headers,
+  private async request<T>(path: string, init: RequestInit = {}): Promise<ApiResponse<T>> {
+    const url = `${API_BASE_URL}${path}`;
+    try {
+      const res = await fetch(url, {
+        ...init,
+        headers: {
+          'Content-Type': 'application/json',
+          ...this.getAuthHeaders(),
+          ...(init.headers || {})
+        }
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return {
-          error: data.detail || `HTTP ${response.status}: ${response.statusText}`,
-          status: response.status,
-        };
+      const status = res.status;
+      const isJson = res.headers.get('content-type')?.includes('application/json');
+      const data = isJson ? await res.json() : undefined;
+      if (!res.ok) {
+        return { status, error: (data && (data.detail || data.error)) || res.statusText };
       }
-
-      return {
-        data,
-        status: response.status,
-      };
-    } catch (error) {
-      return {
-        error: error instanceof Error ? error.message : 'Network error occurred',
-        status: 0,
-      };
+      return { status, data: data as T };
+    } catch (e: unknown) {
+      return { status: 0, error: (e as Error)?.message || 'Network error' };
     }
   }
 
-  // Health check
-  async getStatus(): Promise<ApiResponse<{ status: string; message: string }>> {
-    return this.request('/api/status');
+  // Health/status
+  async getStatus() {
+    return this.request<{ status: string }>('/health');
   }
 
-  // Dashboard data
-  async getDashboardStats(): Promise<ApiResponse<DashboardStats>> {
-    return this.request('/api/dashboard/stats');
+  // Dashboard
+  async getDashboardStats() {
+    return this.request<DashboardStats>('/api/dashboard/stats');
+  }
+  async getRecentActivity() {
+    return this.request<RecentActivity[]>('/api/dashboard/recent');
   }
 
-  async getRecentActivity(): Promise<ApiResponse<RecentActivity[]>> {
-    return this.request('/api/dashboard/activity');
+  // Projects
+  async getProjects(page = 1, limit = 6) {
+    const search = new URLSearchParams({ page: String(page), limit: String(limit) });
+    return this.request<{ projects: Project[]; total: number; page: number; pages: number }>(`/api/projects?${search}`);
   }
 
-  // Content Generation
-  async generateVideo(request: VideoGenerationRequest): Promise<ApiResponse<VideoGenerationResponse>> {
-    return this.request('/api/generate/video', {
+  // Gallery
+  async getGalleryItems(page = 1, limit = 12, filter = 'all') {
+    const search = new URLSearchParams({ 
+      page: String(page), 
+      limit: String(limit),
+      type: filter 
+    });
+    return this.request<PaginatedResponse<GalleryItem>>(`/api/assets?${search}`);
+  }
+  async createProject(project: Partial<Project>) {
+    return this.request<Project>('/api/projects', {
       method: 'POST',
-      body: JSON.stringify(request),
+      body: JSON.stringify(project)
     });
   }
-
-  async generateNewsVideo(request: NewsVideoGenerationRequest): Promise<ApiResponse<VideoGenerationResponse>> {
-    return this.request('/api/generate/news-video', {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
-  }
-
-  async generateImage(request: {
-    prompt: string;
-    style?: string;
-    size?: string;
-    cultural_preset?: string;
-  }): Promise<ApiResponse<VideoGenerationResponse>> {
-    return this.request('/api/generate/image', {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
-  }
-
-  async generateAudio(request: {
-    text: string;
-    voice_type?: string;
-    language?: string;
-    speed?: number;
-  }): Promise<ApiResponse<VideoGenerationResponse>> {
-    return this.request('/api/generate/audio', {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
-  }
-
-  async getGenerationJob(jobId: string): Promise<ApiResponse<ContentGenerationJob>> {
-    return this.request(`/api/jobs/${jobId}`);
-  }
-
-  async getGenerationJobs(): Promise<ApiResponse<ContentGenerationJob[]>> {
-    return this.request('/api/jobs');
-  }
-
-  // Payment System
-  async getPaymentPlans(): Promise<ApiResponse<PaymentPlan[]>> {
-    // Mock plans for now - will be replaced with real Paystack integration
-    return {
-      data: [
-        {
-          id: 'starter',
-          name: 'Starter',
-          price: 2500,
-          currency: 'KES',
-          interval: 'monthly',
-          features: ['10 Videos/month', '50 Images/month', '20 Audio tracks/month', 'Basic support'],
-          video_credits: 10,
-          image_credits: 50,
-          audio_credits: 20,
-        },
-        {
-          id: 'professional',
-          name: 'Professional',
-          price: 7500,
-          currency: 'KES',
-          interval: 'monthly',
-          features: ['50 Videos/month', '200 Images/month', '100 Audio tracks/month', 'Priority support', 'HD Quality'],
-          video_credits: 50,
-          image_credits: 200,
-          audio_credits: 100,
-          is_popular: true,
-        },
-        {
-          id: 'enterprise',
-          name: 'Enterprise',
-          price: 15000,
-          currency: 'KES',
-          interval: 'monthly',
-          features: ['Unlimited Videos', 'Unlimited Images', 'Unlimited Audio', '24/7 Support', '4K Quality', 'Custom branding'],
-          video_credits: -1,
-          image_credits: -1,
-          audio_credits: -1,
-        }
-      ],
-      status: 200
-    };
-  }
-
-  async createPaymentSession(planId: string): Promise<ApiResponse<PaymentSession>> {
-    return this.request('/api/payments/create-session', {
-      method: 'POST',
-      body: JSON.stringify({ plan_id: planId }),
-    });
-  }
-
-  async getUserSubscription(): Promise<ApiResponse<UserSubscription>> {
-    return this.request('/api/user/subscription');
-  }
-
-  async cancelSubscription(): Promise<ApiResponse<{ success: boolean }>> {
-    return this.request('/api/user/subscription/cancel', {
-      method: 'POST',
-    });
-  }
-
-  // Analytics
-  async getAnalytics(timeRange: '7d' | '30d' | '90d' = '30d'): Promise<ApiResponse<AnalyticsData>> {
-    return this.request(`/api/analytics?range=${timeRange}`);
-  }
-
-  async getAnalyticsOverview(): Promise<ApiResponse<AnalyticsData['overview']>> {
-    return this.request('/api/analytics/overview');
-  }
-
-  // API Keys
-  async getApiKeys(): Promise<ApiResponse<ApiKey[]>> {
-    return this.request('/api/keys');
-  }
-
-  async generateApiKey(): Promise<ApiResponse<ApiKey>> {
-    return this.request('/api/keys', {
-      method: 'POST',
-    });
-  }
-
-  async revokeApiKey(id: string): Promise<ApiResponse<{ success: boolean }>> {
-    return this.request(`/api/keys/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  // Integrations
-  async getIntegrations(): Promise<ApiResponse<Integration[]>> {
-    return this.request('/api/integrations');
-  }
-
-  async updateIntegration(id: string, config: Partial<Integration>): Promise<ApiResponse<Integration>> {
-    return this.request(`/api/integrations/${id}`, {
+  async updateProject(id: string, project: Partial<Project>) {
+    return this.request<Project>(`/api/projects/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(config),
+      body: JSON.stringify(project)
     });
   }
-
-  // Projects with pagination
-  async getProjects(page: number = 1, limit: number = 6): Promise<ApiResponse<{
-    projects: Project[];
-    total: number;
-    page: number;
-    pages: number;
-  }>> {
-    return this.request(`/api/projects?page=${page}&limit=${limit}`);
+  async deleteProject(id: string) {
+    return this.request<{ success: boolean }>(`/api/projects/${id}`, { method: 'DELETE' });
   }
 
-  async getProject(projectId: string): Promise<ApiResponse<Project>> {
-    return this.request(`/api/projects/${projectId}`);
+  // Local models
+  async getLocalModels() {
+    return this.request<LocalModel[]>('/api/local-models');
+  }
+  async downloadLocalModel(modelId: string) {
+    return this.request<{ status: string }>(`/api/local-models/${modelId}/download`, { method: 'POST' });
+  }
+  async deleteLocalModel(modelId: string) {
+    return this.request<{ success: boolean }>(`/api/local-models/${modelId}`, { method: 'DELETE' });
   }
 
-  async createProject(project: {
-    name: string;
-    description?: string;
-    type: 'video' | 'image' | 'audio';
-  }): Promise<ApiResponse<Project>> {
-    return this.request('/api/projects', {
-      method: 'POST',
-      body: JSON.stringify(project),
-    });
+  // Billing
+  async getBillingHistory() {
+    return this.request<BillingRecord[]>('/api/billing/history');
   }
 
-  async updateProject(projectId: string, updates: Partial<Project>): Promise<ApiResponse<Project>> {
-    return this.request(`/api/projects/${projectId}`, {
-      method: 'PUT',
-      body: JSON.stringify(updates),
-    });
+  // SuperAdmin
+  async getSuperAdminUsers() {
+    return this.request<UserData[]>('/superadmin/users');
   }
 
-  async deleteProject(projectId: string): Promise<ApiResponse<{ success: boolean }>> {
-    return this.request(`/api/projects/${projectId}`, {
-      method: 'DELETE',
-    });
+  async getSuperAdminTenants() {
+    return this.request<Tenant[]>('/superadmin/tenants');
+  }
+
+  async getSuperAdminAuditLogs() {
+    return this.request<AuditLogEntry[]>('/superadmin/audit-logs');
+  }
+
+  // Tenant Branding
+  async getTenantBranding(tenantId: string) {
+    return this.request<TenantBrandingData>(`/superadmin/tenants/${tenantId}/branding`);
+  }
+
+  // Auth
+  async login(username: string, password: string): Promise<ApiResponse<LoginResponse>> {
+    const body = new URLSearchParams({ username, password });
+    // OAuth2PasswordRequestForm expects x-www-form-urlencoded
+    try {
+      const res = await fetch(`${API_BASE_URL}/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString()
+      });
+      const status = res.status;
+      const data = await res.json().catch(() => undefined);
+      if (!res.ok) {
+        return { status, error: (data && (data.detail || data.error)) || res.statusText };
+      }
+      return { status, data };
+    } catch (e: unknown) {
+      return { status: 0, error: (e as Error)?.message || 'Network error' };
+    }
   }
 
   // User Management
-  async getUsers(): Promise<ApiResponse<UserData[]>> {
-    return this.request('/api/users');
+  async getUsers() {
+    return this.request<UserData[]>('/api/users');
   }
 
-  async getUser(id: number): Promise<ApiResponse<UserData>> {
-    return this.request(`/api/users/${id}`);
+  async getUser(id: number) {
+    return this.request<UserData>(`/api/users/${id}`);
   }
 
-  async createUser(data: Omit<UserData, 'id'>): Promise<ApiResponse<UserData>> {
-    return this.request('/api/users', {
+  async createUser(data: CreateUserData) {
+    return this.request<UserData>('/api/users', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async updateUser(id: number, data: Partial<UserData>): Promise<ApiResponse<UserData>> {
-    return this.request(`/api/users/${id}`, {
+  async updateUser(id: number, data: Partial<UserData>) {
+    return this.request<UserData>(`/api/users/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
-  async deleteUser(id: number): Promise<ApiResponse<{ success: boolean }>> {
-    return this.request(`/api/users/${id}`, {
+  async deleteUser(id: number) {
+    return this.request<{ success: boolean }>(`/api/users/${id}`, {
       method: 'DELETE',
     });
   }
 
-  // Assets
-  async getAssets(page: number, limit: number, type?: string): Promise<ApiResponse<{ assets: Asset[], pages: number, total: number }>> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-    });
-    if (type) {
-      params.append('type', type);
-    }
-    return this.request(`/api/assets?${params.toString()}`);
+  // Tenant Management
+  async getTenants() {
+    return this.request<Tenant[]>('/api/tenants');
   }
 
-  async uploadAsset(formData: FormData): Promise<ApiResponse<Asset>> {
-    return this.request('/api/assets', {
+  async getTenant(id: number) {
+    return this.request<Tenant>(`/api/tenants/${id}`);
+  }
+
+  async createTenant(data: CreateTenantData) {
+    return this.request<Tenant>('/api/tenants', {
       method: 'POST',
-      body: formData,
+      body: JSON.stringify(data),
     });
   }
 
-  async deleteAsset(id: string): Promise<ApiResponse<{ success: boolean }>> {
-    return this.request(`/api/assets/${id}`, {
+  async updateTenant(id: number, data: Partial<Tenant>) {
+    return this.request<Tenant>(`/api/tenants/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // SuperAdmin Methods
+  async getSuperAdminMetrics() {
+    return this.request<SuperAdminMetrics>('/api/superadmin/metrics');
+  }
+
+  async deleteTenant(id: number) {
+    return this.request<{ success: boolean }>(`/api/tenants/${id}`, {
       method: 'DELETE',
     });
   }
 
-  // Gallery with pagination and filtering
-  async getGalleryItems(
-    page: number = 1,
-    limit: number = 6,
-    type?: 'video' | 'image' | 'audio',
-    search?: string
-  ): Promise<ApiResponse<{
-        items: GalleryItem[];
-    total: number;
-    page: number;
-    pages: number;
-  }>> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-    });
+  // Audit Log Management
+  async getAuditLogs() {
+    return this.request<AuditLogEntry[]>('/api/audit-logs');
+  }
 
-    if (type) params.append('type', type);
-    if (search) params.append('search', search);
+  // Prompt Suggestions
+  async getPromptSuggestions(prompt: string) {
+    return this.request<{ suggestions: string[] }>(`/api/prompt-suggestions?prompt=${encodeURIComponent(prompt)}`);
+  }
+}
 
-    return this.request(`/api/gallery?${params.toString()}`);
+export function handleApiResponse<T>(
+  response: ApiResponse<T>,
+  onSuccess: (data: T) => void,
+  onError: (error: string) => void
+) {
+  if (response.data !== undefined) {
+    onSuccess(response.data);
+  } else {
+    onError(response.error || 'Unknown error');
   }
 }
 
 export const apiClient = new ApiClient();
-
-// Utility function for handling API responses in components
-export function handleApiResponse<T>(
-  response: ApiResponse<T>,
-  onSuccess: (data: T) => void,
-  onError?: (error: string) => void
-) {
-  if (response.error) {
-    if (onError) {
-      onError(response.error);
-    } else {
-      console.error('API Error:', response.error);
-    }
-  } else if (response.data) {
-    onSuccess(response.data);
-  }
-}
-
-export default apiClient;

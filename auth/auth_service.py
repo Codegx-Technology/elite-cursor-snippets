@@ -3,12 +3,14 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
+from fastapi import Depends, HTTPException, status, Request
 
 from auth.user_models import User, Tenant
-from auth.jwt_utils import create_jwt, hash_password, verify_password # Import hash_password and verify_password
+from auth.jwt_utils import create_jwt, hash_password, verify_password, verify_jwt # Import hash_password and verify_password
 from logging_setup import get_logger # ADD THIS
 from config_loader import get_config # ADD THIS
 from security.audit_log_manager import audit_log_manager, AuditEventType # ADD THIS
+from database import get_db
 
 logger = get_logger(__name__) # ADD THIS
 config = get_config() # ADD THIS
@@ -105,4 +107,45 @@ def update_user_profile(db: Session, user_id: int, user_update_data: dict):
     db.commit()
     db.refresh(user)
     audit_log_manager.log_event(db, AuditEventType.USER_PROFILE_UPDATE, f"User profile updated for user ID: {user_id}", user_id=user_id, tenant_id=user.tenant_id, event_details=user_update_data) # Use audit_log_manager
+    return user
+
+def _extract_bearer_token(auth_header: Optional[str]) -> Optional[str]:
+    if not auth_header:
+        return None
+    parts = auth_header.split(" ", 1)
+    if len(parts) != 2:
+        return None
+    scheme, token = parts[0], parts[1]
+    if scheme.lower() != "bearer":
+        return None
+    return token.strip()
+
+def get_current_active_user(request: Request, db: Session = Depends(get_db)) -> User:
+    """
+    // [TASK]: Resolve the current active user from Authorization: Bearer <token>
+    // [GOAL]: Provide a FastAPI dependency for RBAC and protected endpoints
+    """
+    auth_header = request.headers.get("Authorization")
+    token = _extract_bearer_token(auth_header)
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing or invalid Authorization header")
+
+    try:
+        payload = verify_jwt(token)
+    except Exception as e:
+        audit_log_manager.log_event(db, AuditEventType.USER_LOGIN_FAILURE, f"JWT verification failed: {e}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+
+    user_id = payload.get("user_id") or payload.get("sub")
+    username = payload.get("username")
+
+    user = None
+    if user_id is not None:
+        user = db.query(User).filter(User.id == user_id).first()
+    if user is None and username:
+        user = get_user_by_username(db, username)
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+
     return user

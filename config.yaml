@@ -8,6 +8,12 @@ app:
     - "https://cdn1.example.com/assets/"
     - "https://cdn2.example.com/assets/"
     - "https://fallback.example.com/assets/"
+  watched_models: # Models to be continuously monitored for updates
+    llm: {"provider": "huggingface", "name": "gpt-neo-2.7B", "type": "text_generation"}
+    embedding: {"provider": "openai", "name": "text-embedding-3-small", "type": "embedding"} # Assuming an embedding model type
+    tts_voice_xtts: {"provider": "huggingface", "name": "coqui/XTTS-v2", "type": "voice_synthesis"}
+    tts_voice_eleven: {"provider": "elevenlabs", "name": "english-female-v1", "type": "voice_synthesis"}
+  model_check_interval_seconds: 3600 # How often to check for model updates (1 hour)
 
 # API Keys and Credentials (sensitive, loaded from .env or secrets management)
 api_keys:
@@ -23,19 +29,46 @@ api_keys:
 
 # Model Configuration
 models:
-  disable_model_loading: true # Set to true to prevent any model loading or downloading
+  disable_model_loading: false # Enable to allow local/API models to load
   text_generation:
     hf_api_id: "mistralai/Mistral-7B-Instruct-v0.2" # Default for scene generation
     local_fallback_path: "" # Path to local LLM model (e.g., LLaMA.cpp compatible)
+    versioning: true
+    checksum: "" # Optional
+    min_health_score: 0.9
   image_generation:
     hf_api_id: "stabilityai/stable-diffusion-xl-base-1.0" # Example HF model
-    local_fallback_path: "" # Path to local Stable Diffusion model
+    local_fallback_path: "models/stable-diffusion-2-1" # Path to local Stable Diffusion model
+    versioning: true
+    checksum: "" # Optional
+    min_health_score: 0.9
   voice_synthesis:
     hf_api_id: "suno/bark"
-    local_fallback_path: "" # Path to local Bark/CoquiTTS model
+    local_fallback_path: "models/mms-tts-eng" # Path to local Bark/CoquiTTS model
+    versioning: true
+    checksum: "" # Optional
+    min_health_score: 0.9
   speech_to_text:
     hf_api_id: "openai/whisper-large-v2"
     local_fallback_path: "" # Path to local Whisper model
+    versioning: true
+    checksum: "" # Optional
+    min_health_score: 0.9
+  tts_models: # New section for TTS models
+    elevenlabs:
+      provider: "elevenlabs"
+      model_name: "elevenlabs-voice-en"
+      api_id: "some_elevenlabs_voice_id" # Example ElevenLabs voice ID
+      versioning: true
+      checksum: "def456" # Example checksum
+      min_health_score: 0.9
+    xtts_v2:
+      provider: "local"
+      model_name: "xtts-v2"
+      local_fallback_path: "models/tts/xtts-v2" # Path to local XTTS v2 model
+      versioning: true
+      checksum: "abc123" # Example checksum
+      min_health_score: 0.9
 
 # GPU Management (HybridGPUManager settings)
 gpu_manager:
@@ -63,14 +96,44 @@ logging:
 
 auth:
   access_token_expire_minutes: 30 # JWT token expiry time in minutes
+  # List of super admin users. 
+  # For production, it is STRONGLY recommended to load this from a secure source 
+  # using environment variables or a secrets manager instead of hardcoding here.
+  # Example for env var: ${SHUJAA_SUPER_ADMINS}
+  # The value should be a JSON string of a list of objects, e.g.:
+  # '[{"username": "admin1", "email": "admin1@example.com", "password": "securepass1", "role": "admin"}]'
+  super_admins:
+    - username: "peter"
+      email: "peter@shujaa.studio"
+      password: "${PETER_PASSWORD}" # Loaded from environment variable
+      role: "admin"
+    - username: "apollo"
+      email: "apollo@shujaa.studio"
+      password: "${APOLLO_PASSWORD}" # Loaded from environment variable
+      role: "admin"
 
 security:
-  encryption_password: "your_super_secret_encryption_password" # CHANGE THIS IN PRODUCTION
-  encryption_salt: "a_random_salt_string_for_encryption" # CHANGE THIS IN PRODUCTION
+  encryption_password: "${SHUJAA_ENCRYPTION_PASSWORD}" # Loaded from environment variable
+  encryption_salt: "${SHUJAA_ENCRYPTION_SALT}" # Loaded from environment variable
+  webhook_secret: "${SHUJAA_WEBHOOK_SECRET}" # Loaded from environment variable
+
+storage:
+  provider: "s3" # "local" or "s3"
+  s3:
+    bucket_name: "shujaa-studio-assets"
+    region_name: "us-east-1"
+    access_key_id: "${AWS_ACCESS_KEY_ID}"
+    secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+    signed_url_expiry: 3600 # in seconds
 
 i18n:
   supported_languages: ["en", "sw", "fr"] # English, Swahili, French
   default_language: "en"
+
+webhook:
+  initial_retry_delay_seconds: 10 # Initial delay before first retry (seconds)
+  max_retries: 5 # Maximum number of retry attempts
+  dlq_check_interval_seconds: 60 # How often the DLQ background task checks for items (seconds)
 
 feature_flags:
   new_ui:
@@ -81,3 +144,5 @@ feature_flags:
   beta_video_pipeline:
     enabled: false
     # users: ["admin_user"]
+  AUTO_ROLLBACK_ON_BOOT:
+    enabled: true # Enable auto-rollback on boot by default

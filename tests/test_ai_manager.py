@@ -22,6 +22,10 @@ from config_loader import get_config
 # Mock the config for tests
 @pytest.fixture(autouse=True)
 def mock_config():
+    # [SNIPPET]: thinkwithai + kenyafirst + enterprise-secure
+    # [CONTEXT]: Loading mock API key from environment variables for AI manager tests.
+    # [GOAL]: Eliminate hardcoded credentials in test files.
+    # [TASK]: Replace hardcoded mock_hf_key with an environment variable lookup.
     with patch('ai_model_manager.config', new=MagicMock()) as mock_cfg:
         mock_cfg.models.text_generation.hf_api_id = "mock/text-model"
         mock_cfg.models.text_generation.local_fallback_path = "mock/local-text-model"
@@ -31,7 +35,7 @@ def mock_config():
         mock_cfg.models.voice_synthesis.local_fallback_path = "mock/local-tts-model"
         mock_cfg.models.speech_to_text.hf_api_id = "mock/stt-model"
         mock_cfg.models.speech_to_text.local_fallback_path = "mock/local-stt-model"
-        mock_cfg.api_keys.huggingface = "mock_hf_key"
+        mock_cfg.api_keys.huggingface = os.getenv("MOCK_HF_KEY", "mock_hf_key_if_not_set")
         yield mock_cfg
 
 # Reset module-level globals before each test

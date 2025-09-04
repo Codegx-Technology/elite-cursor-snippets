@@ -1,13 +1,14 @@
-feat: Implement Auto-Deploy & Provider Registration System
+feat: Implement enterprise-grade UI fixes and enhancements
 
-Implements the "Auto-Deploy & Provider Registration" system, centralizing provider setup and enabling one-line execution for notebooks.
+This commit addresses various linting errors, type safety issues, and UI/UX improvements across the frontend application. Key changes include:
 
-- Created 'cloud_setup.py' to configure and return the 'Router' instance and its providers, centralizing provider setup.
-- Modified 'backend/cloud_registry.py' to:
-  - Import 'configure_providers' from 'cloud_setup.py'.
-  - Initialize 'self.router' and 'self.providers' by calling 'configure_providers()'.
-  - Implement 'list_providers()' to return names of configured providers.
-  - Implement 'log_failure()' to log errors to a file.
-  - Implement 'async execute()' method that leverages 'self.router.execute_with_fallback' for DRY principle, handling overall request routing and fallback.
+- Refactored `dependencyGuard.ts` and `JobLogPanel.tsx` for improved type safety and React hook dependencies.
+- Corrected conditional React Hook calls in `admin/dashboard/page.tsx`.
+- Cleaned up unused imports and variables in several page components (`admin/reporting/page.tsx`, `admin/tenants/page.tsx`, `admin/users/page.tsx`, `audio-studio/page.tsx`, `news-generate/page.tsx`, `projects/page.tsx`).
+- Enhanced type safety in API routes (`api/generate/video/route.ts`, `api/jobs/[id]/route.ts`, `api/tiers/route.ts`, `api/tiers/subscribe/route.ts`, `api/videos/[id]/route.ts`) by replacing `any` types with specific interfaces and type guards.
+- Fixed unescaped HTML entities in `login/page.tsx` and `pricing/page.tsx`.
+- Updated `useUserManagement.ts` to use `useCallback` for its functions, improving performance and addressing `useEffect` dependency warnings.
+- Integrated `PaginatedResponse` type in `api.ts` and `gallery/page.tsx` for consistent pagination handling.
+- Added new ESLint configuration and Lighthouse setup for improved code quality and performance auditing.
 
-This fulfills the "Auto-Deploy & Provider Registration" task.
+These changes contribute to a more robust, maintainable, and enterprise-grade frontend experience.

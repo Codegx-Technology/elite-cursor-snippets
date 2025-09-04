@@ -17,7 +17,12 @@ from backend.ai_routing.providers.gemini_provider import GeminiProvider
 class TestProviderIntegrations(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
-        self.mock_config = {"api_endpoint": "http://mock.api/v1", "api_key": "mock_key", "model_id": "mock_model", "endpoint_id": "mock_endpoint"}
+        # [SNIPPET]: thinkwithai + kenyafirst + enterprise-secure
+        # [CONTEXT]: Loading mock API key from environment variables for tests.
+        # [GOAL]: Eliminate hardcoded credentials in test files.
+        # [TASK]: Replace hardcoded mock_key with an environment variable lookup.
+        mock_api_key = os.getenv("MOCK_API_KEY", "mock_key_if_not_set")
+        self.mock_config = {"api_endpoint": "http://mock.api/v1", "api_key": mock_api_key, "model_id": "mock_model", "endpoint_id": "mock_endpoint"}
         self.test_payload = {"prompt": "Generate a test response"}
 
     async def test_colab_provider(self):

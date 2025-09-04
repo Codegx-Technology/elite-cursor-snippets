@@ -54,6 +54,59 @@ def enforce_limits(user_id: str, feature_name: str) -> bool:
         raise BillingException("Internal billing error.")
 
 # Example of how it would be used in a pipeline (conceptual)
+
+# --- New Usage Tracking and Cost Calculation Functions ---
+
+async def record_model_usage(user_id: str, model_name: str, version: str, tokens: int, cost: float):
+    """
+    Records the usage of a specific AI model version by a user.
+    """
+    # In a real system, this would persist to a database or a dedicated usage tracking service.
+    # For now, we'll log it and potentially use Redis for aggregation.
+    logger.info(f"MODEL_USAGE: User {user_id} used {tokens} tokens on model {model_name}@{version}. Cost: {cost}")
+    # Example: Increment a Redis counter for monthly model usage
+    # redis_client.increment_counter(user_id, f"model_usage:{model_name}:{version}:{datetime.now().strftime("%Y-%m")}", tokens)
+
+async def record_tts_usage(user_id: str, voice_name: str, version: str, seconds: int, cost: float):
+    """
+    Records the usage of a specific TTS voice version by a user.
+    """
+    # In a real system, this would persist to a database or a dedicated usage tracking service.
+    # For now, we'll log it and potentially use Redis for aggregation.
+    logger.info(f"TTS_USAGE: User {user_id} generated {seconds} seconds with voice {voice_name}@{version}. Cost: {cost}")
+    # Example: Increment a Redis counter for monthly TTS usage
+    # redis_client.increment_counter(user_id, f"tts_usage:{voice_name}:{version}:{datetime.now().strftime("%Y-%m")}", seconds)
+
+def calculate_model_cost(model_name: str, tokens: int) -> float:
+    """
+    Calculates the cost of using a model based on model weight and token count.
+    """
+    # Example pricing tiers (can be loaded from config or database)
+    model_costs_per_token = {
+        "Llama-3.1-instruct": 0.000002,  # Cheaper
+        "Mistral-7B": 0.000003,
+        "gpt-4o-mini": 0.000005,
+        "gpt-4o": 0.000015,
+        "gpt-5": 0.00002, # More expensive
+        "Mixtral-8x22B": 0.000025, # Heaviest
+        "custom-finetunes": 0.00003,
+    }
+    cost_per_token = model_costs_per_token.get(model_name, 0.00001) # Default cost
+    return tokens * cost_per_token
+
+def calculate_tts_cost(voice_name: str, seconds: int) -> float:
+    """
+    Calculates the cost of using a TTS voice based on voice family and duration.
+    """
+    # Example pricing tiers (can be loaded from config or database)
+    tts_costs_per_second = {
+        "xtts-v2": 0.0001,  # Basic (1 credit/min = 0.000166 credits/sec)
+        "elevenlabs-pro": 0.0003, # Premium (3 credits/min = 0.0005 credits/sec)
+        "elevenlabs-multi": 0.0003, # Premium
+    }
+    cost_per_second = tts_costs_per_second.get(voice_name, 0.0002) # Default cost
+    return seconds * cost_per_second
+
 async def conceptual_pipeline_step(user_id: str, data: str):
     """
     // [TASK]: Conceptual pipeline step demonstrating billing enforcement

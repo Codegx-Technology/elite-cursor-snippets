@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Card from '@/components/Card';
 import FormInput from '@/components/FormInput';
 import FormSelect from '@/components/FormSelect';
-import { FaMusic, FaMicrophone, FaPlay, FaPause, FaStop, FaDownload, FaFlag, FaMountain, FaVolumeUp, FaWaveSquare } from 'react-icons/fa';
+import { FaDownload, FaFlag, FaMicrophone, FaMountain, FaMusic, FaPause, FaPlay, FaStop, FaVolumeHigh, FaWaveSquare } from 'react-icons/fa6';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent
 // [CONTEXT]: Audio Studio page for voice and music creation with Kenya-first design
@@ -109,7 +109,7 @@ export default function AudioStudioPage() {
           ].map(({ key, label, icon: Icon }) => (
             <button
               key={key}
-              onClick={() => setActiveTab(key as any)}
+              onClick={() => setActiveTab(key as 'voice' | 'music' | 'effects')}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 ${
                 activeTab === key
                   ? 'bg-green-600 text-white'
@@ -143,6 +143,7 @@ export default function AudioStudioPage() {
 
                   <FormSelect
                     label="Language"
+                    name="language"
                     value={voiceSettings.language}
                     onChange={(e) => setVoiceSettings({...voiceSettings, language: (e.target as HTMLSelectElement).value})}
                     options={languageOptions}
@@ -150,6 +151,7 @@ export default function AudioStudioPage() {
 
                   <FormSelect
                     label="Voice Type"
+                    name="voice"
                     value={voiceSettings.voice}
                     onChange={(e) => setVoiceSettings({...voiceSettings, voice: (e.target as HTMLSelectElement).value})}
                     options={voiceOptions}
@@ -217,6 +219,7 @@ export default function AudioStudioPage() {
                 <div className="space-y-4">
                   <FormSelect
                     label="Genre"
+                    name="genre"
                     value={musicSettings.genre}
                     onChange={(e) => setMusicSettings({...musicSettings, genre: (e.target as HTMLSelectElement).value})}
                     options={genreOptions}
@@ -224,6 +227,7 @@ export default function AudioStudioPage() {
 
                   <FormSelect
                     label="Mood"
+                    name="mood"
                     value={musicSettings.mood}
                     onChange={(e) => setMusicSettings({...musicSettings, mood: (e.target as HTMLSelectElement).value})}
                     options={[
@@ -248,6 +252,7 @@ export default function AudioStudioPage() {
 
                   <FormSelect
                     label="Primary Instruments"
+                    name="instruments"
                     value={musicSettings.instruments}
                     onChange={(e) => setMusicSettings({...musicSettings, instruments: (e.target as HTMLSelectElement).value})}
                     options={[
@@ -341,9 +346,10 @@ export default function AudioStudioPage() {
         <div className="flex items-center justify-center space-x-2">
           <FaFlag className="text-lg" />
           <span className="font-medium">Preserving Kenyan voices and musical heritage through AI</span>
-          <FaVolumeUp className="text-lg" />
+          <FaVolumeHigh className="text-lg" />
         </div>
       </div>
     </div>
   );
 }
+

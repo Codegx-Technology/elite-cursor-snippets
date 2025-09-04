@@ -12,7 +12,7 @@ export interface JobRecord {
   completed_at?: string;
   result_url?: string;
   error_message?: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 // Persist across Next.js dev HMR by attaching to globalThis

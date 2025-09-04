@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import Card from '@/components/Card';
-import { FaUsers, FaUserPlus, FaCog, FaEnvelope, FaPhone, FaFlag, FaMountain, FaUserCircle, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
+import LoadingStates from '@/components/ui/LoadingStates';
+import ErrorStates from '@/components/ui/ErrorStates';
+import { FaGear, FaEye, FaFlag, FaMountain, FaTrashCan, FaCircleUser, FaUserPlus, FaUsers, FaPencil } from 'react-icons/fa6';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent
 // [CONTEXT]: Team collaboration page with Kenya-first design and mobile-first approach
@@ -132,7 +134,7 @@ export default function TeamPage() {
               <p className="text-gray-500 text-sm">Admins</p>
               <p className="text-2xl font-bold text-gray-800">{members.filter(m => m.role === 'admin').length}</p>
             </div>
-            <FaCog className="text-3xl text-red-600" />
+            <FaGear className="text-3xl text-red-600" />
           </div>
         </Card>
 
@@ -166,7 +168,7 @@ export default function TeamPage() {
             <div key={member.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <FaUserCircle className="text-2xl text-green-600" />
+                  <FaCircleUser className="text-2xl text-green-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800">{member.name}</h3>
@@ -188,10 +190,10 @@ export default function TeamPage() {
                     <FaEye className="text-sm" />
                   </button>
                   <button className="p-2 text-gray-600 hover:text-green-600 transition-colors duration-200">
-                    <FaEdit className="text-sm" />
+                    <FaPencil className="text-sm" />
                   </button>
                   <button className="p-2 text-gray-600 hover:text-red-600 transition-colors duration-200">
-                    <FaTrash className="text-sm" />
+                    <FaTrashCan className="text-sm" />
                   </button>
                 </div>
               </div>
@@ -274,7 +276,7 @@ export default function TeamPage() {
                 </label>
                 <select
                   value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as any)}
+                  onChange={(e) => setInviteRole(e.target.value as 'admin' | 'editor' | 'viewer')}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 >
                   <option value="viewer">Viewer</option>
@@ -313,3 +315,4 @@ export default function TeamPage() {
     </div>
   );
 }
+

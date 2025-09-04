@@ -1,6 +1,27 @@
 import { render, screen } from '@testing-library/react';
 import VideoGeneratePage from './page';
 
+interface MockPromptSuggesterProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  id: string;
+}
+
+interface MockFormSelectOption {
+  value: string;
+  label: string;
+}
+
+interface MockFormSelectProps {
+  label: string;
+  options: MockFormSelectOption[];
+  id: string;
+  name: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+}
+
 // Mock the useVideoGenerator hook
 jest.mock('@/hooks/useVideoGenerator', () => ({
   useVideoGenerator: () => ({
@@ -18,10 +39,11 @@ jest.mock('@/hooks/useVideoGenerator', () => ({
 
 // Mock the PromptSuggester component as it's a child component
 jest.mock('@/components/Video/PromptSuggester', () => {
-  return function MockPromptSuggester({ value, onChange, placeholder }: any) {
+  return function MockPromptSuggester({ value, onChange, placeholder, id }: MockPromptSuggesterProps) {
     return (
       <input
         data-testid="prompt-suggester-mock"
+        id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
@@ -39,12 +61,12 @@ jest.mock('@/components/Video/SimpleMode', () => {
 
 // Mock FormSelect component
 jest.mock('@/components/FormSelect', () => {
-  return function MockFormSelect({ label, options, id, name, value, onChange }: any) {
+  return function MockFormSelect({ label, options, id, name, value, onChange }: MockFormSelectProps) {
     return (
       <div>
         <label htmlFor={id}>{label}</label>
         <select id={id} name={name} value={value} onChange={onChange}>
-          {options.map((option: any) => (
+          {options.map((option: MockFormSelectOption) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>

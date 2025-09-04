@@ -2,13 +2,13 @@ from config_loader import get_config
 from logging_setup import get_logger
 import asyncio
 import functools
+from typing import Any
 from enhanced_model_router import enhanced_router
 
 # Import pipeline entrypoints (do not call them yet)
 import news_video_generator
 import offline_video_maker.generate_video
 import cartoon_anime_pipeline
-import generate_video # Original basic pipeline
 
 # Import parallel processing utilities
 from utils.parallel_processing import ParallelProcessor, SceneProcessor
@@ -26,7 +26,7 @@ class PipelineOrchestrator:
             "news_video_generator": news_video_generator.main,
             "offline_video_maker": offline_video_maker.generate_video.main,
             "cartoon_anime_pipeline": cartoon_anime_pipeline.create_african_cartoon_video,
-            "basic_video_generator": generate_video.create_gradio_interface
+            "basic_video_generator": lambda *args, **kwargs: __import__('generate_video').create_gradio_interface(*args, **kwargs)
         }
         self.parallel_processor = ParallelProcessor()
         self.scene_processor = SceneProcessor()
@@ -97,7 +97,7 @@ class PipelineOrchestrator:
         logger.info(f"Decision: Chosen pipeline: {chosen_pipeline}, Reason: {reason}")
         return {"chosen": chosen_pipeline, "reason": reason}
 
-    async def run_pipeline(self, input_type, input_data, user_preferences=None, api_call=False):
+    async def run_pipeline(self, input_type, input_data, user_preferences=None, api_call=False, request: Any = None): # Added request: Any
         """
         // [TASK]: Run the chosen pipeline with appropriate arguments and execution model (sync/async)
         // [GOAL]: Execute the selected pipeline and return its result
@@ -123,6 +123,7 @@ class PipelineOrchestrator:
         pipeline_kwargs['enhanced_router'] = enhanced_router
         pipeline_kwargs['parallel_processor'] = self.parallel_processor
         pipeline_kwargs['scene_processor'] = self.scene_processor
+        pipeline_kwargs['request'] = request # Pass the request object
 
         try:
             if chosen == "news_video_generator":
@@ -139,10 +140,8 @@ class PipelineOrchestrator:
                 func = functools.partial(self.pipelines[chosen], prompt=input_data, **pipeline_kwargs)
                 result = await loop.run_in_executor(None, func)
             elif chosen == "cartoon_anime_pipeline":
-                # Run sync function in a separate thread
-                loop = asyncio.get_running_loop()
-                func = functools.partial(self.pipelines[chosen], script=input_data, **pipeline_kwargs)
-                result = await loop.run_in_executor(None, func)
+                # The cartoon pipeline is async; call it directly
+                result = await self.pipelines[chosen](script=input_data, **pipeline_kwargs)
             elif chosen == "basic_video_generator":
                 logger.warning("Basic_video_generator (Gradio UI) cannot be executed from the API.")
                 return {"status": "error", "message": "The selected pipeline is interactive and cannot be run from the API."}

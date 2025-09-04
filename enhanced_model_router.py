@@ -15,6 +15,12 @@ import requests
 from logging_setup import get_logger
 from config_loader import get_config
 from dialect_rag_manager import DialectRAGManager
+from datetime import datetime # Added for rollback notification timestamp
+
+# New imports for rollback and notifications
+from backend.ai_health.rollback import should_rollback, perform_rollback
+from backend.notifications.admin_notify import send_admin_notification
+from backend.ai_health.healthcheck import aggregate, record_metric, score_inference
 
 # [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent + augmentsearch
 # [CONTEXT]: Enhanced model routing with intelligent fallbacks and Kenya-first design
@@ -184,6 +190,26 @@ class EnhancedModelRouter:
             GenerationMethod.CACHED_CONTENT,
             GenerationMethod.FRIENDLY_FALLBACK
         ]
+
+        # Rollback thresholds for each provider/model type
+        self.rollback_thresholds = {
+            "default": {
+                "error_rate_threshold": 0.1, # 10% error rate
+                "min_success_rate": 0.9,     # 90% success rate
+                "max_avg_response_time": 15.0 # 15 seconds average response time
+            },
+            "huggingface_api": {
+                "error_rate_threshold": 0.15,
+                "min_success_rate": 0.85,
+                "max_avg_response_time": 20.0
+            },
+            "gemini_api": {
+                "error_rate_threshold": 0.08,
+                "min_success_rate": 0.92,
+                "max_avg_response_time": 10.0
+            }
+            # Add more specific thresholds for other providers/models as needed
+        }
     
     def _assess_prompt_complexity(self, prompt: str) -> str:
         """Assess prompt complexity for resource planning"""
@@ -434,9 +460,9 @@ class EnhancedModelRouter:
         return final_result
 
     def _log_generation_analytics(self, request: GenerationRequest, final_result: GenerationResult, all_attempts: List[GenerationResult]):
-        """Logs detailed analytics for a generation request."""
+        """Logs detailed analytics for a generation request and triggers rollback if necessary."""
         analytics_data = {
-            "request_id": str(uuid.uuid4()), # Generate a unique ID for each request
+            "request_id": str(uuid.uuid4()),
             "timestamp": time.time(),
             "prompt": request.prompt,
             "type": request.type,
@@ -447,6 +473,66 @@ class EnhancedModelRouter:
             "total_attempts": len(all_attempts),
             "attempts_details": []
         }
+        
+        # Aggregate metrics for the specific provider/model that was used
+        # For simplicity, we'll aggregate based on the final_method_used
+        # In a more complex system, you might aggregate per model within a provider
+        provider_key = final_result.method_used.value if final_result.method_used else "N/A"
+        
+        # Initialize if not exists
+        if provider_key not in self.historical_performance:
+            self.historical_performance[provider_key] = {"success_count": 0, "fail_count": 0, "total_time": 0.0, "call_count": 0}
+        
+        # Update historical performance
+        self.historical_performance[provider_key]["call_count"] += 1
+        self.historical_performance[provider_key]["total_time"] += final_result.provider_response_time
+        if final_result.success:
+            self.historical_performance[provider_key]["success_count"] += 1
+        else:
+            self.historical_performance[provider_key]["fail_count"] += 1
+        
+        # Calculate aggregated metrics for rollback check
+        current_stats = self.historical_performance[provider_key]
+        total_calls = current_stats["call_count"]
+        
+        if total_calls > 0:
+            error_rate = current_stats["fail_count"] / total_calls
+            success_rate = current_stats["success_count"] / total_calls
+            avg_response_time = current_stats["total_time"] / total_calls
+        else:
+            error_rate = 0.0
+            success_rate = 1.0
+            avg_response_time = 0.0
+
+        aggregated_metrics = {
+            "error_rate": error_rate,
+            "success_rate": success_rate,
+            "avg_response_time": avg_response_time
+        }
+
+        # Get relevant thresholds
+        thresholds = self.rollback_thresholds.get(provider_key, self.rollback_thresholds["default"])
+
+        # Check for rollback condition
+        if should_rollback(aggregated_metrics, thresholds):
+            logger.warning(f"Rollback condition met for {provider_key}. Aggregated metrics: {aggregated_metrics}")
+            rolled_back_to_tag = perform_rollback(provider_key, request.type) # Assuming request.type can act as model_name
+            
+            if rolled_back_to_tag:
+                subject = f"🚨 Auto-rollback executed: {provider_key}/{request.type}"
+                body = (
+                    f"Model {provider_key}/{request.type} has been automatically rolled back.\n"
+                    f"Metrics leading to rollback:\n"
+                    f"  - Error Rate: {error_rate:.2f} (Threshold: {thresholds['error_rate_threshold']:.2f})\n"
+                    f"  - Success Rate: {success_rate:.2f} (Threshold: {thresholds['min_success_rate']:.2f})\n"
+                    f"  - Avg Response Time: {avg_response_time:.2f}s (Threshold: {thresholds['max_avg_response_time']:.2f}s)\n"
+                    f"Rolled back to version: {rolled_back_to_tag}\n"
+                    f"Time: {datetime.now().isoformat()}"
+                )
+                send_admin_notification(subject, body, metadata=aggregated_metrics)
+                logger.info(f"Admin notification sent for rollback of {provider_key}/{request.type}.")
+            else:
+                logger.info(f"Rollback failed for {provider_key}/{request.type}. No notification sent.")
         
         for attempt in all_attempts:
             attempt_detail = {
@@ -459,18 +545,6 @@ class EnhancedModelRouter:
                 "metadata": attempt.metadata
             }
             analytics_data["attempts_details"].append(attempt_detail)
-            
-            # Store historical performance for smart routing
-            method_key = attempt.method_used.value if attempt.method_used else "N/A"
-            if method_key not in self.historical_performance:
-                self.historical_performance[method_key] = {"success_count": 0, "fail_count": 0, "total_time": 0.0, "call_count": 0}
-            
-            self.historical_performance[method_key]["call_count"] += 1
-            self.historical_performance[method_key]["total_time"] += attempt.provider_response_time
-            if attempt.success:
-                self.historical_performance[method_key]["success_count"] += 1
-            else:
-                self.historical_performance[method_key]["fail_count"] += 1
             
         logger.info(f"GENERATION_ANALYTICS: {json.dumps(analytics_data, indent=2)}") # Log as JSON
         logger.debug(f"HISTORICAL_PERFORMANCE: {json.dumps(self.historical_performance, indent=2)}") # Log historical performance for debugging
@@ -544,6 +618,8 @@ class EnhancedModelRouter:
         logger.info(f"Text quality check: {quality_report}")
         return quality_report
     
+    
+
     def _get_fallback_chain(self, analysis: Dict[str, Any]) -> List[GenerationMethod]:
         """Get customized fallback chain based on analysis and historical performance"""
         chain = []
@@ -565,27 +641,34 @@ class EnhancedModelRouter:
         if availability['local_models']:
             available_methods.append(GenerationMethod.LOCAL_MODELS)
         
-        # Sort available methods based on historical performance
-        # Prioritize: higher success rate, lower average response time
-        def sort_key(method: GenerationMethod):
-            stats = self.historical_performance.get(method.value, {"success_count": 0, "fail_count": 0, "total_time": 0.0, "call_count": 0})
+        # Sort available methods based on real-time health metrics
+        def sort_key_by_health(method: GenerationMethod):
+            # For simplicity, use method.value as provider and request.type as model_name
+            # In a real system, you'd map these to actual model names
+            provider_name = method.value
+            model_name = analysis['request_type'] # Assuming request.type is passed in analysis
             
-            success_rate = stats["success_count"] / stats["call_count"] if stats["call_count"] > 0 else 0.0
-            average_time = stats["total_time"] / stats["call_count"] if stats["call_count"] > 0 else float('inf')
+            # Get aggregated health metrics
+            health_metrics = aggregate(provider_name, model_name, "latest") # Assuming "latest" tag
             
-            # Simple scoring: higher success rate is better, lower time is better
-            # You might want to adjust weights or use a more complex scoring function
-            score = (success_rate * 100) - (average_time / 10) # Example scoring
+            # Prioritize: higher score, lower error rate, lower latency
+            # This scoring function can be refined based on business needs
+            score = health_metrics["avg_score"] * 100 - (health_metrics["error_rate"] * 100) - (health_metrics["p50_latency_ms"] / 100)
             
-            # Deprioritize methods with recent failures (e.g., if fail_count is high)
-            if stats["fail_count"] > 5 and stats["call_count"] > 10: # Example threshold
-                score -= 50 # Significant penalty for frequent failures
+            # Deprioritize if error rate is above a certain threshold
+            thresholds = self.rollback_thresholds.get(provider_name, self.rollback_thresholds["default"])
+            if health_metrics["error_rate"] > thresholds["error_rate_threshold"]:
+                score -= 1000 # Significant penalty
             
             return score
 
-        # Sort in descending order of score
-        sorted_available_methods = sorted(available_methods, key=sort_key, reverse=True)
-        
+        # Sort in descending order of health score
+        # Only sort if there are available methods and we have some health data
+        if available_methods and analysis.get('request_type'): # Ensure request_type is available for aggregation
+            sorted_available_methods = sorted(available_methods, key=sort_key_by_health, reverse=True)
+        else:
+            sorted_available_methods = available_methods # No sorting if no health data or request type
+
         # Add sorted available methods to the chain, avoiding duplicates
         for method in sorted_available_methods:
             if method not in chain:
@@ -600,6 +683,8 @@ class EnhancedModelRouter:
         
         return chain
     
+    
+
     async def _try_generation_method(
         self, 
         method: GenerationMethod, 
@@ -631,7 +716,23 @@ class EnhancedModelRouter:
             # Populate common fields
             result.method_used = method # Ensure method_used is set
             result.provider_response_time = time.time() - method_start_time # ADD THIS LINE
-            # Placeholder for resource_usage - would be populated by specific generation methods
+            
+            # Record metric for successful attempt
+            # Determine provider and model name for metric recording
+            provider_name = method.value # Use method name as provider for simplicity
+            model_name = request.type # Use request type as model name for simplicity
+            
+            # Score the inference result
+            inference_score = score_inference(result.metadata or {}) # Pass metadata for scoring
+            
+            record_metric(
+                provider=provider_name,
+                model=model_name,
+                tag="latest", # Assuming "latest" tag for current active model
+                ok=result.success,
+                latency_ms=result.provider_response_time * 1000, # Convert to ms
+                score=inference_score
+            )
             
             return result
 
@@ -640,6 +741,18 @@ class EnhancedModelRouter:
             result.error_message = f"Generation method {method.value} failed: {str(e)}"
             result.provider_response_time = time.time() - method_start_time # ADD THIS LINE
             logger.warning(f"Generation method {method.value} failed: {e}") # Keep existing warning
+            
+            # Record metric for failed attempt
+            provider_name = method.value
+            model_name = request.type
+            record_metric(
+                provider=provider_name,
+                model=model_name,
+                tag="latest",
+                ok=False,
+                latency_ms=result.provider_response_time * 1000,
+                score=0.0 # Failed attempts get a score of 0
+            )
             return result
     
     async def _try_huggingface_generation(self, request: GenerationRequest) -> GenerationResult:

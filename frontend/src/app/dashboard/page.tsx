@@ -1,231 +1,275 @@
-'use client';
+// [TASK]: Create a new page component for the user dashboard.
+// [GOAL]: Provide a central hub for users to view PlanGuard info, recent projects, and account settings.
+// [CONSTRAINTS]: Integrate seamlessly with existing UI, use Tailwind CSS, apply Kenya-first principles.
+// [SNIPPET]: thinkwithai + kenyafirst + refactorclean + taskchain
+// [CONTEXT]: Building out the enterprise-grade UI, starting with the user dashboard.
 
+"use client";
+
+import React, { useEffect, useState } from 'react';
+import { usePlanGuard } from '@/context/PlanGuardContext';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Card from '@/components/Card';
-import { FaVideo, FaImages, FaMusic, FaUsers, FaClock, FaFlag, FaMountain, FaGlobe, FaHeart, FaExclamationTriangle } from 'react-icons/fa';
-import { useDashboard } from '@/hooks/useDashboard';
+import Layout from '@/components/Layout';
+import { FaVideo, FaCreditCard, FaGear, FaChartLine, FaImage, FaMusic } from 'react-icons/fa6';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import type { PlanStatus } from '@/widgets/PlanGuardWidget/types';
+import { apiClient, Project } from '@/lib/api';
+// Phase 2 Enterprise Components
+import LoadingStates from '@/components/ui/LoadingStates';
+import ErrorStates from '@/components/ui/ErrorStates';
+// import { BarChart, LineChart } from '@/components/charts/Chart';
 
-// [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean + augmentsearch
-// [CONTEXT]: Enterprise-grade dashboard with Kenya-first design and real backend integration
-// [GOAL]: Create clean, responsive dashboard with real data and proper error handling
-// [TASK]: Implement dashboard with backend API integration and mobile responsiveness
+// [SNIPPET]: thinkwithai + kenyafirst + refactorclean
+// [CONTEXT]: Dashboard page component for Shujaa Studio users.
+// [GOAL]: Display user-specific information like plan status, usage, and quick links.
+// [TASK]: Implement the main dashboard layout and integrate data from contexts.
 
 export default function DashboardPage() {
-  const { stats, recentActivity, isLoading, error, backendStatus, loadDashboardData } = useDashboard();
+  const { planStatus, loading: planLoading, error: planError } = usePlanGuard();
+  const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
 
-  const getActivityStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'processing': return 'bg-yellow-100 text-yellow-800';
-      case 'failed': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setProjectsLoading(true);
+      setProjectsError(null);
+      try {
+        const response = await apiClient.getProjects(1, 3); // Fetch first 3 projects
+        if (response.data) {
+          setProjects(response.data.projects);
+        } else if (response.error) {
+          setProjectsError(response.error);
+        }
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Failed to fetch projects.';
+        setProjectsError(message);
+      } finally {
+        setProjectsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  const getPlanStateVariant = (state: PlanStatus['state']) => {
+    switch (state) {
+      case 'healthy':
+        return 'success'; // Assuming a 'success' variant for Badge
+      case 'grace':
+        return 'warning';
+      case 'view_only':
+      case 'locked':
+        return 'destructive';
+      default:
+        return 'default';
     }
   };
 
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'video': return <FaVideo className="text-blue-600" aria-label="Video Icon" />;
-      case 'image': return <FaImages className="text-green-600" aria-label="Image Icon" />;
-      case 'audio': return <FaMusic className="text-purple-600" aria-label="Audio Icon" />;
-      default: return <FaVideo className="text-gray-600" aria-label="Video Icon" />;
-    }
-  };
-
-  if (isLoading) {
+  if (planLoading || authLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <span className="text-gray-600 font-medium">Loading dashboard...</span>
-          <p className="text-sm text-gray-500 mt-2">Connecting to backend services...</p>
-        </div>
+      <div className="flex justify-center items-center min-h-screen-content">
+        <LoadingStates.PageLoading message="Loading dashboard data... 🦒" />
       </div>
     );
   }
 
+  if (planError) {
+    return (
+      <div className="flex justify-center items-center min-h-screen-content">
+        <ErrorStates.ErrorPage 
+          type="server-error"
+          customTitle="Plan Error"
+          customMessage={`Failed to load plan information: ${planError}`}
+          onRetry={() => window.location.reload()}
+        />
+      </div>
+    );
+  }
+
+  // Sample analytics data for charts
+  const usageData = [
+    { label: 'Video', value: planStatus?.usage.videoMins || 0, color: '#00A651' },
+    { label: 'Miradi', value: projects.length, color: '#3B82F6' },
+    { label: 'Matumizi', value: Math.round((planStatus?.usage.videoMins || 0) / (planStatus?.quota.videoMins || 100) * 100), color: '#8B5CF6' }
+  ];
+
+  const monthlyData = [
+    { label: 'Jan', value: 12 },
+    { label: 'Feb', value: 19 },
+    { label: 'Mar', value: 15 },
+    { label: 'Apr', value: 22 },
+    { label: 'May', value: 18 },
+    { label: 'Jun', value: 25 }
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Kenya-First Hero Section */}
-      <div className="bg-gradient-to-r from-green-600 via-red-600 to-black p-6 rounded-xl text-white shadow-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <FaFlag className="text-3xl" aria-label="Kenyan Flag" />
-            <div>
-              <h1 className="text-2xl font-bold">Karibu Shujaa Studio! 🇰🇪</h1>
-              <p className="text-green-100">Empowering African storytellers with AI-powered video generation</p>
-              {backendStatus === 'offline' && (
-                <div className="flex items-center space-x-2 mt-2 bg-red-500 bg-opacity-20 px-3 py-1 rounded">
-                  <FaExclamationTriangle className="text-yellow-300 text-sm" aria-label="Warning Icon" />
-                  <span className="text-yellow-100 text-sm">Backend service offline - showing sample data</span>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="hidden md:block">
-            <FaMountain className="text-4xl text-yellow-300" aria-label="Mount Kenya" />
-          </div>
-        </div>
+    <Layout>
+      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">
+          Welcome, {user?.username || 'Shujaa'}! 🇰🇪
+        </h1>
+        <p className="text-lg text-gray-600">Your Shujaa Studio Dashboard</p>
       </div>
 
-      {/* Stats Grid */}
-      {error && !stats ? (
-        <Card className="p-8 text-center">
-          <div className="text-red-600 mb-4">
-            <FaExclamationTriangle className="text-4xl mx-auto mb-2" aria-label="Error Icon" />
-            <p className="font-medium">Unable to load dashboard data</p>
-            <p className="text-sm text-gray-600 mt-2">{error}</p>
+      {/* Enterprise Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card className="p-6 bg-gradient-to-br from-kenya-green/10 to-cultural-gold/10 border-kenya-green/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Your Plan</p>
+              <p className="text-2xl font-bold text-gray-900">{planStatus?.planName || 'None'}</p>
+              <p className="text-xs text-gray-500">Status: {planStatus?.state || 'Unknown'}</p>
+            </div>
+            <FaCreditCard className="text-3xl text-kenya-green" />
           </div>
-          <button
-            onClick={loadDashboardData}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-          >
-            Try Again
-          </button>
         </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500 text-sm">Videos Generated</p>
-                <p className="text-2xl font-bold text-gray-800">
-                  {stats?.videosGenerated || 0}
-                  {stats?.videosGenerated === 0 && (
-                    <span className="text-sm text-gray-500 block">No data available</span>
-                  )}
-                </p>
-              </div>
-              <FaVideo className="text-3xl text-blue-600" aria-label="Video Icon" />
+        
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Video Minutes</p>
+              <p className="text-2xl font-bold text-gray-900">{planStatus?.usage.videoMins || 0}/{planStatus?.quota.videoMins || 0}</p>
+              <p className="text-xs text-gray-500">{Math.round(((planStatus?.usage.videoMins || 0) / (planStatus?.quota.videoMins || 1)) * 100)}% used</p>
             </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500 text-sm">Images Created</p>
-                <p className="text-2xl font-bold text-gray-800">
-                  {stats?.imagesCreated || 0}
-                  {stats?.imagesCreated === 0 && (
-                    <span className="text-sm text-gray-500 block">No data available</span>
-                  )}
-                </p>
-              </div>
-              <FaImages className="text-3xl text-green-600" aria-label="Image Icon" />
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500 text-sm">Audio Tracks</p>
-                <p className="text-2xl font-bold text-gray-800">
-                  {stats?.audioTracks || 0}
-                  {stats?.audioTracks === 0 && (
-                    <span className="text-sm text-gray-500 block">No data available</span>
-                  )}
-                </p>
-              </div>
-              <FaMusic className="text-3xl text-purple-600" aria-label="Audio Icon" />
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500 text-sm">Active Users</p>
-                <p className="text-2xl font-bold text-gray-800">
-                  {stats?.activeUsers || 0}
-                  {stats?.activeUsers === 0 && (
-                    <span className="text-sm text-gray-500 block">No data available</span>
-                  )}
-                </p>
-              </div>
-              <FaUsers className="text-3xl text-orange-600" aria-label="Users Icon" />
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Quick Actions */}
-      <Card className="p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link href="/video-generate">
-            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg transition-colors duration-200 flex items-center space-x-3">
-              <FaVideo className="text-xl" aria-label="Video Icon" />
-              <div className="text-left">
-                <h3 className="font-semibold">Generate Video</h3>
-                <p className="text-sm opacity-90">Create Kenya-first content</p>
-              </div>
-            </button>
-          </Link>
-
-          <Link href="/gallery">
-            <button className="w-full bg-green-600 hover:bg-green-700 text-white p-4 rounded-lg transition-colors duration-200 flex items-center space-x-3">
-              <FaImages className="text-xl" aria-label="Image Icon" />
-              <div className="text-left">
-                <h3 className="font-semibold">Browse Gallery</h3>
-                <p className="text-sm opacity-90">View generated content</p>
-              </div>
-            </button>
-          </Link>
-
-          <Link href="/audio-studio">
-            <button className="w-full bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-lg transition-colors duration-200 flex items-center space-x-3">
-              <FaMusic className="text-xl" aria-label="Audio Icon" />
-              <div className="text-left">
-                <h3 className="font-semibold">Audio Studio</h3>
-                <p className="text-sm opacity-90">Voice & music creation</p>
-              </div>
-            </button>
-          </Link>
-        </div>
-      </Card>
-
-      {/* Recent Activity */}
-      <Card className="p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Recent Activity</h2>
-        {recentActivity.length === 0 ? (
-          <div className="text-center py-8">
-            <FaClock className="text-4xl text-gray-400 mx-auto mb-4" aria-label="Clock Icon" />
-            <p className="text-gray-600 font-medium mb-2">No recent activity</p>
-            <p className="text-sm text-gray-500">
-              Start creating content to see your activity here.
-            </p>
+            <FaVideo className="text-3xl text-blue-600" />
           </div>
+        </Card>
+        
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Projects</p>
+              <p className="text-2xl font-bold text-gray-900">{projects.length}</p>
+              <p className="text-xs text-gray-500">Recent projects</p>
+            </div>
+            <FaChartLine className="text-3xl text-purple-600" />
+          </div>
+        </Card>
+        
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Account Status</p>
+              <p className="text-2xl font-bold text-gray-900">{planStatus?.state === 'healthy' ? 'Healthy' : 'Check Required'}</p>
+              <p className="text-xs text-gray-500">{planStatus?.expiresAt ? `Expires: ${new Date(planStatus.expiresAt).toLocaleDateString()}` : 'No expiry date'}</p>
+            </div>
+            <FaGear className="text-3xl text-teal-600" />
+          </div>
+        </Card>
+      </div>
+
+      {/* Analytics Charts - Temporarily disabled for debugging */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <FaChartLine className="mr-2 text-kenya-green" /> Resource Usage 🦁
+          </h3>
+          <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+            <p className="text-gray-500">Chart component temporarily disabled</p>
+          </div>
+        </Card>
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <FaVideo className="mr-2 text-blue-600" /> Monthly Growth 🏃‍♂️
+          </h3>
+          <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+            <p className="text-gray-500">Chart component temporarily disabled</p>
+          </div>
+        </Card>
+      </div>
+
+      {/* Recent Projects */}
+      <section className="bg-white shadow-lg rounded-lg p-6 mb-8">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+          <FaVideo className="mr-3 text-blue-600" /> Your Recent Projects
+        </h2>
+        {projectsLoading ? (
+          <LoadingStates.LoadingCard />
+        ) : projectsError ? (
+          <ErrorStates.Alert 
+            title="Projects Error"
+            message={`Failed to load projects: ${projectsError}`}
+            variant="default"
+          />
+        ) : projects.length === 0 ? (
+          <ErrorStates.EmptyState 
+            title="No Projects Yet"
+            message="You haven't created any projects yet. 🎬"
+            action={{
+              label: "Start Creating Now!",
+              onClick: () => router.push('/video-generate')
+            }}
+            icon={<FaVideo className="text-5xl text-gray-300" />}
+          />
         ) : (
-          <div className="space-y-4">
-            {recentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-white p-2 rounded-lg shadow-sm">
-                    {getActivityIcon(activity.type)}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {projects.map((project) => (
+              <Card key={project.id} className="p-4 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center mb-2">
+                    {project.type === 'video' && <FaVideo className="text-blue-500 mr-2" />}
+                    {project.type === 'image' && <FaImage className="text-purple-500 mr-2" />}
+                    {project.type === 'audio' && <FaMusic className="text-orange-500 mr-2" />}
+                    <h3 className="font-semibold text-gray-800">{project.name}</h3>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-800">{activity.title}</p>
-                    <p className="text-sm text-gray-500">{activity.timestamp}</p>
-                  </div>
+                  <p className="text-sm text-gray-600 mb-1">Status: {project.status}</p>
+                  <p className="text-xs text-gray-500">Created: {new Date(project.created_at).toLocaleDateString()}</p>
                 </div>
-                <span className={`px-2 py-1 text-xs rounded-full font-medium ${getActivityStatusColor(activity.status)}`}>
-                  {activity.status}
-                </span>
-              </div>
+                <Link href={`/projects/${project.id}`} className="text-blue-600 hover:underline mt-3 inline-block self-end">
+                  View Details
+                </Link>
+              </Card>
             ))}
           </div>
         )}
-      </Card>
-
-      {/* Cultural Footer */}
-      <div className="bg-gradient-to-r from-yellow-400 via-red-500 to-green-600 p-6 rounded-lg text-white text-center">
-        <div className="flex items-center justify-center space-x-2 mb-2">
-          <FaGlobe className="text-xl" aria-label="Globe Icon" />
-          <span className="font-bold">Proudly Kenyan</span>
-          <FaHeart className="text-xl" aria-label="Heart Icon" />
+        <div className="text-right mt-4">
+          <Link href="/projects" className="text-blue-600 hover:underline inline-block">
+            View All Projects
+          </Link>
         </div>
-        <p className="text-sm">
-          🌍 Serving African creators • 🎬 {stats?.videosGenerated || 0} videos celebrating heritage • 🇰🇪 Harambee spirit
-        </p>
+      </section>
+
+      {/* Quick Links */}
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card className="p-6 flex flex-col items-center text-center">
+          <FaGear className="text-5xl text-purple-600 mb-4" />
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Account Settings</h3>
+          <p className="text-gray-600 mb-4">Manage your profile, security, and preferences.</p>
+          <Link href="/profile" className="btn-primary">
+            Go to Settings
+          </Link>
+        </Card>
+
+        <Card className="p-6 flex flex-col items-center text-center">
+          <FaChartLine className="text-5xl text-teal-600 mb-4" />
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Usage & Analytics</h3>
+          <p className="text-gray-600 mb-4">Monitor your resource consumption and performance.</p>
+          <Link href="/usage" className="btn-primary">
+            View Analytics
+          </Link>
+        </Card>
+
+        <Card className="p-6 flex flex-col items-center text-center">
+          <FaVideo className="text-5xl text-orange-600 mb-4" />
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Start New Video</h3>
+          <p className="text-gray-600 mb-4">Jump directly into creating your next masterpiece.</p>
+          <Link href="/video-generate" className="btn-primary">
+            Create Video
+          </Link>
+        </Card>
+      </section>
       </div>
-    </div>
+    </Layout>
   );
 }
+

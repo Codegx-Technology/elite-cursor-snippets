@@ -1,8 +1,16 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Layout from "@/components/Layout";
+// import Layout from "@/components/Layout"; // Handled by [lang]/layout.tsx
 import ClientBoot from "@/components/ClientBoot";
+import { PlanGuardProvider } from "@/context/PlanGuardContext"; // New import
+import { AuthProvider } from "@/context/AuthContext"; // New import for AuthProvider
+import { ErrorProvider } from "@/context/ErrorContext"; // Re-added ErrorProvider
+import ErrorNotification from "@/components/ErrorNotification"; // Re-added ErrorNotification
+import { ToastProvider } from "@/components/ui/use-toast"; // New import
+import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Root layout with Kenya-first design system and enterprise styling
@@ -29,7 +37,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Shujaa Studio - Kenya-First AI Video Platform",
-    description: "Empowering African storytellers with cutting-edge AI video generation technology",
+    description: "Empowering African storytellers with cutting-edge AI Video Platform",
     url: 'https://shujaa.studio',
     siteName: 'Shujaa Studio',
     images: [
@@ -46,7 +54,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: "Shujaa Studio - Kenya-First AI Video Platform",
-    description: "Empowering African storytellers with cutting-edge AI video generation technology",
+    description: "Empowering African storytellers with cutting-edge AI Video Platform",
     images: ['/twitter-image.png'],
     creator: '@ShujaaStudio',
   },
@@ -81,11 +89,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const messages = await getMessages();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -103,8 +113,20 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="//fonts.gstatic.com" />
       </head>
       <body className={inter.className} suppressHydrationWarning={true}>
-        <Layout>{children}</Layout>
-        <ClientBoot />
+        <ToastProvider>
+          <ErrorProvider>
+            <AuthProvider>
+              <PlanGuardProvider>
+                <NextIntlClientProvider messages={messages}>
+                  {children}
+                </NextIntlClientProvider>
+              </PlanGuardProvider>
+            </AuthProvider>
+            <ClientBoot />
+            <ErrorNotification />
+          </ErrorProvider>
+        </ToastProvider>
+        <ServiceWorkerRegistrar />
       </body>
     </html>
   );

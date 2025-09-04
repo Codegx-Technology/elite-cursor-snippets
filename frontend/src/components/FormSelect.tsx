@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FaChevronDown } from 'react-icons/fa';
+import { FaChevronDown } from 'react-icons/fa6';
+import { UseFormRegister, FieldValues } from 'react-hook-form'; // Import types from react-hook-form
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorclean
 // [CONTEXT]: Enterprise-grade form select with Kenya-first design system
@@ -11,10 +12,13 @@ import { FaChevronDown } from 'react-icons/fa';
 interface FormSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   options: { value: string; label: string }[];
-  error?: string;
+  error?: { message?: string }; // Updated error prop to match react-hook-form's FieldError
   helperText?: string;
   variant?: 'default' | 'cultural' | 'elite';
   placeholder?: string;
+  labelClassName?: string;
+  name: string; // Added name prop for react-hook-form registration
+  register?: UseFormRegister<FieldValues>; // Optional register prop from react-hook-form
 }
 
 export default function FormSelect({
@@ -25,6 +29,13 @@ export default function FormSelect({
   helperText,
   variant = 'default',
   placeholder = 'Select an option...',
+  labelClassName,
+  name,
+  register,
+  onChange,
+  onBlur,
+  onFocus,
+  id,
   ...props
 }: FormSelectProps) {
   const [isFocused, setIsFocused] = useState(false);
@@ -35,20 +46,37 @@ export default function FormSelect({
     elite: 'form-select border-purple-300 focus:border-purple-500 focus:ring-purple-200'
   };
 
-  const labelClasses = `block text-sm font-medium mb-2 transition-colors duration-200 ${
-    error ? 'text-red-600' :
-    isFocused ? 'text-green-600' :
-    'text-gray-700'
-  }`;
+  const defaultLabelColor = error?.message ? 'text-red-600' : isFocused ? 'text-green-600' : 'text-gray-700';
+  const labelClasses = `${labelClassName ? labelClassName : defaultLabelColor} block text-sm font-medium mb-2 transition-colors duration-200`;
 
   const selectClasses = `${variantClasses[variant]} w-full appearance-none ${
-    error ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''
+    error?.message ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''
   } ${props.disabled ? 'bg-gray-50 cursor-not-allowed' : ''} ${className}`;
+
+  // Prepare react-hook-form registration (if provided)
+  const registration = register ? register(name, { shouldUnregister: true }) : undefined;
+
+  // Compose handlers to avoid duplicate prop keys and ensure all callbacks fire
+  const handleFocus: React.FocusEventHandler<HTMLSelectElement> = (e) => {
+    setIsFocused(true);
+    onFocus?.(e);
+  };
+
+  const handleBlur: React.FocusEventHandler<HTMLSelectElement> = (e) => {
+    setIsFocused(false);
+    registration?.onBlur?.(e);
+    onBlur?.(e);
+  };
+
+  const handleChange: React.ChangeEventHandler<HTMLSelectElement> = (e) => {
+    registration?.onChange?.(e);
+    onChange?.(e);
+  };
 
   return (
     <div className="mb-6">
       {label && (
-        <label htmlFor={props.id} className={labelClasses}>
+        <label htmlFor={id || name} className={labelClasses}> {/* Use name as fallback for htmlFor */}
           {label}
           {props.required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -56,9 +84,13 @@ export default function FormSelect({
 
       <div className="relative">
         <select
+          id={id || name}
+          name={name}
+          ref={registration?.ref}
           className={selectClasses}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          onChange={handleChange}
           {...props}
         >
           {placeholder && (
@@ -80,16 +112,16 @@ export default function FormSelect({
         </div>
       </div>
 
-      {error && (
+      {error?.message && ( // Display error message from react-hook-form
         <p className="mt-2 text-sm text-red-600 flex items-center">
           <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
-          {error}
+          {error.message}
         </p>
       )}
 
-      {helperText && !error && (
+      {helperText && !error?.message && ( // Only show helper text if no error
         <p className="mt-2 text-sm text-gray-500">
           {helperText}
         </p>
@@ -97,3 +129,4 @@ export default function FormSelect({
     </div>
   );
 }
+

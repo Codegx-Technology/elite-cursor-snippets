@@ -21,7 +21,39 @@ Shujaa Studio is a comprehensive AI video generation platform designed with Keny
 - **Mobile-First**: Optimized for African mobile usage patterns
 - **Friendly Fallbacks**: Cultural messaging instead of technical errors
 
-## 🚀 Quick Start
+## 🚀 Quick Start - Professional Launcher System
+
+### **🎯 Elite Development Workflow (Recommended)**
+
+**Windows:**
+```powershell
+# 1. Health check first
+.\run.ps1 -Check
+
+# 2. Launch full development environment
+.\run.ps1
+
+# 3. Access your applications
+# Frontend: http://localhost:3000
+# Backend:  http://localhost:8000
+# API Docs: http://localhost:8000/docs
+```
+
+**Linux/macOS:**
+```bash
+# 1. Health check first
+./run.sh --check
+
+# 2. Launch full development environment
+./run.sh
+```
+
+**Individual Services:**
+```powershell
+.\run.ps1 -BackendOnly    # Backend only
+.\run.ps1 -FrontendOnly   # Frontend only
+.\run.ps1 -Help           # Show help
+```
 
 ### Prerequisites
 - Node.js 18+ and npm
@@ -34,21 +66,48 @@ git clone https://github.com/Codegx-Technology/ShujaaStudio.git
 cd ShujaaStudio
 ```
 
-### 2. Frontend Setup
+### 2. Activate Environment (from SHUJAA_STUDIO_SETUP_GUIDE.md)
+```bash
+.\venv\Scripts\Activate.ps1
+```
+
+### 3. Install Dependencies (from SHUJAA_STUDIO_SETUP_GUIDE.md)
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Start API Server (from SHUJAA_STUDIO_SETUP_GUIDE.md)
+```bash
+pip install fastapi uvicorn pydantic
+python simple_api.py
+# Server: http://localhost:8000
+```
+
+### 5. Start Gradio UI (from SHUJAA_STUDIO_SETUP_GUIDE.md)
+```bash
+python simple_ui.py
+# UI: http://localhost:7860
+```
+
+### 6. Test System (from SHUJAA_STUDIO_SETUP_GUIDE.md)
+```bash
+# Test API
+curl http://localhost:8000/health
+
+# Test generation
+curl -X POST "http://localhost:8000/generate" \
+     -H "Content-Type: application/json" \
+     -d '{"prompt": "Kenyan story", "scenes": 3, "vertical": true}'
+```
+
+### 7. Frontend Setup (from existing README.md)
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### 3. Backend Setup
-```bash
-cd backend
-pip install fastapi uvicorn pydantic
-python api.py
-```
-
-### 4. Access Application
+### 8. Access Application (from existing README.md)
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs
@@ -66,6 +125,34 @@ python hf_access_check.py
 # - SDXL for image generation
 # - Bark for voice synthesis
 # - Whisper for speech recognition
+```
+
+## 🌐 API Endpoints (from SHUJAA_STUDIO_SETUP_GUIDE.md)
+
+- `GET /health` - Health check
+- `POST /generate` - Generate video
+- `POST /batch` - Batch processing
+- `GET /videos` - List videos
+- `GET /config` - Get configuration
+- `POST /test` - Test generation
+
+## 🎯 Configuration (from SHUJAA_STUDIO_SETUP_GUIDE.md)
+
+```yaml
+# API Settings
+api_host: 0.0.0.0
+api_port: 8000
+ui_port: 7860
+
+# Pipeline Settings
+work_base: ./outputs
+default_scenes: 3
+vertical: true
+use_cuda: false
+
+# Model Paths
+bark_cli: ./voice_engine.py
+sdxl_path: ./models/sdxl
 ```
 
 ## 🛠️ Architecture
@@ -89,6 +176,7 @@ User Request → Enhanced Router → Analysis → Method Selection → Generatio
 - **Next.js 15.4.6**: React framework with App Router
 - **TypeScript**: Type-safe development
 - **Tailwind CSS**: Utility-first styling with Kenya-first design
+- **Inline SVG Icons**: Zero external dependencies for bulletproof UI stability
 - **PWA Support**: Offline capability and mobile optimization
 
 #### **Backend**
@@ -177,6 +265,7 @@ cd backend && python api.py
 - **Accessibility**: WCAG 2.1 AA compliance
 - **Security**: Payment integration security validated
 - **UX**: Kenya-first cultural authenticity verified
+- **UI Stability**: Zero external icon dependencies with inline SVGs
 
 ## 🎬 Usage Examples
 

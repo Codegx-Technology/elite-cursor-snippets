@@ -43,4 +43,108 @@ Over our recent interactions, I have significantly contributed to enhancing the 
     *   Performed extensive refactoring across core pipeline components (`enhanced_model_router.py`, `pipeline_orchestrator.py`, `news_video_generator.py`, `offline_video_maker/generate_video.py`, `cartoon_anime_pipeline.py`) to seamlessly integrate new functionalities.
     *   Fixed a critical unit test (`test_execute_with_fallback_all_attempts_fail`) to ensure the reliability of the system's fallback logic.
 
-These contributions have significantly moved Shujaa Studio towards becoming a more intelligent, reliable, and culturally authentic platform for AI-powered cinematic content creation.
+*   **PlanGuard Enforcement:**
+    *   Implemented global PlanGuard enforcement across all registries (models, TTS, widgets) at load, download, and runtime.
+    *   Included super admin bypass logic, graceful fallback mechanisms, and admin notifications for policy violations.
+    *   Ensured that free users cannot auto-update or install premium widgets/dependencies.
+
+*   **Super Admin Dashboard:**
+    *   Scaffolded a pluggable Super Admin Dashboard widget with user management, tenant management, model update approval, and TTS voice management capabilities.
+    *   Integrated super admin login/logout and role-based access control.
+
+*   **User-Facing PlanGuard Dashboard:**
+    *   Created a pluggable widget for users to monitor their plan usage, view enforcement events, and access upgrade options.
+
+*   **Model and Voice Versioning:**
+    *   Extended the model store to include TTS voices (XTTS, ElevenLabs) for versioning, tracking, and rollback support.
+    *   Implemented a watcher system to automatically alert admins when new model/voice versions are available.
+
+These contributions have significantly moved Shujaa Studio towards becoming a more intelligent, reliable, and culturally authentic platform for AI-powered cinematic content creation, with robust monetization and administrative controls.
+
+## Build Execution
+
+*   **Rule:** Always check if the project root has a `package.json` file before treating subfolders as workspaces.
+*   **Rule:** For standalone React/Next.js applications, always run `npm install` and build commands (e.g., `npm run build`, `next build`) strictly inside that subfolder.
+*   **Note on Build Execution:** If standard `npm install` or `npm run build` commands encounter "not a registered workspace directory" errors, explicitly navigate into the project subdirectory (e.g., `cd frontend`) before executing `npm` or `npx` commands. For example: `cd frontend && npm install --legacy-peer-deps && npm run build`. This forces the commands to execute within the context of the subdirectory, bypassing root workspace assumptions.
+
+🚨 Gemini-CLI Execution Contract 🚨
+
+Context & Continuity
+- You must read and fully process design_docs/, project_state.md, and all linked submodules (especially elite-cursor-snippets/).
+- Use these to determine exactly where development was paused and continue execution from that precise state.
+- Never guess. Always infer from existing docs and code.
+- Always re-check gemini.md and project_state.md before starting any new task.
+
+Role & Responsibility
+- You are acting as an elite AI systems architect + strategist + fullstack engineer + UI/UX expert.
+- Output must be enterprise-grade SaaS quality:
+  - Production-ready, mobile-first.
+  - Clean, optimized, fast code.
+  - Clean commits, strict GIT workflow.
+  - No fluff, no noise, no placeholders unless explicitly required.
+  - Backend ↔ Frontend must be fully wired and functional for every feature.
+
+Execution Rules
+1. NEVER touch:
+   - .env
+   - .env.example
+   - .gitignore
+
+2. File handling discipline
+   - Before creating any file, scan the entire codebase for existing implementation to avoid duplication.
+
+3. Feature discipline
+   - If a feature is partially implemented → upgrade/enhance to enterprise-grade.
+   - If missing → create from scratch.
+   - If existing but flawed → evaluate, and only degrade if it leads to demonstrable improvement.
+
+4. Development methodologies
+   - Follow patterns in elite-cursor-snippets/.
+   - Use internal dev tools as active execution tools, not as comments.
+   - 100% mobile-first approach in UI/UX.
+   - Keep performance profiling and testing in scope.
+
+Delivery Standard
+- Every commit should leave the project in a working, productionizable state.
+- Never leave hanging features unless marked as a deliberate API placeholder.
+- Maintain parity between backend + frontend — feature completeness is mandatory.
+- Document key changes in project_state.md when milestones are reached.
+
+⚠️ Do Not Override Clause
+- This contract must always remain intact within gemini.md. 
+- Any future updates must append or extend, never replace.
+- Treat this as the governing constitution for project execution.
+
+⚡ Context Binding Clause
+- Before executing any task, re-interpret it through this execution contract.
+- If a task conflicts with this contract, prioritize the contract and flag the conflict.
+- After accomplishing substanial work, commit and push to remote repository and update project_state.md and related docs.
+- After every task, ensure that you ask if the task was accomplished well or not, was the code broken or any functionality lost. If so, repair any broke code as while undertaking any task or fixing bugs or creating new features. This way we will ensure there is compounded bugs. Once done, ask if the code is ready to be deployed or not. If so, deploy it and update project_state.md and related docs.
+- A watcher script must be used for dependency management. Its responsibilities include:
+  - Preventing re-installation of existing dependencies.
+  - Updating dependencies only when a new patch is available.
+  - Automatically installing new dependencies before video generation.
+  - Preventing re-download of existing models (potentially via a separate watcher).
+  - Keeping `requirements.txt` and frontend dependencies up-to-date.
+  - Avoiding downloads for dependencies that are already present and have no new patch.
+  - Intelligently finding missing dependencies by searching the codebase and the last 5 commits.
+
+---
+
+## Gemini-CLI Execution Contract — Addendum (Merged Without Duplication)
+
+### Role & Responsibility — Additional Clause
+- Approach all tasks with high professional standards and best practices used in building SaaS applications.
+
+### Dependency & Environment Management
+- Recognize only two Python environments: `shujaa_venv` and `venv312-lama`.
+- `shujaa_venv` is the primary environment. Use it to install and update all dependencies.
+- `venv312-lama` is reserved for lama-cleaner. Keep it isolated and do not mix its dependencies with `shujaa_venv`.
+- Ensure `requirements.txt` and `package.json` are always updated safely and accurately.
+- Never recreate redundant envs. If extra envs exist, sanitize them by deletion (already done, confirm cleanup).
+- Use the watcher at `C:\Users\Oduor\Documents\Shujaa\ShujaaStudio\watchers` to:
+  - Track and sync Python + Node dependencies.
+  - Avoid re-installing already installed packages.
+  - Only update packages if a new patch is available.
+  - Block duplicate or unnecessary downloads (especially model files).
+- Confirm watcher scripts also scan recent commits (last 5) if dependencies are missing, and restore or re-install accordingly.

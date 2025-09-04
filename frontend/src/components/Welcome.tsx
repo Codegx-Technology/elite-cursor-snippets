@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Card from './Card';
+import LoadingStates from '@/components/ui/LoadingStates';
+import ErrorStates from '@/components/ui/ErrorStates';
+import KenyanFlag from '@/components/KenyanFlag';
 import {
   FaVideo,
   FaImages,
@@ -15,26 +18,35 @@ import {
   FaStar,
   FaUsers,
   FaChartLine
-} from 'react-icons/fa';
+} from 'react-icons/fa6';
 
 // [SNIPPET]: thinkwithai + kenyafirst + refactorclean
 // [CONTEXT]: Enterprise welcome page with Kenya-first design and cultural authenticity
 // [GOAL]: Create engaging landing experience showcasing platform capabilities
 // [TASK]: Implement welcome page with cultural elements, feature highlights, and clear CTAs
 
-export default function Welcome() {
+export default function Welcome({ title }: { title: string }) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({
     videosGenerated: 0,
     happyCreators: 0,
     countriesServed: 0
   });
 
+  useEffect(() => {
+    // Check authentication status
+    const token = localStorage.getItem('jwt_token');
+    setIsLoggedIn(!!token);
+    setIsLoading(false);
+  }, []);
+
   // Kenya-first showcase slides
   const showcaseSlides = [
     {
       title: "Mount Kenya Adventure",
-      description: "Cinematic journey through Kenya's highest peak",
+      description: "Cinematic journey through Kenya&apos;s highest peak",
       thumbnail: "🏔️",
       category: "Tourism"
     },
@@ -106,36 +118,61 @@ export default function Welcome() {
             background: 'linear-gradient(135deg, #00A651 0%, #FF6B35 50%, #FFD700 100%)'
           }}
         >
-          <div className="flex justify-center items-center space-x-4 mb-6">
-            <FaFlag className="text-4xl" />
-            <FaMountain className="text-4xl" />
-            <FaGlobe className="text-4xl" />
+          <div className="flex justify-center items-center mb-6">
+            <KenyanFlag size="2xl" className="shadow-lg rounded" animated={true} />
           </div>
 
-          <h1 className="text-5xl font-bold mb-4">
-            Karibu Shujaa Studio! 🇰🇪
-          </h1>
+          <div className="flex items-center justify-center space-x-4 mb-4">
+            <h1 className="text-5xl font-bold">
+              {title}
+            </h1>
+          </div>
           <p className="text-xl mb-2 text-green-100">
-            Kenya's Premier AI-Powered Video Generation Platform
+            Kenya&apos;s Premier AI-Powered Video Generation Platform
           </p>
           <p className="text-lg mb-8 text-yellow-100">
             Empowering African storytellers with cutting-edge AI technology
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
-            <Link href="/video-generate">
-              <button className="bg-white text-green-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition-all duration-300 flex items-center space-x-2 shadow-lg">
-                <FaPlay />
-                <span>Start Creating</span>
-                <FaArrowRight />
-              </button>
-            </Link>
-            <Link href="/dashboard">
-              <button className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-white hover:text-green-600 transition-all duration-300 flex items-center space-x-2">
-                <FaChartLine />
-                <span>View Dashboard</span>
-              </button>
-            </Link>
+            {isLoading ? (
+              <>
+                <div className="bg-gray-300 px-8 py-4 rounded-lg font-bold text-lg flex items-center space-x-2 shadow-lg w-48 h-16 animate-pulse"></div>
+                <div className="border-2 border-gray-300 px-8 py-4 rounded-lg font-bold text-lg flex items-center space-x-2 w-48 h-16 animate-pulse"></div>
+              </>
+            ) : isLoggedIn ? (
+              <>
+                <Link href="/video-generate" className="hover:no-underline">
+                  <button className="bg-white text-green-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition-all duration-300 flex items-center space-x-2 shadow-lg">
+                    <FaPlay />
+                    <span>Start Creating</span>
+                    <FaArrowRight />
+                  </button>
+                </Link>
+                <Link href="/dashboard" className="hover:no-underline">
+                  <button className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-white hover:text-green-600 transition-all duration-300 flex items-center space-x-2">
+                    <FaChartLine />
+                    <span>View Dashboard</span>
+                  </button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="hover:no-underline">
+                  <button className="bg-white text-green-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition-all duration-300 flex items-center space-x-2 shadow-lg">
+                    <FaPlay />
+                    <span>Get Started</span>
+                    <FaArrowRight />
+                  </button>
+                </Link>
+                <Link href="/demo" className="hover:no-underline">
+                  <button className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-white hover:text-green-600 transition-all duration-300 flex items-center space-x-2">
+                    <FaVideo />
+                    <span>View Demo</span>
+                  </button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -248,3 +285,4 @@ export default function Welcome() {
     </div>
   );
 }
+

@@ -1,5 +1,5 @@
 
-import { FaTrash, FaTimes } from 'react-icons/fa';
+import { FaTrashCan, FaXmark } from 'react-icons/fa6';
 import { Project } from '@/hooks/useProjects';
 
 interface DeleteProjectModalProps {
@@ -26,17 +26,17 @@ export default function DeleteProjectModal({ isOpen, onClose, onDelete, project 
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Delete Project</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <FaTimes />
+            <FaXmark />
           </button>
         </div>
         <form onSubmit={handleSubmit}>
-          <p>Are you sure you want to delete the project "{project?.name}"?</p>
+          <p>Are you sure you want to delete the project &quot;{project?.name}&quot;?</p>
           <div className="flex justify-end space-x-4 mt-6">
             <button type="button" onClick={onClose} className="btn-secondary">
               Cancel
             </button>
             <button type="submit" className="btn-danger flex items-center space-x-2">
-              <FaTrash />
+              <FaTrashCan />
               <span>Delete</span>
             </button>
           </div>
@@ -45,3 +45,4 @@ export default function DeleteProjectModal({ isOpen, onClose, onDelete, project 
     </div>
   );
 }
+

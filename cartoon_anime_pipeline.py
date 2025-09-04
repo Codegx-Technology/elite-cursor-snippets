@@ -8,15 +8,27 @@ Lightweight, CPU-friendly pipeline for cartoon/anime videos with African identit
 // [GOAL]: CPU-friendly animation with Sheng/Kiswahili TTS and mobile exports
 """
 
-import cv2
+try:
+    import cv2
+except ImportError:  # Allow server to start without cv2; feature-gate at runtime
+    cv2 = None  # type: ignore
 import numpy as np
 from pathlib import Path
 import time
 import json
 import subprocess
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 import io
 from PIL import Image
+import asyncio
+import random
+from logging_setup import get_logger
+from enhanced_model_router import GenerationRequest
+
+logger = get_logger(__name__)
+# Notify if OpenCV isn't available to avoid hard crashes at import time
+if cv2 is None:
+    logger.warning("OpenCV (cv2) is not installed. Cartoon pipeline will be limited. Install with: pip install opencv-python-headless")
 
 from config_loader import get_config
 from ai_model_manager import generate_image, text_to_speech
@@ -228,8 +240,11 @@ class AfricanCartoonPipeline:
                 file_size = scene_path.stat().st_size / 1024
                 logger.info(f"✅ Scene {scene['id']} generated: {file_size:.1f} KB")
                 
-                # Convert to OpenCV format
-                cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+                # Convert to OpenCV format if available
+                if cv2 is not None:
+                    cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+                else:
+                    cv_image = np.array(image)  # Keep as RGB numpy array
                 return cv_image
             else:
                 logger.warning(f"Enhanced router failed for image generation: {result.error_message}. Using placeholder image.")
@@ -240,26 +255,44 @@ class AfricanCartoonPipeline:
     def _create_placeholder_image_cv2(self, scene: Dict) -> np.ndarray:
         """Creates a simple placeholder image using OpenCV."""
         width, height = self.width, self.height
-        img = np.zeros((height, width, 3), dtype=np.uint8) # Black image
-        img.fill(random.randint(50, 200)) # Random color
-        
-        # Add text
-        text = f"Scene {scene['id']}"
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 1.5
-        font_thickness = 2
-        text_size = cv2.getTextSize(text, font, font_scale, font_thickness)[0]
-        text_x = (width - text_size[0]) // 2
-        text_y = (height + text_size[1]) // 2
-        cv2.putText(img, text, (text_x, text_y), font, font_scale, (255, 255, 255), font_thickness, cv2.LINE_AA)
-        
-        return img
+        if cv2 is not None:
+            img = np.zeros((height, width, 3), dtype=np.uint8) # Black image
+            img.fill(random.randint(50, 200)) # Random color
+            
+            # Add text
+            text = f"Scene {scene['id']}"
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 1.5
+            font_thickness = 2
+            text_size = cv2.getTextSize(text, font, font_scale, font_thickness)[0]
+            text_x = (width - text_size[0]) // 2
+            text_y = (height + text_size[1]) // 2
+            cv2.putText(img, text, (text_x, text_y), font, font_scale, (255, 255, 255), font_thickness, cv2.LINE_AA)
+            return img
+        else:
+            # Fallback using PIL
+            from PIL import Image, ImageDraw, ImageFont
+            bg = random.randint(50, 200)
+            pil_img = Image.new("RGB", (width, height), color=(bg, bg, bg))
+            draw = ImageDraw.Draw(pil_img)
+            text = f"Scene {scene['id']}"
+            try:
+                font = ImageFont.load_default()
+            except Exception:
+                font = None
+            tw, th = draw.textsize(text, font=font)
+            tx = (width - tw) // 2
+            ty = (height - th) // 2
+            draw.text((tx, ty), text, fill=(255, 255, 255), font=font)
+            return np.array(pil_img)
     
     def create_scene_animation(self, scene_image: np.ndarray, duration: float) -> List[np.ndarray]:
         """
         // [TASK]: Create simple animation from static scene
         """
         logger.info(f"🎬 Creating {duration}s animation...")
+        if cv2 is None:
+            log_and_raise(ImportError("OpenCV (cv2) not installed"), "Animation creation failed")
         
         frames = []
         total_frames = int(self.fps * duration)
@@ -362,7 +395,7 @@ class AfricanCartoonPipeline:
             logger.error(f"Failed to create silent audio fallback: {e}")
             return None
     
-    async def create_cartoon_video(self, scenes: List[Dict], style: str, voice: str) -> Optional[str]: # Make it async
+    async def create_cartoon_video(self, scenes: List[Dict], style: str, voice: str, parallel_processor: Any = None, scene_processor: Any = None) -> Optional[str]: # Make it async
         """Create complete cartoon video with parallel scene processing"""
         
         logger.info(f"🎬 Creating cartoon video: {style} style, {voice} voice")
@@ -401,6 +434,8 @@ class AfricanCartoonPipeline:
             log_and_raise(ValueError("No frames generated"), "Video creation failed")
         
         video_path = self.output_folder / f"cartoon_{style}_{voice}_{int(time.time())}.mp4"
+        if cv2 is None:
+            log_and_raise(ImportError("OpenCV (cv2) not installed"), "Video writing failed - install opencv-python-headless")
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         writer = cv2.VideoWriter(str(video_path), fourcc, self.fps, (self.width, self.height))
         
@@ -455,7 +490,7 @@ class AfricanCartoonPipeline:
             log_and_raise(e, f"Export error")
 
 
-def create_african_cartoon_video(
+async def create_african_cartoon_video(
     script: str,
     style: str = "african_cartoon",
     voice: str = "sheng_male",
@@ -506,4 +541,22 @@ def create_african_cartoon_video(
     return result
 
 
-if __name__ == "__main__":    # Test the cartoon pipeline    test_script = """    Welcome to Kenya, the beautiful land of diverse cultures.     Mount Kenya stands majestically with snow-capped peaks.     The Maasai people preserve their rich traditions.     Wildlife roams freely in the vast savannas.     This is our home, this is Kenya.    """        try:        result = create_african_cartoon_video(            script=test_script,            style="african_cartoon",            voice="sheng_male",            mobile_preset="tiktok"        )        logger.info(f"\n🎉 RESULT: {result}")    except Exception as e:        log_and_raise(e, "Error during cartoon video creation")
+if __name__ == "__main__":
+    # Test the cartoon pipeline
+    test_script = (
+        "Welcome to Kenya, the beautiful land of diverse cultures. "
+        "Mount Kenya stands majestically with snow-capped peaks. "
+        "The Maasai people preserve their rich traditions. "
+        "Wildlife roams freely in the vast savannas. "
+        "This is our home, this is Kenya."
+    )
+    try:
+        result = asyncio.run(create_african_cartoon_video(
+            script=test_script,
+            style="african_cartoon",
+            voice="sheng_male",
+            mobile_preset="tiktok"
+        ))
+        logger.info(f"\n🎉 RESULT: {result}")
+    except Exception as e:
+        log_and_raise(e, "Error during cartoon video creation")

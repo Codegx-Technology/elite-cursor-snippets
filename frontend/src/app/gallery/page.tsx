@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Card from '@/components/Card';
-import { FaImages, FaVideo, FaMusic, FaDownload, FaPlay, FaEye, FaHeart, FaFlag, FaMountain } from 'react-icons/fa';
+import LazyImage from '@/components/LazyImage';
+import LoadingStates from '@/components/ui/LoadingStates';
+import ErrorStates from '@/components/ui/ErrorStates';
+import { FaImages, FaVideo, FaMusic, FaDownload, FaPlay, FaEye, FaHeart, FaFlag, FaMountain } from 'react-icons/fa6';
 import { apiClient, handleApiResponse } from '@/lib/api';
 
 // [SNIPPET]: thinkwithai + kenyafirst + surgicalfix + refactorintent
@@ -10,78 +13,61 @@ import { apiClient, handleApiResponse } from '@/lib/api';
 // [GOAL]: Create responsive gallery with proper loading states and mobile-first approach
 // [TASK]: Implement gallery with real backend integration and cultural authenticity
 
-interface GalleryItem {
-  id: string;
-  type: 'video' | 'image' | 'audio';
-  title: string;
-  thumbnail: string;
-  createdAt: string;
-  duration?: string;
-  size: string;
-  tags: string[];
-}
+// interface GalleryItem {
+//   id: string;
+//   name: string;
+//   type: 'video' | 'image' | 'audio';
+//   title: string;
+//   thumbnail: string;
+//   createdAt: string;
+//   duration?: string;
+//   size: number;
+//   uploaded_at: string | number;
+//   tags: string[];
+// }
 
 export default function GalleryPage() {
-  const [items, setItems] = useState<GalleryItem[]>([]);
+  const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'video' | 'image' | 'audio'>('all');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadGalleryItems();
-  }, []);
+  }, [filter]);
 
   const loadGalleryItems = async () => {
     setIsLoading(true);
     setError(null);
-
-    const response = await apiClient.getGalleryItems();
-    handleApiResponse(
-      response,
-      (data) => {
-        // data is expected to be a paginated object: { items: any[]; total: number; page: number; pages: number }
-        const arr = Array.isArray((data as any).items) ? (data as any).items : Array.isArray(data) ? (data as any) : [];
-        if (arr.length === 0) {
-          // Show sample Kenya-first content when no real data is available
-          setItems([
-            {
-              id: '1',
-              type: 'video',
-              title: 'Mount Kenya Sunrise',
-              thumbnail: '/api/placeholder/400/300',
-              createdAt: '2024-01-15',
-              duration: '2:30',
-              size: '45 MB',
-              tags: ['Kenya', 'Nature', 'Tourism']
-            },
-            {
-              id: '2',
-              type: 'image',
-              title: 'Maasai Mara Wildlife',
-              thumbnail: '/api/placeholder/400/300',
-              createdAt: '2024-01-14',
-              size: '2.1 MB',
-              tags: ['Wildlife', 'Safari', 'Kenya']
-            },
-            {
-              id: '3',
-              type: 'audio',
-              title: 'Swahili Narration',
-              thumbnail: '/api/placeholder/400/300',
-              createdAt: '2024-01-13',
-              duration: '1:45',
-              size: '8.5 MB',
-              tags: ['Swahili', 'Voice', 'Culture']
-            }
-          ]);
-        } else {
-          setItems(arr as any);
+    try {
+      const response = await apiClient.getGalleryItems(1, 12, filter);
+      handleApiResponse(
+        response,
+        (data) => {
+                              const mappedItems = data.items.map((asset: { id: string; name: string; type: 'video' | 'image' | 'audio'; thumbnail_url?: string; url: string; uploaded_at: string | number; size: number; }) => ({
+            id: asset.id,
+            title: asset.name,
+            type: asset.type,
+            thumbnail: asset.thumbnail_url || asset.url,
+            createdAt: new Date(asset.uploaded_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+            size: asset.size,
+            duration: 'N/A',
+            tags: ['ShujaaContent'],
+          }));
+          setItems(mappedItems);
+        },
+        (error) => {
+          setError(error);
+          setItems([]); // Clear items on error
         }
-      },
-      (error) => setError(error)
-    );
-
-    setIsLoading(false);
+      );
+    } catch (err) {
+      const error = err instanceof Error ? err.message : 'An unknown error occurred.';
+      setError(error);
+      setItems([]); // Clear items on error
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const filteredItems = items.filter(item => 
@@ -137,7 +123,7 @@ export default function GalleryPage() {
           ].map(({ key, label, icon: Icon }) => (
             <button
               key={key}
-              onClick={() => setFilter(key as any)}
+              onClick={() => setFilter(key as 'all' | 'video' | 'image' | 'audio')}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 ${
                 filter === key
                   ? 'bg-green-600 text-white'
@@ -182,10 +168,19 @@ export default function GalleryPage() {
           {filteredItems.map((item) => (
             <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
               <div className="relative">
-                <div className="aspect-video bg-gray-200 flex items-center justify-center">
-                  {getTypeIcon(item.type)}
-                  <span className="ml-2 text-gray-600 font-medium">{item.type.toUpperCase()}</span>
-                </div>
+                <LazyImage
+                  src={item.thumbnail}
+                  alt={item.title}
+                  width={1600} // Arbitrary width for aspect ratio
+                  height={900} // Arbitrary height for aspect ratio (16:9)
+                  placeholder={
+                    <div className="aspect-video bg-gray-200 flex items-center justify-center">
+                      {getTypeIcon(item.type)}
+                      <span className="ml-2 text-gray-600 font-medium">{item.type.toUpperCase()}</span>
+                    </div>
+                  }
+                  className="aspect-video"
+                />
                 <div className="absolute top-2 right-2">
                   <span className="bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
                     {item.duration || item.size}
@@ -238,3 +233,4 @@ export default function GalleryPage() {
     </div>
   );
 }
+

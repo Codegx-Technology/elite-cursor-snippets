@@ -1,5 +1,12 @@
-import Welcome from "@/components/Welcome";
+'use client';
 
-export default function Home() {
-  return <Welcome />;
+import Welcome from '@/components/Welcome';
+import Layout from '@/components/Layout';
+
+export default function RootPage() {
+  return (
+    <Layout>
+      <Welcome title="Welcome to Shujaa Studio" />
+    </Layout>
+  );
 }

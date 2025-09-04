@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { FaPlus, FaTimes } from 'react-icons/fa';
+import { FaPlus, FaXmark } from 'react-icons/fa6';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -27,7 +27,7 @@ export default function CreateProjectModal({ isOpen, onClose, onCreate }: Create
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Create New Project</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <FaTimes />
+            <FaXmark />
           </button>
         </div>
         <form onSubmit={handleSubmit}>
@@ -80,3 +80,4 @@ export default function CreateProjectModal({ isOpen, onClose, onCreate }: Create
     </div>
   );
 }
+

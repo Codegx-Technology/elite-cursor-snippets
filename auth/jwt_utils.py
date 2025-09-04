@@ -2,6 +2,7 @@ import jwt
 from datetime import datetime, timedelta
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.backends import default_backend
 from logging_setup import get_logger
 from config_loader import get_config
 
@@ -64,6 +65,18 @@ def create_jwt(payload: dict, expiry_minutes: int = 30) -> str:
     encoded_jwt = jwt.encode(to_encode, _private_key, algorithm="RS256")
     logger.info(f"JWT created for user: {payload.get('user_id')}")
     return encoded_jwt
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+    """
+    Compatibility wrapper: create an access token using the existing create_jwt.
+    """
+    minutes = 30
+    if expires_delta is not None:
+        try:
+            minutes = max(1, int(expires_delta.total_seconds() // 60))
+        except Exception:
+            minutes = 30
+    return create_jwt(data, expiry_minutes=minutes)
 
 def verify_jwt(token: str) -> dict:
     """

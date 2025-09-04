@@ -25,12 +25,31 @@ const nextConfig: NextConfig = {
   },
 
   // Bundle analyzer (enable when needed)
-  // bundleAnalyzer: {
-  //   enabled: process.env.ANALYZE === 'true',
-  // },
+  bundleAnalyzer: {
+    enabled: process.env.ANALYZE === 'true',
+  },
+
+  // In development, proxy API calls to the FastAPI backend to avoid CORS and ensure cookies flow.
+  async rewrites() {
+    if (process.env.NODE_ENV !== 'production') {
+      return [
+        {
+          source: '/api/:path*',
+          destination: 'http://localhost:8000/api/:path*',
+        },
+      ];
+    }
+    return [];
+  },
 
   // Headers for caching
   async headers() {
+    // Do not set strict headers (like nosniff) in development because
+    // dev chunk requests may 404 to HTML and the browser will block them.
+    if (process.env.NODE_ENV !== 'production') {
+      return [];
+    }
+
     return [
       {
         source: '/(.*)',

@@ -1,0 +1,6 @@
+elevenlabs:
+  price_per_million_chars_usd: 30
+xtts-local:
+  gpu_cost_per_min_usd: 0.12
+huggingface:
+  price_per_million_tokens_usd: 1.2

@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import time
+import random # For canary routing
 from typing import Any, Dict, List, Optional, Type
 
 import yaml
@@ -14,9 +15,19 @@ from backend.ai_routing.providers.huggingface_provider import HuggingFaceProvide
 from backend.ai_routing.providers.runpod_provider import RunPodProvider
 from backend.ai_routing.providers.gemini_provider import GeminiProvider
 
+# Import healthcheck functions
+from backend.ai_health.healthcheck import record_metric, aggregate, score_inference
+# Import ModelStore to get model metadata (e.g., blue/green strategy)
+from backend.ai_models.model_store import ModelStore
+from backend.ai_health.rollback import should_rollback, perform_rollback
+from backend.notifications.admin_notify import send_admin_email
+
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# Initialize ModelStore
+model_store = ModelStore()
 
 class Router:
     def __init__(self, config_path: str):
@@ -116,28 +127,180 @@ class Router:
 
         return eligible_providers[0]
 
-    async def execute_with_fallback(self, task_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Executes a task, attempting fallbacks if the preferred provider fails.
-        """
+    async def execute_with_fallback(self, task_type: str, payload: Dict[str, Any], request: Any) -> Dict[str, Any]: # Added request: Any
+        user_plan = request.state.get("user_plan")
+        if not user_plan:
+            logger.warning("User plan not found in request state. Defaulting to FREE tier policy.")
+            # Fallback to FREE tier policy if user_plan is not set (e.g., for unauthenticated requests)
+            from billing_models import get_default_plans
+            all_plans = get_default_plans()
+            user_plan = next((p for p in all_plans if p.tier_code == "FREE"), None)
+            if not user_plan:
+                logger.critical("FREE tier plan not found in default plans. System misconfiguration.")
+                raise RuntimeError("System misconfiguration: FREE plan not found.")
+
+        # --- Emergency Freeze Check ---
+        # Assuming a global emergency freeze flag in config.yaml
+        if self.config.get("emergency_freeze", False):
+            logger.warning(f"Emergency freeze is active. Blocking task {task_type}.")
+            raise HTTPException(status_code=503, detail="Service temporarily unavailable due to emergency maintenance.")
+
+        # --- Version Pinning Logic ---
+        effective_model_name = payload.get("model_name")
+        effective_model_version = None
+        effective_provider_name = payload.get("provider_name")
+
+        model_policy = user_plan.model_policy
+
+        if model_policy.defaultRouting == "pinned":
+            pinned_model = model_policy.pinned.get(task_type)
+            if pinned_model:
+                effective_model_name = pinned_model.model
+                effective_model_version = pinned_model.version
+                logger.info(f"Tier policy: Forcing pinned model {effective_model_name}@{effective_model_version} for task {task_type}.")
+            else:
+                logger.warning(f"Tier policy: 'pinned' routing but no pinned model found for task {task_type}. Falling back to 'latest'.")
+                # Fallback to latest if pinned but no specific model is defined
+                # This would typically involve querying ModelStore for the latest version
+        elif model_policy.defaultRouting == "allow_minor":
+            # Logic to allow minor version updates but pin major
+            # This would involve comparing requested version with available versions
+            # and selecting the latest minor version within the same major version.
+            logger.debug(f"Tier policy: Allowing minor version updates for task {task_type}.")
+
+        # Override payload with effective model/version if determined by policy
+        if effective_model_name:
+            payload["model_name"] = effective_model_name
+        if effective_model_version:
+            payload["version_tag"] = effective_model_version # Assuming version_tag is used for specific version
+
+        # --- Provider Routing based on Tier Policy ---
+        # This would involve modifying self.route_task or creating a new routing function
+        # that respects user_plan.model_policy.providers (ordered fallback list).
+        # For now, route_task will still pick the best healthy provider from its own config.
+        # The idea is that the provider list in tier policy would override/filter the router's default.
+
+        # Extract model info from payload if available (assuming a convention)
+        # This part needs to be adapted based on how model_name and provider are passed in payload
+        model_name = payload.get("model_name") # Example
+        provider_name = payload.get("provider_name") # Example
+
+        # Get model metadata from ModelStore if available
+        model_metadata = None
+        if model_name and provider_name:
+            current_model_info = self.model_store.current(provider_name, model_name)
+            if current_model_info:
+                model_metadata = current_model_info.get("metadata", {})
+
+        strategy = model_metadata.get("strategy")
+        canary_pct = model_metadata.get("canary_pct", 0)
+
+        target_provider = None
+        active_tag = "main" # Default to main/blue
+        canary_tag = "staging" # Default to staging/green
+
+        if strategy == "bluegreen" and model_name and provider_name:
+            # Determine which version to route to
+            if random.randint(1, 100) <= canary_pct:
+                logger.info(f"Routing {canary_pct}% of requests for {model_name} to canary (green) version.")
+                # In a real scenario, you'd need to get the path to the green version
+                # For now, we'll assume the 'green' version is identified by a specific tag
+                # and the provider can handle routing to it. This is a simplification.
+                # The actual routing would involve passing the version_tag to the provider.
+                # For this example, we'll just log and proceed with the default provider.
+                target_provider = self.route_task(task_type, payload) # Still route to best provider
+                active_tag = "green" # Indicate green path taken
+            else:
+                logger.info(f"Routing {100 - canary_pct}% of requests for {model_name} to active (blue) version.")
+                target_provider = self.route_task(task_type, payload)
+                active_tag = "blue" # Indicate blue path taken
+        else:
+            target_provider = self.route_task(task_type, payload)
+
+        if not target_provider:
+            raise RuntimeError(f"No suitable provider found for task type '{task_type}'.")
+
         attempt = 0
         while attempt <= self.fallback_retries:
-            provider = self.route_task(task_type, payload)
-            if not provider:
-                raise RuntimeError(f"No suitable provider found for task type '{task_type}' after {attempt} attempts.")
+            provider = target_provider # Start with the chosen provider (blue/green/canary)
 
             logger.info(f"Attempting task '{task_type}' with provider '{provider.name}' (attempt {attempt + 1})...")
+            start_time = time.time()
+            inference_ok = False
+            inference_score = 0.0
             try:
                 result = await provider.process_request(task_type, payload)
+                latency_ms = (time.time() - start_time) * 1000
+                inference_ok = True
+                inference_score = score_inference(result) # Score the inference result
                 logger.info(f"Task '{task_type}' successful with provider '{provider.name}'.")
                 return result
             except Exception as e:
+                latency_ms = (time.time() - start_time) * 1000
                 logger.error(f"Provider '{provider.name}' failed for task '{task_type}': {e}")
+                # Record metric for failed inference
+                record_metric(provider.name, model_name, active_tag, False, latency_ms, 0.0)
                 attempt += 1
                 if attempt <= self.fallback_retries:
                     logger.info(f"Attempting fallback for task '{task_type}'...")
                 else:
                     logger.error(f"All fallback attempts failed for task '{task_type}'.")
                     # The final RuntimeError after the loop will handle this.
+            finally:
+                # Record metric for successful inference (if applicable) and check for auto-promotion/rollback
+                if inference_ok:
+                    record_metric(provider.name, model_name, active_tag, True, latency_ms, inference_score)
+                
+                # Check health metrics and potentially promote/rollback
+                if strategy == "bluegreen" and model_name and provider_name:
+                    # Aggregate metrics for the current tag (blue or green)
+                    agg_metrics = aggregate(provider.name, model_name, active_tag)
+                    # Determine thresholds (min_score sourced from config if present)
+                    try:
+                        min_health_score = getattr(self.config.models.image_generation, 'min_health_score', 0.9)
+                    except Exception:
+                        min_health_score = 0.9
+                    thresholds = {
+                        "max_error_rate": 0.08,
+                        "min_score": float(min_health_score),
+                        "p95_sla_ms": 2000,
+                    }
+
+                    if active_tag == "green" and agg_metrics.get("avg_score", 0.0) >= float(min_health_score) and agg_metrics.get("count", 0) >= 100:
+                        logger.info(f"Canary (green) version for {model_name} is healthy. Promoting to active.")
+                        # Promote green to active
+                        green_version_tag = model_metadata.get("green_version_tag") # Assuming green_version_tag is stored in metadata
+                        if green_version_tag:
+                            self.model_store.activate(provider_name, model_name, green_version_tag, metadata={"strategy":"bluegreen", "promoted_from_canary": True})
+                            logger.info(f"Promoted {model_name} to active version: {green_version_tag}")
+                        else:
+                            logger.warning(f"Could not promote green version for {model_name}: green_version_tag not found in metadata.")
+                    elif active_tag == "green" and agg_metrics.get("count", 0) >= 100:
+                        # Evaluate rollback trigger using thresholds
+                        if should_rollback(agg_metrics, thresholds):
+                            logger.warning(f"Canary (green) version for {model_name} is unhealthy. Rolling back to blue.")
+                            # Execute rollback and notify admin
+                            try:
+                                old_tag = active_tag
+                                target_tag = perform_rollback(provider_name, model_name, dry_run=False)
+                                if target_tag:
+                                    subject = f"🚨 Auto-rollback executed: {provider_name}/{model_name}"
+                                    body = (
+                                        f"Provider: {provider_name}\n"
+                                        f"Model: {model_name}\n"
+                                        f"Old tag: {old_tag} -> New tag: {target_tag}\n"
+                                        f"Metrics: count={agg_metrics.get('count', 0)}, "
+                                        f"error_rate={agg_metrics.get('error_rate', 'n/a')}, "
+                                        f"avg_score={agg_metrics.get('avg_score', 'n/a')}, "
+                                        f"p95_latency_ms={agg_metrics.get('p95_latency_ms', 'n/a')}\n"
+                                        f"Thresholds: {thresholds}\n"
+                                        f"Time: {time.strftime('%Y-%m-%d %H:%M:%S')}"
+                                    )
+                                    send_admin_email(subject, body)
+                                else:
+                                    logger.error("Rollback could not determine target tag (no history).")
+                            except Exception as ex:
+                                logger.error(f"Rollback attempt failed: {ex}")
+
 
         raise RuntimeError(f"Failed to execute task '{task_type}' after {self.fallback_retries + 1} attempts.")

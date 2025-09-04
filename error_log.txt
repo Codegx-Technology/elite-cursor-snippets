@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "C:\Users\Oduor\Documents\Shujaa\ShujaaStudio\backend\dependency_watcher\dependency_watcher.py", line 7, in <module>
+    from backend.notifications.admin_notifier import notify_admin
+ModuleNotFoundError: No module named 'backend'

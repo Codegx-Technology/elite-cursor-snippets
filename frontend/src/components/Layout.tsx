@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import ErrorBoundary from './ErrorBoundary';
+import SuperAdminMenu from './SuperAdminMenu'; // New import
 
 // Dynamically import ScrollToTop on client only to avoid hydration mismatch
 const ScrollToTop = dynamic(() => import('./ScrollToTop'), { ssr: false });
@@ -25,26 +26,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       const isMobileDevice = window.innerWidth < 768;
       setIsMobile(isMobileDevice);
 
-      // Auto-close sidebar on desktop, but keep user preference on mobile
-      if (window.innerWidth >= 1024) {
+      // Auto-close sidebar on desktop
+      if (window.innerWidth >= 768) {
         setSidebarOpen(false);
       }
     };
 
     checkMobile();
-
-    // Debounced resize handler for better performance
-    let timeoutId: NodeJS.Timeout;
-    const debouncedResize = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(checkMobile, 150);
-    };
-
-    window.addEventListener('resize', debouncedResize);
-    return () => {
-      window.removeEventListener('resize', debouncedResize);
-      clearTimeout(timeoutId);
-    };
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   return (
@@ -58,6 +48,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       }`}>
         {/* Header */}
         <Header isSidebarOpen={isSidebarOpen} setSidebarOpen={setSidebarOpen} />
+
+        {/* Super Admin Menu (conditionally rendered) */}
+                <SuperAdminMenu />
 
         {/* Main Content with improved mobile spacing and error boundary */}
         <main className={`min-h-screen pt-4 pb-20 transition-all duration-300 ${
@@ -83,9 +76,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Mobile Overlay with improved touch handling */}
       {isSidebarOpen && isMobile && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden touch-none"
-          onClick={() => setSidebarOpen(false)}
-          onTouchStart={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          style={{ pointerEvents: 'auto' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setSidebarOpen(false);
+          }}
+          onTouchStart={(e) => {
+            e.stopPropagation();
+            setSidebarOpen(false);
+          }}
         />
       )}
 
