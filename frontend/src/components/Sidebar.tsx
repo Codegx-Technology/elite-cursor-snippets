@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 // Icons replaced with inline SVGs to avoid react-icons dependency issues
@@ -33,16 +33,16 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
     }
   }, []);
 
+  // Optimize pathname change handler
   useEffect(() => {
     if (isSidebarOpen) {
       setSidebarOpen(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  }, [pathname, isSidebarOpen, setSidebarOpen]);
 
 
-  // Navigation items based on authentication status
-  const navigationItems = isLoggedIn ? [
+  // Memoize navigation items to prevent re-creation on every render
+  const navigationItems = useMemo(() => isLoggedIn ? [
     {
       href: `/dashboard`,
       icon: () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>,
@@ -158,9 +158,10 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       label: 'Login',
       description: 'Access Your Account 🇰🇪'
     }
-  ];
+  ], [isLoggedIn]);
 
-  const isActive = (href: string) => {
+  // Memoize isActive function to prevent recalculation
+  const isActive = useCallback((href: string) => {
     // Handle root route and dashboard alias
     if (href === '/' && (pathname === '/' || pathname.startsWith('/dashboard'))) {
       return true;
@@ -170,7 +171,7 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
       return true;
     }
     return false;
-  };
+  }, [pathname]);
 
   return (
     <aside
@@ -226,15 +227,13 @@ export default function Sidebar({ isSidebarOpen, setSidebarOpen }: SidebarProps)
               <Link
                 key={`${item.href}-${idx}`}
                 href={item.href}
-                prefetch={true}
+                prefetch={false}
                 className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 group cursor-pointer relative ${
                   active
                     ? 'bg-gradient-to-r from-green-600 to-blue-600 text-white shadow-lg'
                     : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                 }`}
-                style={{ pointerEvents: 'auto', zIndex: 1 }}
                 aria-current={active ? 'page' : undefined}
-                
               >
                 <Icon />
                 <div className="flex flex-col ml-3">
