@@ -1,0 +1,56 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Elite: Auto-Trigger from Prompt",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        ".vscode/elite-cursor-snippets/cursor-automation.js",
+        "${input:promptText}"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Elite: Monitor Cursor Prompts",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        ".vscode/elite-cursor-snippets/cursor-integration.js",
+        "monitor"
+      ],
+      "group": "build",
+      "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Elite: Test Automation",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        ".vscode/elite-cursor-snippets/cursor-automation.js",
+        "fix the footer blinking button issue"
+      ],
+      "group": "test"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "promptText",
+      "description": "Enter your prompt for Elite automation",
+      "type": "promptString"
+    }
+  ]
+}

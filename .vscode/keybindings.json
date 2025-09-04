@@ -1,0 +1,13 @@
+[
+  {
+    "key": "ctrl+shift+e",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Elite: Auto-Trigger from Prompt",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "ctrl+alt+e",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Elite: Test Automation"
+  }
+]

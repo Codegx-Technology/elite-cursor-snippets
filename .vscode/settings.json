@@ -1,0 +1,12 @@
+{
+  "elite.automation.enabled": true,
+  "elite.automation.autoTrigger": true,
+  "elite.automation.confidence.threshold": 0.7,
+  "elite.automation.kenya.first": true,
+  "elite.automation.debug": false,
+  "cursor.ai.autoComplete": true,
+  "cursor.ai.enableEliteIntegration": true,
+  "editor.suggest.snippetsPreventQuickSuggestions": false,
+  "editor.tabCompletion": "on",
+  "editor.snippetSuggestions": "top"
+}

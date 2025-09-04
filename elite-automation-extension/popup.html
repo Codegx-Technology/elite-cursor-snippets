@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite Automation</title>
+    <style>
+        body {
+            width: 350px;
+            min-height: 400px;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .logo {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .subtitle {
+            font-size: 12px;
+            opacity: 0.8;
+            margin: 5px 0 0 0;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        
+        .status-text {
+            font-weight: 500;
+        }
+        
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .toggle.active {
+            background: #4CAF50;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        
+        .toggle.active .toggle-slider {
+            transform: translateX(26px);
+        }
+        
+        .stats {
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .patterns {
+            margin-bottom: 20px;
+        }
+        
+        .pattern-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        .pattern-icon {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(0,0,0,0.2);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(0,0,0,0.3);
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">🤖</div>
+        <h1 class="title">Elite Automation</h1>
+        <p class="subtitle">AI Chat Enhancement System</p>
+    </div>
+    
+    <div class="content">
+        <div class="status">
+            <span class="status-text">Auto-Enhancement</span>
+            <div class="toggle active" id="toggleSwitch">
+                <div class="toggle-slider"></div>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="section-title">📊 Session Stats</div>
+            <div class="stat-item">
+                <span>Prompts Enhanced:</span>
+                <span id="enhancedCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span>Success Rate:</span>
+                <span id="successRate">100%</span>
+            </div>
+            <div class="stat-item">
+                <span>Platform:</span>
+                <span id="currentPlatform">Detecting...</span>
+            </div>
+        </div>
+        
+        <div class="patterns">
+            <div class="section-title">🎯 Active Patterns</div>
+            <div class="pattern-item">
+                <span class="pattern-icon">🔧</span>
+                <span>Bug Fixes & Debugging</span>
+            </div>
+            <div class="pattern-item">
+                <span class="pattern-icon">⚡</span>
+                <span>Performance Optimization</span>
+            </div>
+            <div class="pattern-item">
+                <span class="pattern-icon">⚛️</span>
+                <span>React Component Issues</span>
+            </div>
+            <div class="pattern-item">
+                <span class="pattern-icon">🇰🇪</span>
+                <span>Kenya-First Engineering</span>
+            </div>
+            <div class="pattern-item">
+                <span class="pattern-icon">🛡️</span>
+                <span>Security Analysis</span>
+            </div>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn btn-primary" id="testBtn">Test</button>
+            <button class="btn btn-secondary" id="settingsBtn">Settings</button>
+        </div>
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html>
