@@ -1,0 +1,176 @@
+{
+  "autoApply": false,
+  "verboseOutput": true,
+  "enableGuardrails": true,
+  "excludePatterns": [
+    "node_modules",
+    ".git",
+    "dist",
+    "build",
+    "coverage",
+    ".next",
+    ".nuxt",
+    "vendor",
+    "__pycache__",
+    "*.min.js",
+    "*.bundle.js"
+  ],
+  "fileExtensions": [
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".vue",
+    ".py",
+    ".java",
+    ".cs",
+    ".php",
+    ".rb",
+    ".go",
+    ".rs",
+    ".swift",
+    ".kt"
+  ],
+  "severityThresholds": {
+    "critical": {
+      "autoSuggest": true,
+      "requireConfirmation": true,
+      "blockCommit": true
+    },
+    "high": {
+      "autoSuggest": true,
+      "requireConfirmation": true,
+      "blockCommit": false
+    },
+    "medium": {
+      "autoSuggest": true,
+      "requireConfirmation": false,
+      "blockCommit": false
+    },
+    "low": {
+      "autoSuggest": false,
+      "requireConfirmation": false,
+      "blockCommit": false
+    }
+  },
+  "snippetPriorities": {
+    "securitycheck": 100,
+    "errorcheck": 90,
+    "surgicalfix": 80,
+    "hookcheck": 70,
+    "refactorintent": 60,
+    "autocomp": 60,
+    "writetest": 50,
+    "perfcheck": 50,
+    "a11ycheck": 40,
+    "refactorclean": 40,
+    "doccode": 30,
+    "kenyacheck": 30,
+    "mobilecheck": 20,
+    "noconlog": 10,
+    "srpcheck": 10
+  },
+  "kenyaSpecific": {
+    "currency": {
+      "preferred": "KSh",
+      "alternatives": ["Ksh", "KES"],
+      "avoid": ["$", "USD", "€", "EUR"]
+    },
+    "phoneFormat": {
+      "preferred": "+254",
+      "alternatives": ["254", "0"],
+      "avoid": ["+1", "+44", "+91"]
+    },
+    "timezone": {
+      "preferred": "EAT",
+      "alternatives": ["Africa/Nairobi", "UTC+3"],
+      "avoid": ["UTC", "GMT", "PST", "EST"]
+    },
+    "language": {
+      "tone": "professional-kenyan",
+      "includeSwahili": false,
+      "localTerms": ["M-Pesa", "NHIF", "KRA", "NSSF"]
+    }
+  },
+  "reactSpecific": {
+    "preferFunctional": true,
+    "enforceHooks": true,
+    "requirePropTypes": false,
+    "enforceAccessibility": true,
+    "mobileFirst": true,
+    "performanceOptimization": true
+  },
+  "codeQuality": {
+    "maxFunctionLength": 50,
+    "maxComplexity": 10,
+    "enforceErrorHandling": true,
+    "requireDocumentation": true,
+    "enforceNaming": true
+  },
+  "security": {
+    "scanForVulnerabilities": true,
+    "enforceInputValidation": true,
+    "checkForXSS": true,
+    "validateAPIUsage": true
+  },
+  "performance": {
+    "checkBundleSize": true,
+    "optimizeImages": true,
+    "lazyLoading": true,
+    "codesplitting": true
+  },
+  "gitHooks": {
+    "preCommit": {
+      "enabled": true,
+      "runAnalysis": true,
+      "blockOnCritical": true,
+      "blockOnHigh": false
+    },
+    "postCommit": {
+      "enabled": true,
+      "generateReport": true,
+      "suggestImprovements": true
+    },
+    "prePush": {
+      "enabled": true,
+      "fullAnalysis": true,
+      "generateSummary": true
+    }
+  },
+  "output": {
+    "format": "console",
+    "colors": true,
+    "emoji": true,
+    "verbose": true,
+    "saveReport": true,
+    "reportPath": "./elite-auto-fix-report.json"
+  },
+  "integrations": {
+    "vscode": {
+      "enabled": true,
+      "autoOpenSnippets": true,
+      "showInProblems": true
+    },
+    "cursor": {
+      "enabled": true,
+      "autoSuggestSnippets": true,
+      "contextAware": true
+    },
+    "ci": {
+      "enabled": false,
+      "failOnCritical": true,
+      "generateArtifacts": true
+    }
+  },
+  "customRules": {
+    "enabled": true,
+    "rulesPath": "./custom-rules.js",
+    "allowOverrides": true
+  },
+  "learning": {
+    "enabled": true,
+    "trackPatterns": true,
+    "adaptToProject": true,
+    "suggestNewRules": true
+  }
+}
