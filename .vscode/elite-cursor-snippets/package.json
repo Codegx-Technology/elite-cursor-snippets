@@ -1,0 +1,120 @@
+{
+  "name": "elite-cursor-snippets-automation",
+  "version": "1.0.0",
+  "description": "Intelligent automation system for Elite Cursor Snippets - Kenya-First Engineering",
+  "main": "elite-auto-fix.js",
+  "bin": {
+    "elite": "./elite-cli.js",
+    "elite-fix": "./elite-auto-fix.js"
+  },
+  "scripts": {
+    "start": "node elite-cli.js",
+    "analyze": "node elite-auto-fix.js",
+    "test": "node test/run-tests.js",
+    "install-hooks": "node scripts/install-git-hooks.js",
+    "setup": "npm run install-hooks && echo 'Elite Auto-Fix setup complete!'",
+    "lint": "node elite-auto-fix.js --analyze-all",
+    "fix": "node elite-cli.js fix",
+    "scan": "node elite-cli.js scan",
+    "config": "node elite-cli.js config show"
+  },
+  "keywords": [
+    "cursor",
+    "snippets",
+    "automation",
+    "code-quality",
+    "kenya-first",
+    "elite-engineering",
+    "ai-assistance",
+    "guardrails",
+    "refactoring",
+    "react",
+    "javascript",
+    "typescript"
+  ],
+  "author": "Paps (Kenya-First Engineering)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/elite-cursor-snippets.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/elite-cursor-snippets/issues"
+  },
+  "homepage": "https://github.com/your-org/elite-cursor-snippets#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^9.4.1",
+    "glob": "^8.0.3",
+    "inquirer": "^8.2.5"
+  },
+  "devDependencies": {
+    "jest": "^29.3.1",
+    "eslint": "^8.28.0"
+  },
+  "files": [
+    "*.js",
+    "*.json",
+    "scripts/",
+    "templates/",
+    "docs/",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "elite-config": {
+    "version": "1.0.0",
+    "snippets": {
+      "core": [
+        "thinkwithai",
+        "surgicalfix",
+        "refactorintent",
+        "refactorclean",
+        "autocomp",
+        "writetest",
+        "doccode",
+        "unstuck",
+        "augmentsearch",
+        "kenyafirst",
+        "mindreset",
+        "guardon"
+      ],
+      "guardrails": [
+        "srpcheck",
+        "noconlog",
+        "hookcheck",
+        "kenyacheck",
+        "mobilecheck",
+        "errorcheck",
+        "securitycheck",
+        "perfcheck",
+        "a11ycheck"
+      ],
+      "workflow": [
+        "phase1init",
+        "phase2core",
+        "phase3test",
+        "phase4optimize",
+        "dailyboost",
+        "mentorme",
+        "pairprog"
+      ]
+    },
+    "integrations": {
+      "vscode": true,
+      "cursor": true,
+      "git-hooks": true,
+      "ci-cd": false
+    },
+    "features": {
+      "smart-selection": true,
+      "auto-fix": false,
+      "learning-engine": true,
+      "guardrails": true,
+      "kenya-first": true,
+      "performance-monitoring": true
+    }
+  }
+}
